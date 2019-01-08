@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { AngularFireStorage, AngularFireUploadTask } from '@angular/fire/storage';
+import { AngularFireDatabase } from '@angular/fire/database';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { map, finalize } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -14,18 +15,14 @@ export class AppComponent {
   uploadState$: Observable<string>;
   downloadURL$: Observable<any> = new BehaviorSubject('');
 
-  constructor(private afs: AngularFireStorage) { }
+  constructor(private afs: AngularFireStorage, private afd: AngularFireDatabase) { }
 
   upload(event) {
     const filePath = `/uploads/${this.autoId()}`;
-    const fileRef = this.afs.ref(filePath);
     this.task = this.afs.upload(filePath, event.target.files[0]);
     this.uploadState$ = this.task.snapshotChanges().pipe(map(s => s.state));
     this.uploadProgress$ = this.task.percentageChanges();
-
-    // Sets the downloadURL$ when the file has been uploaded.
-    const setUrl = () => this.downloadURL$ = fileRef.getDownloadURL();
-    this.task.snapshotChanges().pipe(finalize(setUrl)).subscribe();
+    this.downloadURL$ = this.afd.object(filePath).valueChanges();
   }
 
   /** Returns a unique 20-character wide identifier. */

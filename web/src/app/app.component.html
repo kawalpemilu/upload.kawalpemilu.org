@@ -2,16 +2,23 @@
 <input type="file" (change)="upload($event)" accept=".png,.jpg" />
 
 <h3>Progress</h3>
-<progress max="100" [value]="(uploadProgress$ | async)"></progress>
+<progress max="100" [value]="uploadProgress$ | async"></progress>
 
-<section class="control-bar" *ngIf="uploadState$ | async; let state">
+<section class="control-bar" *ngIf="(uploadState$ | async); let state">
   <button (click)="task.pause()" [disabled]="state === 'paused'">Pause</button>
-  <button (click)="task.cancel()" [disabled]="!(state === 'paused' || state === 'running')">Cancel</button>
-  <button (click)="task.resume()" [disabled]="state === 'running'">Resume</button>
-</section> 
+  <button
+    (click)="task.cancel()"
+    [disabled]="!(state === 'paused' || state === 'running')"
+  >
+    Cancel
+  </button>
+  <button (click)="task.resume()" [disabled]="state === 'running'">
+    Resume
+  </button>
+</section>
 
 <h3>Download Picture</h3>
-<div class="result" *ngIf="downloadURL$ | async; let downloadSrc">
+<div class="result" *ngIf="(downloadURL$ | async); let downloadSrc">
   <a [href]="downloadSrc">You just uploaded this file!</a>
 </div>
 
