@@ -1,0 +1,179 @@
+{
+  "rules": {
+    "digitizer": {
+      ".read": "root
+        .child('digitizer')
+        .child(auth.uid)
+        .child('is_ninja')
+        .val() === true",
+      ".indexOn": ["is_requesting"],
+
+      "$uid": {
+        ".read": "auth.uid == $uid ||
+        	root.child('digitizer').child(auth.uid).child('is_member').val() === true",
+
+        // Filled by nodejs admin.
+        "fbuid": { ".validate": "newData.isString()" },
+        "displayName": { ".validate": "newData.isString()" },
+        "email": { ".validate": "newData.isString()" },
+        "photoURL": { ".validate": "newData.isString()" },
+
+        // Filled by user who wants to request or a ninja who wants to approve/reject.
+        "is_requesting": {
+          ".write": "
+          	(!data.exists() && auth.uid == $uid && newData.val() === true) ||
+          	(data.exists() && newData.isBoolean() &&
+             root.child('digitizer').child(auth.uid).child('is_ninja').exists())",
+        },
+
+        // Filled by a ninja who approves a user. 
+        "is_member": {
+          ".write": "newData.isBoolean() &&
+          					 root.child('digitizer').child(auth.uid).child('is_ninja').exists()",
+        },
+
+        // List of digitizer ninjas, can only be added by Felix Halim.
+        "is_ninja": {
+          ".write": "auth.uid == 'vqT87OIqZwMflVhsI6ed3ZGlWeS2'" // felix.halim@gmail.com
+        }
+      }
+    },
+
+    "users": {
+      ".indexOn": ["fbuid"],
+      "$uid": {
+	      ".read": "
+        	auth.uid == $uid ||
+        	root
+            .child('digitizer')
+            .child(auth.uid)
+            .child('is_member')
+            .val() === true",
+      },
+    },
+
+    "banned_users": {},
+
+    "hierarchy": {
+      ".read": "root
+            .child('digitizer')
+            .child(auth.uid)
+            .child('is_member')
+            .val() === true"
+    },
+
+    "verified_uploads": {
+      ".read": "root
+            .child('digitizer')
+            .child(auth.uid)
+            .child('is_member')
+            .val() === true",
+      "$tpsid": {
+	      "$tpsno": {
+		      "$timestamp": {}
+        }
+      }
+    },
+
+    "verified_uploads_default": {
+      "$tpsid": {
+	      ".read": "root
+            .child('digitizer')
+            .child(auth.uid)
+            .child('is_member')
+            .val() === true",
+	      "$tpsno": {
+        	".write": "
+          	root.child('digitizer').child(auth.uid).child('is_member').val() === true &&
+            root.child('tps').child($tpsid + '_' + $tpsno).exists()"
+        }
+      }
+    },
+
+    "verified_uploads_queue": {
+      "$randomKey": {
+        ".write": "
+        	!data.exists() &&
+          root
+            .child('tps')
+            .child(newData.child('tpsid').val() + '_' + newData.child('tpsno').val())
+            .exists() &&
+          root
+            .child('uploads')
+            .child(newData.child('old_tpsid').val())
+            .child(newData.child('old_tpsno').val())
+            .child(newData.child('uploadTime').val())
+            .child('uploader').val() == newData.child('uploader').val() &&
+          root
+            .child('uploads')
+            .child(newData.child('old_tpsid').val())
+            .child(newData.child('old_tpsno').val())
+            .child(newData.child('uploadTime').val())
+            .child('uploadTime').val() == newData.child('uploadTime').val() &&
+          !root.child('banned_users').child(auth.uid).exists() &&
+          newData.hasChildren(['old_tpsid', 'old_tpsno', 'tpsid', 'tpsno',
+                               'uploader', 'uploadTime', 'uploadUrl',
+                               'approved', 'verifier', 'verifyTime',
+                               'agus', 'ahok', 'anies', 'sah', 'tidaksah'])",
+        "old_tpsid": { ".validate": "newData.isString()" },
+        "old_tpsno": { ".validate": "newData.isString()" },
+        "tpsid": { ".validate": "newData.isString()" },
+        "tpsno": { ".validate": "newData.isString()" },
+        "uploader": { ".validate": "newData.isString()" },
+        "uploadTime": { ".validate": "newData.isString()" },
+        "uploadUrl": { ".validate": "newData.isString()" },
+        "verifier": { ".validate": "newData.val() == auth.uid" },
+        "verifyTime": { ".validate": "newData.isString()" },
+        "agus": { ".validate": "newData.isNumber()" },
+        "ahok": { ".validate": "newData.isNumber()" },
+        "anies": { ".validate": "newData.isNumber()" },
+        "sah": { ".validate": "newData.isNumber()" },
+        "tidaksah": { ".validate": "newData.isNumber()" },
+        "approved": { ".validate": "newData.isBoolean()" },
+        "$other": { ".validate": false }
+      }
+    },
+
+    "removed_uploads": { "$tpsid": { "$tpsno": { "$timestamp": {} } } },
+
+    "uploads": {
+      ".read": "root
+        .child('digitizer')
+        .child(auth.uid)
+        .child('is_member')
+        .val() === true",
+      "$tpsid": {
+	      "$tpsno": {
+		      "$timestamp": {
+		        // timestamp=uploadTime and uploadUrl are set by admin.
+          }
+        }
+      }
+    },
+
+    "uploads_queue": {
+      "$randomKey": {
+        // New upload entry is inserted by user.
+        ".write": "
+        	!data.exists() &&
+          !root.child('banned_users').child(auth.uid).exists() &&
+          newData.hasChildren(['tpsid', 'tpsno', 'uploader',
+                 'agus', 'ahok', 'anies', 'sah', 'tidaksah']) &&
+          root
+            .child('tps')
+            .child(newData.child('tpsid').val() + '_' + newData.child('tpsno').val())
+            .exists()",
+        "tpsid": { ".validate": "newData.isNumber()" },
+        "tpsno": { ".validate": "newData.isNumber()" },
+        "uploader": { ".validate": "newData.val() == auth.uid" },
+        "uploadToken": { ".validate": "newData.isString() && newData.val().length < 100" },
+        "agus": { ".validate": "newData.isNumber()" },
+        "ahok": { ".validate": "newData.isNumber()" },
+        "anies": { ".validate": "newData.isNumber()" },
+        "sah": { ".validate": "newData.isNumber()" },
+        "tidaksah": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}
