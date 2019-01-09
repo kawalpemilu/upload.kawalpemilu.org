@@ -4,6 +4,20 @@
       "$imageId": {
         ".read": true
       }
+    },
+
+    "kelurahan": {
+      "$id": {
+        "tps": {
+          "$tpsNo": {
+            ".read": true,
+            "$randomId": {
+              // TODO: make sure valid randomId, has only certain fields: 'url'
+              ".write": "!data.exists()"
+            }
+          }
+        }
+      }
     }
   }
 }

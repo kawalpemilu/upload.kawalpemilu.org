@@ -13,13 +13,17 @@ import { environment } from '../environments/environment';
 import { HierarchyComponent } from './hierarchy/hierarchy.component';
 import { TpsComponent } from './tps/tps.component';
 import { PathComponent } from './path/path.component';
+import { UploadComponent } from './upload/upload.component';
+import { TpsPhotosComponent } from './tps-photos/tps-photos.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     HierarchyComponent,
     TpsComponent,
-    PathComponent
+    PathComponent,
+    UploadComponent,
+    TpsPhotosComponent
   ],
   imports: [
     BrowserModule,

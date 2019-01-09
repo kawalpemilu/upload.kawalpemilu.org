@@ -1,0 +1,32 @@
+<input
+  #u
+  type="file"
+  (change)="upload($event)"
+  accept=".png,.jpg"
+  style="display: none"
+/>
+
+<div *ngIf="(uploadProgress$ | async) as uploadProgress; else uploadButton">
+  {{ uploadProgress.toFixed(0) }}% <progress max="100" [value]="uploadProgress"></progress>
+
+  <div *ngIf="(uploadState$ | async) as state">
+    <button (click)="task.pause()" [disabled]="state === 'paused'">
+      Pause
+    </button>
+    <button
+      (click)="task.cancel()"
+      [disabled]="!(state === 'paused' || state === 'running')"
+    >
+      Cancel
+    </button>
+    <button (click)="task.resume()" [disabled]="state === 'running'">
+      Resume
+    </button>
+  </div>
+</div>
+
+<ng-template #uploadButton>
+  <button (click)="u.click()" style="padding: 8px 12px; font-size: 16px">
+    Upload Foto
+  </button>
+</ng-template>

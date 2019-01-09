@@ -2,7 +2,7 @@ service firebase.storage {
   match /b/{bucket}/o {
     // Only allows write. The images are read from serving url.
     match /uploads/{id} {
-      allow write: if request.resource.size < 5 * 1024 * 1024
+      allow write: if request.resource.size < 15 * 1024 * 1024
                    && request.resource.contentType.matches('image/.*')
                    && id.matches('[A-Za-z0-9]{20}');
     }

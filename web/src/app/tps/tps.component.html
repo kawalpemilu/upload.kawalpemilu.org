@@ -1,42 +1,54 @@
-<app-path [id$]="id$"></app-path>
+<ng-container *ngIf="(state$ | async) as state">
+  <app-path [id]="state.kelurahanId"></app-path>
 
-<table border="1" cellpadding="10">
-  <thead>
-    <tr>
-      <th>Coverage</th>
-      <th>Lokasi dan Foto C1</th>
-    </tr>
-  </thead>
+  <p>Kelurahan: {{ hie.name[state.kelurahanId] }}</p>
 
-  <tbody>
-    <tr *ngFor="let row of (rows$ | async); let i = index">
-      <td valign="top" align="middle">
-          TPS #{{ row.tpsno }}<br />
+  <table border="1" cellpadding="10">
+    <thead>
+      <tr>
+        <th>Coverage</th>
+        <th>Lokasi dan Foto C1</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let tps of state.tpsList; let i = index">
+        <td valign="top" align="middle">
+          TPS #{{ tps.tpsNo }}<br />
           ---<br />
-        <table border="1" cellspacing="0">
-          <tr>
-            <td>Jokowi:</td>
-            <td>0</td>
-          </tr>
-          <tr>
-            <td>Prabowo:</td>
-            <td>0</td>
-          </tr>
-          <tr>
-            <td>Sah:</td>
-            <td>0</td>
-          </tr>
-          <tr>
-            <td>~Sah:</td>
-            <td>0</td>
-          </tr>
-        </table>
-      </td>
+          <table border="1" cellspacing="0">
+            <tr>
+              <td>Jokowi:</td>
+              <td>0</td>
+            </tr>
+            <tr>
+              <td>Prabowo:</td>
+              <td>0</td>
+            </tr>
+            <tr>
+              <td>Sah:</td>
+              <td>0</td>
+            </tr>
+            <tr>
+              <td>~Sah:</td>
+              <td>0</td>
+            </tr>
+          </table>
+        </td>
 
-      <td>
-        <p>{{ row.address }}</p>
-        <button>Upload<br />Foto</button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+        <td>
+          {{ tps.address }}<br />
+          <app-tps-photos
+            [kelurahanId]="state.kelurahanId"
+            [tpsNo]="tps.tpsNo"
+          ></app-tps-photos>
+          <br />
+          <app-upload
+            [kelurahanId]="state.kelurahanId"
+            [tpsNo]="tps.tpsNo"
+          ></app-upload>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</ng-container>

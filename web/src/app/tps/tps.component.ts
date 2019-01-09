@@ -4,9 +4,14 @@ import { ActivatedRoute } from '@angular/router';
 import { map, distinctUntilChanged, shareReplay, filter } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
-interface Row {
-  tpsno: number;
+interface Tps {
+  tpsNo: number;
   address: string;
+}
+
+interface State {
+  kelurahanId: number;
+  tpsList: Tps[];
 }
 
 @Component({
@@ -15,41 +20,40 @@ interface Row {
   styleUrls: ['./tps.component.css']
 })
 export class TpsComponent implements OnInit {
-  id$: Observable<number>;
-  rows$: Observable<Row[]>;
+  state$: Observable<State>;
 
   constructor(public hie: HierarchyService, private route: ActivatedRoute) {}
 
   ngOnInit() {
-    this.id$ = this.route.paramMap.pipe(
-      map(params => params.get('id')),
-      filter(Boolean),
-      map(id => parseInt(id, 10)),
-      distinctUntilChanged(),
-      shareReplay(1)
-    );
-
-    this.rows$ = this.id$.pipe(
-      map(id => {
-        const r = this.hie.children[id];
-        const rows: Row[] = [];
-        if (Array.isArray(r)) {
-          for (const tpsno of r) {
-            rows.push({
-              tpsno,
-              address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG)'
-            });
+    this.state$ = this.route.paramMap
+      .pipe(
+        map(params => params.get('id')),
+        filter(Boolean),
+        map(id => parseInt(id, 10)),
+        distinctUntilChanged()
+      )
+      .pipe(
+        map(id => {
+          const r = this.hie.children[id];
+          const state: State = { kelurahanId: id, tpsList: [] };
+          if (Array.isArray(r)) {
+            for (const tpsNo of r) {
+              state.tpsList.push({
+                tpsNo,
+                address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG)'
+              });
+            }
+          } else {
+            for (let tpsNo = 1; tpsNo <= r; tpsNo++) {
+              state.tpsList.push({
+                tpsNo,
+                address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG 2)'
+              });
+            }
           }
-        } else {
-          for (let tpsno = 1; tpsno <= r; tpsno++) {
-            rows.push({
-              tpsno,
-              address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG 2)'
-            });
-          }
-        }
-        return rows;
-      })
-    );
+          return state;
+        })
+      );
+    console.log('TpsComponent inited');
   }
 }
