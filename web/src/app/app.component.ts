@@ -1,8 +1,12 @@
 import { Component } from '@angular/core';
-import { AngularFireStorage, AngularFireUploadTask } from '@angular/fire/storage';
+import {
+  AngularFireStorage,
+  AngularFireUploadTask
+} from '@angular/fire/storage';
 import { AngularFireDatabase } from '@angular/fire/database';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { HierarchyService } from './hierarchy.service';
 
 @Component({
   selector: 'app-root',
@@ -15,7 +19,11 @@ export class AppComponent {
   uploadState$: Observable<string>;
   downloadURL$: Observable<any> = new BehaviorSubject('');
 
-  constructor(private afs: AngularFireStorage, private afd: AngularFireDatabase) { }
+  constructor(
+    private afs: AngularFireStorage,
+    private afd: AngularFireDatabase,
+    public hie: HierarchyService
+  ) {}
 
   upload(event) {
     const filePath = `/uploads/${this.autoId()}`;

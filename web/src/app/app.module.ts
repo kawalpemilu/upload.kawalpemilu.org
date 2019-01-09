@@ -10,10 +10,12 @@ import { AngularFireStorageModule } from '@angular/fire/storage';
 import { AngularFireAuthModule } from '@angular/fire/auth';
 
 import { environment } from '../environments/environment';
+import { HierarchyComponent } from './hierarchy/hierarchy.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    HierarchyComponent
   ],
   imports: [
     BrowserModule,

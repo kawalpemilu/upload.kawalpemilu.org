@@ -1,0 +1,32 @@
+<p>
+  <span *ngFor="let path of (path$ | async); let i = index">
+    <span *ngIf="i > 0"> &gt; </span>
+    <a [routerLink]="['/h', path]">{{ hie.name[path] }}</a>
+  </span>
+</p>
+
+<table border="1" cellpadding="4">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Tempat</th>
+      <th>Jokowi</th>
+      <th>Prabowo</th>
+      <th>Sah</th>
+      <th>-Sah</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr *ngFor="let row of (rows$ | async); let i = index">
+      <td>{{ i + 1 }}</td>
+      <td>
+        <a [routerLink]="['/h', row.id]">{{ row.name }}</a>
+      </td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
