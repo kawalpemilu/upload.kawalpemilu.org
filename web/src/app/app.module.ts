@@ -11,11 +11,15 @@ import { AngularFireAuthModule } from '@angular/fire/auth';
 
 import { environment } from '../environments/environment';
 import { HierarchyComponent } from './hierarchy/hierarchy.component';
+import { TpsComponent } from './tps/tps.component';
+import { PathComponent } from './path/path.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    HierarchyComponent
+    HierarchyComponent,
+    TpsComponent,
+    PathComponent
   ],
   imports: [
     BrowserModule,

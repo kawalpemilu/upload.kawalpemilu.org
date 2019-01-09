@@ -1,0 +1,42 @@
+<app-path [id$]="id$"></app-path>
+
+<table border="1" cellpadding="10">
+  <thead>
+    <tr>
+      <th>Coverage</th>
+      <th>Lokasi dan Foto C1</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr *ngFor="let row of (rows$ | async); let i = index">
+      <td valign="top" align="middle">
+          TPS #{{ row.tpsno }}<br />
+          ---<br />
+        <table border="1" cellspacing="0">
+          <tr>
+            <td>Jokowi:</td>
+            <td>0</td>
+          </tr>
+          <tr>
+            <td>Prabowo:</td>
+            <td>0</td>
+          </tr>
+          <tr>
+            <td>Sah:</td>
+            <td>0</td>
+          </tr>
+          <tr>
+            <td>~Sah:</td>
+            <td>0</td>
+          </tr>
+        </table>
+      </td>
+
+      <td>
+        <p>{{ row.address }}</p>
+        <button>Upload<br />Foto</button>
+      </td>
+    </tr>
+  </tbody>
+</table>

@@ -1,20 +1,20 @@
 import { Component, OnInit } from '@angular/core';
 import { HierarchyService } from '../hierarchy.service';
 import { ActivatedRoute } from '@angular/router';
+import { map, distinctUntilChanged, shareReplay, filter } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { map, shareReplay, distinctUntilChanged, filter } from 'rxjs/operators';
 
 interface Row {
-  id: number;
-  name: string;
+  tpsno: number;
+  address: string;
 }
 
 @Component({
-  selector: 'app-hierarchy',
-  templateUrl: './hierarchy.component.html',
-  styleUrls: ['./hierarchy.component.css']
+  selector: 'app-tps',
+  templateUrl: './tps.component.html',
+  styleUrls: ['./tps.component.css']
 })
-export class HierarchyComponent implements OnInit {
+export class TpsComponent implements OnInit {
   id$: Observable<number>;
   rows$: Observable<Row[]>;
 
@@ -31,25 +31,25 @@ export class HierarchyComponent implements OnInit {
 
     this.rows$ = this.id$.pipe(
       map(id => {
+        const r = this.hie.children[id];
         const rows: Row[] = [];
-        const children = this.hie.children[id];
-        if (Array.isArray(children)) {
-          for (const cid of children) {
+        if (Array.isArray(r)) {
+          for (const tpsno of r) {
             rows.push({
-              id: cid,
-              name: this.hie.name[cid]
+              tpsno,
+              address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG)'
+            });
+          }
+        } else {
+          for (let tpsno = 1; tpsno <= r; tpsno++) {
+            rows.push({
+              tpsno,
+              address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG 2)'
             });
           }
         }
         return rows;
       })
     );
-
-    console.log('Hierarchy Component Inited');
-  }
-
-  /** Returns hierarchy link if the {id} has children, otherwise tps link. */
-  link(id: number) {
-    return this.hie.depth(id) < 4 ? '/h' : '/t';
   }
 }
