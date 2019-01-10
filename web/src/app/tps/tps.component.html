@@ -1,8 +1,6 @@
 <ng-container *ngIf="(state$ | async) as state">
   <app-path [id]="state.kelurahanId"></app-path>
 
-  <p>Kelurahan: {{ hie.name[state.kelurahanId] }}</p>
-
   <table border="1" cellpadding="10">
     <thead>
       <tr>

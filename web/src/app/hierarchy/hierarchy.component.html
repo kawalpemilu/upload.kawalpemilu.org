@@ -1,29 +1,33 @@
-<app-path [id]="id$ | async"></app-path>
+<ng-container *ngIf="(state$ | async) as state">
+  <app-path [id]="state.id"></app-path>
 
-<p></p>
+  <p></p>
 
-<table border="1" cellpadding="10">
-  <thead>
-    <tr>
-      <th>#</th>
-      <th>Tempat</th>
-      <th>Jokowi</th>
-      <th>Prabowo</th>
-      <th>Sah</th>
-      <th>~Sah</th>
-    </tr>
-  </thead>
+  <table border="1" cellpadding="10">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Tempat</th>
+        <th>Jokowi</th>
+        <th>Prabowo</th>
+        <th>Sah</th>
+        <th>~Sah</th>
+      </tr>
+    </thead>
 
-  <tbody>
-    <tr *ngFor="let row of (rows$ | async); let i = index">
-      <td>{{ i + 1 }}</td>
-      <td>
-        <a [routerLink]="[link(row.id), row.id]">{{ row.name }}</a>
-      </td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-  </tbody>
-</table>
+    <tbody>
+      <tr *ngFor="let c of state.children; let i = index">
+        <td>{{ i + 1 }}</td>
+        <td>
+          <a [routerLink]="[state.depth < 3 ? '/h' : '/t', c[0]]">{{
+            c[1]
+          }}</a>
+        </td>
+        <td>0</td>
+        <td>0</td>
+        <td>0</td>
+        <td>0</td>
+      </tr>
+    </tbody>
+  </table>
+</ng-container>

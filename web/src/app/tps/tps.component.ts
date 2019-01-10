@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HierarchyService } from '../hierarchy.service';
 import { ActivatedRoute } from '@angular/router';
-import { map, distinctUntilChanged, shareReplay, filter } from 'rxjs/operators';
+import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
 interface Tps {
@@ -33,8 +33,8 @@ export class TpsComponent implements OnInit {
         distinctUntilChanged()
       )
       .pipe(
-        map(id => {
-          const r = this.hie.children[id];
+        switchMap(async id => {
+          const r = (await this.hie.get(id)).children;
           const state: State = { kelurahanId: id, tpsList: [] };
           if (Array.isArray(r)) {
             for (const tpsNo of r) {

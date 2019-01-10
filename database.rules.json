@@ -1,5 +1,11 @@
 {
   "rules": {
+    "h": {
+      "$id": {
+        ".read": true
+      }
+    },
+
     "uploads": {
       "$imageId": {
         ".read": true

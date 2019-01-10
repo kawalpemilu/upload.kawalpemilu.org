@@ -1,13 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { HierarchyService } from '../hierarchy.service';
+import { HierarchyService, HierarchyNode } from '../hierarchy.service';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
-import { map, shareReplay, distinctUntilChanged, filter } from 'rxjs/operators';
-
-interface Row {
-  id: number;
-  name: string;
-}
+import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-hierarchy',
@@ -15,41 +10,20 @@ interface Row {
   styleUrls: ['./hierarchy.component.css']
 })
 export class HierarchyComponent implements OnInit {
-  id$: Observable<number>;
-  rows$: Observable<Row[]>;
+  state$: Observable<HierarchyNode>;
 
   constructor(public hie: HierarchyService, private route: ActivatedRoute) {}
 
   ngOnInit() {
-    this.id$ = this.route.paramMap.pipe(
+    this.state$ = this.route.paramMap.pipe(
       map(params => params.get('id')),
       filter(Boolean),
       map(id => parseInt(id, 10)),
+      filter(id => !isNaN(id)),
       distinctUntilChanged(),
-      shareReplay(1)
-    );
-
-    this.rows$ = this.id$.pipe(
-      map(id => {
-        const rows: Row[] = [];
-        const children = this.hie.children[id];
-        if (Array.isArray(children)) {
-          for (const cid of children) {
-            rows.push({
-              id: cid,
-              name: this.hie.name[cid]
-            });
-          }
-        }
-        return rows;
-      })
+      switchMap(id => this.hie.get(id))
     );
 
     console.log('Hierarchy Component Inited');
-  }
-
-  /** Returns hierarchy link if the {id} has children, otherwise tps link. */
-  link(id: number) {
-    return this.hie.depth(id) < 4 ? '/h' : '/t';
   }
 }
