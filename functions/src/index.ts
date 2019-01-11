@@ -10,13 +10,6 @@ admin.initializeApp({
 const auth = admin.auth();
 const rtdb = admin.database();
 
-// // Start writing Firebase Functions
-// // https://firebase.google.com/docs/functions/typescript
-//
-// export const helloWorld = functions.https.onRequest((request, response) => {
-//  response.send("Hello from Firebase!");
-// });
-
 // Creates a serving url for the uploaded images.
 export const handlePhotoUpload = functions.storage
   .object()

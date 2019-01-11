@@ -5,7 +5,7 @@ import { take, map } from 'rxjs/operators';
 export interface HierarchyNode {
   id: number;
   name: string;
-  parent: number;
+  parents: string[][];
   children: any;
   depth: number;
 }
@@ -37,7 +37,7 @@ export class HierarchyService {
             <HierarchyNode>{
               id,
               name: v.n,
-              parent: v.p,
+              parents: v.p,
               children: v.c,
               depth: v.d
             }

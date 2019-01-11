@@ -1,10 +1,10 @@
 <ng-container *ngIf="(state$ | async) as state">
-  <app-path [id]="state.kelurahanId"></app-path>
+  <app-path [parents]="state.parents" [top]="state.kelurahanName"></app-path>
 
   <table border="1" cellpadding="10">
     <thead>
       <tr>
-        <th>Coverage</th>
+        <th width="120">Coverage</th>
         <th>Lokasi dan Foto C1</th>
       </tr>
     </thead>
@@ -18,7 +18,7 @@
           <table border="1" cellspacing="0">
             <tr>
               <td>Jokowi:</td>
-              <td>0</td>
+              <td width="80">0</td>
             </tr>
             <tr>
               <td>Prabowo:</td>

@@ -4,40 +4,25 @@ import { HierarchyService, HierarchyNode } from '../hierarchy.service';
 @Component({
   selector: 'app-path',
   template: `
-    <span *ngFor="let path of paths; let i = index">
-      <span *ngIf="i > 0"> &gt; </span>
-      <span *ngIf="i == paths.length - 1">{{ path.name }}</span>
-      <a *ngIf="i != paths.length - 1" [routerLink]="['/h', path.id]">{{
-        path.name
-      }}</a>
-    </span>
+    <p>
+      <span *ngFor="let p of parents">
+        <a [routerLink]="['/h', p[0]]">{{ p[1] }}</a> &gt;
+      </span>
+      {{ top }}
+    </p>
   `,
   styles: [``]
 })
 export class PathComponent implements OnInit, OnChanges {
   @Input()
-  id: number;
+  parents: string[][];
 
-  paths: HierarchyNode[];
+  @Input()
+  top: string;
 
   constructor(public hie: HierarchyService) {}
 
-  ngOnInit() {
-    this.updatePaths();
-  }
+  ngOnInit() {}
 
-  ngOnChanges() {
-    this.updatePaths();
-  }
-
-  private async updatePaths() {
-    // TODO: make this O(1)
-    const paths: HierarchyNode[] = [];
-    for (let i = this.id; i >= 0; ) {
-      const node = await this.hie.get(i);
-      paths.push(node);
-      i = node.parent;
-    }
-    this.paths = paths.reverse();
-  }
+  ngOnChanges() {}
 }

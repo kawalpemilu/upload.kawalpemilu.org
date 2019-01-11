@@ -1,13 +1,12 @@
 <ng-container *ngIf="(state$ | async) as state">
-  <app-path [id]="state.id"></app-path>
+  <app-path [parents]="state.parents" [top]="state.name"></app-path>
 
   <p></p>
 
   <table border="1" cellpadding="10">
     <thead>
       <tr>
-        <th>#</th>
-        <th>Tempat</th>
+        <th>Wilayah</th>
         <th>Jokowi</th>
         <th>Prabowo</th>
         <th>Sah</th>
@@ -16,12 +15,9 @@
     </thead>
 
     <tbody>
-      <tr *ngFor="let c of state.children; let i = index">
-        <td>{{ i + 1 }}</td>
+      <tr *ngFor="let c of state.children">
         <td>
-          <a [routerLink]="[state.depth < 3 ? '/h' : '/t', c[0]]">{{
-            c[1]
-          }}</a>
+          <a [routerLink]="[state.depth < 3 ? '/h' : '/t', c[0]]">{{ c[1] }}</a>
         </td>
         <td>0</td>
         <td>0</td>

@@ -11,6 +11,8 @@ interface Tps {
 
 interface State {
   kelurahanId: number;
+  kelurahanName: string;
+  parents: string[][];
   tpsList: Tps[];
 }
 
@@ -34,17 +36,22 @@ export class TpsComponent implements OnInit {
       )
       .pipe(
         switchMap(async id => {
-          const r = (await this.hie.get(id)).children;
-          const state: State = { kelurahanId: id, tpsList: [] };
-          if (Array.isArray(r)) {
-            for (const tpsNo of r) {
+          const node = await this.hie.get(id);
+          const state: State = {
+            kelurahanId: id,
+            kelurahanName: node.name,
+            tpsList: [],
+            parents: node.parents,
+          };
+          if (Array.isArray(node.children)) {
+            for (const tpsNo of node.children) {
               state.tpsList.push({
                 tpsNo,
                 address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG)'
               });
             }
           } else {
-            for (let tpsNo = 1; tpsNo <= r; tpsNo++) {
+            for (let tpsNo = 1; tpsNo <= node.children; tpsNo++) {
               state.tpsList.push({
                 tpsNo,
                 address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG 2)'
