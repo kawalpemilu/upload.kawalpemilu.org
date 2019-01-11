@@ -1,4 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -17,7 +19,12 @@ import { UploadComponent } from './upload/upload.component';
 import { TpsPhotosComponent } from './tps-photos/tps-photos.component';
 import { UploadSequenceComponent } from './upload-sequence/upload-sequence.component';
 
-import { MatButtonModule } from '@angular/material';
+import {
+  MatButtonModule,
+  MatStepperModule,
+  MatFormFieldModule,
+  MatInputModule
+} from '@angular/material';
 
 @NgModule({
   declarations: [
@@ -31,12 +38,20 @@ import { MatButtonModule } from '@angular/material';
   ],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
+
     AngularFireModule.initializeApp(environment.firebase),
     AngularFireDatabaseModule,
     AngularFireAuthModule,
     AngularFireStorageModule,
     AppRoutingModule,
-    MatButtonModule
+
+    FormsModule,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatStepperModule,
+    MatFormFieldModule,
+    MatInputModule
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -10,6 +10,7 @@
     </thead>
 
     <tbody>
+      <!-- TODO: use virtual scolling to avoid costly image loading -->
       <tr *ngFor="let tps of state.tpsList; let i = index">
         <td valign="top" align="middle">
           TPS #{{ tps.tpsNo }}<br />

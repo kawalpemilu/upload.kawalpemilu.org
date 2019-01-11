@@ -1,2 +1,9 @@
 /* You can add global styles to this file, and also import other style files */
 @import "~@angular/material/prebuilt-themes/indigo-pink.css";
+
+.alert {
+  color: red;
+  font-size: .9em;
+  margin-bottom: 20px;
+  animation: 1s alertAnim forwards;
+}

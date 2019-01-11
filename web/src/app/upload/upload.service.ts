@@ -6,7 +6,6 @@ import {
 } from '@angular/fire/storage';
 import { AngularFireDatabase } from '@angular/fire/database';
 import { take, filter } from 'rxjs/operators';
-import { AngularFireAuth } from '@angular/fire/auth';
 
 @Injectable({
   providedIn: 'root'
@@ -25,16 +24,15 @@ export class UploadService {
 
   constructor(
     private afs: AngularFireStorage,
-    private afd: AngularFireDatabase,
-    private auth: AngularFireAuth
+    private afd: AngularFireDatabase
   ) {
     console.log('UploadService initalized');
   }
 
   async upload(kelurahanId: number, tpsNo: number, file) {
     if (this.task) {
-      console.warn(`Ongoing upload: ${this.kelurahanId}/${this.tpsNo}`);
-      return;
+      console.warn(`Ongoing upload canceled: ${this.kelurahanId}/${this.tpsNo}`);
+      this.task.cancel();
     }
     console.log('uploading', kelurahanId, tpsNo, file);
     const imageId = this.autoId();
@@ -42,7 +40,6 @@ export class UploadService {
 
     this.kelurahanId = kelurahanId;
     this.tpsNo = tpsNo;
-
     this.task = this.afs.upload(filePath, file);
     this.task.percentageChanges().subscribe(p => (this.progress = p));
     this.task.snapshotChanges().subscribe(s => (this.state = s.state));
@@ -63,6 +60,7 @@ export class UploadService {
       console.log(`Upload done ${imageId}`);
     }, console.error);
 
+    this.kelurahanId = this.tpsNo = 0;
     this.task = null;
   }
 
