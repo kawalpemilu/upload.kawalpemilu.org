@@ -29,39 +29,37 @@ export class UploadService {
     console.log('UploadService initalized');
   }
 
-  async upload(kelurahanId: number, tpsNo: number, file) {
+  async upload(userId: string, kelurahanId: number, tpsNo: number, file) {
     if (this.task) {
-      console.warn(`Ongoing upload canceled: ${this.kelurahanId}/${this.tpsNo}`);
+      console.warn(`Upload canceled: ${this.kelurahanId}/${this.tpsNo}`);
       this.task.cancel();
     }
-    console.log('uploading', kelurahanId, tpsNo, file);
     const imageId = this.autoId();
-    const filePath = `/uploads/${imageId}`;
+    const filePath = `/uploads/${kelurahanId}/${tpsNo}/${userId}/${imageId}`;
+    console.log('Uploading', kelurahanId, tpsNo, imageId, file);
 
     this.kelurahanId = kelurahanId;
     this.tpsNo = tpsNo;
     this.task = this.afs.upload(filePath, file);
     this.task.percentageChanges().subscribe(p => (this.progress = p));
     this.task.snapshotChanges().subscribe(s => (this.state = s.state));
-    await this.task.then(async _ => {
-      const url = await this.afd
-        .object(filePath)
-        .valueChanges()
-        .pipe(
-          filter(Boolean),
-          take(1)
-        )
-        .toPromise();
-      const imgPath = `kelurahan/${kelurahanId}/tps/${tpsNo}`;
-      const data = { url };
-      // TODO: avoid round trip.
-      await this.afd.object(`${imgPath}/${imageId}`).set(data);
-      this.task = null;
-      console.log(`Upload done ${imageId}`);
-    }, console.error);
+    await this.task.then(
+      _ =>
+        this.afd
+          .object(`uploads/${imageId}/userId`)
+          .valueChanges()
+          .pipe(
+            filter(Boolean),
+            take(1)
+          )
+          .toPromise()
+          .catch(console.error),
+      console.error
+    );
 
     this.kelurahanId = this.tpsNo = 0;
     this.task = null;
+    return imageId;
   }
 
   /** Returns a unique 20-character wide identifier. */

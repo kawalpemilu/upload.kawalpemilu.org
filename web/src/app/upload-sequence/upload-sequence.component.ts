@@ -3,10 +3,12 @@ import { UploadService } from '../upload/upload.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
-import { map } from 'rxjs/operators';
+import { map, retry } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
 import { UserService } from '../user.service';
+import { HttpClient } from '@angular/common/http';
+import { User } from 'firebase';
 
 export class UploadState {
   kelurahanId: number;
@@ -22,13 +24,15 @@ export class UploadSequenceComponent implements OnInit {
   state$: Observable<UploadState>;
   formGroup: FormGroup;
   imgURL: string | ArrayBuffer;
+  uploadedImageId: Promise<string>;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     public userService: UserService,
     public uploadService: UploadService,
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    private http: HttpClient
   ) {}
 
   ngOnInit() {
@@ -51,7 +55,7 @@ export class UploadSequenceComponent implements OnInit {
     });
   }
 
-  async upload(state: UploadState, event) {
+  async upload(userId: string, state: UploadState, event) {
     if (event.target.files.length === 0) {
       console.log('No file to be uploaded');
       return;
@@ -71,7 +75,8 @@ export class UploadSequenceComponent implements OnInit {
       this.imgURL = 'error';
     }
 
-    this.uploadService.upload(
+    this.uploadedImageId = this.uploadService.upload(
+      userId,
       state.kelurahanId,
       state.tpsNo,
       event.target.files[0]
@@ -86,8 +91,33 @@ export class UploadSequenceComponent implements OnInit {
     return '';
   }
 
-  selesai(kelurahanId, tpsNo) {
-    // TODO: actually save the values to the server!
-    this.router.navigate(['/t', kelurahanId], { fragment: tpsNo });
+  async selesai(user: User, kelurahanId: number, tpsNo: number) {
+    const jokowi = this.formGroup.get('jokowiCtrl').value;
+    const prabowo = this.formGroup.get('prabowoCtrl').value;
+    const sah = this.formGroup.get('sahCtrl').value;
+    const tidakSah = this.formGroup.get('tidakSahCtrl').value;
+
+    Promise.all([user.getIdToken(), this.uploadedImageId]).then(
+      ([idToken, imageId]) => {
+        const headers = { Authorization: `Bearer ${idToken}` };
+        const apiUrl = 'https://kawal-c1.firebaseapp.com/api';
+        const body = {
+          kelurahanId,
+          tpsNo,
+          jokowi,
+          prabowo,
+          sah,
+          tidakSah,
+          imageId
+        };
+        console.log('body', body);
+        return this.http
+          .post(`${apiUrl}/upload`, body, { headers })
+          .pipe(retry(3))
+          .toPromise();
+      }
+    );
+
+    this.router.navigate(['/t', kelurahanId], { fragment: `${tpsNo}` });
   }
 }

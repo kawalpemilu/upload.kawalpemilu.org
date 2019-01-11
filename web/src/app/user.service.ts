@@ -3,18 +3,23 @@ import { AngularFireAuth } from '@angular/fire/auth';
 
 import { auth, User } from 'firebase/app';
 import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
   user$: Observable<User>;
+  isLoading = true;
 
   constructor(private afAuth: AngularFireAuth) {
-    this.user$ = this.afAuth.user;
-    this.afAuth.authState.subscribe(u => {
-      console.log('state', u);
-    });
+    this.isLoading = true;
+    this.user$ = this.afAuth.user.pipe(
+      tap(u => {
+        console.log('User', (u && u.uid) || '-');
+        this.isLoading = false;
+      })
+    );
   }
 
   login(method: string) {
@@ -22,6 +27,7 @@ export class UserService {
       method === 'google'
         ? new auth.GoogleAuthProvider()
         : new auth.FacebookAuthProvider();
+    this.isLoading = true;
     return window !== window.top
       ? this.afAuth.auth.signInWithPopup(provider)
       : this.afAuth.auth.signInWithRedirect(provider);

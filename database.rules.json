@@ -8,7 +8,9 @@
 
     "uploads": {
       "$imageId": {
-        ".read": true
+        "userId": {
+          ".read": true
+        }
       }
     },
 
