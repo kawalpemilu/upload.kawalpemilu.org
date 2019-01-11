@@ -15,6 +15,9 @@ import { TpsComponent } from './tps/tps.component';
 import { PathComponent } from './path/path.component';
 import { UploadComponent } from './upload/upload.component';
 import { TpsPhotosComponent } from './tps-photos/tps-photos.component';
+import { UploadSequenceComponent } from './upload-sequence/upload-sequence.component';
+
+import { MatButtonModule } from '@angular/material';
 
 @NgModule({
   declarations: [
@@ -23,7 +26,8 @@ import { TpsPhotosComponent } from './tps-photos/tps-photos.component';
     TpsComponent,
     PathComponent,
     UploadComponent,
-    TpsPhotosComponent
+    TpsPhotosComponent,
+    UploadSequenceComponent
   ],
   imports: [
     BrowserModule,
@@ -31,9 +35,10 @@ import { TpsPhotosComponent } from './tps-photos/tps-photos.component';
     AngularFireDatabaseModule,
     AngularFireAuthModule,
     AngularFireStorageModule,
-    AppRoutingModule
+    AppRoutingModule,
+    MatButtonModule
   ],
   providers: [],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {}

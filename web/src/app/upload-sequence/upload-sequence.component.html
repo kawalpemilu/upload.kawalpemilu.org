@@ -1,0 +1,13 @@
+<ng-container *ngIf="(state$ | async) as state">
+  <input
+    #u
+    type="file"
+    (change)="upload(state, $event)"
+    accept=".png,.jpg"
+    style="display: none"
+  />
+
+  <button (click)="u.click()" style="padding: 8px 12px; font-size: 16px">
+    Upload Foto
+  </button>
+</ng-container>

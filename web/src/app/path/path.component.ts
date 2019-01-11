@@ -31,6 +31,7 @@ export class PathComponent implements OnInit, OnChanges {
   }
 
   private async updatePaths() {
+    // TODO: make this O(1)
     const paths: HierarchyNode[] = [];
     for (let i = this.id; i >= 0; ) {
       const node = await this.hie.get(i);
