@@ -21,7 +21,6 @@ import { UploadSequenceComponent } from './upload-sequence/upload-sequence.compo
 
 import {
   MatButtonModule,
-  MatStepperModule,
   MatFormFieldModule,
   MatInputModule,
   MatProgressSpinnerModule
@@ -53,7 +52,6 @@ import { HttpClientModule } from '@angular/common/http';
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,
-    MatStepperModule,
     MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule

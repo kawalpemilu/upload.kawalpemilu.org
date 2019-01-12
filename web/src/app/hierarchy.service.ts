@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AngularFireDatabase } from '@angular/fire/database';
 import { take, map } from 'rxjs/operators';
-import { Aggregate } from './tps/tps.component';
+import { Aggregate } from 'shared';
 
 export interface HierarchyNode {
   id: number;

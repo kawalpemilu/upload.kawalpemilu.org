@@ -8,128 +8,115 @@
   </p>
 
   <div *ngIf="(state$ | async) as state">
-    <mat-vertical-stepper linear="false" #stepper>
-      <mat-step completed="false">
-        <ng-template matStepLabel>Petunjuk Pengambilan Foto C1</ng-template>
-        <p>
-          Gunakan kamera HP anda untuk mengambil foto formulir final yang telah
-          ditanda-tangani semua saksi, seperti contoh berikut:
-        </p>
-        <img height="300" src="/assets/contoh.jpeg" />
-        <p>
-          Pastikan <b>SELURUH</b> kertas terlihat jelas (semua angka-angka
-          maupun tulisan).
-        </p>
-        <p>Pastikan foto tersebut tersimpan di HP anda!</p>
-        <p>
-          <b>Catatan</b>: jika anda langsung memotret foto dari aplikasi ini,
-          fotonya <b>TIDAK AKAN</b> tersimpan di HP anda!
-        </p>
-        <div>
-          <button mat-raised-button color="primary" matStepperNext>
-            Lanjut ->
-          </button>
-        </div>
-      </mat-step>
+    <p>Petunjuk pengambilan Foto C1:</p>
+    <ol>
+      <li>
+        Ambillah foto formulir final <b>SETELAH</b> ditanda-tangani semua saksi.
+      </li>
+      <li>
+          Pastikan <b>SELURUH</b> kertas terlihat jelas (semua angka-angka maupun
+          tulisan) seperti
+          <a href="/assets/contoh.jpeg" target="_blank">contoh foto ini</a>.
+        </li>
+        <li>Pastikan foto tersebut sudah tersimpan di HP anda!<br>
+        <b style="color:red">Catatan</b>: jika anda langsung memotret foto dari
+        aplikasi ini, fotonya <b>TIDAK AKAN</b> tersimpan di HP anda!
+      </li>
+      <li>Jika sudah siap, klik tombol Upload dibawah:</li>
+    </ol>
 
-      <mat-step completed="false">
-        <form [formGroup]="formGroup">
-          <ng-template matStepLabel>Upload Foto</ng-template>
-          <p>Upload foto yang <b>SUDAH</b> tersimpan di HP anda:</p>
+    <form [formGroup]="formGroup">
+      <input
+        #u
+        type="file"
+        (change)="upload(user.uid, state, $event)"
+        accept=".png,.jpg"
+        style="display: none"
+      />
+      <p *ngIf="!imgURL">
+        <a mat-raised-button color="primary" (click)="u.click()">
+          Upload Foto yang SUDAH tersimpan di HP anda
+        </a>
+      </p>
+      <div *ngIf="imgURL">
+        <img [src]="imgURL" height="300" (click)="u.click()" />
+        <p>Pastikan lokasi TPS di foto sesuai dengan lokasi berikut:</p>
+
+        <p>Terakhir, masukkan angka-angka yang tertera di foto tersebut:</p>
+
+        <mat-form-field style="width: 225px">
           <input
-            #u
-            type="file"
-            (change)="upload(user.uid, state, $event)"
-            accept=".png,.jpg"
-            style="display: none"
+            matInput
+            placeholder="Jumlah Suara Jokowi"
+            formControlName="jokowiCtrl"
+            type="number"
+            required
           />
-          <p *ngIf="!imgURL">
-            <a mat-raised-button color="primary" (click)="u.click()">
-              Upload Foto
-            </a>
-          </p>
-          <div *ngIf="imgURL">
-            <img [src]="imgURL" height="300" (click)="u.click()" />
-            <p>Pastikan lokasi TPS di foto sesuai dengan lokasi berikut:</p>
+        </mat-form-field>
+        &nbsp;
+        <span *ngIf="getError('jokowiCtrl') as error" class="alert">
+          {{ error }}
+        </span>
+        <br />
 
-            <p>Terakhir, masukkan angka-angka yang tertera di foto tersebut:</p>
+        <mat-form-field style="width: 225px">
+          <input
+            matInput
+            placeholder="Jumlah Suara Prabowo"
+            formControlName="prabowoCtrl"
+            type="number"
+            required
+          />
+        </mat-form-field>
+        &nbsp;
+        <span *ngIf="getError('prabowoCtrl') as error" class="alert">
+          {{ error }}
+        </span>
+        <br />
 
-            <mat-form-field style="width: 225px">
-              <input
-                matInput
-                placeholder="Jumlah Suara Jokowi"
-                formControlName="jokowiCtrl"
-                type="number"
-                required
-              />
-            </mat-form-field>
-            &nbsp;
-            <span *ngIf="getError('jokowiCtrl') as error" class="alert">
-              {{ error }}
-            </span>
-            <br />
+        <mat-form-field style="width: 225px">
+          <input
+            matInput
+            placeholder="Jumlah Suara Sah"
+            formControlName="sahCtrl"
+            type="number"
+            required
+          />
+        </mat-form-field>
+        &nbsp;
+        <span *ngIf="getError('sahCtrl') as error" class="alert">
+          {{ error }}
+        </span>
+        <br />
 
-            <mat-form-field style="width: 225px">
-              <input
-                matInput
-                placeholder="Jumlah Suara Prabowo"
-                formControlName="prabowoCtrl"
-                type="number"
-                required
-              />
-            </mat-form-field>
-            &nbsp;
-            <span *ngIf="getError('prabowoCtrl') as error" class="alert">
-              {{ error }}
-            </span>
-            <br />
+        <mat-form-field style="width: 225px">
+          <input
+            matInput
+            placeholder="Jumlah Suara Tidak Sah"
+            formControlName="tidakSahCtrl"
+            type="number"
+            required
+          />
+        </mat-form-field>
+        &nbsp;
+        <span *ngIf="getError('tidakSahCtrl') as error" class="alert">
+          {{ error }}
+        </span>
 
-            <mat-form-field style="width: 225px">
-              <input
-                matInput
-                placeholder="Jumlah Suara Sah"
-                formControlName="sahCtrl"
-                type="number"
-                required
-              />
-            </mat-form-field>
-            &nbsp;
-            <span *ngIf="getError('sahCtrl') as error" class="alert">
-              {{ error }}
-            </span>
-            <br />
+        <p>
+          <button
+            type="submit"
+            mat-raised-button
+            color="primary"
+            (click)="selesai(user, state.kelurahanId, state.tpsNo)"
+            [disabled]="formGroup.invalid"
+          >
+            Selesai!
+          </button>
+        </p>
+      </div>
+    </form>
 
-            <mat-form-field style="width: 225px">
-              <input
-                matInput
-                placeholder="Jumlah Suara Tidak Sah"
-                formControlName="tidakSahCtrl"
-                type="number"
-                required
-              />
-            </mat-form-field>
-            &nbsp;
-            <span *ngIf="getError('tidakSahCtrl') as error" class="alert">
-              {{ error }}
-            </span>
-
-            <p>
-              <button
-                type="submit"
-                mat-raised-button
-                color="primary"
-                (click)="selesai(user, state.kelurahanId, state.tpsNo)"
-                [disabled]="formGroup.invalid"
-              >
-                Selesai!
-              </button>
-            </p>
-          </div>
-        </form>
-      </mat-step>
-    </mat-vertical-stepper>
-
-    <br />
     <p>
       <a
         [routerLink]="['/t', state.kelurahanId]"
