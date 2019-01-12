@@ -7,6 +7,31 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
+
+    <script>
+      window.ga =
+        window.ga ||
+        function() {
+          (ga.q = ga.q || []).push(arguments);
+        };
+      ga.l = +new Date();
+      ga('create', 'UA-296967-5', 'auto');
+
+      ga('require', 'cleanUrlTracker');
+      ga('require', 'eventTracker');
+      ga('require', 'impressionTracker');
+      ga('require', 'maxScrollTracker');
+      ga('require', 'mediaQueryTracker');
+      ga('require', 'outboundFormTracker');
+      ga('require', 'outboundLinkTracker');
+      ga('require', 'pageVisibilityTracker');
+      ga('require', 'socialWidgetTracker');
+      ga('require', 'urlChangeTracker');
+
+      ga('send', 'pageview');
+    </script>
+    <script async src="https://www.google-analytics.com/analytics.js"></script>
+    <script async src="assets/autotrack.js"></script>
   </head>
   <body>
     <app-root></app-root>
