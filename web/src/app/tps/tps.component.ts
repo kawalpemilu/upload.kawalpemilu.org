@@ -5,10 +5,7 @@ import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { AngularFireDatabase } from '@angular/fire/database';
 
-export interface Aggregate {
-  sum: number[];
-  max: number[];
-}
+import { Aggregate } from 'shared';
 
 interface Tps {
   tpsNo: number;

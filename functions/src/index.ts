@@ -1,6 +1,8 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import * as request from 'request-promise';
+import * as express from 'express';
+import { Aggregate } from 'shared';
 
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
@@ -9,6 +11,9 @@ admin.initializeApp({
 
 const auth = admin.auth();
 const rtdb = admin.database();
+
+const app = express();
+app.use(require('cors')({ origin: true }));
 
 // Creates a serving url for the uploaded images.
 export const handlePhotoUpload = functions.storage
@@ -34,11 +39,6 @@ export const handlePhotoUpload = functions.storage
       url
     });
   });
-
-import * as express from 'express';
-
-const app = express();
-app.use(require('cors')({ origin: true }));
 
 /**
  * Validates Firebase ID Tokens passed in the authorization HTTP header.
@@ -123,11 +123,6 @@ app.post('/api/upload', async (req, res) => {
 
   return res.json({ url });
 });
-
-export interface Aggregate {
-  sum: number[];
-  max: number[];
-}
 
 export interface Upsert {
   kelurahanId: number;
