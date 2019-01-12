@@ -11,7 +11,7 @@ interface Photo {
   template: `
     <a
       *ngFor="let photo of (photos$ | async)"
-      href="{{ imageUrl(photo.url, 800) }}"
+      href="{{ imageUrl(photo.url, 1024) }}"
       target="_blank"
     >
       <img [src]="imageUrl(photo.url, 100)" style="padding: 10px 10px 10px 0" />

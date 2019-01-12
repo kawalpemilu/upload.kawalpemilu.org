@@ -1,18 +1,22 @@
 import { Component, OnInit } from '@angular/core';
-import { HierarchyService } from '../hierarchy.service';
+import { HierarchyService, HierarchyNode } from '../hierarchy.service';
 import { ActivatedRoute } from '@angular/router';
 import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
+import { AngularFireDatabase } from '@angular/fire/database';
+
+export interface Aggregate {
+  sum: number[];
+  max: number[];
+}
 
 interface Tps {
   tpsNo: number;
   address: string;
+  aggregate$: Observable<Aggregate>;
 }
 
-interface State {
-  kelurahanId: number;
-  kelurahanName: string;
-  parents: string[][];
+interface State extends HierarchyNode {
   tpsList: Tps[];
 }
 
@@ -24,7 +28,11 @@ interface State {
 export class TpsComponent implements OnInit {
   state$: Observable<State>;
 
-  constructor(public hie: HierarchyService, private route: ActivatedRoute) {}
+  constructor(
+    public hie: HierarchyService,
+    private route: ActivatedRoute,
+    private afd: AngularFireDatabase
+  ) {}
 
   ngOnInit() {
     this.state$ = this.route.paramMap
@@ -36,31 +44,32 @@ export class TpsComponent implements OnInit {
       )
       .pipe(
         switchMap(async id => {
-          const node = await this.hie.get(id);
-          const state: State = {
-            kelurahanId: id,
-            kelurahanName: node.name,
-            tpsList: [],
-            parents: node.parents,
-          };
-          if (Array.isArray(node.children)) {
-            for (const tpsNo of node.children) {
-              state.tpsList.push({
-                tpsNo,
-                address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG)'
-              });
-            }
-          } else {
-            for (let tpsNo = 1; tpsNo <= node.children; tpsNo++) {
-              state.tpsList.push({
-                tpsNo,
-                address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG 2)'
-              });
-            }
-          }
+          const state = (await this.hie.get(id)) as State;
+          const tpsNumbers = this.getTpsNumbers(state.children);
+          state.tpsList = tpsNumbers.map(tpsNo => ({
+            tpsNo,
+            address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG 2)',
+            aggregate$: this.afd
+              .object<Aggregate>(`h/${id}/a/${tpsNo}`)
+              .valueChanges()
+          }));
           return state;
         })
       );
     console.log('TpsComponent inited');
+  }
+
+  getTpsNumbers(children) {
+    const tpsNumbers = [];
+    if (Array.isArray(children)) {
+      for (const tpsNo of children) {
+        tpsNumbers.push(tpsNo);
+      }
+    } else {
+      for (let tpsNo = 1; tpsNo <= children; tpsNo++) {
+        tpsNumbers.push(tpsNo);
+      }
+    }
+    return tpsNumbers;
   }
 }

@@ -1,5 +1,5 @@
 <ng-container *ngIf="(state$ | async) as state">
-  <app-path [parents]="state.parents" [top]="state.kelurahanName"></app-path>
+  <app-path [parents]="state.parents" [top]="state.name"></app-path>
 
   <table border="1" cellpadding="10">
     <thead>
@@ -15,22 +15,26 @@
         <td valign="top" align="middle">
           TPS #{{ tps.tpsNo }}<br />
           ---<br />
-          <table border="1" cellspacing="0">
+          <table
+            border="1"
+            cellspacing="0"
+            *ngIf="(tps.aggregate$ | async) as a"
+          >
             <tr>
               <td>Jokowi:</td>
-              <td width="80">0</td>
+              <td width="80">{{ a.sum[0] }}</td>
             </tr>
             <tr>
               <td>Prabowo:</td>
-              <td>0</td>
+              <td>{{ a.sum[1] }}</td>
             </tr>
             <tr>
               <td>Sah:</td>
-              <td>0</td>
+              <td>{{ a.sum[2] }}</td>
             </tr>
             <tr>
               <td>~Sah:</td>
-              <td>0</td>
+              <td>{{ a.sum[3] }}</td>
             </tr>
           </table>
         </td>
@@ -38,14 +42,11 @@
         <td>
           {{ tps.address }}<br />
           <app-tps-photos
-            [kelurahanId]="state.kelurahanId"
+            [kelurahanId]="state.id"
             [tpsNo]="tps.tpsNo"
           ></app-tps-photos>
           <br />
-          <app-upload
-            [kelurahanId]="state.kelurahanId"
-            [tpsNo]="tps.tpsNo"
-          ></app-upload>
+          <app-upload [kelurahanId]="state.id" [tpsNo]="tps.tpsNo"></app-upload>
         </td>
       </tr>
     </tbody>

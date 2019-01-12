@@ -19,11 +19,21 @@
         <td>
           <a [routerLink]="[state.depth < 3 ? '/h' : '/t', c[0]]">{{ c[1] }}</a>
         </td>
-        <td>0</td>
-        <td>0</td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ state.aggregate && (state.aggregate[c[0]]?.sum)[0] }}</td>
+        <td>{{ state.aggregate && (state.aggregate[c[0]]?.sum)[1] }}</td>
+        <td>{{ state.aggregate && (state.aggregate[c[0]]?.sum)[2] }}</td>
+        <td>{{ state.aggregate && (state.aggregate[c[0]]?.sum)[3] }}</td>
       </tr>
     </tbody>
+
+    <tfoot *ngIf="sum(state) as s">
+      <tr>
+        <th align="right">TOTAL</th>
+        <td>{{ s[0] }}</td>
+        <td>{{ s[1] }}</td>
+        <td>{{ s[2] }}</td>
+        <td>{{ s[3] }}</td>
+      </tr>
+    </tfoot>
   </table>
 </ng-container>

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AngularFireDatabase } from '@angular/fire/database';
 import { take, map } from 'rxjs/operators';
+import { Aggregate } from './tps/tps.component';
 
 export interface HierarchyNode {
   id: number;
@@ -8,6 +9,7 @@ export interface HierarchyNode {
   parents: string[][];
   children: any;
   depth: number;
+  aggregate: Aggregate;
 }
 
 @Injectable({
@@ -20,18 +22,22 @@ export class HierarchyService {
     console.log('Loaded HierarchyService');
   }
 
+  // TODO: disable realtime update to save banwidth?
   async get(id: number) {
     const n = this.cache[id];
-    return n ? n : (this.cache[id] = await this.getFromDatabase(id));
+    return n
+      ? n
+      : (this.cache[id] = await this.get$(id)
+          .pipe(take(1))
+          .toPromise());
   }
 
-  private getFromDatabase(id: number): Promise<HierarchyNode> {
+  get$(id: number) {
     console.log('fetch node', id);
     return this.afd
       .object(`h/${id}`)
       .valueChanges()
       .pipe(
-        take(1),
         map(
           (v: any) =>
             <HierarchyNode>{
@@ -39,10 +45,10 @@ export class HierarchyService {
               name: v.n,
               parents: v.p,
               children: v.c,
-              depth: v.d
+              depth: v.d,
+              aggregate: v.a
             }
         )
-      )
-      .toPromise();
+      );
   }
 }

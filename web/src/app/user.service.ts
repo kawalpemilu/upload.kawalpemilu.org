@@ -27,10 +27,7 @@ export class UserService {
       method === 'google'
         ? new auth.GoogleAuthProvider()
         : new auth.FacebookAuthProvider();
-    this.isLoading = true;
-    return window !== window.top
-      ? this.afAuth.auth.signInWithPopup(provider)
-      : this.afAuth.auth.signInWithRedirect(provider);
+    this.afAuth.auth.signInWithRedirect(provider);
   }
 
   logout() {
