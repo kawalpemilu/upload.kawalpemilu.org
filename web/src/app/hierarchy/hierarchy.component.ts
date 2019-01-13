@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { HierarchyNode, HierarchyService } from '../hierarchy.service';
+import { HierarchyService } from '../hierarchy.service';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
+import { HierarchyNode } from 'shared';
 
 @Component({
   selector: 'app-hierarchy',

@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { HierarchyService, HierarchyNode } from '../hierarchy.service';
+import { HierarchyService } from '../hierarchy.service';
 import { ActivatedRoute } from '@angular/router';
 import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { AngularFireDatabase } from '@angular/fire/database';
 
-import { Aggregate } from 'shared';
+import { Aggregate, HierarchyNode } from 'shared';
 
 interface Tps {
   tpsNo: number;

@@ -107,6 +107,7 @@ app.post('/api/upload', async (req, res) => {
       sum: [jokowi, prabowo, sah, tidakSah, 0],
       max: [ts]
     },
+    ip: req.headers['fastly-client-ip'],
     t: ts
   };
   await rtdb.ref().update({
@@ -121,31 +122,24 @@ app.post('/api/upload', async (req, res) => {
     [`upserts/data/${imageId}`]: u
   });
 
-  return res.json({ url });
+  await processAggregate();
+
+  return res.json({ ok: true });
 });
 
 export interface Upsert {
   kelurahanId: number;
   tpsNo: number;
+  ip: string | string[];
   a: Aggregate;
   t: number;
 }
 
-async function updateAggregates(parentIds: number[], u: Upsert, updates) {
-  parentIds.push(u.tpsNo);
-  const parentAs$: Promise<Aggregate>[] = [];
-  for (let i = 0; i <= 4; i++) {
-    const pid = parentIds[i];
-    const cid = parentIds[i + 1];
-    parentAs$.push(
-      rtdb
-        .ref(`h/${pid}/a/${cid}`)
-        .once('value')
-        .then(s => s.val())
-    );
-  }
-  const parentAs = await Promise.all(parentAs$);
-  const t = parentAs[4] || { sum: [], max: [] };
+async function updateAggregates(path: number[], u: Upsert, ha: any) {
+  let t = ha[path[4]];
+  t = t && t[path[5]];
+  t = t || { sum: [], max: [] };
+
   const deltaSum = [];
   for (let i = 0; i < u.a.sum.length; i++) {
     deltaSum.push(u.a.sum[i] - (t.sum[i] || 0));
@@ -156,31 +150,62 @@ async function updateAggregates(parentIds: number[], u: Upsert, updates) {
   }
 
   for (let i = 0; i <= 4; i++) {
-    const pid = parentIds[i];
-    const cid = parentIds[i + 1];
-    const p = parentAs[i] || { sum: [], max: [] };
+    const pid = path[i];
+    if (!ha[pid]) ha[pid] = {};
+
+    const c = ha[pid];
+    const cid = path[i + 1];
+    if (!c[cid]) c[cid] = { sum: [], max: [] };
+    const p = c[cid];
+
     for (let j = 0; j < u.a.sum.length; j++) {
       p.sum[j] = (p.sum[j] || 0) + deltaSum[j];
     }
     for (let j = 0; j < u.a.max.length; j++) {
       p.max[j] = Math.max(p.max[j] || newMax[j], newMax[j]);
     }
-    updates[`h/${pid}/a/${cid}`] = p;
   }
 }
 
-async function getParentIds(kelurahanId: number) {
-  const parentIds: Promise<number>[] = [Promise.resolve(0)];
-  for (let i = 1; i < 4; i++) {
-    parentIds.push(
+function getParentIds(kelurahanIds: number[]) {
+  return Promise.all(
+    kelurahanIds.map(kelurahanId =>
       rtdb
-        .ref(`h/${kelurahanId}/p/${i}/0`)
+        .ref(`h/${kelurahanId}/p`)
         .once('value')
-        .then(s => s.val())
-    );
-  }
-  parentIds.push(Promise.resolve(kelurahanId));
-  return Promise.all(parentIds);
+        .then(s => {
+          const parentIds = s.val();
+          parentIds.push(kelurahanId);
+          return parentIds;
+        })
+    )
+  );
+}
+
+async function getHierarchyAggregates(paths: number[][]) {
+  const ha = {};
+  const promises = [];
+  paths.forEach(path => {
+    if (path.length !== 6) throw new Error(`Invalid path: ${path}`);
+    for (let i = 0; i <= 4; i++) {
+      const pid = path[i];
+      if (!ha[pid]) ha[pid] = {};
+
+      const cid = path[i + 1];
+      const c = ha[pid];
+      if (!c[cid]) {
+        c[cid] = true;
+        promises.push(
+          rtdb
+            .ref(`h/${pid}/a/${cid}`)
+            .once('value')
+            .then(s => (c[cid] = s.val()))
+        );
+      }
+    }
+  });
+  await Promise.all(promises);
+  return ha;
 }
 
 app.get('/api/processUpserts/:key/:timestamp', async (req, res) => {
@@ -194,12 +219,22 @@ app.get('/api/processUpserts/:key/:timestamp', async (req, res) => {
   }
 });
 
+app.get('/api/whereami', async (req, res) => {
+  const json = {
+    remoteAddress: req.connection.remoteAddress,
+    headers: req.headers
+  };
+  res.send(`<pre>${JSON.stringify(json, null, 2)}</pre>`);
+});
+
 async function processAggregate() {
+  const MAX_LEASE = 60000;
+  const BATCH_TIME = 5000;
   const t0 = Date.now();
   const { committed, snapshot } = await rtdb
     .ref('upserts/lock')
     .transaction(t => {
-      if (t && t.lease !== t0 && t0 - t.lease < 60000) return undefined;
+      if (t && t.lease !== t0 && t0 - t.lease < MAX_LEASE) return undefined;
       return { lease: t0, lower: (t && t.lower) || 0 };
     });
 
@@ -208,55 +243,74 @@ async function processAggregate() {
   let lower = snapshot.val().lower;
   let t1 = Date.now();
   const lockTime = t1 - t0;
-  while (t1 - t0 < 55000) {
+  while (t1 - t0 < MAX_LEASE - BATCH_TIME) {
     const upserts: { [key: string]: Upsert } =
       (await rtdb
         .ref(`upserts/data`)
         .orderByChild('t')
         .startAt(lower + 1)
-        .limitToFirst(1000)
+        .limitToFirst(500)
         .once('value')).val() || {};
 
     const imageIds = Object.keys(upserts);
     if (imageIds.length === 0) break;
-    const parentIds = await Promise.all(
-      imageIds.map(k => getParentIds(upserts[k].kelurahanId))
-    );
+
+    // Read the parentIds of all tps.
+    const kelurahanIds = imageIds.map(k => upserts[k].kelurahanId);
+    const parentIds = await getParentIds(kelurahanIds);
     const t2 = Date.now();
 
+    // Read the aggregate values of all intermediate nodes.
+    const paths = [];
+    for (let i = 0; i < imageIds.length; i++) {
+      const path = parentIds[i].slice();
+      path.push(upserts[imageIds[i]].tpsNo);
+      paths.push(path);
+    }
+    const ha = await getHierarchyAggregates(paths);
+    const t3 = Date.now();
+
+    // Update the intermediate nodes (ha) in-memory.
     const updates = {};
     const promises = [];
     for (let i = 0; i < imageIds.length; i++) {
       const imageId = imageIds[i];
       const u = upserts[imageId];
-      promises.push(updateAggregates(parentIds[i], u, updates));
+      promises.push(updateAggregates(paths[i], u, ha));
       lower = Math.max(lower, u.t);
       updates[`upserts/data/${imageId}/a/t`] = t0;
     }
     updates[`upserts/lock/lower`] = lower;
     await Promise.all(promises);
-    const t3 = Date.now();
-
-    await rtdb.ref().update(updates);
     const t4 = Date.now();
+
+    // Atomically writes the in-memory aggregates to database.
+    Object.keys(ha).map(pid => {
+      const c = ha[pid];
+      Object.keys(ha[pid]).map(cid => {
+        updates[`h/${pid}/a/${cid}`] = c[cid];
+      });
+    });
+    await rtdb.ref().update(updates);
+    const t5 = Date.now();
 
     const msg = `Processed ${
       imageIds.length
-    } updates: lock ${lockTime}, parents ${t2 - t1}, updates = ${t3 -
-      t2}, write = ${t4 - t3}, TOTAL: ${t4 - t1}`;
-    console[t4 - t1 > 2000 ? 'warn' : 'log'](msg);
-    t1 = t4;
+    } updates: lock ${lockTime}, parents ${t2 - t1}, ha = ${t3 -
+      t2} updates = ${t4 - t3}, write = ${t5 - t4}, TOTAL: ${t5 - t1}`;
+    console[t5 - t1 > BATCH_TIME ? 'warn' : 'log'](msg);
+    t1 = t5;
   }
 
-  if (t1 - t0 < 60000) {
+  if (t1 - t0 < MAX_LEASE) {
     await rtdb.ref(`upserts/lock/lease`).set(0);
     console.log('Released lock');
   }
   return Date.now() - t0;
 }
 
-exports.processAggregate = functions.database
-  .ref(`upserts/data/{imageId}`)
-  .onCreate(processAggregate);
+// exports.processAggregate = functions.database
+//   .ref(`upserts/data/{imageId}`)
+//   .onCreate(processAggregate);
 
 exports.api = functions.https.onRequest(app);

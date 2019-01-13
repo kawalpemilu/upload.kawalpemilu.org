@@ -1,5 +1,5 @@
 <ng-container *ngIf="(state$ | async) as state">
-  <app-path [parents]="state.parents" [top]="state.name"></app-path>
+  <app-path [node]="state"></app-path>
 
   <p></p>
 

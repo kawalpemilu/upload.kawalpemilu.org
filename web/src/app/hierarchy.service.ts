@@ -1,16 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AngularFireDatabase } from '@angular/fire/database';
 import { take, map } from 'rxjs/operators';
-import { Aggregate } from 'shared';
-
-export interface HierarchyNode {
-  id: number;
-  name: string;
-  parents: string[][];
-  children: any;
-  depth: number;
-  aggregate: Aggregate;
-}
+import { HierarchyNode } from 'shared';
 
 @Injectable({
   providedIn: 'root'
@@ -43,7 +34,8 @@ export class HierarchyService {
             <HierarchyNode>{
               id,
               name: v.n,
-              parents: v.p,
+              parentIds: v.p,
+              parentNames: v.q,
               children: v.c,
               depth: v.d,
               aggregate: v.a
