@@ -2,7 +2,7 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import * as request from 'request-promise';
 import * as express from 'express';
-import { Aggregate, DbPath, AggregateResponse } from 'shared';
+import { Aggregate, DbPath, AggregateResponse, ImageMetadata } from 'shared';
 
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
@@ -64,36 +64,61 @@ app.post('/api/upload', async (req, res) => {
   if (!user) return null;
 
   console.log('body', req.body);
-  const imageId = req.body.imageId;
-  if (!imageId.match(/^[A-Za-z0-9]{20}$/)) {
+  const inputM = req.body.metadata as ImageMetadata;
+  const validM = {} as ImageMetadata;
+  if (!inputM) {
+    return res.json({ error: 'Invalid metadata' });
+  }
+  if (!inputM.i || !inputM.i.match(/^[A-Za-z0-9]{20}$/)) {
     return res.json({ error: 'Invalid imageId' });
   }
-  // TODO: centralize check.
+  validM.i = inputM.i;
+  ['w', 'h', 'o', 'y', 'x', 'l', 's', 'z'].forEach(attr => {
+    if (typeof inputM[attr] === 'number') {
+      validM[attr] = inputM[attr];
+    }
+  });
+  if (typeof inputM.m === 'object') {
+    validM.m = ['', ''];
+    if (typeof inputM.m[0] === 'string') {
+      validM.m[0] = inputM.m[0].substring(0, 50);
+    }
+    if (typeof inputM.m[1] === 'string') {
+      validM.m[1] = inputM.m[1].substring(0, 50);
+    }
+  }
+
   const kelurahanId = parseInt(req.body.kelurahanId, 10);
   if (isNaN(kelurahanId) || kelurahanId < 0 || kelurahanId > 100000) {
+    return res.json({ error: 'kelurahanId out of range' });
+  }
+  if (
+    (await rtdb.ref(DbPath.hieDepth(kelurahanId)).once('value')).val() !== 4
+  ) {
     return res.json({ error: 'Invalid kelurahanId' });
   }
+
   const tpsNo = parseInt(req.body.tpsNo, 10);
   if (isNaN(tpsNo) || tpsNo < 0 || tpsNo > 1000) {
-    return res.json({ error: 'Invalid tpsNo' });
+    return res.json({ error: 'tpsNo out of range' });
   }
-  const jokowi = parseInt(req.body.jokowi, 10);
-  if (isNaN(jokowi) || jokowi < 0 || jokowi > 1000) {
-    return res.json({ error: 'Invalid jokowi' });
+  // TODO: ensure TPS no exists.
+
+  const ts = Date.now();
+  const agg = { sum: [], max: [ts] } as Aggregate;
+  const a = req.body.aggregates;
+  if (!a || !a.sum || !a.sum.length || a.sum.length > 5) {
+    return res.json({ error: 'Invalid aggregates sum' });
   }
-  const prabowo = parseInt(req.body.prabowo, 10);
-  if (isNaN(prabowo) || prabowo < 0 || prabowo > 1000) {
-    return res.json({ error: 'Invalid prabowo' });
+  for (let i = 0; i < a.sum.length; i++) {
+    const sum = parseInt(a.sum[i], 10);
+    if (isNaN(sum) || sum < 0 || sum > 1000) {
+      return res.json({ error: 'Invalid sum range' });
+    }
+    agg.sum.push(sum);
   }
-  const sah = parseInt(req.body.sah, 10);
-  if (isNaN(sah) || sah < 0 || sah > 1000) {
-    return res.json({ error: 'Invalid sah' });
-  }
-  const tidakSah = parseInt(req.body.tidakSah, 10);
-  if (isNaN(tidakSah) || tidakSah < 0 || tidakSah > 1000) {
-    return res.json({ error: 'Invalid tidakSah' });
-  }
-  const url = (await rtdb.ref(`uploads/${imageId}/url`).once('value')).val();
+
+  const url = (await rtdb.ref(`uploads/${validM.i}/url`).once('value')).val();
   if (!url) {
     return res.json({ error: 'Invalid url' });
   }
@@ -101,29 +126,22 @@ app.post('/api/upload', async (req, res) => {
   const rootId = (await rtdb.ref(`h/${kelurahanId}/p/1`).once('value')).val();
 
   // TODO: move this to admin action.
-  const ts = Date.now();
   const u: Upsert = {
     k: kelurahanId,
     n: tpsNo,
-    a: {
-      sum: [jokowi, prabowo, sah, tidakSah, 0],
-      max: [ts]
-    },
+    a: agg,
     i: req.headers['fastly-client-ip'],
     t: `${rootId}-${ts}`,
-    d: -1
+    d: 0
   };
 
   await rtdb.ref().update({
-    [`kelurahan/${kelurahanId}/tps/${tpsNo}/${imageId}`]: {
-      url,
-      jokowi,
-      prabowo,
-      sah,
-      tidakSah,
-      ts
+    [`kelurahan/${kelurahanId}/tps/${tpsNo}/${validM.i}`]: {
+      u: url,
+      a: agg,
+      m: validM
     },
-    [DbPath.upsertsDataImage(imageId)]: u
+    [DbPath.upsertsDataImage(validM.i)]: u
   });
 
   return res.json({ ok: await processAggregate(rootId) });
@@ -217,9 +235,9 @@ app.get('/api/processUpserts/:key/:rootId', async (req, res) => {
   }
   try {
     return res.json({
-      ok: (await req.params.rootId)
+      ok: await (req.params.rootId
         ? processAggregate(req.params.rootId)
-        : Promise.all(DbPath.rootIds.map(rootId => processAggregate(rootId)))
+        : Promise.all(DbPath.rootIds.map(rootId => processAggregate(rootId))))
     });
   } catch (e) {
     return res.json({ error: e.message });
@@ -295,7 +313,7 @@ async function processAggregate(rootId: number): Promise<AggregateResponse> {
       const u = upserts[imageId];
       promises.push(updateAggregates(paths[i], u, ha));
       if (u.d) {
-        console.error(`Upsert is already done: ${u}`);
+        console.error(`Upsert is already done: ${JSON.stringify(u)}`);
       }
       if (u.t > res.lower) {
         res.lower = u.t;

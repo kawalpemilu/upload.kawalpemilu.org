@@ -24,7 +24,7 @@ export class HierarchyService {
   }
 
   get$(id: number) {
-    console.log('fetch node', id);
+    console.log('Fetch node', id);
     return this.afd
       .object(`h/${id}`)
       .valueChanges()

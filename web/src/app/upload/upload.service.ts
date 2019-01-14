@@ -36,7 +36,6 @@ export class UploadService {
     }
     const imageId = this.autoId();
     const filePath = `/uploads/${kelurahanId}/${tpsNo}/${userId}/${imageId}`;
-    console.log('Uploading', kelurahanId, tpsNo, imageId, file);
 
     this.kelurahanId = kelurahanId;
     this.tpsNo = tpsNo;

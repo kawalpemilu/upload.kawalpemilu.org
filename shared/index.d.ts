@@ -24,10 +24,23 @@ export interface AggregateResponse {
     largeBatchTime: number;
     lower: string;
 }
+export interface ImageMetadata {
+    i: string;
+    l: number;
+    s: number;
+    z: number;
+    w: number;
+    h: number;
+    m: [string, string];
+    o: number;
+    y: number;
+    x: number;
+}
 export declare class DbPath {
     static rootIds: number[];
     static hie(id: number): string;
     static hieParents(id: number): string;
+    static hieDepth(id: number): string;
     static hieAgg(id: number, cid: number): string;
     static upserts(rootId: number): string;
     static upsertsLock(rootId: number): string;

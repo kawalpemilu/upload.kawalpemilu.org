@@ -27,6 +27,19 @@ export interface AggregateResponse {
   lower: string;
 }
 
+export interface ImageMetadata {
+  i: string; // imageId.
+  l: number; // Last Modified.
+  s: number; // Size in Bytes.
+  z: number; // Size in Bytes after compressed.
+  w: number; // Original Width.
+  h: number; // Original Height.
+  m: [string, string]; // [Make, Model].
+  o: number; // Orientation.
+  y: number; // Latitude.
+  x: number; // Longitude.
+}
+
 export class DbPath {
   static rootIds = [
     1,
@@ -69,6 +82,9 @@ export class DbPath {
   }
   static hieParents(id: number) {
     return `${DbPath.hie(id)}/p`;
+  }
+  static hieDepth(id: number) {
+    return `${DbPath.hie(id)}/d`;
   }
   static hieAgg(id: number, cid: number) {
     return `${DbPath.hie(id)}/a/${cid}`;

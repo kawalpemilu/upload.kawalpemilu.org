@@ -9,6 +9,9 @@ var DbPath = /** @class */ (function () {
     DbPath.hieParents = function (id) {
         return DbPath.hie(id) + "/p";
     };
+    DbPath.hieDepth = function (id) {
+        return DbPath.hie(id) + "/d";
+    };
     DbPath.hieAgg = function (id, cid) {
         return DbPath.hie(id) + "/a/" + cid;
     };

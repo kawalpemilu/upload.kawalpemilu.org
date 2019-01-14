@@ -14,12 +14,7 @@ export class UserService {
 
   constructor(private afAuth: AngularFireAuth) {
     this.isLoading = true;
-    this.user$ = this.afAuth.user.pipe(
-      tap(u => {
-        console.log('User', (u && u.uid) || '-');
-        this.isLoading = false;
-      })
-    );
+    this.user$ = this.afAuth.user.pipe(tap(u => (this.isLoading = false)));
   }
 
   login(method: string) {
