@@ -2,7 +2,13 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import * as request from 'request-promise';
 import * as express from 'express';
-import { Aggregate, DbPath, AggregateResponse, ImageMetadata } from 'shared';
+import {
+  Aggregate,
+  DbPath,
+  AggregateResponse,
+  ImageMetadata,
+  getTpsNumbers
+} from 'shared';
 
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
@@ -102,7 +108,12 @@ app.post('/api/upload', async (req, res) => {
   if (isNaN(tpsNo) || tpsNo < 0 || tpsNo > 1000) {
     return res.json({ error: 'tpsNo out of range' });
   }
-  // TODO: ensure TPS no exists.
+  const childrenBits = (await rtdb
+    .ref(DbPath.hieChildren(kelurahanId))
+    .once('value')).val();
+  if (!childrenBits || getTpsNumbers(childrenBits).indexOf(tpsNo) === -1) {
+    return res.json({ error: 'tpsNo does not exists' });
+  }
 
   const ts = Date.now();
   const agg = { sum: [], max: [ts] } as Aggregate;

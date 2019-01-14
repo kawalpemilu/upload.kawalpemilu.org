@@ -5,7 +5,7 @@ import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { AngularFireDatabase } from '@angular/fire/database';
 
-import { Aggregate, HierarchyNode } from 'shared';
+import { Aggregate, HierarchyNode, getTpsNumbers } from 'shared';
 
 interface Tps {
   tpsNo: number;
@@ -42,7 +42,7 @@ export class TpsComponent implements OnInit {
       .pipe(
         switchMap(async id => {
           const state = (await this.hie.get(id)) as State;
-          const tpsNumbers = this.getTpsNumbers(state.children);
+          const tpsNumbers = getTpsNumbers(state.children);
           state.tpsList = tpsNumbers.map(tpsNo => ({
             tpsNo,
             address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG 2)',
@@ -54,19 +54,5 @@ export class TpsComponent implements OnInit {
         })
       );
     console.log('TpsComponent inited');
-  }
-
-  getTpsNumbers(children) {
-    const tpsNumbers = [];
-    if (Array.isArray(children)) {
-      for (const tpsNo of children) {
-        tpsNumbers.push(tpsNo);
-      }
-    } else {
-      for (let tpsNo = 1; tpsNo <= children; tpsNo++) {
-        tpsNumbers.push(tpsNo);
-      }
-    }
-    return tpsNumbers;
   }
 }

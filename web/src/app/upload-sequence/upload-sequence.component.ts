@@ -73,23 +73,27 @@ export class UploadSequenceComponent implements OnInit {
       let imgURL = await this.readAsDataUrl(file);
       const exifObj = piexif.load(imgURL as string);
       const z = exifObj['0th'];
-      m.w = z[piexif.TagValues.ImageIFD.ImageWidth];
-      m.h = z[piexif.TagValues.ImageIFD.ImageLength];
-      m.m = [
-        z[piexif.TagValues.ImageIFD.Make] as string,
-        z[piexif.TagValues.ImageIFD.Model] as string
-      ];
-      m.o = z[piexif.TagValues.ImageIFD.Orientation];
+      if (z) {
+        m.w = z[piexif.TagValues.ImageIFD.ImageWidth];
+        m.h = z[piexif.TagValues.ImageIFD.ImageLength];
+        m.m = [
+          z[piexif.TagValues.ImageIFD.Make] as string,
+          z[piexif.TagValues.ImageIFD.Model] as string
+        ];
+        m.o = z[piexif.TagValues.ImageIFD.Orientation];
+      }
 
       const g = exifObj['GPS'];
-      m.y = this.convertDms(
-        g[piexif.TagValues.GPSIFD.GPSLatitude],
-        g[piexif.TagValues.GPSIFD.GPSLatitudeRef]
-      );
-      m.x = this.convertDms(
-        g[piexif.TagValues.GPSIFD.GPSLongitude],
-        g[piexif.TagValues.GPSIFD.GPSLongitudeRef]
-      );
+      if (g) {
+        m.y = this.convertDms(
+          g[piexif.TagValues.GPSIFD.GPSLatitude],
+          g[piexif.TagValues.GPSIFD.GPSLatitudeRef]
+        );
+        m.x = this.convertDms(
+          g[piexif.TagValues.GPSIFD.GPSLongitude],
+          g[piexif.TagValues.GPSIFD.GPSLongitudeRef]
+        );
+      }
 
       if (file.size > 800 * 1024) {
         imgURL = await this.compress(imgURL, 1024);

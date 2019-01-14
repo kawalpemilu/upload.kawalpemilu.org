@@ -41,6 +41,7 @@ export declare class DbPath {
     static hie(id: number): string;
     static hieParents(id: number): string;
     static hieDepth(id: number): string;
+    static hieChildren(id: number): string;
     static hieAgg(id: number, cid: number): string;
     static upserts(rootId: number): string;
     static upsertsLock(rootId: number): string;
@@ -50,3 +51,4 @@ export declare class DbPath {
     static upsertsDataImage(imageId: string): string;
     static upsertsDataImageDone(imageId: string): string;
 }
+export declare function getTpsNumbers(childrenBits: number[]): any[];

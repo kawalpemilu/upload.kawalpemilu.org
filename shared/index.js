@@ -12,6 +12,9 @@ var DbPath = /** @class */ (function () {
     DbPath.hieDepth = function (id) {
         return DbPath.hie(id) + "/d";
     };
+    DbPath.hieChildren = function (id) {
+        return DbPath.hie(id) + "/c";
+    };
     DbPath.hieAgg = function (id, cid) {
         return DbPath.hie(id) + "/a/" + cid;
     };
@@ -74,3 +77,15 @@ var DbPath = /** @class */ (function () {
     return DbPath;
 }());
 exports.DbPath = DbPath;
+function getTpsNumbers(childrenBits) {
+    var tpsNumbers = [];
+    for (var i = 0; i < childrenBits.length; i++) {
+        for (var j = 0; j < 30; j++) {
+            if (childrenBits[i] & (1 << j)) {
+                tpsNumbers.push(i * 30 + j);
+            }
+        }
+    }
+    return tpsNumbers;
+}
+exports.getTpsNumbers = getTpsNumbers;

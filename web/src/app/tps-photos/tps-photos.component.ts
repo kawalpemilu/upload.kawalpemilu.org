@@ -16,12 +16,12 @@ interface Photo {
       <a href="{{ imageUrl(photo.u, 980) }}" target="_blank">
         <img [src]="imageUrl(photo.u, 100)" style="padding: 10px 10px 10px 0" />
       </a>
-      <br />
-      <span *ngIf="photo.m.m"
-        >{{ photo.m.m[0] }}<br />{{ photo.m.m[1] }}<br
-      /></span>
-      <a *ngIf="photo.m.x" href="{{ mapLink(photo.m) }}" target="_blank">GPS</a>
-      <br />
+      <span *ngIf="photo.m?.m"
+        ><br />{{ photo.m.m[0] }}<br />{{ photo.m.m[1] }}</span
+      >
+      <a *ngIf="photo.m?.x" href="{{ mapLink(photo.m) }}" target="_blank"
+        ><br />GPS</a
+      >
     </span>
   `,
   styles: [``]

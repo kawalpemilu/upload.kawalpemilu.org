@@ -86,6 +86,9 @@ export class DbPath {
   static hieDepth(id: number) {
     return `${DbPath.hie(id)}/d`;
   }
+  static hieChildren(id: number) {
+    return `${DbPath.hie(id)}/c`;
+  }
   static hieAgg(id: number, cid: number) {
     return `${DbPath.hie(id)}/a/${cid}`;
   }
@@ -111,4 +114,16 @@ export class DbPath {
   static upsertsDataImageDone(imageId: string) {
     return `${DbPath.upsertsDataImage(imageId)}/d`;
   }
+}
+
+export function getTpsNumbers(childrenBits: number[]) {
+  const tpsNumbers = [];
+  for (let i = 0; i < childrenBits.length; i++) {
+    for (let j = 0; j < 30; j++) {
+      if (childrenBits[i] & (1 << j)) {
+        tpsNumbers.push(i * 30 + j);
+      }
+    }
+  }
+  return tpsNumbers;
 }
