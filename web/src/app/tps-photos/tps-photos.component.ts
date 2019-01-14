@@ -13,15 +13,31 @@ interface Photo {
   selector: 'app-tps-photos',
   template: `
     <span *ngFor="let photo of (photos$ | async)">
-      <a href="{{ imageUrl(photo.u, 980) }}" target="_blank">
-        <img [src]="imageUrl(photo.u, 100)" style="padding: 10px 10px 10px 0" />
-      </a>
-      <span *ngIf="photo.m?.m"
-        ><br />{{ photo.m.m[0] }}<br />{{ photo.m.m[1] }}</span
-      >
-      <a *ngIf="photo.m?.x" href="{{ mapLink(photo.m) }}" target="_blank"
-        ><br />GPS</a
-      >
+      <table style="display: inline">
+        <tr>
+          <td>
+            <a href="{{ imageUrl(photo.u, 980) }}" target="_blank">
+              <img
+                [src]="imageUrl(photo.u, 100)"
+                style="padding: 10px 10px 0 0"
+              />
+            </a>
+          </td>
+        </tr>
+
+        <tr *ngIf="photo.m?.m">
+          <td>{{ photo.m.m[0] }}</td>
+        </tr>
+        <tr *ngIf="photo.m?.m">
+          <td>{{ photo.m.m[1] }}</td>
+        </tr>
+
+        <tr *ngIf="photo.m?.x">
+          <td>
+            <a href="{{ mapLink(photo.m) }}" target="_blank">GPS</a><br /><br />
+          </td>
+        </tr>
+      </table>
     </span>
   `,
   styles: [``]

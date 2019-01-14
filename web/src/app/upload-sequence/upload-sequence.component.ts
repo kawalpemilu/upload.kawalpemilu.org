@@ -71,36 +71,18 @@ export class UploadSequenceComponent implements OnInit {
     const m = { s: file.size, l: file.lastModified } as ImageMetadata;
     try {
       let imgURL = await this.readAsDataUrl(file);
-      const exifObj = piexif.load(imgURL as string);
-      const z = exifObj['0th'];
-      if (z) {
-        m.w = z[piexif.TagValues.ImageIFD.ImageWidth];
-        m.h = z[piexif.TagValues.ImageIFD.ImageLength];
-        m.m = [
-          z[piexif.TagValues.ImageIFD.Make] as string,
-          z[piexif.TagValues.ImageIFD.Model] as string
-        ];
-        m.o = z[piexif.TagValues.ImageIFD.Orientation];
-      }
-
-      const g = exifObj['GPS'];
-      if (g) {
-        m.y = this.convertDms(
-          g[piexif.TagValues.GPSIFD.GPSLatitude],
-          g[piexif.TagValues.GPSIFD.GPSLatitudeRef]
-        );
-        m.x = this.convertDms(
-          g[piexif.TagValues.GPSIFD.GPSLongitude],
-          g[piexif.TagValues.GPSIFD.GPSLongitudeRef]
-        );
-      }
-
+      const exifObj = this.populateMetadata(imgURL, m);
       if (file.size > 800 * 1024) {
         imgURL = await this.compress(imgURL, 1024);
-
-        // https://piexifjs.readthedocs.io/en/2.0/sample.html#insert-exif-into-jpeg
-        const withExif = piexif.insert(piexif.dump(exifObj), imgURL);
-        file = this.dataURLtoBlob(withExif) as File;
+        if (exifObj) {
+          try {
+            // https://piexifjs.readthedocs.io/en/2.0/sample.html#insert-exif-into-jpeg
+            imgURL = piexif.insert(piexif.dump(exifObj), imgURL);
+          } catch (e) {
+            console.error(e);
+          }
+        }
+        file = this.dataURLtoBlob(imgURL) as File;
         m.z = file.size;
       }
 
@@ -160,6 +142,36 @@ export class UploadSequenceComponent implements OnInit {
     );
 
     this.router.navigate(['/t', kelurahanId], { fragment: `${tpsNo}` });
+  }
+
+  private populateMetadata(imgURL, m) {
+    try {
+      const exifObj = piexif.load(imgURL as string);
+      const z = exifObj['0th'];
+      if (z) {
+        m.w = z[piexif.TagValues.ImageIFD.ImageWidth];
+        m.h = z[piexif.TagValues.ImageIFD.ImageLength];
+        m.m = [
+          z[piexif.TagValues.ImageIFD.Make] as string,
+          z[piexif.TagValues.ImageIFD.Model] as string
+        ];
+        m.o = z[piexif.TagValues.ImageIFD.Orientation];
+      }
+      const g = exifObj['GPS'];
+      if (g) {
+        m.y = this.convertDms(
+          g[piexif.TagValues.GPSIFD.GPSLatitude],
+          g[piexif.TagValues.GPSIFD.GPSLatitudeRef]
+        );
+        m.x = this.convertDms(
+          g[piexif.TagValues.GPSIFD.GPSLongitude],
+          g[piexif.TagValues.GPSIFD.GPSLongitudeRef]
+        );
+      }
+      return exifObj;
+    } catch (e) {
+      return null;
+    }
   }
 
   private readAsDataUrl(file: File): Promise<string | ArrayBuffer> {
