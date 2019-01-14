@@ -2,7 +2,7 @@
   "name": "functions",
   "scripts": {
     "lint": "tslint --project tsconfig.json",
-    "build": "tsc",
+    "build": "cp ../shared/shared-1.0.0.tgz . && npm install shared-1.0.0.tgz && tsc",
     "serve": "npm run build && firebase serve --only functions",
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
@@ -20,7 +20,7 @@
     "firebase-functions": "^2.1.0",
     "request": "^2.88.0",
     "request-promise": "^4.2.2",
-    "shared": "file:../shared"
+    "shared": "file:shared-1.0.0.tgz"
   },
   "devDependencies": {
     "tslint": "~5.8.0",
