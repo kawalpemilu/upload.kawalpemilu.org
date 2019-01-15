@@ -18,23 +18,24 @@
           <table
             border="1"
             cellspacing="0"
+            cellpadding="4"
             *ngIf="(tps.aggregate$ | async) as a"
           >
             <tr>
-              <td>Jokowi:</td>
-              <td width="80">{{ a.sum[0] }}</td>
+              <td nowrap>Paslon 1:</td>
+              <td width="40" class="angka">{{ a.sum[0] }}</td>
             </tr>
             <tr>
-              <td>Prabowo:</td>
-              <td>{{ a.sum[1] }}</td>
+              <td>Paslon 2:</td>
+              <td class="angka">{{ a.sum[1] }}</td>
             </tr>
             <tr>
               <td>Sah:</td>
-              <td>{{ a.sum[2] }}</td>
+              <td class="angka">{{ a.sum[2] }}</td>
             </tr>
             <tr>
               <td>~Sah:</td>
-              <td>{{ a.sum[3] }}</td>
+              <td class="angka">{{ a.sum[3] }}</td>
             </tr>
           </table>
         </td>

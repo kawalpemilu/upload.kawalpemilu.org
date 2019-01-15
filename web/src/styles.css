@@ -5,6 +5,10 @@ body {
   margin: 0;
 }
 
+a.wilayah {
+  text-decoration: none;
+}
+
 .alert {
   color: red;
   font-size: 0.9em;

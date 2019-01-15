@@ -50,8 +50,8 @@ export class UploadSequenceComponent implements OnInit {
 
     const validators = [Validators.pattern('^[0-9]{1,3}$')];
     this.formGroup = this.formBuilder.group({
-      jokowiCtrl: [null, validators],
-      prabowoCtrl: [null, validators],
+      paslon1Ctrl: [null, validators],
+      paslon2Ctrl: [null, validators],
       sahCtrl: [null, validators],
       tidakSahCtrl: [null, validators]
     });
@@ -115,8 +115,8 @@ export class UploadSequenceComponent implements OnInit {
   async selesai(user: User, kelurahanId: number, tpsNo: number) {
     const aggregates: Aggregate = {
       sum: [
-        this.formGroup.get('jokowiCtrl').value,
-        this.formGroup.get('prabowoCtrl').value,
+        this.formGroup.get('paslon1Ctrl').value,
+        this.formGroup.get('paslon2Ctrl').value,
         this.formGroup.get('sahCtrl').value,
         this.formGroup.get('tidakSahCtrl').value,
         0

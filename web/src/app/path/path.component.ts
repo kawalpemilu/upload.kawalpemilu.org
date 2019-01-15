@@ -9,7 +9,7 @@ import { HierarchyNode } from 'shared';
       <span *ngFor="let p of parents()">
         <a
           [routerLink]="['/h', p.id]"
-          style="text-decoration: none; color: blue"
+          class="wilayah"
           >{{ p.name }}</a
         >
         &gt;&nbsp;

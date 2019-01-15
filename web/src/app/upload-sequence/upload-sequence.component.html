@@ -48,14 +48,14 @@
         <mat-form-field style="width: 225px">
           <input
             matInput
-            placeholder="Jumlah Suara Jokowi"
-            formControlName="jokowiCtrl"
+            placeholder="Jumlah Suara Paslon 1"
+            formControlName="paslon1Ctrl"
             type="number"
             required
           />
         </mat-form-field>
         &nbsp;
-        <span *ngIf="getError('jokowiCtrl') as error" class="alert">
+        <span *ngIf="getError('paslon1Ctrl') as error" class="alert">
           {{ error }}
         </span>
         <br />
@@ -63,14 +63,14 @@
         <mat-form-field style="width: 225px">
           <input
             matInput
-            placeholder="Jumlah Suara Prabowo"
-            formControlName="prabowoCtrl"
+            placeholder="Jumlah Suara Paslon 2"
+            formControlName="paslon2Ctrl"
             type="number"
             required
           />
         </mat-form-field>
         &nbsp;
-        <span *ngIf="getError('prabowoCtrl') as error" class="alert">
+        <span *ngIf="getError('paslon2Ctrl') as error" class="alert">
           {{ error }}
         </span>
         <br />
