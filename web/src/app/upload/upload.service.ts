@@ -6,6 +6,7 @@ import {
 } from '@angular/fire/storage';
 import { AngularFireDatabase } from '@angular/fire/database';
 import { take, filter } from 'rxjs/operators';
+import { DbPath } from 'shared';
 
 @Injectable({
   providedIn: 'root'
@@ -45,7 +46,7 @@ export class UploadService {
     await this.task.then(
       _ =>
         this.afd
-          .object(`uploads/${imageId}/userId`)
+          .object(DbPath.imageMetadataUserId(imageId))
           .valueChanges()
           .pipe(
             filter(Boolean),

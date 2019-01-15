@@ -1,7 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ApiService } from '../api.service';
 import { UserService } from '../user.service';
-import { HierarchyNode } from 'shared';
+import { DbPath, getTpsNumbers, Aggregate } from 'shared';
+import { AngularFireDatabase } from '@angular/fire/database';
+import { User } from 'firebase';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-admin',
@@ -9,9 +12,16 @@ import { HierarchyNode } from 'shared';
   styleUrls: ['./admin.component.css']
 })
 export class AdminComponent implements OnInit {
-  constructor(public userService: UserService, private api: ApiService) {}
+  constructor(
+    public userService: UserService,
+    private api: ApiService,
+    private afd: AngularFireDatabase
+  ) {}
 
-  async ngOnInit() {}
+  async ngOnInit() {
+    // await this.afd.object('upserts').remove();
+    // console.log('removed');
+  }
 
   async kelurahanIds() {
     const arr = await this.api.get(null, '/assets/kelurahan_ids.js');
@@ -54,11 +64,16 @@ export class AdminComponent implements OnInit {
     let now = Date.now();
     const parentIds = [];
     const upsertsData = {};
+    let maxTps = 100;
 
     rec([], 0, 'Nasional', 0);
-    console.log(JSON.stringify(h));
+    console.log(JSON.stringify(t));
+    console.log(JSON.stringify(upsertsData));
 
     function rec(parents: [number, string][], id, name, depth) {
+      // if (maxTps < 0) {
+      //   return;
+      // }
       const arr = data[id][ANAK];
       const node = (h[id] = {
         n: name,
@@ -88,17 +103,22 @@ export class AdminComponent implements OnInit {
               c.push(0);
             }
             c[i] += Math.pow(2, tpsNo % 30);
+            maxTps--;
           });
         return;
+      }
+      if (id) {
+        parents.push([id, name]);
       }
       for (const r of arr) {
         const a = data[r];
         const cid = a[TEMPAT_ID] as number;
         const cname = a[NAMA] as string;
-        parents.push([cid, cname]);
         rec(parents, cid, cname, depth + 1);
-        parents.pop();
         node.c.push([cid, cname]);
+      }
+      if (id) {
+        parents.pop();
       }
     }
 
@@ -107,9 +127,9 @@ export class AdminComponent implements OnInit {
         p: {
           [imageId]: {
             u:
-              'https://lh3.googleusercontent.com/' +
+              'http://lh3.googleusercontent.com/' +
               'hJNMRNckvFNLdDDbtfjyvpC-u0Iov_wZPYeF6Zw' +
-              'vF3JfZK4kswubbiPUkYT82syEpGqksUSj-PwTtJxwTQ=s980',
+              'vF3JfZK4kswubbiPUkYT82syEpGqksUSj-PwTtJxwTQ',
             a
           }
         }
@@ -126,6 +146,42 @@ export class AdminComponent implements OnInit {
         t: idx,
         m: { m: ['Google', 'Pixel XL'], x: 106, y: -6 }
       };
+    }
+  }
+
+  async zero(user: User) {
+    const kelurahanIds = (await this.api.kelurahanIds$.toPromise()) as any[];
+    kelurahanIds.sort((a, b) => a - b);
+    console.log(kelurahanIds);
+    for (let i = 0; i < 100; i++) {
+      const kelurahanId = kelurahanIds[i];
+      const childrenBits = (await this.afd
+        .list(DbPath.hieChildren(kelurahanId))
+        .valueChanges()
+        .pipe(take(1))
+        .toPromise()) as number[];
+      for (const tpsNo of getTpsNumbers(childrenBits)) {
+        const aggregates = (await this.afd
+          .object(DbPath.hieAgg(kelurahanId, tpsNo))
+          .valueChanges()
+          .pipe(take(1))
+          .toPromise()) as Aggregate;
+        console.log(kelurahanId, tpsNo, aggregates.s);
+        for (let j = 0; j < 5; j++) {
+          aggregates.s[j] = 0;
+        }
+
+        this.api
+          .post(user, `${ApiService.HOST}/api/upload`, {
+            kelurahanId,
+            tpsNo,
+            aggregates,
+            metadata: { i: 'vJVwly28IC3fK2ExYMaG' }
+          })
+          .then(res => {
+            console.log('res', kelurahanId, tpsNo);
+          });
+      }
     }
   }
 }

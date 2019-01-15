@@ -5,7 +5,7 @@ import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { AngularFireDatabase } from '@angular/fire/database';
 
-import { Aggregate, HierarchyNode, getTpsNumbers } from 'shared';
+import { Aggregate, HierarchyNode, getTpsNumbers, DbPath } from 'shared';
 
 interface Tps {
   tpsNo: number;
@@ -47,7 +47,7 @@ export class TpsComponent implements OnInit {
             tpsNo,
             address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG 2)',
             aggregate$: this.afd
-              .object<Aggregate>(`h/${id}/a/${tpsNo}`)
+              .object<Aggregate>(DbPath.hieAgg(id, tpsNo))
               .valueChanges()
           }));
           return state;

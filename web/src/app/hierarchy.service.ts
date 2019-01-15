@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AngularFireDatabase } from '@angular/fire/database';
 import { take, map } from 'rxjs/operators';
-import { HierarchyNode } from 'shared';
+import { HierarchyNode, DbPath } from 'shared';
 
 @Injectable({
   providedIn: 'root'
@@ -26,7 +26,7 @@ export class HierarchyService {
   get$(id: number) {
     console.log('Fetch node', id);
     return this.afd
-      .object(`h/${id}`)
+      .object(DbPath.hie(id))
       .valueChanges()
       .pipe(
         map(

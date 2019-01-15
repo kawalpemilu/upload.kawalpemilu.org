@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { AngularFireDatabase } from '@angular/fire/database';
 import { Observable } from 'rxjs';
-import { Aggregate, ImageMetadata } from 'shared';
+import { Aggregate, ImageMetadata, DbPath } from 'shared';
 
 interface Photo {
   u: string;
@@ -52,7 +52,7 @@ export class TpsPhotosComponent implements OnInit {
 
   ngOnInit() {
     this.photos$ = this.afd
-      .list<Photo>(`kelurahan/${this.kelurahanId}/tps/${this.tpsNo}`)
+      .list<Photo>(DbPath.tpsPending(this.kelurahanId, this.tpsNo))
       .valueChanges();
   }
 

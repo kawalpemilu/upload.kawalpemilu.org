@@ -7,11 +7,7 @@ import { HierarchyNode } from 'shared';
   template: `
     <p style="line-height: 200%">
       <span *ngFor="let p of parents()">
-        <a
-          [routerLink]="['/h', p.id]"
-          class="wilayah"
-          >{{ p.name }}</a
-        >
+        <a [routerLink]="['/h', p.id]" class="wilayah">{{ p.name }}</a>
         &gt;&nbsp;
       </span>
       {{ node.name }}
@@ -36,7 +32,7 @@ export class PathComponent implements OnInit, OnChanges {
   ngOnChanges() {}
 
   parents() {
-    const arr = [];
+    const arr = [{ id: 0, name: 'Nasional' }];
     if (this.node.parentIds) {
       for (let i = 0; i < this.node.parentIds.length; i++) {
         arr.push({

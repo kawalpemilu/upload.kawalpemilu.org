@@ -1,6 +1,19 @@
 export interface Aggregate {
-  sum: number[];
-  max: number[];
+  s: number[]; // Sum.
+  x: number[]; // Max.
+}
+
+export interface TpsImage {
+  u: string; // The Serving URL of the image.
+  a: Aggregate;
+}
+
+export interface ApiUploadRequest {
+  kelurahanId: number;
+  tpsNo: number;
+  aggregate: Aggregate;
+  metadata: ImageMetadata;
+  imageId: string;
 }
 
 export interface HierarchyNode {
@@ -10,7 +23,7 @@ export interface HierarchyNode {
   parentNames: string[];
   children: any;
   depth: number;
-  aggregate: Aggregate;
+  aggregate: { [key: string]: Aggregate };
 }
 
 export interface AggregateResponse {
@@ -28,7 +41,10 @@ export interface AggregateResponse {
 }
 
 export interface ImageMetadata {
-  i: string; // imageId.
+  u: string; // The userId who uploaded.
+  k: number; // Kelurahan ID wher it's set.
+  t: number; // TPS Number where it's set.
+  v: string; // The serving URL of the image.
   l: number; // Last Modified.
   s: number; // Size in Bytes.
   z: number; // Size in Bytes after compressed.
@@ -38,6 +54,40 @@ export interface ImageMetadata {
   o: number; // Orientation.
   y: number; // Latitude.
   x: number; // Longitude.
+}
+
+export function extractImageMetadata(m: any): ImageMetadata | null {
+  let validM: ImageMetadata = null;
+  if (m) {
+    validM = {} as ImageMetadata;
+    ['u', 'k', 't', 'v', 'l', 's', 'z', 'w', 'h', 'o', 'y', 'x'].forEach(
+      attr => {
+        if (typeof m[attr] === 'number') {
+          validM[attr] = m[attr];
+        }
+      }
+    );
+    if (typeof m.m === 'object') {
+      validM.m = ['', ''];
+      if (typeof m.m[0] === 'string') {
+        validM.m[0] = m.m[0].substring(0, 50);
+      }
+      if (typeof m.m[1] === 'string') {
+        validM.m[1] = m.m[1].substring(0, 50);
+      }
+    }
+  }
+  return !validM || Object.keys(validM).length == 0 ? null : validM;
+}
+
+export interface Upsert {
+  k: number; // Kelurahan ID
+  n: number; // Tps No
+  i: string | string[]; // IP Address
+  a: Aggregate; // Value to set
+  t: string; // Root ID + '-' + Request Timestamp
+  d: number; // Processed Timestamp
+  m: ImageMetadata;
 }
 
 export class DbPath {
@@ -92,9 +142,12 @@ export class DbPath {
   static hieAgg(id: number, cid: number) {
     return `${DbPath.hie(id)}/a/${cid}`;
   }
+  static hieRootId(id: number) {
+    return `${DbPath.hie(id)}/p/0`;
+  }
 
   static upserts(rootId: number) {
-    return `upserts/${rootId}`;
+    return `u/${rootId}`;
   }
   static upsertsLock(rootId: number) {
     return `${DbPath.upserts(rootId)}/lock`;
@@ -106,13 +159,30 @@ export class DbPath {
     return `${DbPath.upsertsLock(rootId)}/lease`;
   }
   static upsertsData() {
-    return `upserts/data`;
+    return `u/d`;
   }
   static upsertsDataImage(imageId: string) {
     return `${DbPath.upsertsData()}/${imageId}`;
   }
   static upsertsDataImageDone(imageId: string) {
     return `${DbPath.upsertsDataImage(imageId)}/d`;
+  }
+
+  static imageMetadata(imageId: string) {
+    return `i/${imageId}`;
+  }
+  static imageMetadataUserId(imageId: string) {
+    return `${DbPath.imageMetadata(imageId)}/u`;
+  }
+  static imageMetadataServingUrl(imageId: string) {
+    return `${DbPath.imageMetadata(imageId)}/v`;
+  }
+
+  static tpsPending(kelurahanId: number, tpsNo: number) {
+    return `t/${kelurahanId}/${tpsNo}/p`;
+  }
+  static tpsPendingImage(kelurahanId: number, tpsNo: number, imageId: string) {
+    return `${DbPath.tpsPending(kelurahanId, tpsNo)}/${imageId}`;
   }
 }
 

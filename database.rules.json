@@ -1,41 +1,27 @@
 {
   "rules": {
     "h": {
-      "$id": {
-        ".read": true
+      "$id": { ".read": true }
+    },
+
+    "i": {
+      "$imageId": {
+        "u": { ".read": true }
       }
     },
 
     "t": {
       "$kelurahanId": {
         "$tpsNo": {
-          ".read": true
+          "p": { ".read": true },
+          "v": { ".read": true },
+          "d": { ".read": true }
         }
       }
     },
 
-    "uploads": {
-      "$imageId": {
-        "userId": {
-          ".read": true
-        }
-      }
-    },
-
-    "upserts": {
-      "data": {
-        ".indexOn": "t"
-      }
-    },
-
-    "kelurahan": {
-      "$id": {
-        "tps": {
-          "$tpsNo": {
-            ".read": true
-          }
-        }
-      }
+    "u": {
+      "d": { ".indexOn": "t" }
     }
   }
 }

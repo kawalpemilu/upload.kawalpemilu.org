@@ -9,7 +9,7 @@ import { Observable } from 'rxjs';
 import { UserService } from '../user.service';
 import { User } from 'firebase';
 import * as piexif from 'piexifjs';
-import { Aggregate, ImageMetadata } from 'shared';
+import { ImageMetadata, ApiUploadRequest } from 'shared';
 import { ApiService } from '../api.service';
 
 export class UploadState {
@@ -26,7 +26,7 @@ export class UploadSequenceComponent implements OnInit {
   state$: Observable<UploadState>;
   formGroup: FormGroup;
   imgURL: string | ArrayBuffer;
-  uploadedMetadata$: Promise<any>;
+  uploadedMetadata$: Promise<[ImageMetadata, string]>;
 
   constructor(
     private route: ActivatedRoute,
@@ -98,10 +98,7 @@ export class UploadSequenceComponent implements OnInit {
 
     this.uploadedMetadata$ = this.uploadService
       .upload(userId, state.kelurahanId, state.tpsNo, file)
-      .then(imageId => {
-        m.i = imageId;
-        return m;
-      });
+      .then(imageId => <[ImageMetadata, string]>[m, imageId]);
   }
 
   getError(ctrlName: string) {
@@ -113,24 +110,24 @@ export class UploadSequenceComponent implements OnInit {
   }
 
   async selesai(user: User, kelurahanId: number, tpsNo: number) {
-    const aggregates: Aggregate = {
-      sum: [
-        this.formGroup.get('paslon1Ctrl').value,
-        this.formGroup.get('paslon2Ctrl').value,
-        this.formGroup.get('sahCtrl').value,
-        this.formGroup.get('tidakSahCtrl').value,
-        0
-      ],
-      max: []
-    };
-
-    this.api.post(user, `${ApiService.HOST}/api/upload`, {
+    const [metadata, imageId] = await this.uploadedMetadata$;
+    const request: ApiUploadRequest = {
       kelurahanId,
       tpsNo,
-      aggregates,
-      metadata: await this.uploadedMetadata$
-    });
-
+      aggregate: {
+        s: [
+          this.formGroup.get('paslon1Ctrl').value,
+          this.formGroup.get('paslon2Ctrl').value,
+          this.formGroup.get('sahCtrl').value,
+          this.formGroup.get('tidakSahCtrl').value,
+          0
+        ],
+        x: []
+      },
+      metadata,
+      imageId
+    };
+    this.api.post(user, `${ApiService.HOST}/api/upload`, request);
     this.router.navigate(['/t', kelurahanId], { fragment: `${tpsNo}` });
   }
 

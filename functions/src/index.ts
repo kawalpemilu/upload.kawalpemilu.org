@@ -7,7 +7,11 @@ import {
   DbPath,
   AggregateResponse,
   ImageMetadata,
-  getTpsNumbers
+  getTpsNumbers,
+  Upsert,
+  extractImageMetadata,
+  TpsImage,
+  ApiUploadRequest
 } from 'shared';
 
 admin.initializeApp({
@@ -35,15 +39,15 @@ export const handlePhotoUpload = functions.storage
     const path = encodeURIComponent(`${domain}/${object.name}`);
     const url = await request(`https://${domain}/gsu?path=${path}`);
 
-    // object.name = uploads/{kelurahanId}/{tpsNo}/{userId}/{imageId}
     const paths = object.name.split('/');
+    // object.name = uploads/{kelurahanId}/{tpsNo}/{userId}/{imageId}
     const [, kelurahanId, tpsNo, userId, imageId] = paths;
-    await rtdb.ref(`/uploads/${imageId}`).set({
-      kelurahanId,
-      tpsNo,
-      userId,
-      url
-    });
+    const m = {} as ImageMetadata;
+    m.u = userId;
+    m.k = parseInt(kelurahanId, 10);
+    m.t = parseInt(tpsNo, 10);
+    m.v = url;
+    await rtdb.ref(DbPath.imageMetadata(imageId)).set(m);
   });
 
 /**
@@ -69,116 +73,86 @@ app.post('/api/upload', async (req, res) => {
   const user = await validateToken(req, res);
   if (!user) return null;
 
-  console.log('body', req.body);
-  const inputM = req.body.metadata as ImageMetadata;
-  const validM = {} as ImageMetadata;
-  if (!inputM) {
-    return res.json({ error: 'Invalid metadata' });
-  }
-  if (!inputM.i || !inputM.i.match(/^[A-Za-z0-9]{20}$/)) {
+  const b = req.body as ApiUploadRequest;
+  const imageId = b.imageId;
+  if (typeof imageId !== 'string' || !imageId.match(/^[A-Za-z0-9]{20}$/)) {
     return res.json({ error: 'Invalid imageId' });
   }
-  validM.i = inputM.i;
-  ['w', 'h', 'o', 'y', 'x', 'l', 's', 'z'].forEach(attr => {
-    if (typeof inputM[attr] === 'number') {
-      validM[attr] = inputM[attr];
-    }
-  });
-  if (typeof inputM.m === 'object') {
-    validM.m = ['', ''];
-    if (typeof inputM.m[0] === 'string') {
-      validM.m[0] = inputM.m[0].substring(0, 50);
-    }
-    if (typeof inputM.m[1] === 'string') {
-      validM.m[1] = inputM.m[1].substring(0, 50);
-    }
-  }
-
-  const kelurahanId = parseInt(req.body.kelurahanId, 10);
-  if (isNaN(kelurahanId) || kelurahanId < 0 || kelurahanId > 100000) {
-    return res.json({ error: 'kelurahanId out of range' });
-  }
-  if (
-    (await rtdb.ref(DbPath.hieDepth(kelurahanId)).once('value')).val() !== 4
-  ) {
-    return res.json({ error: 'Invalid kelurahanId' });
-  }
-
-  const tpsNo = parseInt(req.body.tpsNo, 10);
-  if (isNaN(tpsNo) || tpsNo < 0 || tpsNo > 1000) {
-    return res.json({ error: 'tpsNo out of range' });
-  }
-  const childrenBits = (await rtdb
-    .ref(DbPath.hieChildren(kelurahanId))
+  const servingUrl = (await rtdb
+    .ref(DbPath.imageMetadataServingUrl(imageId))
     .once('value')).val();
-  if (!childrenBits || getTpsNumbers(childrenBits).indexOf(tpsNo) === -1) {
-    return res.json({ error: 'tpsNo does not exists' });
-  }
-
-  const ts = Date.now();
-  const agg = { sum: [], max: [ts] } as Aggregate;
-  const a = req.body.aggregates;
-  if (!a || !a.sum || !a.sum.length || a.sum.length > 5) {
-    return res.json({ error: 'Invalid aggregates sum' });
-  }
-  for (let i = 0; i < a.sum.length; i++) {
-    const sum = parseInt(a.sum[i], 10);
-    if (isNaN(sum) || sum < 0 || sum > 1000) {
-      return res.json({ error: 'Invalid sum range' });
-    }
-    agg.sum.push(sum);
-  }
-
-  const url = (await rtdb.ref(`uploads/${validM.i}/url`).once('value')).val();
-  if (!url) {
+  if (!servingUrl) {
     return res.json({ error: 'Invalid url' });
   }
 
-  const rootId = (await rtdb.ref(`h/${kelurahanId}/p/1`).once('value')).val();
+  const kelId = b.kelurahanId;
+  if (typeof kelId !== 'number' || kelId <= 0 || kelId > 100000) {
+    return res.json({ error: 'kelurahanId out of range' });
+  }
+  if ((await rtdb.ref(DbPath.hieDepth(kelId)).once('value')).val() !== 4) {
+    return res.json({ error: 'Invalid kelurahanId' });
+  }
 
-  // TODO: move this to admin action.
-  const u: Upsert = {
-    k: kelurahanId,
-    n: tpsNo,
-    a: agg,
-    i: req.headers['fastly-client-ip'],
-    t: `${rootId}-${ts}`,
-    d: 0
+  const tpsNo = b.tpsNo;
+  if (typeof tpsNo !== 'number' || tpsNo < 0 || tpsNo > 1000) {
+    return res.json({ error: 'tpsNo out of range' });
+  }
+  const bits = (await rtdb.ref(DbPath.hieChildren(kelId)).once('value')).val();
+  if (!bits || getTpsNumbers(bits).indexOf(tpsNo) === -1) {
+    return res.json({ error: 'tpsNo does not exists' });
+  }
+
+  const a = b.aggregate;
+  if (!a || !a.s || !a.s.length || a.s.length > 5) {
+    return res.json({ error: 'Invalid aggregates sum' });
+  }
+  const ts = Date.now();
+  const agg = { s: [], x: [ts] } as Aggregate;
+  for (const sum of a.s) {
+    if (typeof sum !== 'number' || sum < 0 || sum > 1000) {
+      return res.json({ error: 'Invalid sum range' });
+    }
+    agg.s.push(sum);
+  }
+
+  const rootId = (await rtdb.ref(DbPath.hieRootId(kelId)).once('value')).val();
+
+  const ti: TpsImage = {
+    u: servingUrl,
+    a: agg
   };
-
+  const upsert: Upsert = {
+    k: kelId,
+    n: tpsNo,
+    i: req.headers['fastly-client-ip'],
+    a: agg,
+    t: `${rootId}-${ts}`,
+    d: 0,
+    m: extractImageMetadata(b.metadata)
+  };
   await rtdb.ref().update({
-    [`kelurahan/${kelurahanId}/tps/${tpsNo}/${validM.i}`]: {
-      u: url,
-      a: agg,
-      m: validM
-    },
-    [DbPath.upsertsDataImage(validM.i)]: u
+    [DbPath.tpsPendingImage(kelId, tpsNo, imageId)]: ti,
+    [DbPath.upsertsDataImage(imageId)]: upsert
   });
 
   return res.json({ ok: await processAggregate(rootId) });
 });
 
-export interface Upsert {
-  k: number; // Kelurahan ID
-  n: number; // Tps No
-  i: string | string[]; // IP Address
-  a: Aggregate; // Value to set
-  t: string; // Root ID + '-' + Request Timestamp
-  d: number; // Processed Timestamp
-}
+type HierarchyAggregates = { [key: string]: { [key: string]: Aggregate } };
 
-async function updateAggregates(path: number[], u: Upsert, ha: any) {
-  let t = ha[path[4]];
-  t = t && t[path[5]];
-  t = t || { sum: [], max: [] };
-
+async function updateAggregates(
+  path: number[],
+  u: Upsert,
+  ha: HierarchyAggregates
+) {
+  const t = (ha[path[4]] && ha[path[4]][path[5]]) || { s: [], x: [] };
   const deltaSum = [];
-  for (let i = 0; i < u.a.sum.length; i++) {
-    deltaSum.push(u.a.sum[i] - (t.sum[i] || 0));
+  for (let i = 0; i < u.a.s.length; i++) {
+    deltaSum.push(u.a.s[i] - (t.s[i] || 0));
   }
   const newMax = [];
-  for (let i = 0; i < u.a.max.length; i++) {
-    newMax[i] = Math.max(u.a.max[i], t.max[i] || u.a.max[i]);
+  for (let i = 0; i < u.a.x.length; i++) {
+    newMax[i] = Math.max(u.a.x[i], t.x[i] || u.a.x[i]);
   }
 
   for (let i = 0; i <= 4; i++) {
@@ -187,14 +161,14 @@ async function updateAggregates(path: number[], u: Upsert, ha: any) {
 
     const c = ha[pid];
     const cid = path[i + 1];
-    if (!c[cid]) c[cid] = { sum: [], max: [] };
+    if (!c[cid]) c[cid] = { s: [], x: [] };
     const p = c[cid];
 
-    for (let j = 0; j < u.a.sum.length; j++) {
-      p.sum[j] = (p.sum[j] || 0) + deltaSum[j];
+    for (let j = 0; j < u.a.s.length; j++) {
+      p.s[j] = (p.s[j] || 0) + deltaSum[j];
     }
-    for (let j = 0; j < u.a.max.length; j++) {
-      p.max[j] = Math.max(p.max[j] || newMax[j], newMax[j]);
+    for (let j = 0; j < u.a.x.length; j++) {
+      p.x[j] = Math.max(p.x[j] || newMax[j], newMax[j]);
     }
   }
 }
@@ -207,6 +181,7 @@ function getParentIds(kelurahanIds: number[]) {
         .once('value')
         .then(s => {
           const parentIds = s.val();
+          parentIds.unshift(0);
           parentIds.push(kelurahanId);
           return parentIds;
         })
@@ -215,7 +190,7 @@ function getParentIds(kelurahanIds: number[]) {
 }
 
 async function getHierarchyAggregates(paths: number[][]) {
-  const ha = {};
+  const ha: HierarchyAggregates = {};
   const promises = [];
   paths.forEach(path => {
     if (path.length !== 6) throw new Error(`Invalid path: ${path}`);
@@ -226,7 +201,7 @@ async function getHierarchyAggregates(paths: number[][]) {
       const cid = path[i + 1];
       const c = ha[pid];
       if (!c[cid]) {
-        c[cid] = true;
+        c[cid] = {} as Aggregate;
         promises.push(
           rtdb
             .ref(DbPath.hieAgg(pid, cid))
@@ -239,21 +214,6 @@ async function getHierarchyAggregates(paths: number[][]) {
   await Promise.all(promises);
   return ha;
 }
-
-app.get('/api/processUpserts/:key/:rootId', async (req, res) => {
-  if (req.params.key !== 'l32kj09309823ll1kk1lasJKLDK83kjKJHD') {
-    return res.json({ error: 'Invalid key' });
-  }
-  try {
-    return res.json({
-      ok: await (req.params.rootId
-        ? processAggregate(req.params.rootId)
-        : Promise.all(DbPath.rootIds.map(rootId => processAggregate(rootId))))
-    });
-  } catch (e) {
-    return res.json({ error: e.message });
-  }
-});
 
 async function processAggregate(rootId: number): Promise<AggregateResponse> {
   if (DbPath.rootIds.indexOf(rootId) === -1)
@@ -361,5 +321,20 @@ async function processAggregate(rootId: number): Promise<AggregateResponse> {
   res.totalRuntime = Date.now() - t0;
   return res;
 }
+
+app.get('/api/processUpserts/:key/:rootId', async (req, res) => {
+  if (req.params.key !== 'l32kj09309823ll1kk1lasJKLDK83kjKJHD') {
+    return res.json({ error: 'Invalid key' });
+  }
+  try {
+    return res.json({
+      ok: await (parseInt(req.params.rootId, 10)
+        ? processAggregate(req.params.rootId)
+        : Promise.all(DbPath.rootIds.map(rootId => processAggregate(rootId))))
+    });
+  } catch (e) {
+    return res.json({ error: e.message });
+  }
+});
 
 exports.api = functions.runWith({ memory: '512MB' }).https.onRequest(app);

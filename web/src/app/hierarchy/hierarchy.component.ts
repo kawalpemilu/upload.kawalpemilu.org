@@ -36,8 +36,8 @@ export class HierarchyComponent implements OnInit {
     for (const c of node.children) {
       const a = node.aggregate[c[0]];
       if (a) {
-        for (let i = 0; i < a.sum.length; i++) {
-          res[i] = (res[i] || 0) + a.sum[i];
+        for (let i = 0; i < a.s.length; i++) {
+          res[i] = (res[i] || 0) + a.s[i];
         }
       }
     }

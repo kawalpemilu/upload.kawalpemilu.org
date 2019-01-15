@@ -1,5 +1,27 @@
 "use strict";
 exports.__esModule = true;
+function extractImageMetadata(m) {
+    var validM = null;
+    if (m) {
+        validM = {};
+        ['u', 'k', 't', 'v', 'l', 's', 'z', 'w', 'h', 'o', 'y', 'x'].forEach(function (attr) {
+            if (typeof m[attr] === 'number') {
+                validM[attr] = m[attr];
+            }
+        });
+        if (typeof m.m === 'object') {
+            validM.m = ['', ''];
+            if (typeof m.m[0] === 'string') {
+                validM.m[0] = m.m[0].substring(0, 50);
+            }
+            if (typeof m.m[1] === 'string') {
+                validM.m[1] = m.m[1].substring(0, 50);
+            }
+        }
+    }
+    return !validM || Object.keys(validM).length == 0 ? null : validM;
+}
+exports.extractImageMetadata = extractImageMetadata;
 var DbPath = /** @class */ (function () {
     function DbPath() {
     }
@@ -18,8 +40,11 @@ var DbPath = /** @class */ (function () {
     DbPath.hieAgg = function (id, cid) {
         return DbPath.hie(id) + "/a/" + cid;
     };
+    DbPath.hieRootId = function (id) {
+        return DbPath.hie(id) + "/p/0";
+    };
     DbPath.upserts = function (rootId) {
-        return "upserts/" + rootId;
+        return "u/" + rootId;
     };
     DbPath.upsertsLock = function (rootId) {
         return DbPath.upserts(rootId) + "/lock";
@@ -31,13 +56,28 @@ var DbPath = /** @class */ (function () {
         return DbPath.upsertsLock(rootId) + "/lease";
     };
     DbPath.upsertsData = function () {
-        return "upserts/data";
+        return "u/d";
     };
     DbPath.upsertsDataImage = function (imageId) {
         return DbPath.upsertsData() + "/" + imageId;
     };
     DbPath.upsertsDataImageDone = function (imageId) {
         return DbPath.upsertsDataImage(imageId) + "/d";
+    };
+    DbPath.imageMetadata = function (imageId) {
+        return "i/" + imageId;
+    };
+    DbPath.imageMetadataUserId = function (imageId) {
+        return DbPath.imageMetadata(imageId) + "/u";
+    };
+    DbPath.imageMetadataServingUrl = function (imageId) {
+        return DbPath.imageMetadata(imageId) + "/v";
+    };
+    DbPath.tpsPending = function (kelurahanId, tpsNo) {
+        return "t/" + kelurahanId + "/" + tpsNo + "/p";
+    };
+    DbPath.tpsPendingImage = function (kelurahanId, tpsNo, imageId) {
+        return DbPath.tpsPending(kelurahanId, tpsNo) + "/" + imageId;
     };
     DbPath.rootIds = [
         1,
