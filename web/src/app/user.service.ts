@@ -18,11 +18,17 @@ export class UserService {
   }
 
   login(method: string) {
-    const provider =
-      method === 'google'
-        ? new auth.GoogleAuthProvider()
-        : new auth.FacebookAuthProvider();
-    this.afAuth.auth.signInWithRedirect(provider);
+    const a = this.afAuth.auth;
+    switch (method) {
+      case 'anon':
+        return a.signInAnonymously();
+      case 'google':
+        return a.signInWithRedirect(new auth.GoogleAuthProvider());
+      case 'facebook':
+        return a.signInWithRedirect(new auth.FacebookAuthProvider());
+      case 'twitter':
+        return a.signInWithRedirect(new auth.TwitterAuthProvider());
+    }
   }
 
   logout() {

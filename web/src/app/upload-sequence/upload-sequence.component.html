@@ -133,7 +133,12 @@
 <ng-template #login>
   <div *ngIf="userService.isLoading"><mat-spinner></mat-spinner></div>
   <div *ngIf="!userService.isLoading">
-    Untuk mengupload foto, anda harus login terlebih dahulu:
+    <p>
+      Untuk mengupload foto, anda harus login terlebih dahulu<a
+        (click)="userService.login('anon')"
+        >:</a
+      >
+    </p>
 
     <p></p>
     <button
@@ -161,8 +166,17 @@
       Login with Facebook
     </button>
 
-    <!-- twitter -->
-    <!-- https://icons8.com/icon/set/twitter/color -->
-    <!-- <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAMJSURBVGhD7ZhfiA1RHMePO/emWOVPlJQ3kSIST1IkSZT8eRCR7Jt/KXmSfVDkkS28iJS950x3lza8CU8UJUq8EF50u+zeO+fMtqh7fc/sr9tlDzszZ2aVzqe+zZ07c37f3/kz55wZ5nA4HA6HIy6isdjj6iL0xuMy9IRqFLh84Ql5lvWr+XTXL5T65HL6mQ6YbGat1hQ6TUdPq6CTRNI/EK9lFFeywFV3dP+d2gxPBLtw/khXOPovFX61CwGGoV76JxUof9mYtEHokeeo6LfonMvPTNRnU5jkwHhLOziSYH7Lo0uxQUJ72zGSiKsvJV+tYLfqs9B7GyhcMgpCHu4MivNBNtCYQ5cnBkMPrfi+M0Y8ye8FoSrQY1Tka0nIZRQxGWi9o4bgn5DURrrlrxR5uHp8+QTictQrq60ULjkeD7cZA0Oo3ACrBEvoViN4CA+aysZUregHaylUSvRsgNnBEHxMXDZRkbtRK91vTqVSbTDkjhnLxRDK7qEwdiDYpd+D/0ENGrcno4eu0liEJPYZ7ouncrCDUrDkZnM6euGt0SRPldUmyiA9egrEON6vpzO07EujUU6yXoE1GALH20G5HOk0yFV4tthgaxqlkZ5Sn1ppNMhbXL2mFOxBLzwxmuQqeZXs7Sn54Sp06djeZLKELQzZZwMqsFsv70az7FUzrSnW6G0BhtMzg2G24vI8WWYLthXbddfC4Do0ajS3FWY6JsIFZJktSL7XaJqp5AWyywERzEUlqmbjDMTlR733Ird8KIpwDcyGxpnbCgsXFGuLbo/epHH1wJhISmGbcoaiTx56fUBFeqwrg0nB+qNBKmAavbDol35TYnHE5Y0079l2YJFBlx+w2p1GL0LqdK4tr7ezepgUebDO48FOGJ7CQnYPLR4Yk4or/ZLP5XqyyZHbwzMxL5+DWTbbaAy1qNX9ahc5TBL9ch5a/gTMXxkTm0B6qKH8Ef19hyL+Q0SwFAkdQq9cQ1JPcXyHlq3j2ESyQzh+wPWHOF5BhbuZP7KQSjocDofD4fgPYewnh1ftHbHR+OoAAAAASUVORK5CYII="> -->
+    <p></p>
+    <button
+      style="width: 250px; text-align: left"
+      mat-raised-button
+      (click)="userService.login('twitter')"
+    >
+      <img
+      style="padding:8px"
+      src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAMJSURBVGhD7ZhfiA1RHMePO/emWOVPlJQ3kSIST1IkSZT8eRCR7Jt/KXmSfVDkkS28iJS950x3lza8CU8UJUq8EF50u+zeO+fMtqh7fc/sr9tlDzszZ2aVzqe+zZ07c37f3/kz55wZ5nA4HA6HIy6isdjj6iL0xuMy9IRqFLh84Ql5lvWr+XTXL5T65HL6mQ6YbGat1hQ6TUdPq6CTRNI/EK9lFFeywFV3dP+d2gxPBLtw/khXOPovFX61CwGGoV76JxUof9mYtEHokeeo6LfonMvPTNRnU5jkwHhLOziSYH7Lo0uxQUJ72zGSiKsvJV+tYLfqs9B7GyhcMgpCHu4MivNBNtCYQ5cnBkMPrfi+M0Y8ye8FoSrQY1Tka0nIZRQxGWi9o4bgn5DURrrlrxR5uHp8+QTictQrq60ULjkeD7cZA0Oo3ACrBEvoViN4CA+aysZUregHaylUSvRsgNnBEHxMXDZRkbtRK91vTqVSbTDkjhnLxRDK7qEwdiDYpd+D/0ENGrcno4eu0liEJPYZ7ouncrCDUrDkZnM6euGt0SRPldUmyiA9egrEON6vpzO07EujUU6yXoE1GALH20G5HOk0yFV4tthgaxqlkZ5Sn1ppNMhbXL2mFOxBLzwxmuQqeZXs7Sn54Sp06djeZLKELQzZZwMqsFsv70az7FUzrSnW6G0BhtMzg2G24vI8WWYLthXbddfC4Do0ajS3FWY6JsIFZJktSL7XaJqp5AWyywERzEUlqmbjDMTlR733Ird8KIpwDcyGxpnbCgsXFGuLbo/epHH1wJhISmGbcoaiTx56fUBFeqwrg0nB+qNBKmAavbDol35TYnHE5Y0079l2YJFBlx+w2p1GL0LqdK4tr7ezepgUebDO48FOGJ7CQnYPLR4Yk4or/ZLP5XqyyZHbwzMxL5+DWTbbaAy1qNX9ahc5TBL9ch5a/gTMXxkTm0B6qKH8Ef19hyL+Q0SwFAkdQq9cQ1JPcXyHlq3j2ESyQzh+wPWHOF5BhbuZP7KQSjocDofD4fgPYewnh1ftHbHR+OoAAAAASUVORK5CYII="
+      />
+      Login with Twitter
+    </button>
   </div>
 </ng-template>
