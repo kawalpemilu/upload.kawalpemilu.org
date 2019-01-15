@@ -7,22 +7,26 @@
     <thead>
       <tr>
         <th>Wilayah</th>
-        <th>Jokowi</th>
-        <th>Prabowo</th>
-        <th>Sah</th>
-        <th>~Sah</th>
+        <th class="paslon1">Jokowi</th>
+        <th class="paslon2">Prabowo</th>
+        <!-- <th>Sah</th>
+        <th>~Sah</th> -->
       </tr>
     </thead>
 
     <tbody>
       <tr *ngFor="let c of state.children">
         <td>
-          <a [routerLink]="[state.depth < 3 ? '/h' : '/t', c[0]]">{{ c[1] }}</a>
+          <a
+            [routerLink]="[state.depth < 3 ? '/h' : '/t', c[0]]"
+            style="text-decoration: none; color: blue"
+            >{{ c[1] }}</a
+          >
         </td>
         <td>{{ state.aggregate && (state.aggregate[c[0]]?.sum)[0] }}</td>
         <td>{{ state.aggregate && (state.aggregate[c[0]]?.sum)[1] }}</td>
-        <td>{{ state.aggregate && (state.aggregate[c[0]]?.sum)[2] }}</td>
-        <td>{{ state.aggregate && (state.aggregate[c[0]]?.sum)[3] }}</td>
+        <!-- <td>{{ state.aggregate && (state.aggregate[c[0]]?.sum)[2] }}</td>
+        <td>{{ state.aggregate && (state.aggregate[c[0]]?.sum)[3] }}</td> -->
       </tr>
     </tbody>
 
@@ -31,8 +35,8 @@
         <th align="right">TOTAL</th>
         <td>{{ s[0] }}</td>
         <td>{{ s[1] }}</td>
-        <td>{{ s[2] }}</td>
-        <td>{{ s[3] }}</td>
+        <!-- <td>{{ s[2] }}</td>
+        <td>{{ s[3] }}</td> -->
       </tr>
     </tfoot>
   </table>

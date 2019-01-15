@@ -25,6 +25,8 @@ import {
   MatInputModule,
   MatProgressSpinnerModule
 } from '@angular/material';
+import { MatToolbarModule } from '@angular/material/toolbar';
+
 import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
@@ -54,7 +56,9 @@ import { HttpClientModule } from '@angular/common/http';
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+
+    MatToolbarModule
   ],
   providers: [],
   bootstrap: [AppComponent]

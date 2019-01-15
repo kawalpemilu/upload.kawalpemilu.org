@@ -5,14 +5,25 @@ import { HierarchyNode } from 'shared';
 @Component({
   selector: 'app-path',
   template: `
-    <p>
+    <p style="line-height: 200%">
       <span *ngFor="let p of parents()">
-        <a [routerLink]="['/h', p.id]">{{ p.name }}</a> &gt;
+        <a
+          [routerLink]="['/h', p.id]"
+          style="text-decoration: none; color: blue"
+          >{{ p.name }}</a
+        >
+        &gt;&nbsp;
       </span>
       {{ node.name }}
     </p>
   `,
-  styles: [``]
+  styles: [
+    `
+      p {
+        font-family: Arial, Helvetica, sans-serif;
+      }
+    `
+  ]
 })
 export class PathComponent implements OnInit, OnChanges {
   @Input()
