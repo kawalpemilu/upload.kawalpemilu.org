@@ -1,0 +1,21 @@
+<div *ngIf="(userService.user$ | async) as user; else login">
+  <p>
+    Halo, {{ user.displayName }} (<a
+      style="color: blue; cursor: pointer;"
+      (click)="userService.logout()"
+      >logout</a
+    >)
+  </p>
+
+  <p>Halaman Admin</p>
+</div>
+
+<ng-template #login>
+  <app-login fitur="mengakses halaman admin"></app-login>
+</ng-template>
+
+<p>
+  <a [routerLink]="['/h/0']" mat-raised-button color="primary">
+    Kembali ke halaman utama
+  </a>
+</p>

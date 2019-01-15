@@ -3,14 +3,14 @@ import { UploadService } from '../upload/upload.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
-import { map, retry } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
 import { UserService } from '../user.service';
-import { HttpClient } from '@angular/common/http';
 import { User } from 'firebase';
 import * as piexif from 'piexifjs';
 import { Aggregate, ImageMetadata } from 'shared';
+import { ApiService } from '../api.service';
 
 export class UploadState {
   kelurahanId: number;
@@ -34,7 +34,7 @@ export class UploadSequenceComponent implements OnInit {
     public userService: UserService,
     public uploadService: UploadService,
     private formBuilder: FormBuilder,
-    private http: HttpClient
+    private api: ApiService
   ) {}
 
   ngOnInit() {
@@ -124,22 +124,12 @@ export class UploadSequenceComponent implements OnInit {
       max: []
     };
 
-    Promise.all([user.getIdToken(), this.uploadedMetadata$]).then(
-      ([idToken, metadata]) => {
-        const headers = { Authorization: `Bearer ${idToken}` };
-        const apiUrl = 'https://kawal-c1.firebaseapp.com/api';
-        const body = {
-          kelurahanId,
-          tpsNo,
-          aggregates,
-          metadata
-        };
-        return this.http
-          .post(`${apiUrl}/upload`, body, { headers })
-          .pipe(retry(3))
-          .toPromise();
-      }
-    );
+    this.api.post(user, `${ApiService.HOST}/api/upload`, {
+      kelurahanId,
+      tpsNo,
+      aggregates,
+      metadata: await this.uploadedMetadata$
+    });
 
     this.router.navigate(['/t', kelurahanId], { fragment: `${tpsNo}` });
   }

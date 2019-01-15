@@ -3,6 +3,7 @@ import { Routes, RouterModule } from '@angular/router';
 import { HierarchyComponent } from './hierarchy/hierarchy.component';
 import { TpsComponent } from './tps/tps.component';
 import { UploadSequenceComponent } from './upload-sequence/upload-sequence.component';
+import { AdminComponent } from './admin/admin.component';
 
 const routes: Routes = [
   { path: '', redirectTo: '/h/0', pathMatch: 'full' },
@@ -11,6 +12,10 @@ const routes: Routes = [
   {
     path: 'u/:kelurahanId/:tpsNo',
     component: UploadSequenceComponent
+  },
+  {
+    path: 'admin',
+    component: AdminComponent
   }
 ];
 

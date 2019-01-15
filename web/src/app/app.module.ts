@@ -28,6 +28,8 @@ import {
 import { MatToolbarModule } from '@angular/material/toolbar';
 
 import { HttpClientModule } from '@angular/common/http';
+import { LoginComponent } from './login/login.component';
+import { AdminComponent } from './admin/admin.component';
 
 @NgModule({
   declarations: [
@@ -37,7 +39,9 @@ import { HttpClientModule } from '@angular/common/http';
     PathComponent,
     UploadComponent,
     TpsPhotosComponent,
-    UploadSequenceComponent
+    UploadSequenceComponent,
+    LoginComponent,
+    AdminComponent
   ],
   imports: [
     BrowserModule,
