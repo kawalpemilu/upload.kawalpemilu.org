@@ -21,7 +21,9 @@
     },
 
     "u": {
-      "d": { ".indexOn": "t" }
+      "$rootId": {
+        "c": { ".read": true }
+      }
     }
   }
 }

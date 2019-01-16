@@ -46,23 +46,26 @@ var DbPath = /** @class */ (function () {
     DbPath.upserts = function (rootId) {
         return "u/" + rootId;
     };
-    DbPath.upsertsLock = function (rootId) {
-        return DbPath.upserts(rootId) + "/lock";
+    DbPath.upsertsLease = function (rootId) {
+        return DbPath.upserts(rootId) + "/l";
     };
-    DbPath.upsertsLockLower = function (rootId) {
-        return DbPath.upsertsLock(rootId) + "/lower";
+    DbPath.upsertsPending = function (rootId) {
+        return DbPath.upserts(rootId) + "/p";
     };
-    DbPath.upsertsLockLease = function (rootId) {
-        return DbPath.upsertsLock(rootId) + "/lease";
+    DbPath.upsertsQueueCount = function (rootId) {
+        return DbPath.upserts(rootId) + "/c";
     };
-    DbPath.upsertsData = function () {
-        return "u/d";
+    DbPath.upsertsQueue = function (rootId) {
+        return DbPath.upserts(rootId) + "/q";
     };
-    DbPath.upsertsDataImage = function (imageId) {
-        return DbPath.upsertsData() + "/" + imageId;
+    DbPath.upsertsQueueImage = function (rootId, imageId) {
+        return DbPath.upsertsQueue(rootId) + "/" + imageId;
     };
-    DbPath.upsertsDataImageDone = function (imageId) {
-        return DbPath.upsertsDataImage(imageId) + "/d";
+    DbPath.upsertsArchiveImage = function (rootId, imageId) {
+        return DbPath.upserts(rootId) + "/a/" + imageId;
+    };
+    DbPath.upsertsArchiveImageDone = function (rootId, imageId) {
+        return DbPath.upserts(rootId) + "/a/" + imageId + "/d";
     };
     DbPath.imageMetadata = function (imageId) {
         return "i/" + imageId;

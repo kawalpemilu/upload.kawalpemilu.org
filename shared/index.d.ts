@@ -30,12 +30,13 @@ export interface AggregateResponse {
     totalUpdates: number;
     totalRuntime: number;
     totalBatches: number;
+    readPayload: number;
     readParents: number;
     readHieAggs: number;
     updateInMem: number;
     writeDbAggs: number;
     largeBatchTime: number;
-    lower: string;
+    lease: number;
 }
 export interface ImageMetadata {
     u: string;
@@ -58,7 +59,6 @@ export interface Upsert {
     n: number;
     i: string | string[];
     a: Aggregate;
-    t: string;
     d: number;
     m: ImageMetadata;
 }
@@ -71,12 +71,13 @@ export declare class DbPath {
     static hieAgg(id: number, cid: number): string;
     static hieRootId(id: number): string;
     static upserts(rootId: number): string;
-    static upsertsLock(rootId: number): string;
-    static upsertsLockLower(rootId: number): string;
-    static upsertsLockLease(rootId: number): string;
-    static upsertsData(): string;
-    static upsertsDataImage(imageId: string): string;
-    static upsertsDataImageDone(imageId: string): string;
+    static upsertsLease(rootId: number): string;
+    static upsertsPending(rootId: number): string;
+    static upsertsQueueCount(rootId: number): string;
+    static upsertsQueue(rootId: number): string;
+    static upsertsQueueImage(rootId: number, imageId: string): string;
+    static upsertsArchiveImage(rootId: number, imageId: string): string;
+    static upsertsArchiveImageDone(rootId: number, imageId: string): string;
     static imageMetadata(imageId: string): string;
     static imageMetadataUserId(imageId: string): string;
     static imageMetadataServingUrl(imageId: string): string;

@@ -32,12 +32,13 @@ export interface AggregateResponse {
   totalUpdates: number;
   totalRuntime: number;
   totalBatches: number;
+  readPayload: number;
   readParents: number;
   readHieAggs: number;
   updateInMem: number;
   writeDbAggs: number;
   largeBatchTime: number;
-  lower: string;
+  lease: number;
 }
 
 export interface ImageMetadata {
@@ -85,7 +86,6 @@ export interface Upsert {
   n: number; // Tps No
   i: string | string[]; // IP Address
   a: Aggregate; // Value to set
-  t: string; // Root ID + '-' + Request Timestamp
   d: number; // Processed Timestamp
   m: ImageMetadata;
 }
@@ -149,23 +149,26 @@ export class DbPath {
   static upserts(rootId: number) {
     return `u/${rootId}`;
   }
-  static upsertsLock(rootId: number) {
-    return `${DbPath.upserts(rootId)}/lock`;
+  static upsertsLease(rootId: number) {
+    return `${DbPath.upserts(rootId)}/l`;
   }
-  static upsertsLockLower(rootId: number) {
-    return `${DbPath.upsertsLock(rootId)}/lower`;
+  static upsertsPending(rootId: number) {
+    return `${DbPath.upserts(rootId)}/p`;
   }
-  static upsertsLockLease(rootId: number) {
-    return `${DbPath.upsertsLock(rootId)}/lease`;
+  static upsertsQueueCount(rootId: number) {
+    return `${DbPath.upserts(rootId)}/c`;
   }
-  static upsertsData() {
-    return `u/d`;
+  static upsertsQueue(rootId: number) {
+    return `${DbPath.upserts(rootId)}/q`;
   }
-  static upsertsDataImage(imageId: string) {
-    return `${DbPath.upsertsData()}/${imageId}`;
+  static upsertsQueueImage(rootId: number, imageId: string) {
+    return `${DbPath.upsertsQueue(rootId)}/${imageId}`;
   }
-  static upsertsDataImageDone(imageId: string) {
-    return `${DbPath.upsertsDataImage(imageId)}/d`;
+  static upsertsArchiveImage(rootId: number, imageId: string) {
+    return `${DbPath.upserts(rootId)}/a/${imageId}`;
+  }
+  static upsertsArchiveImageDone(rootId: number, imageId: string) {
+    return `${DbPath.upserts(rootId)}/a/${imageId}/d`;
   }
 
   static imageMetadata(imageId: string) {

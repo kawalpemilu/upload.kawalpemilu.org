@@ -1,10 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { ApiService } from '../api.service';
 import { UserService } from '../user.service';
-import { DbPath, getTpsNumbers, Aggregate } from 'shared';
+import {
+  DbPath,
+  getTpsNumbers,
+  Aggregate,
+  ImageMetadata,
+  TpsImage
+} from 'shared';
 import { AngularFireDatabase } from '@angular/fire/database';
 import { User } from 'firebase';
 import { take } from 'rxjs/operators';
+import { Upsert } from 'shared';
 
 @Component({
   selector: 'app-admin',
@@ -21,6 +28,15 @@ export class AdminComponent implements OnInit {
   async ngOnInit() {
     // await this.afd.object('upserts').remove();
     // console.log('removed');
+
+    DbPath.rootIds.map(rootId => {
+      this.afd
+        .object(DbPath.upsertsQueueCount(rootId))
+        .valueChanges()
+        .subscribe(val => {
+          console.log(rootId, val);
+        });
+    });
   }
 
   async kelurahanIds() {
@@ -60,18 +76,25 @@ export class AdminComponent implements OnInit {
     }
 
     const h = {};
-    const t = {};
+    const t: {
+      [key: string]: {
+        [key: string]: { p: { [key: string]: TpsImage } };
+      };
+    } = {};
+
     let now = Date.now();
     const parentIds = [];
-    const upsertsData = {};
-    let maxTps = 100;
+    let maxTps = 0;
 
+    const chunk = {};
     rec([], 0, 'Nasional', 0);
-    console.log(JSON.stringify(t));
-    console.log(JSON.stringify(upsertsData));
+    console.log('watiing', Object.keys(chunk).length);
+    // await this.afd.database.ref().update(chunk);
+    console.log(maxTps);
+    // console.log(JSON.stringify(t));
 
     function rec(parents: [number, string][], id, name, depth) {
-      // if (maxTps < 0) {
+      // if (maxTps > 1000) {
       //   return;
       // }
       const arr = data[id][ANAK];
@@ -88,25 +111,30 @@ export class AdminComponent implements OnInit {
           throw new Error('empty');
         }
         const c = node.c;
-        const u = (t[id] = {});
+        t[id] = {};
+        const u = t[id];
         const ts = now++;
+        const rootId = parentIds[1];
         arr
           .map(r => +r[NO_TPS])
           .forEach(tpsNo => {
-            const imageId = `i${id}-${tpsNo}`;
+            const imageId = `z${id}-${tpsNo}`;
             const a = { s: [1, 2, 3, 4, 1], x: [ts] };
-            u[tpsNo] = constructTps(imageId, a);
-            const idx = `${parentIds[1]}-${ts}`;
-            upsertsData[imageId] = constructUpsert(id, tpsNo, a, idx);
+            u[tpsNo] = { p: { [imageId]: constructTpsImage(a) } };
             const i = Math.floor(tpsNo / 30);
             while (i >= c.length) {
               c.push(0);
             }
             c[i] += Math.pow(2, tpsNo % 30);
-            maxTps--;
+            maxTps++;
+            if (rootId === 1) {
+              chunk[DbPath.upsertsArchiveImageDone(rootId, imageId)] = 0;
+              chunk[DbPath.upsertsQueueImage(rootId, imageId)] = 1;
+            }
           });
         return;
       }
+
       if (id) {
         parents.push([id, name]);
       }
@@ -122,30 +150,15 @@ export class AdminComponent implements OnInit {
       }
     }
 
-    function constructTps(imageId, a) {
-      return {
-        p: {
-          [imageId]: {
-            u:
-              'http://lh3.googleusercontent.com/' +
-              'hJNMRNckvFNLdDDbtfjyvpC-u0Iov_wZPYeF6Zw' +
-              'vF3JfZK4kswubbiPUkYT82syEpGqksUSj-PwTtJxwTQ',
-            a
-          }
-        }
+    function constructTpsImage(a) {
+      const ti: TpsImage = {
+        u:
+          'http://lh3.googleusercontent.com/' +
+          'hJNMRNckvFNLdDDbtfjyvpC-u0Iov_wZPYeF6Zw' +
+          'vF3JfZK4kswubbiPUkYT82syEpGqksUSj-PwTtJxwTQ',
+        a
       };
-    }
-
-    function constructUpsert(id, tpsNo, a, idx) {
-      return {
-        a: a,
-        d: 0,
-        i: '36.70.102.81',
-        k: id,
-        n: tpsNo,
-        t: idx,
-        m: { m: ['Google', 'Pixel XL'], x: 106, y: -6 }
-      };
+      return ti;
     }
   }
 
