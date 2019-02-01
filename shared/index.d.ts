@@ -20,8 +20,8 @@ export interface HierarchyNode {
     parentNames: string[];
     children: any;
     depth: number;
-    aggregate: {
-        [key: string]: Aggregate;
+    aggregate$: {
+        [key: string]: any;
     };
 }
 export interface AggregateResponse {

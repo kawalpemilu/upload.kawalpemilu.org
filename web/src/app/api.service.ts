@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { User } from 'firebase';
-import { retry, shareReplay } from 'rxjs/operators';
+import { retry, shareReplay, take } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -11,21 +12,24 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  kelurahanIds$ = this.http
-    .get('/assets/kelurahan_ids.js')
-    .pipe(shareReplay(1));
+  getStatic<T>(url: string) {
+    return (this.http.get(url).pipe(
+      retry(3),
+      take(1)
+    ) as Observable<T>).toPromise();
+  }
 
   async get(user: User, path: string) {
     return this.http
       .get(path, await this.getHeaders(user))
-      .pipe(retry(3))
+      .pipe(retry(3), take(1))
       .toPromise();
   }
 
   async post(user: User, path: string, body: any) {
     return this.http
       .post(path, body, await this.getHeaders(user))
-      .pipe(retry(3))
+      .pipe(retry(3), take(1))
       .toPromise();
   }
 

@@ -24,17 +24,17 @@
           >
         </td>
         <td class="angka">
-          {{ state.aggregate && (state.aggregate[c[0]]?.s)[0] }}
+          <span *ngIf="(state.aggregate$[c[0]] | async) as s">{{ s.s[0] }}</span>
         </td>
         <td class="angka">
-          {{ state.aggregate && (state.aggregate[c[0]]?.s)[1] }}
+          <span *ngIf="(state.aggregate$[c[0]] | async) as s">{{ s.s[1] }}</span>
         </td>
-        <!-- <td>{{ state.aggregate && (state.aggregate[c[0]]?.sum)[2] }}</td>
-        <td>{{ state.aggregate && (state.aggregate[c[0]]?.sum)[3] }}</td> -->
+        <!-- <td>{{  (state.aggregate[c[0]]?.sum)[2] }}</td>
+        <td>{{  (state.aggregate[c[0]]?.sum)[3] }}</td> -->
       </tr>
     </tbody>
 
-    <tfoot *ngIf="sum(state) as s">
+    <tfoot *ngIf="sum$(state) | async as s">
       <tr>
         <th align="right">TOTAL</th>
         <td class="angka">{{ s[0] }}</td>

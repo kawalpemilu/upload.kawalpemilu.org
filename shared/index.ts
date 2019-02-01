@@ -23,7 +23,8 @@ export interface HierarchyNode {
   parentNames: string[];
   children: any;
   depth: number;
-  aggregate: { [key: string]: Aggregate };
+  // Observable<Aggregate>
+  aggregate$: { [key: string]: any };
 }
 
 export interface AggregateResponse {

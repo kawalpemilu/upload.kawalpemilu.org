@@ -40,18 +40,21 @@ export class TpsComponent implements OnInit {
         distinctUntilChanged()
       )
       .pipe(
-        switchMap(async id => {
-          const state = (await this.hie.get(id)) as State;
-          const tpsNumbers = getTpsNumbers(state.children);
-          state.tpsList = tpsNumbers.map(tpsNo => ({
-            tpsNo,
-            address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG 2)',
-            aggregate$: this.afd
-              .object<Aggregate>(DbPath.hieAgg(id, tpsNo))
-              .valueChanges()
-          }));
-          return state;
-        })
+        switchMap(id =>
+          this.hie.get$(id).pipe(
+            map((state: State) => {
+              const tpsNumbers = getTpsNumbers(state.children);
+              state.tpsList = tpsNumbers.map(tpsNo => ({
+                tpsNo,
+                address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG 2)',
+                aggregate$: this.afd
+                  .object<Aggregate>(DbPath.hieAgg(id, tpsNo))
+                  .valueChanges()
+              }));
+              return state;
+            })
+          )
+        )
       );
     console.log('TpsComponent inited');
   }

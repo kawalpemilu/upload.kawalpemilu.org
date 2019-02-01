@@ -1,8 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { HierarchyService } from '../hierarchy.service';
 import { ActivatedRoute } from '@angular/router';
-import { Observable } from 'rxjs';
-import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
+import { Observable, combineLatest } from 'rxjs';
+import {
+  map,
+  distinctUntilChanged,
+  filter,
+  switchMap
+} from 'rxjs/operators';
 import { HierarchyNode } from 'shared';
 
 @Component({
@@ -28,19 +33,17 @@ export class HierarchyComponent implements OnInit {
     console.log('Hierarchy Component Inited');
   }
 
-  sum(node: HierarchyNode) {
-    const res = [];
-    if (!node.aggregate) {
-      return res;
-    }
-    for (const c of node.children) {
-      const a = node.aggregate[c[0]];
-      if (a) {
-        for (let i = 0; i < a.s.length; i++) {
-          res[i] = (res[i] || 0) + a.s[i];
+  sum$(node: HierarchyNode) {
+    return combineLatest(node.children.map(c => node.aggregate$[c[0]])).pipe(
+      map((arr: any) => {
+        const res = [];
+        for (const a of arr) {
+          for (let i = 0; i < a.s.length; i++) {
+            res[i] = (res[i] || 0) + a.s[i];
+          }
         }
-      }
-    }
-    return res;
+        return res;
+      })
+    );
   }
 }
