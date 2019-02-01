@@ -7,6 +7,7 @@ const NAMA = 2;
 const ANAK = 4;
 
 const parentIds = [];
+const rootIds = {};
 const data = {};
 for (let i = 0; i < raw.length; i++) {
   data[raw[i][TEMPAT_ID]] = raw[i];
@@ -18,7 +19,8 @@ function rec(id, name, depth) {
   const node = id ? [id, name] : [];
   parentIds.push(id);
   if (depth > 0) {
-    fs.writeFileSync(`r/r${id}.js`, JSON.stringify(parentIds[1]));
+    if (!rootIds[parentIds[1]]) rootIds[parentIds[1]] = [];
+    rootIds[parentIds[1]].push(id);
   }
   if (depth === 4) {
     for (const r of arr) {
@@ -48,3 +50,4 @@ function rec(id, name, depth) {
 
 const h = rec(0, 'Nasional', 0);
 fs.writeFileSync('h/h0.js', JSON.stringify(h));
+fs.writeFileSync(`r.js`, JSON.stringify(rootIds));

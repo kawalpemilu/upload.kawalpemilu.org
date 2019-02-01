@@ -9,9 +9,17 @@ import { shareReplay } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class HierarchyService {
+  rootIds: Promise<any>;
   cacheHierarchy: { [id: string]: HierarchyNode } = {};
 
   constructor(private afd: AngularFireDatabase, private api: ApiService) {
+    this.rootIds = this.api.getStatic(`/assets/r.js`).then(r => {
+      const map = {};
+      for (const rootId of Object.keys(r)) {
+        r[rootId].forEach(id => (map[id] = rootId));
+      }
+      return map;
+    });
     console.log('Loaded HierarchyService');
   }
 
@@ -43,7 +51,7 @@ export class HierarchyService {
       });
     }
 
-    const rootId = await this.api.getStatic(`/assets/r/r${id}.js`);
+    const rootId = (await this.rootIds)[id];
     this.rec(await this.api.getStatic(`/assets/h/h${rootId}.js`), 1, [], []);
     return this.cacheHierarchy[id];
   }
