@@ -16,7 +16,12 @@ export class HierarchyService {
     this.rootIds = this.api.getStatic(`/assets/r.js`).then(r => {
       const map = {};
       for (const rootId of Object.keys(r)) {
-        r[rootId].forEach(id => (map[id] = rootId));
+        const ids = r[rootId];
+        let prev = 0;
+        for (let i = 0; i < ids.length; i++) {
+          prev += ids[i];
+          map[prev] = rootId;
+        }
       }
       return map;
     });

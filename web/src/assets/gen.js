@@ -50,4 +50,16 @@ function rec(id, name, depth) {
 
 const h = rec(0, 'Nasional', 0);
 fs.writeFileSync('h/h0.js', JSON.stringify(h));
+
+for (const rootId of Object.keys(rootIds)) {
+  const ids = rootIds[rootId].sort((a, b) => a - b);
+  let prev = 0;
+  for (let i = 0; i < ids.length; i++) {
+    const t = ids[i];
+    ids[i] = ids[i] - prev;
+    prev = t;
+  }
+  rootIds[rootId] = ids;
+}
+
 fs.writeFileSync(`r.js`, JSON.stringify(rootIds));
