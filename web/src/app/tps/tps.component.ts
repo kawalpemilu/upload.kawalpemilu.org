@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { HierarchyService } from '../hierarchy.service';
 import { ActivatedRoute } from '@angular/router';
 import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 import { AngularFireDatabase } from '@angular/fire/database';
 
 import { Aggregate, HierarchyNode, getTpsNumbers, DbPath } from 'shared';
+import { AppComponent } from '../app.component';
 
 interface Tps {
   tpsNo: number;
@@ -23,13 +24,24 @@ interface State extends HierarchyNode {
   styleUrls: ['./tps.component.css']
 })
 export class TpsComponent implements OnInit {
+  TOOLBAR_HEIGHT = AppComponent.TOOLBAR_HEIGHT;
+  ROW_HEIGHT = 180;
   state$: Observable<State>;
+  height: number;
+  width: number;
 
   constructor(
     public hie: HierarchyService,
     private route: ActivatedRoute,
     private afd: AngularFireDatabase
   ) {}
+
+  @HostListener('window:resize', ['$event'])
+  getScreenSize() {
+    this.height = window.innerHeight;
+    this.width = window.innerWidth;
+    console.log(this.width, this.height);
+  }
 
   ngOnInit() {
     this.state$ = this.route.paramMap
@@ -56,6 +68,12 @@ export class TpsComponent implements OnInit {
           )
         )
       );
+
+    this.getScreenSize();
     console.log('TpsComponent inited');
+  }
+
+  viewportHeight(rows: number) {
+    return this.height - this.TOOLBAR_HEIGHT * 3 - 15;
   }
 }

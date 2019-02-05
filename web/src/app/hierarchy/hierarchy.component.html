@@ -1,47 +1,77 @@
-<ng-container *ngIf="(state$ | async) as state">
+<div *ngIf="(state$ | async) as state" style="margin: 0 5px">
   <app-path [node]="state"></app-path>
-
-  <p></p>
-
-  <table border="1" cellpadding="10">
+  <table>
     <thead>
-      <tr>
-        <th>Wilayah</th>
+      <tr [style.height.px]="ROW_HEIGHT" style="background-color: lightgray">
+        <th class="index">#</th>
+        <th class="wilayah">Wilayah</th>
         <th class="paslon1">Paslon 1</th>
         <th class="paslon2">Paslon 2</th>
-        <!-- <th>Sah</th>
-        <th>~Sah</th> -->
       </tr>
     </thead>
+  </table>
 
-    <tbody>
-      <tr *ngFor="let c of state.children">
-        <td>
-          <a
-            [routerLink]="[state.depth < 3 ? '/h' : '/t', c[0]]"
-            class="wilayah"
-            >{{ c[1] }}</a
+  <!-- TODO: SCROLL TO PARTICULAR ITEM -->
+  <div
+    style="overflow: scroll; -webkit-overflow-scrolling: touch;"
+    [style.height.px]="viewportHeight(state.children.length)"
+  >
+    <table>
+      <tbody>
+        <ng-container
+          *ngFor="
+            let c of state.children;
+            let index = index;
+            let odd = odd;
+            trackBy: trackByIdx
+          "
+        >
+          <tr
+            [style.height.px]="ROW_HEIGHT"
+            [style.background-color]="odd ? '#FFF' : '#EEE'"
           >
-        </td>
-        <td class="angka">
-          <span *ngIf="(state.aggregate$[c[0]] | async) as s">{{ s.s[0] }}</span>
-        </td>
-        <td class="angka">
-          <span *ngIf="(state.aggregate$[c[0]] | async) as s">{{ s.s[1] }}</span>
-        </td>
-        <!-- <td>{{  (state.aggregate[c[0]]?.sum)[2] }}</td>
-        <td>{{  (state.aggregate[c[0]]?.sum)[3] }}</td> -->
-      </tr>
-    </tbody>
+            <td class="index">{{ index + 1 }}</td>
+            <td class="wilayah">
+              <a
+                [routerLink]="[state.depth < 3 ? '/h' : '/t', c[0]]"
+                class="link"
+                >{{ c[1] }}</a
+              >
+            </td>
+            <td class="paslon1">
+              <span *ngIf="(state.aggregate$[c[0]] | async) as s">{{
+                s.s[0] | number
+              }}</span>
+            </td>
+            <td class="paslon2">
+              <span *ngIf="(state.aggregate$[c[0]] | async) as s">{{
+                s.s[1] | number
+              }}</span>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
 
-    <tfoot *ngIf="sum$(state) | async as s">
-      <tr>
-        <th align="right">TOTAL</th>
-        <td class="angka">{{ s[0] }}</td>
-        <td class="angka">{{ s[1] }}</td>
-        <!-- <td>{{ s[2] }}</td>
-        <td>{{ s[3] }}</td> -->
+  <table>
+    <tfoot>
+      <tr [style.height.px]="ROW_HEIGHT" style="background-color: lightgray">
+        <th class="index"></th>
+        <th class="wilayah" align="right">
+          TOTAL ({{ state.children.length }}) &nbsp;
+        </th>
+        <td class="paslon1">
+          <ng-container *ngIf="(sum$ | async) as s">
+            {{ s[0] | number }}
+          </ng-container>
+        </td>
+        <td class="paslon2">
+          <ng-container *ngIf="(sum$ | async) as s">
+            {{ s[1] | number }}
+          </ng-container>
+        </td>
       </tr>
     </tfoot>
   </table>
-</ng-container>
+</div>

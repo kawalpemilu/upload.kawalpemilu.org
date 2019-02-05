@@ -13,6 +13,8 @@ for (let i = 0; i < raw.length; i++) {
   data[raw[i][TEMPAT_ID]] = raw[i];
 }
 
+let maxTps = 0;
+
 function rec(id, name, depth) {
   // console.log(id, name, depth);
   const arr = data[id][ANAK];
@@ -28,6 +30,10 @@ function rec(id, name, depth) {
       const i = Math.floor(tpsNo / 30);
       while (i >= node.length - 2) node.push(0);
       node[i + 2] += Math.pow(2, tpsNo % 30);
+    }
+    if (arr.length > maxTps) {
+      maxTps = arr.length;
+      console.log('new max', id, name, maxTps);
     }
   } else {
     for (const r of arr) {
@@ -48,7 +54,7 @@ function rec(id, name, depth) {
   return node;
 }
 
-const h = rec(0, 'Nasional', 0);
+const h = rec(0, 'IDN', 0);
 fs.writeFileSync('h/h0.js', JSON.stringify(h));
 
 for (const rootId of Object.keys(rootIds)) {

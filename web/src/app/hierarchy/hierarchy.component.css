@@ -1,21 +1,46 @@
 table {
-  max-width: 500px;
   width: 100%;
-  margin: 0 0 10px 0;
 }
 
+th,
 td {
-  font-family: Arial, Helvetica, sans-serif;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.index {
+  width: 30px;
+  padding-left: 3px;
+  padding-right: 3px;
+  text-align: center;
 }
 
 .paslon1 {
-  width: 60px;
+  width: 65px;
+  text-align: right;
 }
 
 .paslon2 {
-  width: 60px;
+  width: 65px;
+  text-align: right;
 }
 
-.angka {
-  text-align: right;
+a.link {
+  text-decoration: none;
+}
+
+@media screen and (min-width: 370px) {
+  .index {
+    width: 35px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .paslon1 {
+    width: 80px;
+  }
+
+  .paslon2 {
+    width: 80px;
+  }
 }

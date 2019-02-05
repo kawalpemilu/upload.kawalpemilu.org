@@ -1,4 +1,4 @@
-<div *ngIf="(state$ | async) as state">
+<div *ngIf="(state$ | async) as state" style="margin: 0 5px">
   <div *ngIf="(userService.user$ | async) as user; else login">
     <p>
       Halo, {{ user.displayName }} (<a

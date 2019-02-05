@@ -1,3 +1,22 @@
+table {
+  width: 100%;
+}
+
+.coverage {
+  width: 100px;
+  text-align: center;
+  padding: 15px 5px 15px 5px;
+}
+
+.lokasi {
+  padding: 10px;
+}
+
+.label {
+  width: 40px;
+}
+
 .angka {
+  width: 30px;
   text-align: right;
 }

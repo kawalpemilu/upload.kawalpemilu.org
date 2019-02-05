@@ -3,10 +3,14 @@
 
 body {
   margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: small;
 }
 
-a.wilayah {
-  text-decoration: none;
+@media screen and (min-width: 400px) {
+  body {
+    font-size: medium;
+  }
 }
 
 .alert {

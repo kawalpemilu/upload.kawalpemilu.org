@@ -47,12 +47,12 @@ export class HierarchyService {
       }
       return (this.cacheHierarchy[id] = <HierarchyNode>{
         id: 0,
-        name: 'National',
+        name: 'IDN',
         parentIds: [],
         parentNames: [],
         children,
         depth: 0,
-        aggregate$: this.getAggregate$(id, children)
+        aggregate$: this.getAggregateChildren$(id, children)
       });
     }
 
@@ -85,18 +85,22 @@ export class HierarchyService {
       parentNames: parentNames.slice(),
       children,
       depth,
-      aggregate$: this.getAggregate$(id, children)
+      aggregate$: this.getAggregateChildren$(id, children)
     };
   }
 
-  private getAggregate$(id, children: any) {
+  private getAggregateChildren$(id, children: any) {
     const agg = {};
     children.forEach(c => {
-      agg[c[0]] = this.afd
-        .object<Aggregate>(DbPath.hieAgg(id, c[0]))
-        .valueChanges()
-        .pipe(shareReplay(1));
+      agg[c[0]] = this.getAggregate$(id, c[0]);
     });
     return agg;
+  }
+
+  getAggregate$(parent, child) {
+    return this.afd
+      .object<Aggregate>(DbPath.hieAgg(parent, child))
+      .valueChanges()
+      .pipe(shareReplay(1));
   }
 }

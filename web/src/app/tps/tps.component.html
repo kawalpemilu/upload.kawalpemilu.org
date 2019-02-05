@@ -1,55 +1,72 @@
-<ng-container *ngIf="(state$ | async) as state">
+<div *ngIf="(state$ | async) as state" style="margin: 0 5px">
   <app-path [node]="state"></app-path>
-
-  <table border="1" cellpadding="10">
+  <table>
     <thead>
-      <tr>
-        <th width="120">Coverage</th>
-        <th>Lokasi dan Foto C1</th>
+      <tr
+        [style.height.px]="TOOLBAR_HEIGHT"
+        style="background-color: lightgray; "
+      >
+        <th class="coverage">Coverage</th>
+        <th class="lokasi">Lokasi dan Foto C1</th>
       </tr>
     </thead>
-
-    <tbody>
-      <!-- TODO: use virtual scolling to avoid costly image loading -->
-      <tr *ngFor="let tps of state.tpsList; let i = index">
-        <td valign="top" align="middle">
-          TPS #{{ tps.tpsNo }}<br />
-          ---<br />
-          <table
-            border="1"
-            cellspacing="0"
-            cellpadding="4"
-            *ngIf="(tps.aggregate$ | async) as a"
-          >
-            <tr>
-              <td nowrap>Paslon 1:</td>
-              <td width="40" class="angka">{{ a.s[0] }}</td>
-            </tr>
-            <tr>
-              <td>Paslon 2:</td>
-              <td class="angka">{{ a.s[1] }}</td>
-            </tr>
-            <tr>
-              <td>Sah:</td>
-              <td class="angka">{{ a.s[2] }}</td>
-            </tr>
-            <tr>
-              <td>~Sah:</td>
-              <td class="angka">{{ a.s[3] }}</td>
-            </tr>
-          </table>
-        </td>
-
-        <td>
-          {{ tps.address }}<br />
-          <app-tps-photos
-            [kelurahanId]="state.id"
-            [tpsNo]="tps.tpsNo"
-          ></app-tps-photos>
-          <br />
-          <app-upload [kelurahanId]="state.id" [tpsNo]="tps.tpsNo"></app-upload>
-        </td>
-      </tr>
-    </tbody>
   </table>
-</ng-container>
+
+  <div
+    style="overflow: scroll; -webkit-overflow-scrolling: touch;"
+    [style.height.px]="viewportHeight(state.tpsList.length)"
+  >
+    <table>
+      <tbody>
+        <ng-container *ngFor="let tps of state.tpsList; let odd = odd">
+          <tr
+            [style.height.px]="ROW_HEIGHT"
+            [style.background-color]="odd ? '#FFF' : '#EEE'"
+          >
+            <td valign="top" class="coverage">
+              TPS #{{ tps.tpsNo }}<br />
+              ---<br />
+              <table
+                align="center"
+                border="1"
+                cellspacing="0"
+                cellpadding="4"
+                *ngIf="(tps.aggregate$ | async) as a"
+              >
+                <tr>
+                  <td class="label">Pas1:</td>
+                  <td class="angka">{{ a.s[0] }}</td>
+                </tr>
+                <tr>
+                  <td>Pas2:</td>
+                  <td class="angka">{{ a.s[1] }}</td>
+                </tr>
+                <tr>
+                  <td>Sah:</td>
+                  <td class="angka">{{ a.s[2] }}</td>
+                </tr>
+                <tr>
+                  <td>~Sah:</td>
+                  <td class="angka">{{ a.s[3] }}</td>
+                </tr>
+              </table>
+            </td>
+
+            <td class="lokasi">
+              {{ tps.address }}<br />
+              <app-tps-photos
+                [kelurahanId]="state.id"
+                [tpsNo]="tps.tpsNo"
+              ></app-tps-photos>
+              <br />
+              <app-upload
+                [kelurahanId]="state.id"
+                [tpsNo]="tps.tpsNo"
+              ></app-upload>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+</div>
