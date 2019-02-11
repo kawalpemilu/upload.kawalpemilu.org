@@ -57,9 +57,7 @@ export class TpsPhotosComponent implements OnInit {
   }
 
   imageUrl(url, size) {
-    return url.startsWith('http://')
-      ? `https://${url.substring(7)}=s${size}`
-      : url;
+    return url.replace(/^http:/, 'https:') + `=s${size}`;
   }
 
   mapLink(m: ImageMetadata) {

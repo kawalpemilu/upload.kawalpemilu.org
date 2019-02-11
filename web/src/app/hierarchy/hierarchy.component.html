@@ -37,6 +37,9 @@
                 class="link"
                 >{{ c[1] }}</a
               >
+              <span *ngIf="(state.aggregate$[c[0]] | async) as s">{{
+                ago(s.x[0])
+              }}</span>
             </td>
             <td class="paslon1">
               <span *ngIf="(state.aggregate$[c[0]] | async) as s">{{

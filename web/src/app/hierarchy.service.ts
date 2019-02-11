@@ -13,7 +13,7 @@ export class HierarchyService {
   cacheHierarchy: { [id: string]: HierarchyNode } = {};
 
   constructor(private afd: AngularFireDatabase, private api: ApiService) {
-    this.rootIds = this.api.getStatic(`/assets/r.js`).then(r => {
+    this.rootIds = this.api.getStatic(`/assets/r.js?1`).then(r => {
       const map = {};
       for (const rootId of Object.keys(r)) {
         const ids = r[rootId];

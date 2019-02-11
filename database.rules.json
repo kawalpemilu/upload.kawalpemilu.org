@@ -1,15 +1,26 @@
 {
   "rules": {
+    // Relawan details.
+    "r": {
+      "$uid": {
+        ".read": "auth !== null",
+        ".write": "$uid === auth.uid"
+      }
+    },
+
+    // Hierarchy.
     "h": {
       "$id": { ".read": true }
     },
 
+    // Uploaded image.
     "i": {
       "$imageId": {
         "u": { ".read": true }
       }
     },
 
+    // Input votes at kelurahan.
     "t": {
       "$kelurahanId": {
         "$tpsNo": {
@@ -20,10 +31,16 @@
       }
     },
 
+    // Upserts requests sharded by root id.
     "u": {
       "$rootId": {
         "c": { ".read": true }
       }
+    },
+
+    // Code referal details.
+    "c": {
+      "$code":  { ".read": true }
     }
   }
 }

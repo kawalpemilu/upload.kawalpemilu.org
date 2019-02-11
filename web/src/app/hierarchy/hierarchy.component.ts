@@ -53,9 +53,9 @@ export class HierarchyComponent implements OnInit {
               .pipe(map(x => x.s))
           : combineLatest(node.children.map(c => node.aggregate$[c[0]])).pipe(
               map((arr: any) => {
-                const res = [0, 0];
+                const res = [0, 0, 0, 0, 0];
                 for (const a of arr) {
-                  for (let i = 0; i < a.s.length; i++) {
+                  for (let i = 0; a && a.s && i < a.s.length; i++) {
                     res[i] = (res[i] || 0) + a.s[i];
                   }
                 }
@@ -79,5 +79,22 @@ export class HierarchyComponent implements OnInit {
 
   trackByIdx(_, item) {
     return item[0]; // wilayah id.
+  }
+
+  ago(ts: number) {
+    const m = (Date.now() - ts) / 1000 / 60;
+    if (m < 1) {
+      return ' (*)';
+    }
+    if (m < 5) {
+      return ' (x)';
+    }
+    if (m < 20) {
+      return ' (-)';
+    }
+    if (m < 60) {
+      return ' (.)';
+    }
+    return '';
   }
 }
