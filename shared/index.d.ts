@@ -63,13 +63,8 @@ export interface Upsert {
     m: ImageMetadata;
 }
 export declare class DbPath {
-    static rootIds: number[];
     static hie(id: number): string;
-    static hieParents(id: number): string;
-    static hieDepth(id: number): string;
-    static hieChildren(id: number): string;
     static hieAgg(id: number, cid: number): string;
-    static hieRootId(id: number): string;
     static upserts(rootId: number): string;
     static upsertsLease(rootId: number): string;
     static upsertsPending(rootId: number): string;
@@ -83,5 +78,6 @@ export declare class DbPath {
     static imageMetadataServingUrl(imageId: string): string;
     static tpsPending(kelurahanId: number, tpsNo: number): string;
     static tpsPendingImage(kelurahanId: number, tpsNo: number, imageId: string): string;
+    static codeReferral(code: string): string;
 }
 export declare function getTpsNumbers(childrenBits: number[]): any[];

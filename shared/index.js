@@ -28,26 +28,14 @@ var DbPath = /** @class */ (function () {
     DbPath.hie = function (id) {
         return "h/" + id;
     };
-    DbPath.hieParents = function (id) {
-        return DbPath.hie(id) + "/p";
-    };
-    DbPath.hieDepth = function (id) {
-        return DbPath.hie(id) + "/d";
-    };
-    DbPath.hieChildren = function (id) {
-        return DbPath.hie(id) + "/c";
-    };
     DbPath.hieAgg = function (id, cid) {
         return DbPath.hie(id) + "/a/" + cid;
-    };
-    DbPath.hieRootId = function (id) {
-        return DbPath.hie(id) + "/p/0";
     };
     DbPath.upserts = function (rootId) {
         return "u/" + rootId;
     };
     DbPath.upsertsLease = function (rootId) {
-        return DbPath.upserts(rootId) + "/l";
+        return DbPath.upserts(rootId) + " l";
     };
     DbPath.upsertsPending = function (rootId) {
         return DbPath.upserts(rootId) + "/p";
@@ -82,41 +70,9 @@ var DbPath = /** @class */ (function () {
     DbPath.tpsPendingImage = function (kelurahanId, tpsNo, imageId) {
         return DbPath.tpsPending(kelurahanId, tpsNo) + "/" + imageId;
     };
-    DbPath.rootIds = [
-        1,
-        6728,
-        12920,
-        14086,
-        15885,
-        17404,
-        20802,
-        22328,
-        24993,
-        25405,
-        25823,
-        26141,
-        32676,
-        41863,
-        42385,
-        51578,
-        53241,
-        54020,
-        55065,
-        58285,
-        60371,
-        61965,
-        64111,
-        65702,
-        67393,
-        69268,
-        72551,
-        74716,
-        75425,
-        76096,
-        77085,
-        78203,
-        81877
-    ];
+    DbPath.codeReferral = function (code) {
+        return "c/" + code;
+    };
     return DbPath;
 }());
 exports.DbPath = DbPath;

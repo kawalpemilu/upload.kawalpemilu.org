@@ -92,59 +92,11 @@ export interface Upsert {
 }
 
 export class DbPath {
-  static rootIds = [
-    1,
-    6728,
-    12920,
-    14086,
-    15885,
-    17404,
-    20802,
-    22328,
-    24993,
-    25405,
-    25823,
-    26141,
-    32676,
-    41863,
-    42385,
-    51578,
-    53241,
-    54020,
-    55065,
-    58285,
-    60371,
-    61965,
-    64111,
-    65702,
-    67393,
-    69268,
-    72551,
-    74716,
-    75425,
-    76096,
-    77085,
-    78203,
-    81877
-  ];
-
   static hie(id: number) {
     return `h/${id}`;
   }
-  static hieParents(id: number) {
-    return `${DbPath.hie(id)}/p`;
-  }
-  static hieDepth(id: number) {
-    return `${DbPath.hie(id)}/d`;
-  }
-  static hieChildren(id: number) {
-    return `${DbPath.hie(id)}/c`;
-  }
   static hieAgg(id: number, cid: number) {
     return `${DbPath.hie(id)}/a/${cid}`;
-  }
-  static hieRootId(id: number) {
-    return `${DbPath.hie(id)}/p/0`;
   }
 
   static upserts(rootId: number) {
@@ -187,6 +139,10 @@ export class DbPath {
   }
   static tpsPendingImage(kelurahanId: number, tpsNo: number, imageId: string) {
     return `${DbPath.tpsPending(kelurahanId, tpsNo)}/${imageId}`;
+  }
+
+  static codeReferral(code: string) {
+    return `c/${code}`;
   }
 }
 

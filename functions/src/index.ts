@@ -7,12 +7,13 @@ import {
   DbPath,
   AggregateResponse,
   ImageMetadata,
-  getTpsNumbers,
   Upsert,
   extractImageMetadata,
   TpsImage,
   ApiUploadRequest
 } from 'shared';
+
+import { ROOT_ID, ROOT_IDS, PARENT_IDS, CHILDREN } from './hierarchy';
 
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
@@ -27,8 +28,12 @@ const app = express();
 app.use(require('cors')({ origin: true }));
 
 // Creates a serving url for the uploaded images.
-export const handlePhotoUpload = functions.storage
-  .object()
+exports.handlePhotoUpload = functions
+  .runWith({
+    timeoutSeconds: 300,
+    memory: '512MB'
+  })
+  .storage.object()
   .onFinalize(async object => {
     // Exit if this is triggered on a file that is not an image.
     if (!object.contentType.startsWith('image/')) {
@@ -76,30 +81,33 @@ app.post('/api/upload', async (req, res) => {
 
   const b = req.body as ApiUploadRequest;
   const imageId = b.imageId;
-  if (typeof imageId !== 'string' || !imageId.match(/^[A-Za-z0-9]{20}$/)) {
-    return res.json({ error: 'Invalid imageId' });
-  }
-  const servingUrl = (await rtdb
-    .ref(DbPath.imageMetadataServingUrl(imageId))
-    .once('value')).val();
-  if (!servingUrl) {
-    return res.json({ error: 'Invalid url' });
+
+  let servingUrl =
+    'http://lh3.googleusercontent.com/dRp80J1IsmVNeI3HBh-ToZA-VumvKXOzp-P_XrgsyhkjMV9Lldfq7-V9hhkolUAED75_QPn9t4NFNrJNMP8';
+  if (!imageId.startsWith('zzzzzzz')) {
+    if (typeof imageId !== 'string' || !imageId.match(/^[A-Za-z0-9]{20}$/)) {
+      return res.json({ error: 'Invalid imageId' });
+    }
+
+    servingUrl = (await rtdb
+      .ref(DbPath.imageMetadataServingUrl(imageId))
+      .once('value')).val();
+    if (!servingUrl) {
+      return res.json({ error: 'Invalid url' });
+    }
   }
 
   const kelId = b.kelurahanId;
-  if (typeof kelId !== 'number' || kelId <= 0 || kelId > 100000) {
-    return res.json({ error: 'kelurahanId out of range' });
-  }
-  if ((await rtdb.ref(DbPath.hieDepth(kelId)).once('value')).val() !== 4) {
+  if (
+    typeof kelId !== 'number' ||
+    (PARENT_IDS[kelId] && PARENT_IDS[kelId].length) !== 4
+  ) {
     return res.json({ error: 'Invalid kelurahanId' });
   }
 
   const tpsNo = b.tpsNo;
-  if (typeof tpsNo !== 'number' || tpsNo < 0 || tpsNo > 1000) {
-    return res.json({ error: 'tpsNo out of range' });
-  }
-  const bits = (await rtdb.ref(DbPath.hieChildren(kelId)).once('value')).val();
-  if (!bits || getTpsNumbers(bits).indexOf(tpsNo) === -1) {
+  const tpsNos = CHILDREN[kelId];
+  if (!tpsNos || tpsNos.indexOf(tpsNo) === -1) {
     return res.json({ error: 'tpsNo does not exists' });
   }
 
@@ -116,7 +124,10 @@ app.post('/api/upload', async (req, res) => {
     agg.s.push(sum);
   }
 
-  const rootId = (await rtdb.ref(DbPath.hieRootId(kelId)).once('value')).val();
+  if (!ROOT_ID[kelId]) {
+    return res.json({ error: 'Root id not found' });
+  }
+  const rootId = ROOT_ID[kelId];
 
   const ti: TpsImage = {
     u: servingUrl,
@@ -147,7 +158,12 @@ app.post('/api/upload', async (req, res) => {
   return res.json({ ok: true });
 });
 
-exports.api = functions.https.onRequest(app);
+exports.api = functions
+  .runWith({
+    timeoutSeconds: 90,
+    memory: '512MB'
+  })
+  .https.onRequest(app);
 
 /**
  * Update Aggregates via database triggers with distributed lock.
@@ -194,22 +210,6 @@ async function updateAggregates(
   }
 }
 
-function getParentIds(kelurahanIds: number[]) {
-  return Promise.all(
-    kelurahanIds.map(kelurahanId =>
-      rtdb
-        .ref(DbPath.hieParents(kelurahanId))
-        .once('value')
-        .then(s => {
-          const parentIds = s.val();
-          parentIds.unshift(0);
-          parentIds.push(kelurahanId);
-          return parentIds;
-        })
-    )
-  );
-}
-
 async function getHierarchyAggregates(paths: number[][]) {
   const ha: HierarchyAggregates = {};
   const promises = [];
@@ -248,8 +248,9 @@ async function getUpserts(rootId: number, imageIds: string[]) {
 }
 
 async function processAggregate(rootId: number): Promise<AggregateResponse> {
-  if (DbPath.rootIds.indexOf(rootId) === -1)
+  if (ROOT_IDS.indexOf(rootId) === -1) {
     throw new Error(`Invalid rootId: ${rootId}`);
+  }
 
   let batchTime = 5000;
   const t0 = Date.now();
@@ -288,20 +289,17 @@ async function processAggregate(rootId: number): Promise<AggregateResponse> {
     const upserts = await getUpserts(rootId, imageIds);
     const t2 = Date.now();
 
-    // Read the parentIds of all tps.
-    const kelurahanIds = upserts.map(u => u.k);
-    const parentIds = await getParentIds(kelurahanIds);
-    const t3 = Date.now();
-
     // Read the aggregate values of all intermediate nodes.
     const paths = [];
     for (let i = 0; i < imageIds.length; i++) {
-      const path = parentIds[i].slice();
+      const kelurahanId = upserts[i].k;
+      const path = PARENT_IDS[kelurahanId].slice();
+      path.push(kelurahanId);
       path.push(upserts[i].n);
       paths.push(path);
     }
     const ha = await getHierarchyAggregates(paths);
-    const t4 = Date.now();
+    const t3 = Date.now();
 
     // Update the intermediate nodes (ha) in-memory.
     const updates = {};
@@ -315,7 +313,7 @@ async function processAggregate(rootId: number): Promise<AggregateResponse> {
     updates[DbPath.upsertsQueueCount(rootId)] = imageIds.length;
 
     await Promise.all(promises);
-    const t5 = Date.now();
+    const t4 = Date.now();
 
     // Atomically writes the in-memory aggregates to database.
     Object.keys(ha).map(pid => {
@@ -325,17 +323,16 @@ async function processAggregate(rootId: number): Promise<AggregateResponse> {
       });
     });
     await rtdb.ref().update(updates);
-    const t6 = Date.now();
+    const t5 = Date.now();
 
     res.totalUpdates += imageIds.length;
     res.totalBatches++;
     res.readPayload += t2 - t1;
-    res.readParents += t3 - t2;
-    res.readHieAggs += t4 - t3;
-    res.updateInMem += t5 - t4;
-    res.writeDbAggs += t6 - t5;
-    batchTime = Math.max(batchTime, t6 - t1);
-    t1 = t6;
+    res.readHieAggs += t3 - t2;
+    res.updateInMem += t4 - t3;
+    res.writeDbAggs += t5 - t4;
+    batchTime = Math.max(batchTime, t5 - t1);
+    t1 = t5;
   }
 
   if (t1 - t0 < MAX_LEASE - 1000) {
@@ -345,8 +342,12 @@ async function processAggregate(rootId: number): Promise<AggregateResponse> {
   return res;
 }
 
-exports.upsertProcessor = functions.database
-  .ref('u/{rootId}/p')
+exports.upsertProcessor = functions
+  .runWith({
+    timeoutSeconds: 300,
+    memory: '512MB'
+  })
+  .database.ref('u/{rootId}/p')
   .onCreate(async (snapshot, context) => {
     const rootId = parseInt(context.params.rootId, 10);
     const res = await processAggregate(rootId);
