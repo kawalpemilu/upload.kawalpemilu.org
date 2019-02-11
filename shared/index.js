@@ -35,7 +35,7 @@ var DbPath = /** @class */ (function () {
         return "u/" + rootId;
     };
     DbPath.upsertsLease = function (rootId) {
-        return DbPath.upserts(rootId) + " l";
+        return DbPath.upserts(rootId) + "/l";
     };
     DbPath.upsertsPending = function (rootId) {
         return DbPath.upserts(rootId) + "/p";

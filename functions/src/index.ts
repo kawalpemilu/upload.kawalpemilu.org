@@ -267,7 +267,6 @@ async function processAggregate(rootId: number): Promise<AggregateResponse> {
     totalBatches: 0,
     lockTime,
     readPayload: 0,
-    readParents: 0,
     readHieAggs: 0,
     updateInMem: 0,
     writeDbAggs: 0,

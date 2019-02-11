@@ -31,7 +31,6 @@ export interface AggregateResponse {
     totalRuntime: number;
     totalBatches: number;
     readPayload: number;
-    readParents: number;
     readHieAggs: number;
     updateInMem: number;
     writeDbAggs: number;
