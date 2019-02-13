@@ -3,6 +3,6 @@ api_version: 1
 threadsafe: true
 
 handlers:
-- url: /gsu.*
+- url: .*
   script: main.app
   secure: always
