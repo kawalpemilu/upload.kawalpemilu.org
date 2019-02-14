@@ -1,7 +1,8 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { AngularFireDatabase } from '@angular/fire/database';
 import { Observable } from 'rxjs';
-import { Aggregate, ImageMetadata, DbPath } from 'shared';
+import { Aggregate, ImageMetadata, FsPath } from 'shared';
+import { AngularFirestore } from '@angular/fire/firestore';
+import { shareReplay } from 'rxjs/operators';
 
 interface Photo {
   u: string;
@@ -48,12 +49,13 @@ export class TpsPhotosComponent implements OnInit {
 
   photos$: Observable<Photo[]>;
 
-  constructor(private afd: AngularFireDatabase) {}
+  constructor(private fsdb: AngularFirestore) {}
 
   ngOnInit() {
-    this.photos$ = this.afd
-      .list<Photo>(DbPath.tpsPending(this.kelurahanId, this.tpsNo))
-      .valueChanges();
+    this.photos$ = this.fsdb
+      .collection<Photo>(FsPath.tpsImages(this.kelurahanId, this.tpsNo))
+      .valueChanges()
+      .pipe(shareReplay(1));
   }
 
   imageUrl(url, size) {

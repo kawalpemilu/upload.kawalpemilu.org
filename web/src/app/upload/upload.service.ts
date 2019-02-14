@@ -23,10 +23,7 @@ export class UploadService {
   progress: number;
   state: string;
 
-  constructor(
-    private afs: AngularFireStorage,
-    private afd: AngularFireDatabase
-  ) {
+  constructor(private afs: AngularFireStorage) {
     console.log('UploadService initalized');
   }
 
@@ -43,19 +40,7 @@ export class UploadService {
     this.task = this.afs.upload(filePath, file);
     this.task.percentageChanges().subscribe(p => (this.progress = p));
     this.task.snapshotChanges().subscribe(s => (this.state = s.state));
-    await this.task.then(
-      _ =>
-        this.afd
-          .object(DbPath.imageMetadataUserId(imageId))
-          .valueChanges()
-          .pipe(
-            filter(Boolean),
-            take(1)
-          )
-          .toPromise()
-          .catch(console.error),
-      console.error
-    );
+    await this.task;
 
     this.kelurahanId = this.tpsNo = 0;
     this.task = null;

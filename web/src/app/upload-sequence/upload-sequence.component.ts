@@ -27,6 +27,7 @@ export class UploadSequenceComponent implements OnInit {
   formGroup: FormGroup;
   imgURL: string | ArrayBuffer;
   uploadedMetadata$: Promise<[ImageMetadata, string]>;
+  isLoading = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -110,6 +111,7 @@ export class UploadSequenceComponent implements OnInit {
   }
 
   async selesai(user: User, kelurahanId: number, tpsNo: number) {
+    this.isLoading = true;
     const [metadata, imageId] = await this.uploadedMetadata$;
     const request: ApiUploadRequest = {
       kelurahanId,
@@ -127,8 +129,18 @@ export class UploadSequenceComponent implements OnInit {
       metadata,
       imageId
     };
-    this.api.post(user, `${ApiService.HOST}/api/upload`, request);
-    this.router.navigate(['/t', kelurahanId], { fragment: `${tpsNo}` });
+    const url = `${ApiService.HOST}/api/upload`;
+    try {
+      const res: any = await this.api.post(user, url, request);
+      if (res.ok) {
+        this.router.navigate(['/t', kelurahanId], { fragment: `${tpsNo}` });
+      } else {
+        console.error(res);
+      }
+    } catch (e) {
+      console.error(e.message);
+    }
+    this.isLoading = false;
   }
 
   private populateMetadata(imgURL, m) {

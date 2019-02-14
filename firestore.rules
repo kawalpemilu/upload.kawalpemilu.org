@@ -1,0 +1,9 @@
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Uploaded image.
+    match /t/{kelurahanId}/n/{tpsNo}/i/{document=**} {
+      // Only alllow logged in user.
+      allow read: if request.auth.uid != null;
+    }
+  }
+}

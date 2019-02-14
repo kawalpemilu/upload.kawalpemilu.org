@@ -34,7 +34,7 @@ export interface AggregateResponse {
     readHieAggs: number;
     updateInMem: number;
     writeDbAggs: number;
-    largeBatchTime: number;
+    batchTime: number;
     lease: number;
 }
 export interface ImageMetadata {
@@ -61,22 +61,21 @@ export interface Upsert {
     d: number;
     m: ImageMetadata;
 }
-export declare class DbPath {
-    static hie(id: number): string;
-    static hieAgg(id: number, cid: number): string;
-    static upserts(rootId: number): string;
-    static upsertsLease(rootId: number): string;
-    static upsertsPending(rootId: number): string;
-    static upsertsQueueCount(rootId: number): string;
-    static upsertsQueue(rootId: number): string;
-    static upsertsQueueImage(rootId: number, imageId: string): string;
-    static upsertsArchiveImage(rootId: number, imageId: string): string;
-    static upsertsArchiveImageDone(rootId: number, imageId: string): string;
+export declare class FsPath {
     static imageMetadata(imageId: string): string;
     static imageMetadataUserId(imageId: string): string;
     static imageMetadataServingUrl(imageId: string): string;
-    static tpsPending(kelurahanId: number, tpsNo: number): string;
-    static tpsPendingImage(kelurahanId: number, tpsNo: number, imageId: string): string;
+    static upserts(rootId: number, imageId?: string): string;
+    static tpsImages(kelurahanId: number, tpsNo: number): string;
+    static tpsImage(kelurahanId: number, tpsNo: number, imageId: string): string;
+}
+export declare class DbPath {
+    static hie(id: number): string;
+    static hieAgg(id: number, cid: number): string;
+    static upsert(rootId: number): string;
+    static upsertLastStartTs(rootId: number): string;
+    static upsertCreateTrigger(rootId: number): string;
+    static upsertLastUpdateCount(rootId: number): string;
     static codeReferral(code: string): string;
 }
 export declare function getTpsNumbers(childrenBits: number[]): any[];

@@ -37,7 +37,7 @@ export interface AggregateResponse {
   readHieAggs: number;
   updateInMem: number;
   writeDbAggs: number;
-  largeBatchTime: number;
+  batchTime: number;
   lease: number;
 }
 
@@ -90,6 +90,29 @@ export interface Upsert {
   m: ImageMetadata;
 }
 
+export class FsPath {
+  static imageMetadata(imageId: string) {
+    return `i/${imageId}`;
+  }
+  static imageMetadataUserId(imageId: string) {
+    return `${FsPath.imageMetadata(imageId)}/u`;
+  }
+  static imageMetadataServingUrl(imageId: string) {
+    return `${FsPath.imageMetadata(imageId)}/v`;
+  }
+
+  static upserts(rootId: number, imageId?: string) {
+    return `u/${rootId}/i` + (imageId ? `/${imageId}` : '');
+  }
+
+  static tpsImages(kelurahanId: number, tpsNo: number) {
+    return `t/${kelurahanId}/n/${tpsNo}/i`;
+  }
+  static tpsImage(kelurahanId: number, tpsNo: number, imageId: string) {
+    return `${FsPath.tpsImages(kelurahanId, tpsNo)}/${imageId}`;
+  }
+}
+
 export class DbPath {
   static hie(id: number) {
     return `h/${id}`;
@@ -98,46 +121,20 @@ export class DbPath {
     return `${DbPath.hie(id)}/a/${cid}`;
   }
 
-  static upserts(rootId: number) {
+  static upsert(rootId: number) {
     return `u/${rootId}`;
   }
-  static upsertsLease(rootId: number) {
-    return `${DbPath.upserts(rootId)}/l`;
+  // The last startTime of the upsertProcessor.
+  static upsertLastStartTs(rootId: number) {
+    return `${DbPath.upsert(rootId)}/t`;
   }
-  static upsertsPending(rootId: number) {
-    return `${DbPath.upserts(rootId)}/p`;
+  // Remove ans create this path to trigger upsertProcessor function.
+  static upsertCreateTrigger(rootId: number) {
+    return `${DbPath.upsert(rootId)}/c`;
   }
-  static upsertsQueueCount(rootId: number) {
-    return `${DbPath.upserts(rootId)}/c`;
-  }
-  static upsertsQueue(rootId: number) {
-    return `${DbPath.upserts(rootId)}/q`;
-  }
-  static upsertsQueueImage(rootId: number, imageId: string) {
-    return `${DbPath.upsertsQueue(rootId)}/${imageId}`;
-  }
-  static upsertsArchiveImage(rootId: number, imageId: string) {
-    return `${DbPath.upserts(rootId)}/a/${imageId}`;
-  }
-  static upsertsArchiveImageDone(rootId: number, imageId: string) {
-    return `${DbPath.upserts(rootId)}/a/${imageId}/d`;
-  }
-
-  static imageMetadata(imageId: string) {
-    return `i/${imageId}`;
-  }
-  static imageMetadataUserId(imageId: string) {
-    return `${DbPath.imageMetadata(imageId)}/u`;
-  }
-  static imageMetadataServingUrl(imageId: string) {
-    return `${DbPath.imageMetadata(imageId)}/v`;
-  }
-
-  static tpsPending(kelurahanId: number, tpsNo: number) {
-    return `t/${kelurahanId}/${tpsNo}/p`;
-  }
-  static tpsPendingImage(kelurahanId: number, tpsNo: number, imageId: string) {
-    return `${DbPath.tpsPending(kelurahanId, tpsNo)}/${imageId}`;
+  // Number of updates of the last batch.
+  static upsertLastUpdateCount(rootId: number) {
+    return `${DbPath.upsert(rootId)}/u`;
   }
 
   static codeReferral(code: string) {

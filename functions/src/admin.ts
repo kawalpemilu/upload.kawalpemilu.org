@@ -2,8 +2,8 @@ import * as admin from 'firebase-admin';
 import * as request from 'request-promise';
 import * as fs from 'fs';
 
-import { ROOT_ID, ROOT_IDS, PARENT_IDS, CHILDREN } from './hierarchy';
-import { ApiUploadRequest, ImageMetadata } from 'shared';
+import { CHILDREN } from './hierarchy';
+import { ApiUploadRequest, ImageMetadata, FsPath } from 'shared';
 
 admin.initializeApp({
   credential: admin.credential.cert(require('./sa-key.json')),
@@ -11,7 +11,9 @@ admin.initializeApp({
 });
 
 const auth = admin.auth();
-const rtdb = admin.database();
+const fsdb = admin.firestore();
+fsdb.settings({ timestampsInSnapshots: true });
+
 const delay = (ms: number) => new Promise(_ => setTimeout(_, ms));
 
 interface User {
@@ -37,12 +39,13 @@ async function reauthenticate(
     json: true
   });
   console.log('res', res);
+  const expiresIn = +res[expiresInKey];
   const user = {
     uid,
     idToken: res[idTokenKey],
     refreshToken: res[refreshTokenKey],
-    expiresIn: res[expiresInKey],
-    expiresAt: res.expiresIn * 1000 + Date.now()
+    expiresIn,
+    expiresAt: expiresIn * 1000 + Date.now()
   };
   fs.writeFileSync(`${user.uid}.json`, JSON.stringify(user, null, 2));
   return user;
@@ -88,23 +91,28 @@ async function getUser(uid: string) {
   return await autoRenewIdToken(JSON.parse(userJson) as User);
 }
 
-const requests: ApiUploadRequest[] = [];
+let requests: ApiUploadRequest[] = [];
+
+function makeRequest(kelurahanId, tpsNo) {
+  const body: ApiUploadRequest = {
+    kelurahanId,
+    tpsNo,
+    aggregate: {
+      s: [0, 0, 0, 0, 0],
+      // s: [Math.floor(Math.random() * 999), 1, 3, 4, 0],
+      x: []
+    },
+    metadata: {} as ImageMetadata,
+    imageId: `zzzzzzz${kelurahanId}t${tpsNo}`
+  };
+  return body;
+}
 
 function rec(id, depth) {
   const arr = CHILDREN[id];
   if (depth === 4) {
     for (const tpsNo of arr) {
-      const body: ApiUploadRequest = {
-        kelurahanId: id,
-        tpsNo,
-        aggregate: {
-          s: [1, Math.floor(Math.random() * 999), 3, 4, 0],
-          x: []
-        },
-        metadata: {} as ImageMetadata,
-        imageId: `zzzzzzz${id}t${tpsNo}`
-      };
-      requests.push(body);
+      requests.push(makeRequest(id, tpsNo));
     }
   } else {
     for (const cid of arr) {
@@ -114,6 +122,7 @@ function rec(id, depth) {
 }
 
 function upsert(body, token, retry = 0) {
+  // console.log('upsert', JSON.stringify(body));
   return request({
     method: 'POST',
     uri: 'https://kawal-c1.firebaseapp.com/api/upload',
@@ -121,6 +130,7 @@ function upsert(body, token, retry = 0) {
     headers: {
       Authorization: `Bearer ${token}`
     },
+    timeout: 15000,
     json: true // Automatically stringifies the body to JSON
   })
     .then(res => {
@@ -129,17 +139,36 @@ function upsert(body, token, retry = 0) {
       }
     })
     .catch(error => {
+      if (retry > 2) {
+        console.warn(error.message, retry, body);
+      }
       if (retry < 5) {
         return upsert(body, token, retry + 1);
       }
-      console.error(error.message, body);
+      console.error(error.message, retry, body);
     });
 }
 
 (async () => {
-  rec(0, 0);
+  (await fsdb
+    .collection(FsPath.upserts(55065))
+    .where('k', '==', 56720)
+    .limit(100)
+    .get()).forEach(s => {
+    console.log(JSON.stringify(s.data(), null, 2));
+  });
+  // rec(0, 0);
 
-  console.log(requests.length);
+  // requests = [
+  //   makeRequest(38901, 7),
+  //   makeRequest(4, 1),
+  //   makeRequest(4, 2),
+  // ];
+
+  // console.log(requests.length);
+  // if (request.length) return;
+  // requests = requests.slice(0, 10);
+  // console.log(requests.length);
 
   let seed = 14;
   for (let i = 0; i < requests.length; i++) {
@@ -152,17 +181,30 @@ function upsert(body, token, retry = 0) {
     }
   }
 
+  requests = requests.slice(0, 135000);
+  console.log(requests.length);
+
   const uid = '1oz4pZ0MTidjEteHbvlNdfvAu7p1';
   const user = await getUser(uid);
 
-  let promises: any = [];
-  for (let i = 16259; i < requests.length; i++) {
-    promises.push(upsert(requests[i], user.idToken));
-    if (promises.length > 100) {
-      await Promise.all(promises);
-      await delay(1000);
-      promises = [];
-      console.log('i', i);
-    }
+  const promises: any = [];
+  for (let i = 0; i < 500 && i < requests.length; i++) {
+    promises.push(Promise.resolve());
   }
-})();
+  for (let i = 130000, j = 0; i < requests.length; i++) {
+    const idx = i;
+    const req = requests[i];
+    promises[j] = promises[j].then(() => upsert(req, user.idToken));
+    if (j === 0) {
+      promises[j] = promises[j].then(() => console.log('i', idx));
+    }
+    j = (j + 1) % promises.length;
+  }
+  for (let i = 0; i < promises.length; i++) {
+    const idx = i;
+    promises[i] = promises[i].then(() => console.log('done', idx));
+  }
+  console.log('seted up');
+  await Promise.all(promises);
+  console.log('done all');
+})().catch(console.error);

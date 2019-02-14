@@ -22,6 +22,30 @@ function extractImageMetadata(m) {
     return !validM || Object.keys(validM).length == 0 ? null : validM;
 }
 exports.extractImageMetadata = extractImageMetadata;
+var FsPath = /** @class */ (function () {
+    function FsPath() {
+    }
+    FsPath.imageMetadata = function (imageId) {
+        return "i/" + imageId;
+    };
+    FsPath.imageMetadataUserId = function (imageId) {
+        return FsPath.imageMetadata(imageId) + "/u";
+    };
+    FsPath.imageMetadataServingUrl = function (imageId) {
+        return FsPath.imageMetadata(imageId) + "/v";
+    };
+    FsPath.upserts = function (rootId, imageId) {
+        return "u/" + rootId + "/i" + (imageId ? "/" + imageId : '');
+    };
+    FsPath.tpsImages = function (kelurahanId, tpsNo) {
+        return "t/" + kelurahanId + "/n/" + tpsNo + "/i";
+    };
+    FsPath.tpsImage = function (kelurahanId, tpsNo, imageId) {
+        return FsPath.tpsImages(kelurahanId, tpsNo) + "/" + imageId;
+    };
+    return FsPath;
+}());
+exports.FsPath = FsPath;
 var DbPath = /** @class */ (function () {
     function DbPath() {
     }
@@ -31,44 +55,20 @@ var DbPath = /** @class */ (function () {
     DbPath.hieAgg = function (id, cid) {
         return DbPath.hie(id) + "/a/" + cid;
     };
-    DbPath.upserts = function (rootId) {
+    DbPath.upsert = function (rootId) {
         return "u/" + rootId;
     };
-    DbPath.upsertsLease = function (rootId) {
-        return DbPath.upserts(rootId) + "/l";
+    // The last startTime of the upsertProcessor.
+    DbPath.upsertLastStartTs = function (rootId) {
+        return DbPath.upsert(rootId) + "/t";
     };
-    DbPath.upsertsPending = function (rootId) {
-        return DbPath.upserts(rootId) + "/p";
+    // Remove ans create this path to trigger upsertProcessor function.
+    DbPath.upsertCreateTrigger = function (rootId) {
+        return DbPath.upsert(rootId) + "/c";
     };
-    DbPath.upsertsQueueCount = function (rootId) {
-        return DbPath.upserts(rootId) + "/c";
-    };
-    DbPath.upsertsQueue = function (rootId) {
-        return DbPath.upserts(rootId) + "/q";
-    };
-    DbPath.upsertsQueueImage = function (rootId, imageId) {
-        return DbPath.upsertsQueue(rootId) + "/" + imageId;
-    };
-    DbPath.upsertsArchiveImage = function (rootId, imageId) {
-        return DbPath.upserts(rootId) + "/a/" + imageId;
-    };
-    DbPath.upsertsArchiveImageDone = function (rootId, imageId) {
-        return DbPath.upserts(rootId) + "/a/" + imageId + "/d";
-    };
-    DbPath.imageMetadata = function (imageId) {
-        return "i/" + imageId;
-    };
-    DbPath.imageMetadataUserId = function (imageId) {
-        return DbPath.imageMetadata(imageId) + "/u";
-    };
-    DbPath.imageMetadataServingUrl = function (imageId) {
-        return DbPath.imageMetadata(imageId) + "/v";
-    };
-    DbPath.tpsPending = function (kelurahanId, tpsNo) {
-        return "t/" + kelurahanId + "/" + tpsNo + "/p";
-    };
-    DbPath.tpsPendingImage = function (kelurahanId, tpsNo, imageId) {
-        return DbPath.tpsPending(kelurahanId, tpsNo) + "/" + imageId;
+    // Number of updates of the last batch.
+    DbPath.upsertLastUpdateCount = function (rootId) {
+        return DbPath.upsert(rootId) + "/u";
     };
     DbPath.codeReferral = function (code) {
         return "c/" + code;

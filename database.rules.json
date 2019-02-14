@@ -11,36 +11,7 @@
     // Hierarchy.
     "h": {
       "$id": { ".read": true }
-    },
-
-    // Uploaded image.
-    "i": {
-      "$imageId": {
-        "u": { ".read": true }
-      }
-    },
-
-    // Input votes at kelurahan.
-    "t": {
-      "$kelurahanId": {
-        "$tpsNo": {
-          "p": { ".read": true },
-          "v": { ".read": true },
-          "d": { ".read": true }
-        }
-      }
-    },
-
-    // Upserts requests sharded by root id.
-    "u": {
-      "$rootId": {
-        "c": { ".read": true }
-      }
-    },
-
-    // Code referal details.
-    "c": {
-      "$code":  { ".read": true }
     }
+
   }
 }

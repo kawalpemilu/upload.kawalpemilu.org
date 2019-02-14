@@ -111,7 +111,7 @@
             mat-raised-button
             color="primary"
             (click)="selesai(user, state.kelurahanId, state.tpsNo)"
-            [disabled]="formGroup.invalid"
+            [disabled]="formGroup.invalid || isLoading"
           >
             Selesai!
           </button>
@@ -125,8 +125,13 @@
   </ng-template>
 
   <p>
-    <a [routerLink]="['/t', state.kelurahanId]" mat-raised-button color="warn">
+    <button
+      [routerLink]="['/t', state.kelurahanId]"
+      mat-raised-button
+      color="warn"
+      [disabled]="isLoading"
+    >
       Batalkan Upload
-    </a>
+    </button>
   </p>
 </div>

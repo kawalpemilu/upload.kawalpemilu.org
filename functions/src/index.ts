@@ -10,7 +10,8 @@ import {
   Upsert,
   extractImageMetadata,
   TpsImage,
-  ApiUploadRequest
+  ApiUploadRequest,
+  FsPath
 } from 'shared';
 
 import { ROOT_ID, ROOT_IDS, PARENT_IDS, CHILDREN } from './hierarchy';
@@ -22,10 +23,42 @@ admin.initializeApp({
 
 const auth = admin.auth();
 const rtdb = admin.database();
-const MAX_LEASE = 60000;
+const fsdb = admin.firestore();
+fsdb.settings({ timestampsInSnapshots: true });
+
+const MAX_LEASE = 25000;
 
 const app = express();
 app.use(require('cors')({ origin: true }));
+
+const delay = (ms: number) => new Promise(_ => setTimeout(_, ms));
+console.info('createdNewFunction');
+
+
+class Database {
+  rr = require('request-promise');
+
+}
+
+function getServingUrl(objectName: string, ithRetry = 0, maxRetry = 10) {
+  const domain = 'kawal-c1.appspot.com';
+  const path = encodeURIComponent(`${domain}/${objectName}`);
+  return request(`https://${domain}/gsu?path=${path}`)
+    .then(res => {
+      if (!res.startsWith('http')) {
+        throw new Error('gsu failed: ' + path);
+      }
+      return res;
+    })
+    .catch(async e => {
+      if (ithRetry >= maxRetry) {
+        console.error(`${e.message}; path = ${path}, #${ithRetry}/${maxRetry}`);
+        throw e;
+      }
+      await delay(ithRetry * 1000);
+      return getServingUrl(objectName, ithRetry + 1, maxRetry);
+    });
+}
 
 // Creates a serving url for the uploaded images.
 exports.handlePhotoUpload = functions
@@ -41,10 +74,6 @@ exports.handlePhotoUpload = functions
       return null;
     }
 
-    const domain = 'kawal-c1.appspot.com';
-    const path = encodeURIComponent(`${domain}/${object.name}`);
-    const url = await request(`https://${domain}/gsu?path=${path}`);
-
     const paths = object.name.split('/');
     // object.name = uploads/{kelurahanId}/{tpsNo}/{userId}/{imageId}
     const [, kelurahanId, tpsNo, userId, imageId] = paths;
@@ -52,8 +81,8 @@ exports.handlePhotoUpload = functions
     m.u = userId;
     m.k = parseInt(kelurahanId, 10);
     m.t = parseInt(tpsNo, 10);
-    m.v = url;
-    await rtdb.ref(DbPath.imageMetadata(imageId)).set(m);
+    m.v = await getServingUrl(object.name);
+    await fsdb.doc(FsPath.imageMetadata(imageId)).set(m);
   });
 
 /**
@@ -75,6 +104,70 @@ function validateToken(
   });
 }
 
+const CACHE_TIMEOUT = 60;
+const cache_c: any = {};
+app.get('/api/c/:id', async (req, res) => {
+  const cid = req.params.id;
+  let c = cache_c[cid];
+  res.setHeader('Cache-Control', `max-age=${CACHE_TIMEOUT}`);
+  if (c) return res.json(c);
+
+  c = (await rtdb.ref(DbPath.hie(cid)).once('value')).val();
+  cache_c[cid] = c;
+  setTimeout(() => delete cache_c[cid], CACHE_TIMEOUT * 1000);
+  return res.json(c);
+});
+
+async function getServingUrlFromFirestore(imageId, res, uid) {
+  if (imageId.startsWith('zzzzzzz')) {
+    return (
+      'http://lh3.googleusercontent.com/dRp80J1IsmVNeI3HBh-' +
+      'ToZA-VumvKXOzp-P_XrgsyhkjMV9Lldfq7-V9hhkolUAED75_QPn9t4NFNrJNMP8'
+    );
+  }
+
+  if (typeof imageId !== 'string' || !imageId.match(/^[A-Za-z0-9]{20}$/)) {
+    res.json({ error: 'Invalid imageId' });
+    console.warn(`Metadata invalid ${imageId}, uid = ${uid}`);
+    return false;
+  }
+
+  for (let i = 1; i <= 4; i++) {
+    const meta = (await fsdb
+      .doc(FsPath.imageMetadata(imageId))
+      .get()).data() as ImageMetadata;
+    if (meta && meta.v) {
+      return meta.v;
+    }
+    console.info(`Metadata pending ${imageId}, retry #${i}, uid = ${uid}`);
+    await delay(i * 1000);
+  }
+  console.warn(`Metadata missing ${imageId}, uid = ${uid}`);
+  res.json({ error: 'Metadata does not exists' });
+  return false;
+}
+
+// Rate limit to 5s per triggering upsert.
+const upsertRootTimeoutId = {};
+function triggerUpsert(rootId) {
+  if (upsertRootTimeoutId[rootId]) return;
+  upsertRootTimeoutId[rootId] = setTimeout(async () => {
+    upsertRootTimeoutId[rootId] = null;
+    try {
+      const u =
+        (await rtdb.ref(DbPath.upsert(rootId)).once('value')).val() || {};
+      if (Date.now() - (u.t || 0) > MAX_LEASE) {
+        // Will update aggregates later in the trigger below.
+        await rtdb.ref(DbPath.upsertCreateTrigger(rootId)).remove();
+        await rtdb.ref(DbPath.upsertCreateTrigger(rootId)).set(1);
+        console.info('Trigger upsert');
+      }
+    } catch (e) {
+      console.error('Trigger upsert failed: ' + e.message);
+    }
+  }, 5000);
+}
+
 app.post('/api/upload', async (req, res) => {
   const user = await validateToken(req, res);
   if (!user) return null;
@@ -82,26 +175,14 @@ app.post('/api/upload', async (req, res) => {
   const b = req.body as ApiUploadRequest;
   const imageId = b.imageId;
 
-  let servingUrl =
-    'http://lh3.googleusercontent.com/dRp80J1IsmVNeI3HBh-ToZA-VumvKXOzp-P_XrgsyhkjMV9Lldfq7-V9hhkolUAED75_QPn9t4NFNrJNMP8';
-  if (!imageId.startsWith('zzzzzzz')) {
-    if (typeof imageId !== 'string' || !imageId.match(/^[A-Za-z0-9]{20}$/)) {
-      return res.json({ error: 'Invalid imageId' });
-    }
+  // TODO: limit number of photos per tps and per user.
 
-    servingUrl = (await rtdb
-      .ref(DbPath.imageMetadataServingUrl(imageId))
-      .once('value')).val();
-    if (!servingUrl) {
-      return res.json({ error: 'Invalid url' });
-    }
-  }
+  const servingUrl = await getServingUrlFromFirestore(imageId, res, user.uid);
+  if (!servingUrl) return null;
 
   const kelId = b.kelurahanId;
-  if (
-    typeof kelId !== 'number' ||
-    (PARENT_IDS[kelId] && PARENT_IDS[kelId].length) !== 4
-  ) {
+  const pid = PARENT_IDS[kelId];
+  if (typeof kelId !== 'number' || (pid && pid.length) !== 4) {
     return res.json({ error: 'Invalid kelurahanId' });
   }
 
@@ -125,6 +206,7 @@ app.post('/api/upload', async (req, res) => {
   }
 
   if (!ROOT_ID[kelId]) {
+    console.error(`Root id ${kelId} not found`);
     return res.json({ error: 'Root id not found' });
   }
   const rootId = ROOT_ID[kelId];
@@ -141,19 +223,13 @@ app.post('/api/upload', async (req, res) => {
     d: 0,
     m: extractImageMetadata(b.metadata)
   };
-  await rtdb.ref().update({
-    [DbPath.tpsPendingImage(kelId, tpsNo, imageId)]: ti,
-    [DbPath.upsertsArchiveImage(rootId, imageId)]: upsert,
-    [DbPath.upsertsQueueImage(rootId, imageId)]: ts
-  });
 
-  // Will update aggregates later in the trigger below.
-  const pRef = rtdb.ref(DbPath.upsertsPending(rootId));
-  const p = (await pRef.once('value')).val();
-  if (!p || ts - p > MAX_LEASE) {
-    await pRef.remove();
-    await pRef.set(ts);
-  }
+  const batch = fsdb.batch();
+  batch.set(fsdb.doc(FsPath.tpsImage(kelId, tpsNo, imageId)), ti);
+  batch.set(fsdb.doc(FsPath.upserts(rootId, imageId)), upsert);
+  await batch.commit();
+
+  triggerUpsert(rootId);
 
   return res.json({ ok: true });
 });
@@ -171,11 +247,7 @@ exports.api = functions
 
 type HierarchyAggregates = { [key: string]: { [key: string]: Aggregate } };
 
-async function updateAggregates(
-  path: number[],
-  u: Upsert,
-  ha: HierarchyAggregates
-) {
+function updateAggregates(path: number[], u: Upsert, ha: HierarchyAggregates) {
   if (u.d) {
     console.error(`Upsert is already done: ${JSON.stringify(u)}`);
     return;
@@ -236,26 +308,13 @@ async function getHierarchyAggregates(paths: number[][]) {
   return ha;
 }
 
-async function getUpserts(rootId: number, imageIds: string[]) {
-  return Promise.all(
-    imageIds.map(imageId =>
-      rtdb
-        .ref(DbPath.upsertsArchiveImage(rootId, imageId))
-        .once('value')
-        .then(s => s.val() as Upsert)
-    )
-  );
-}
-
 async function processAggregate(rootId: number): Promise<AggregateResponse> {
   if (ROOT_IDS.indexOf(rootId) === -1) {
     throw new Error(`Invalid rootId: ${rootId}`);
   }
-
-  let batchTime = 5000;
   const t0 = Date.now();
   const { committed, snapshot } = await rtdb
-    .ref(DbPath.upsertsLease(rootId))
+    .ref(DbPath.upsertLastStartTs(rootId))
     .transaction(t => (!t || t === t0 || t0 - t > MAX_LEASE ? t0 : undefined));
 
   let t1 = Date.now();
@@ -270,22 +329,25 @@ async function processAggregate(rootId: number): Promise<AggregateResponse> {
     readHieAggs: 0,
     updateInMem: 0,
     writeDbAggs: 0,
-    largeBatchTime: 0,
+    batchTime: 1000,
     lease: snapshot.val()
   };
   if (!committed) return res;
 
-  while (t1 - t0 < MAX_LEASE - batchTime) {
-    const upsertKeys: { [key: string]: number } =
-      (await rtdb
-        .ref(DbPath.upsertsQueue(rootId))
-        .limitToFirst(100)
-        .once('value')).val() || {};
+  while (t1 - t0 < MAX_LEASE - res.batchTime * 2) {
+    const imageIds: string[] = [];
+    const upserts: Upsert[] = [];
+    (await fsdb
+      .collection(FsPath.upserts(rootId))
+      .where('d', '==', 0)
+      .limit(100)
+      .get()).forEach(doc => {
+      imageIds.push(doc.id);
+      upserts.push(doc.data() as Upsert);
+    });
 
-    const imageIds = Object.keys(upsertKeys);
     if (imageIds.length === 0) break;
 
-    const upserts = await getUpserts(rootId, imageIds);
     const t2 = Date.now();
 
     // Read the aggregate values of all intermediate nodes.
@@ -302,17 +364,12 @@ async function processAggregate(rootId: number): Promise<AggregateResponse> {
 
     // Update the intermediate nodes (ha) in-memory.
     const updates = {};
-    const promises = [];
+    const batch = fsdb.batch();
     for (let i = 0; i < imageIds.length; i++) {
       const imageId = imageIds[i];
-      promises.push(updateAggregates(paths[i], upserts[i], ha));
-      updates[DbPath.upsertsQueueImage(rootId, imageId)] = null;
-      updates[DbPath.upsertsArchiveImageDone(rootId, imageId)] = 1;
+      updateAggregates(paths[i], upserts[i], ha);
+      batch.update(fsdb.doc(FsPath.upserts(rootId, imageId)), { d: 1 });
     }
-    updates[DbPath.upsertsQueueCount(rootId)] = imageIds.length;
-
-    await Promise.all(promises);
-    const t4 = Date.now();
 
     // Atomically writes the in-memory aggregates to database.
     Object.keys(ha).map(pid => {
@@ -321,7 +378,14 @@ async function processAggregate(rootId: number): Promise<AggregateResponse> {
         updates[DbPath.hieAgg(+pid, +cid)] = c[cid];
       });
     });
+    const t4 = Date.now();
+
+    if (t4 - t0 > MAX_LEASE - res.batchTime) {
+      console.warn('Skip upserts due to lease near expire');
+      break;
+    }
     await rtdb.ref().update(updates);
+    await batch.commit();
     const t5 = Date.now();
 
     res.totalUpdates += imageIds.length;
@@ -330,13 +394,14 @@ async function processAggregate(rootId: number): Promise<AggregateResponse> {
     res.readHieAggs += t3 - t2;
     res.updateInMem += t4 - t3;
     res.writeDbAggs += t5 - t4;
-    batchTime = Math.max(batchTime, t5 - t1);
+    res.batchTime = Math.max(res.batchTime, t5 - t1);
     t1 = t5;
   }
 
   if (t1 - t0 < MAX_LEASE - 1000) {
-    await rtdb.ref(DbPath.upsertsLease(rootId)).remove();
+    await rtdb.ref(DbPath.upsertLastStartTs(rootId)).remove();
   }
+
   res.totalRuntime = Date.now() - t0;
   return res;
 }
@@ -346,15 +411,16 @@ exports.upsertProcessor = functions
     timeoutSeconds: 300,
     memory: '512MB'
   })
-  .database.ref('u/{rootId}/p')
+  .database.ref('u/{rootId}/c')
   .onCreate(async (snapshot, context) => {
     const rootId = parseInt(context.params.rootId, 10);
     const res = await processAggregate(rootId);
     await snapshot.ref.remove();
     if (res.totalUpdates === 0) {
+      console.info('no more upserts');
       return;
     }
     const qps = Math.ceil((res.totalUpdates / res.totalRuntime) * 1e3);
-    console.log(`qps=${qps},res=${JSON.stringify(res, null, 2)}`);
+    console.info(`qps=${qps},res=${JSON.stringify(res, null, 2)}`);
     await snapshot.ref.set(Date.now());
   });

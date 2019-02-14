@@ -1,17 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ApiService } from '../api.service';
 import { UserService } from '../user.service';
-import {
-  DbPath,
-  getTpsNumbers,
-  Aggregate,
-  ImageMetadata,
-  TpsImage
-} from 'shared';
+import { TpsImage } from 'shared';
 import { AngularFireDatabase } from '@angular/fire/database';
 import { User } from 'firebase';
-import { take } from 'rxjs/operators';
-import { Upsert } from 'shared';
 
 @Component({
   selector: 'app-admin',
@@ -25,19 +17,7 @@ export class AdminComponent implements OnInit {
     private afd: AngularFireDatabase
   ) {}
 
-  async ngOnInit() {
-    // await this.afd.object('upserts').remove();
-    // console.log('removed');
-
-    DbPath.rootIds.map(rootId => {
-      this.afd
-        .object(DbPath.upsertsQueueCount(rootId))
-        .valueChanges()
-        .subscribe(val => {
-          console.log(rootId, val);
-        });
-    });
-  }
+  async ngOnInit() {}
 
   async kelurahanIds() {
     const arr = await this.api.get(null, '/assets/kelurahan_ids.js');
@@ -56,39 +36,106 @@ export class AdminComponent implements OnInit {
   }
 
   async zero(user: User) {
-    const kelurahanIds = await this.api
-      .getStatic<number[]>('/assets/kelurahan_ids.js');
-    kelurahanIds.sort((a, b) => a - b);
-    console.log(kelurahanIds);
-    for (let i = 0; i < 100; i++) {
-      const kelurahanId = kelurahanIds[i];
-      const childrenBits = (await this.afd
-        .list(DbPath.hieChildren(kelurahanId))
-        .valueChanges()
-        .pipe(take(1))
-        .toPromise()) as number[];
-      for (const tpsNo of getTpsNumbers(childrenBits)) {
-        const aggregates = (await this.afd
-          .object(DbPath.hieAgg(kelurahanId, tpsNo))
-          .valueChanges()
-          .pipe(take(1))
-          .toPromise()) as Aggregate;
-        console.log(kelurahanId, tpsNo, aggregates.s);
-        for (let j = 0; j < 5; j++) {
-          aggregates.s[j] = 0;
-        }
+    console.log('zero', user, await user.getIdToken());
+    // return;
 
-        this.api
-          .post(user, `${ApiService.HOST}/api/upload`, {
-            kelurahanId,
-            tpsNo,
-            aggregates,
-            metadata: { i: 'vJVwly28IC3fK2ExYMaG' }
-          })
-          .then(res => {
-            console.log('res', kelurahanId, tpsNo);
-          });
+    const kelurahanIds = await this.api.getStatic<number[]>(
+      '/assets/kelurahan_ids.js'
+    );
+
+    for (let i = 0; i < kelurahanIds.length; i++) {
+      const j = Math.floor(Math.random() * (i + 1));
+      if (i !== j) {
+        const t = kelurahanIds[i];
+        kelurahanIds[i] = kelurahanIds[j];
+        kelurahanIds[j] = t;
       }
     }
+    console.log(kelurahanIds);
+
+    let skipped = 0;
+    for (const batch = []; kelurahanIds.length; ) {
+      const kelurahanId = kelurahanIds.pop();
+      if (localStorage[kelurahanId]) {
+        skipped++;
+        continue;
+      }
+      batch.push(kelurahanId);
+      if (batch.length > 5000 || kelurahanIds.length === 0) {
+        console.log(await this.zeroBatch(batch));
+        console.log('skipped', skipped);
+        break;
+      }
+    }
+  }
+
+  async zeroBatch(batch: number[]) {
+    const tpsNosByKel: any = {};
+    const aggregatesByBatch = await Promise.all(
+      batch.map(async kelurahanId => {
+        // const childrenBits = (await this.afd
+        //   .list(DbPath.hieChildren(kelurahanId))
+        //   .valueChanges()
+        //   .pipe(take(1))
+        //   .toPromise()) as number[];
+        // tpsNosByKel[kelurahanId] = getTpsNumbers(childrenBits);
+        // const aggregates = Promise.all<Aggregate>(
+        //   tpsNosByKel[kelurahanId].map(
+        //     tpsNo =>
+        //       this.afd
+        //         .object(DbPath.hieAgg(kelurahanId, tpsNo))
+        //         .valueChanges()
+        //         .pipe(take(1))
+        //         .toPromise() as Promise<Aggregate>
+        //   )
+        // );
+        // return aggregates;
+      })
+    );
+
+    let curls = '';
+    let cnt = 0;
+    for (let i = 0; i < batch.length; i++) {
+      const kelurahanId = batch[i];
+      const tpsNos = tpsNosByKel[kelurahanId];
+      const aggregates = aggregatesByBatch[i];
+
+      for (let k = 0; k < tpsNos.length; k++) {
+        const tpsNo = tpsNos[k];
+        const aggregate = aggregates[k];
+        let nonZero = false;
+        for (let j = 0; j < 5; j++) {
+          if (aggregate.s[j]) {
+            aggregate.s[j] = 0;
+            nonZero = true;
+          }
+        }
+        if (!nonZero) {
+          localStorage[kelurahanId] = true;
+          continue;
+        }
+        localStorage[kelurahanId] = true;
+        // console.log(kelurahanId, tpsNo, aggregate.s);
+
+        let imageId = `testing${kelurahanId}t${tpsNo}r`;
+        while (imageId.length < 20) {
+          imageId += Math.floor(Math.random() * 10);
+        }
+        curls += `bash upsert.sh '{"kelurahanId":${kelurahanId},"tpsNo":${tpsNo},\
+        "aggregate":{"s":[0,0,0,0,0],"x":[0]},"metadata":{},"imageId":"${imageId}"}' &\n`;
+
+        if (++cnt % 500 === 0) {
+          curls += 'sleep 1\n';
+        }
+        // this.api
+        //   .post(user, `${ApiService.HOST}/api/upload`, body)
+        //   .then((res: any) => {
+        //     if (!res.ok) {
+        //       console.error('res', kelurahanId, tpsNo, res);
+        //     }
+        //   });
+      }
+    }
+    return curls;
   }
 }
