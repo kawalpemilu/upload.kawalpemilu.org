@@ -25,6 +25,12 @@ exports.extractImageMetadata = extractImageMetadata;
 var FsPath = /** @class */ (function () {
     function FsPath() {
     }
+    FsPath.relawan = function (uid) {
+        return "r/" + uid;
+    };
+    FsPath.children = function (cid) {
+        return "c/" + cid;
+    };
     FsPath.imageMetadata = function (imageId) {
         return "i/" + imageId;
     };
@@ -34,8 +40,8 @@ var FsPath = /** @class */ (function () {
     FsPath.imageMetadataServingUrl = function (imageId) {
         return FsPath.imageMetadata(imageId) + "/v";
     };
-    FsPath.upserts = function (rootId, imageId) {
-        return "u/" + rootId + "/i" + (imageId ? "/" + imageId : '');
+    FsPath.upserts = function (imageId) {
+        return "u" + (imageId ? "/" + imageId : '');
     };
     FsPath.tpsImages = function (kelurahanId, tpsNo) {
         return "t/" + kelurahanId + "/n/" + tpsNo + "/i";
@@ -46,36 +52,6 @@ var FsPath = /** @class */ (function () {
     return FsPath;
 }());
 exports.FsPath = FsPath;
-var DbPath = /** @class */ (function () {
-    function DbPath() {
-    }
-    DbPath.hie = function (id) {
-        return "h/" + id;
-    };
-    DbPath.hieAgg = function (id, cid) {
-        return DbPath.hie(id) + "/a/" + cid;
-    };
-    DbPath.upsert = function (rootId) {
-        return "u/" + rootId;
-    };
-    // The last startTime of the upsertProcessor.
-    DbPath.upsertLastStartTs = function (rootId) {
-        return DbPath.upsert(rootId) + "/t";
-    };
-    // Remove ans create this path to trigger upsertProcessor function.
-    DbPath.upsertCreateTrigger = function (rootId) {
-        return DbPath.upsert(rootId) + "/c";
-    };
-    // Number of updates of the last batch.
-    DbPath.upsertLastUpdateCount = function (rootId) {
-        return DbPath.upsert(rootId) + "/u";
-    };
-    DbPath.codeReferral = function (code) {
-        return "c/" + code;
-    };
-    return DbPath;
-}());
-exports.DbPath = DbPath;
 function getTpsNumbers(childrenBits) {
     var tpsNumbers = [];
     for (var i = 0; i < childrenBits.length; i++) {

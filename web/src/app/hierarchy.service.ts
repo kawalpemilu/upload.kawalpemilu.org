@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
-import { AngularFireDatabase } from '@angular/fire/database';
-import { HierarchyNode, DbPath, Aggregate } from 'shared';
+import { HierarchyNode, Aggregate } from 'shared';
 import { ApiService } from './api.service';
-import { from } from 'rxjs';
+import { from, of } from 'rxjs';
 import { shareReplay } from 'rxjs/operators';
 
 @Injectable({
@@ -12,7 +11,7 @@ export class HierarchyService {
   rootIds: Promise<any>;
   cacheHierarchy: { [id: string]: HierarchyNode } = {};
 
-  constructor(private afd: AngularFireDatabase, private api: ApiService) {
+  constructor(private api: ApiService) {
     this.rootIds = this.api.getStatic(`/assets/r.js?1`).then(r => {
       const map = {};
       for (const rootId of Object.keys(r)) {
@@ -98,9 +97,8 @@ export class HierarchyService {
   }
 
   getAggregate$(parent, child) {
-    return this.afd
-      .object<Aggregate>(DbPath.hieAgg(parent, child))
-      .valueChanges()
-      .pipe(shareReplay(1));
+    // TODO: use API
+    const a: Aggregate = { s: [0, 0, 0, 0, 0], x: [0] };
+    return of(a);
   }
 }

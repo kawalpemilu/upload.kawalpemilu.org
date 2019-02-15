@@ -4,7 +4,8 @@ import { AngularFireAuth } from '@angular/fire/auth';
 import { auth, User } from 'firebase/app';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { AngularFireDatabase } from '@angular/fire/database';
+import { AngularFirestore } from '@angular/fire/firestore';
+import { FsPath } from 'shared';
 
 @Injectable({
   providedIn: 'root'
@@ -16,7 +17,7 @@ export class UserService {
 
   constructor(
     private afAuth: AngularFireAuth,
-    private db: AngularFireDatabase
+    private fsdb: AngularFirestore
   ) {
     this.isLoading = true;
     this.user$ = this.afAuth.user.pipe(tap(() => (this.isLoading = false)));
@@ -41,7 +42,7 @@ export class UserService {
 
       if (profile) {
         const p = UserService.SCOPED_PREFIX;
-        this.db.object(`r/${result.user.uid}`).set({
+        this.fsdb.doc(FsPath.relawan(result.user.uid)).set({
           l: profile.link.startsWith(p)
             ? profile.link.substring(p.length)
             : profile.link,

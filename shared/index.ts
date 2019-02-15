@@ -27,20 +27,6 @@ export interface HierarchyNode {
   aggregate$: { [key: string]: any };
 }
 
-export interface AggregateResponse {
-  rootId: number;
-  lockTime: number;
-  totalUpdates: number;
-  totalRuntime: number;
-  totalBatches: number;
-  readPayload: number;
-  readHieAggs: number;
-  updateInMem: number;
-  writeDbAggs: number;
-  batchTime: number;
-  lease: number;
-}
-
 export interface ImageMetadata {
   u: string; // The userId who uploaded.
   k: number; // Kelurahan ID wher it's set.
@@ -91,6 +77,14 @@ export interface Upsert {
 }
 
 export class FsPath {
+  static relawan(uid: string) {
+    return `r/${uid}`;
+  }
+
+  static children(cid: number) {
+    return `c/${cid}`;
+  }
+  
   static imageMetadata(imageId: string) {
     return `i/${imageId}`;
   }
@@ -101,8 +95,8 @@ export class FsPath {
     return `${FsPath.imageMetadata(imageId)}/v`;
   }
 
-  static upserts(rootId: number, imageId?: string) {
-    return `u/${rootId}/i` + (imageId ? `/${imageId}` : '');
+  static upserts(imageId?: string) {
+    return `u` + (imageId ? `/${imageId}` : '');
   }
 
   static tpsImages(kelurahanId: number, tpsNo: number) {
@@ -110,35 +104,6 @@ export class FsPath {
   }
   static tpsImage(kelurahanId: number, tpsNo: number, imageId: string) {
     return `${FsPath.tpsImages(kelurahanId, tpsNo)}/${imageId}`;
-  }
-}
-
-export class DbPath {
-  static hie(id: number) {
-    return `h/${id}`;
-  }
-  static hieAgg(id: number, cid: number) {
-    return `${DbPath.hie(id)}/a/${cid}`;
-  }
-
-  static upsert(rootId: number) {
-    return `u/${rootId}`;
-  }
-  // The last startTime of the upsertProcessor.
-  static upsertLastStartTs(rootId: number) {
-    return `${DbPath.upsert(rootId)}/t`;
-  }
-  // Remove ans create this path to trigger upsertProcessor function.
-  static upsertCreateTrigger(rootId: number) {
-    return `${DbPath.upsert(rootId)}/c`;
-  }
-  // Number of updates of the last batch.
-  static upsertLastUpdateCount(rootId: number) {
-    return `${DbPath.upsert(rootId)}/u`;
-  }
-
-  static codeReferral(code: string) {
-    return `c/${code}`;
   }
 }
 

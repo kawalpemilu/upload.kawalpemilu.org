@@ -24,19 +24,6 @@ export interface HierarchyNode {
         [key: string]: any;
     };
 }
-export interface AggregateResponse {
-    rootId: number;
-    lockTime: number;
-    totalUpdates: number;
-    totalRuntime: number;
-    totalBatches: number;
-    readPayload: number;
-    readHieAggs: number;
-    updateInMem: number;
-    writeDbAggs: number;
-    batchTime: number;
-    lease: number;
-}
 export interface ImageMetadata {
     u: string;
     k: number;
@@ -62,20 +49,13 @@ export interface Upsert {
     m: ImageMetadata;
 }
 export declare class FsPath {
+    static relawan(uid: string): string;
+    static children(cid: number): string;
     static imageMetadata(imageId: string): string;
     static imageMetadataUserId(imageId: string): string;
     static imageMetadataServingUrl(imageId: string): string;
-    static upserts(rootId: number, imageId?: string): string;
+    static upserts(imageId?: string): string;
     static tpsImages(kelurahanId: number, tpsNo: number): string;
     static tpsImage(kelurahanId: number, tpsNo: number, imageId: string): string;
-}
-export declare class DbPath {
-    static hie(id: number): string;
-    static hieAgg(id: number, cid: number): string;
-    static upsert(rootId: number): string;
-    static upsertLastStartTs(rootId: number): string;
-    static upsertCreateTrigger(rootId: number): string;
-    static upsertLastUpdateCount(rootId: number): string;
-    static codeReferral(code: string): string;
 }
 export declare function getTpsNumbers(childrenBits: number[]): any[];

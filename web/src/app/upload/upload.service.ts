@@ -4,9 +4,6 @@ import {
   AngularFireStorage,
   AngularFireUploadTask
 } from '@angular/fire/storage';
-import { AngularFireDatabase } from '@angular/fire/database';
-import { take, filter } from 'rxjs/operators';
-import { DbPath } from 'shared';
 
 @Injectable({
   providedIn: 'root'

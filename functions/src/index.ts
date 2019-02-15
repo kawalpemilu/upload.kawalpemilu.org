@@ -4,8 +4,6 @@ import * as request from 'request-promise';
 import * as express from 'express';
 import {
   Aggregate,
-  DbPath,
-  AggregateResponse,
   ImageMetadata,
   Upsert,
   extractImageMetadata,
@@ -14,7 +12,7 @@ import {
   FsPath
 } from 'shared';
 
-import { ROOT_ID, ROOT_IDS, PARENT_IDS, CHILDREN } from './hierarchy';
+import { PARENT_IDS, CHILDREN } from './hierarchy';
 
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
@@ -22,23 +20,14 @@ admin.initializeApp({
 });
 
 const auth = admin.auth();
-const rtdb = admin.database();
 const fsdb = admin.firestore();
 fsdb.settings({ timestampsInSnapshots: true });
-
-const MAX_LEASE = 25000;
 
 const app = express();
 app.use(require('cors')({ origin: true }));
 
 const delay = (ms: number) => new Promise(_ => setTimeout(_, ms));
 console.info('createdNewFunction');
-
-
-class Database {
-  rr = require('request-promise');
-
-}
 
 function getServingUrl(objectName: string, ithRetry = 0, maxRetry = 10) {
   const domain = 'kawal-c1.appspot.com';
@@ -104,15 +93,16 @@ function validateToken(
   });
 }
 
-const CACHE_TIMEOUT = 60;
+const CACHE_TIMEOUT = 5;
 const cache_c: any = {};
 app.get('/api/c/:id', async (req, res) => {
   const cid = req.params.id;
   let c = cache_c[cid];
   res.setHeader('Cache-Control', `max-age=${CACHE_TIMEOUT}`);
   if (c) return res.json(c);
-
-  c = (await rtdb.ref(DbPath.hie(cid)).once('value')).val();
+  
+  const host = '10.128.0.2'; // 35.188.68.201
+  c = await request(`http://${host}/api/c/${cid}`);
   cache_c[cid] = c;
   setTimeout(() => delete cache_c[cid], CACHE_TIMEOUT * 1000);
   return res.json(c);
@@ -145,27 +135,6 @@ async function getServingUrlFromFirestore(imageId, res, uid) {
   console.warn(`Metadata missing ${imageId}, uid = ${uid}`);
   res.json({ error: 'Metadata does not exists' });
   return false;
-}
-
-// Rate limit to 5s per triggering upsert.
-const upsertRootTimeoutId = {};
-function triggerUpsert(rootId) {
-  if (upsertRootTimeoutId[rootId]) return;
-  upsertRootTimeoutId[rootId] = setTimeout(async () => {
-    upsertRootTimeoutId[rootId] = null;
-    try {
-      const u =
-        (await rtdb.ref(DbPath.upsert(rootId)).once('value')).val() || {};
-      if (Date.now() - (u.t || 0) > MAX_LEASE) {
-        // Will update aggregates later in the trigger below.
-        await rtdb.ref(DbPath.upsertCreateTrigger(rootId)).remove();
-        await rtdb.ref(DbPath.upsertCreateTrigger(rootId)).set(1);
-        console.info('Trigger upsert');
-      }
-    } catch (e) {
-      console.error('Trigger upsert failed: ' + e.message);
-    }
-  }, 5000);
 }
 
 app.post('/api/upload', async (req, res) => {
@@ -205,12 +174,6 @@ app.post('/api/upload', async (req, res) => {
     agg.s.push(sum);
   }
 
-  if (!ROOT_ID[kelId]) {
-    console.error(`Root id ${kelId} not found`);
-    return res.json({ error: 'Root id not found' });
-  }
-  const rootId = ROOT_ID[kelId];
-
   const ti: TpsImage = {
     u: servingUrl,
     a: agg
@@ -226,10 +189,8 @@ app.post('/api/upload', async (req, res) => {
 
   const batch = fsdb.batch();
   batch.set(fsdb.doc(FsPath.tpsImage(kelId, tpsNo, imageId)), ti);
-  batch.set(fsdb.doc(FsPath.upserts(rootId, imageId)), upsert);
+  batch.set(fsdb.doc(FsPath.upserts(imageId)), upsert);
   await batch.commit();
-
-  triggerUpsert(rootId);
 
   return res.json({ ok: true });
 });
@@ -240,187 +201,3 @@ exports.api = functions
     memory: '512MB'
   })
   .https.onRequest(app);
-
-/**
- * Update Aggregates via database triggers with distributed lock.
- */
-
-type HierarchyAggregates = { [key: string]: { [key: string]: Aggregate } };
-
-function updateAggregates(path: number[], u: Upsert, ha: HierarchyAggregates) {
-  if (u.d) {
-    console.error(`Upsert is already done: ${JSON.stringify(u)}`);
-    return;
-  }
-  u.d = 1;
-
-  const t = (ha[path[4]] && ha[path[4]][path[5]]) || { s: [], x: [] };
-  const deltaSum = [];
-  for (let i = 0; i < u.a.s.length; i++) {
-    deltaSum.push(u.a.s[i] - (t.s[i] || 0));
-  }
-  const newMax = [];
-  for (let i = 0; i < u.a.x.length; i++) {
-    newMax[i] = Math.max(u.a.x[i], t.x[i] || u.a.x[i]);
-  }
-
-  for (let i = 0; i <= 4; i++) {
-    const pid = path[i];
-    if (!ha[pid]) ha[pid] = {};
-
-    const c = ha[pid];
-    const cid = path[i + 1];
-    if (!c[cid]) c[cid] = { s: [], x: [] };
-    const p = c[cid];
-
-    for (let j = 0; j < u.a.s.length; j++) {
-      p.s[j] = (p.s[j] || 0) + deltaSum[j];
-    }
-    for (let j = 0; j < u.a.x.length; j++) {
-      p.x[j] = Math.max(p.x[j] || newMax[j], newMax[j]);
-    }
-  }
-}
-
-async function getHierarchyAggregates(paths: number[][]) {
-  const ha: HierarchyAggregates = {};
-  const promises = [];
-  paths.forEach(path => {
-    if (path.length !== 6) throw new Error(`Invalid path: ${path}`);
-    for (let i = 0; i <= 4; i++) {
-      const pid = path[i];
-      if (!ha[pid]) ha[pid] = {};
-
-      const cid = path[i + 1];
-      const c = ha[pid];
-      if (!c[cid]) {
-        c[cid] = {} as Aggregate;
-        promises.push(
-          rtdb
-            .ref(DbPath.hieAgg(pid, cid))
-            .once('value')
-            .then(s => (c[cid] = s.val()))
-        );
-      }
-    }
-  });
-  await Promise.all(promises);
-  return ha;
-}
-
-async function processAggregate(rootId: number): Promise<AggregateResponse> {
-  if (ROOT_IDS.indexOf(rootId) === -1) {
-    throw new Error(`Invalid rootId: ${rootId}`);
-  }
-  const t0 = Date.now();
-  const { committed, snapshot } = await rtdb
-    .ref(DbPath.upsertLastStartTs(rootId))
-    .transaction(t => (!t || t === t0 || t0 - t > MAX_LEASE ? t0 : undefined));
-
-  let t1 = Date.now();
-  const lockTime = t1 - t0;
-  const res: AggregateResponse = {
-    rootId,
-    totalUpdates: 0,
-    totalRuntime: 0,
-    totalBatches: 0,
-    lockTime,
-    readPayload: 0,
-    readHieAggs: 0,
-    updateInMem: 0,
-    writeDbAggs: 0,
-    batchTime: 1000,
-    lease: snapshot.val()
-  };
-  if (!committed) return res;
-
-  while (t1 - t0 < MAX_LEASE - res.batchTime * 2) {
-    const imageIds: string[] = [];
-    const upserts: Upsert[] = [];
-    (await fsdb
-      .collection(FsPath.upserts(rootId))
-      .where('d', '==', 0)
-      .limit(100)
-      .get()).forEach(doc => {
-      imageIds.push(doc.id);
-      upserts.push(doc.data() as Upsert);
-    });
-
-    if (imageIds.length === 0) break;
-
-    const t2 = Date.now();
-
-    // Read the aggregate values of all intermediate nodes.
-    const paths = [];
-    for (let i = 0; i < imageIds.length; i++) {
-      const kelurahanId = upserts[i].k;
-      const path = PARENT_IDS[kelurahanId].slice();
-      path.push(kelurahanId);
-      path.push(upserts[i].n);
-      paths.push(path);
-    }
-    const ha = await getHierarchyAggregates(paths);
-    const t3 = Date.now();
-
-    // Update the intermediate nodes (ha) in-memory.
-    const updates = {};
-    const batch = fsdb.batch();
-    for (let i = 0; i < imageIds.length; i++) {
-      const imageId = imageIds[i];
-      updateAggregates(paths[i], upserts[i], ha);
-      batch.update(fsdb.doc(FsPath.upserts(rootId, imageId)), { d: 1 });
-    }
-
-    // Atomically writes the in-memory aggregates to database.
-    Object.keys(ha).map(pid => {
-      const c = ha[pid];
-      Object.keys(ha[pid]).map(cid => {
-        updates[DbPath.hieAgg(+pid, +cid)] = c[cid];
-      });
-    });
-    const t4 = Date.now();
-
-    if (t4 - t0 > MAX_LEASE - res.batchTime) {
-      console.warn('Skip upserts due to lease near expire');
-      break;
-    }
-    await rtdb.ref().update(updates);
-    await batch.commit();
-    const t5 = Date.now();
-
-    res.totalUpdates += imageIds.length;
-    res.totalBatches++;
-    res.readPayload += t2 - t1;
-    res.readHieAggs += t3 - t2;
-    res.updateInMem += t4 - t3;
-    res.writeDbAggs += t5 - t4;
-    res.batchTime = Math.max(res.batchTime, t5 - t1);
-    t1 = t5;
-  }
-
-  if (t1 - t0 < MAX_LEASE - 1000) {
-    await rtdb.ref(DbPath.upsertLastStartTs(rootId)).remove();
-  }
-
-  res.totalRuntime = Date.now() - t0;
-  return res;
-}
-
-exports.upsertProcessor = functions
-  .runWith({
-    timeoutSeconds: 300,
-    memory: '512MB'
-  })
-  .database.ref('u/{rootId}/c')
-  .onCreate(async (snapshot, context) => {
-    const rootId = parseInt(context.params.rootId, 10);
-    const res = await processAggregate(rootId);
-    await snapshot.ref.remove();
-    if (res.totalUpdates === 0) {
-      console.info('no more upserts');
-      return;
-    }
-    const qps = Math.ceil((res.totalUpdates / res.totalRuntime) * 1e3);
-    console.info(`qps=${qps},res=${JSON.stringify(res, null, 2)}`);
-    await snapshot.ref.set(Date.now());
-  });

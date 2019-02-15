@@ -2,10 +2,9 @@ import { Component, OnInit, HostListener } from '@angular/core';
 import { HierarchyService } from '../hierarchy.service';
 import { ActivatedRoute } from '@angular/router';
 import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
-import { Observable } from 'rxjs';
-import { AngularFireDatabase } from '@angular/fire/database';
+import { Observable, of } from 'rxjs';
 
-import { Aggregate, HierarchyNode, getTpsNumbers, DbPath } from 'shared';
+import { Aggregate, HierarchyNode, getTpsNumbers } from 'shared';
 import { AppComponent } from '../app.component';
 
 interface Tps {
@@ -30,11 +29,7 @@ export class TpsComponent implements OnInit {
   height: number;
   width: number;
 
-  constructor(
-    public hie: HierarchyService,
-    private route: ActivatedRoute,
-    private afd: AngularFireDatabase
-  ) {}
+  constructor(public hie: HierarchyService, private route: ActivatedRoute) {}
 
   @HostListener('window:resize', ['$event'])
   getScreenSize() {
@@ -59,9 +54,8 @@ export class TpsComponent implements OnInit {
               state.tpsList = tpsNumbers.map(tpsNo => ({
                 tpsNo,
                 address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG 2)',
-                aggregate$: this.afd
-                  .object<Aggregate>(DbPath.hieAgg(id, tpsNo))
-                  .valueChanges()
+                // TODO: use API.
+                aggregate$: of({ s: [0, 0, 0, 0, 0], x: [0] })
               }));
               return state;
             })

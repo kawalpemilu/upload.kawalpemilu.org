@@ -1,9 +1,16 @@
 import * as admin from 'firebase-admin';
 import * as request from 'request-promise';
+import * as express from 'express';
 import * as fs from 'fs';
 
-import { CHILDREN } from './hierarchy';
-import { ApiUploadRequest, ImageMetadata, FsPath } from 'shared';
+import { PARENT_IDS, CHILDREN } from './hierarchy';
+import {
+  ApiUploadRequest,
+  ImageMetadata,
+  FsPath,
+  Upsert,
+  Aggregate
+} from 'shared';
 
 admin.initializeApp({
   credential: admin.credential.cert(require('./sa-key.json')),
@@ -91,8 +98,6 @@ async function getUser(uid: string) {
   return await autoRenewIdToken(JSON.parse(userJson) as User);
 }
 
-let requests: ApiUploadRequest[] = [];
-
 function makeRequest(kelurahanId, tpsNo) {
   const body: ApiUploadRequest = {
     kelurahanId,
@@ -108,7 +113,7 @@ function makeRequest(kelurahanId, tpsNo) {
   return body;
 }
 
-function rec(id, depth) {
+function rec(id, depth, requests) {
   const arr = CHILDREN[id];
   if (depth === 4) {
     for (const tpsNo of arr) {
@@ -116,59 +121,15 @@ function rec(id, depth) {
     }
   } else {
     for (const cid of arr) {
-      rec(cid, depth + 1);
+      rec(cid, depth + 1, requests);
     }
   }
 }
 
-function upsert(body, token, retry = 0) {
-  // console.log('upsert', JSON.stringify(body));
-  return request({
-    method: 'POST',
-    uri: 'https://kawal-c1.firebaseapp.com/api/upload',
-    body,
-    headers: {
-      Authorization: `Bearer ${token}`
-    },
-    timeout: 15000,
-    json: true // Automatically stringifies the body to JSON
-  })
-    .then(res => {
-      if (!res.ok) {
-        console.error(`Error posting `, body);
-      }
-    })
-    .catch(error => {
-      if (retry > 2) {
-        console.warn(error.message, retry, body);
-      }
-      if (retry < 5) {
-        return upsert(body, token, retry + 1);
-      }
-      console.error(error.message, retry, body);
-    });
-}
+function generateRequests() {
+  const requests: ApiUploadRequest[] = [];
 
-(async () => {
-  (await fsdb
-    .collection(FsPath.upserts(55065))
-    .where('k', '==', 56720)
-    .limit(100)
-    .get()).forEach(s => {
-    console.log(JSON.stringify(s.data(), null, 2));
-  });
-  // rec(0, 0);
-
-  // requests = [
-  //   makeRequest(38901, 7),
-  //   makeRequest(4, 1),
-  //   makeRequest(4, 2),
-  // ];
-
-  // console.log(requests.length);
-  // if (request.length) return;
-  // requests = requests.slice(0, 10);
-  // console.log(requests.length);
+  rec(0, 0, requests);
 
   let seed = 14;
   for (let i = 0; i < requests.length; i++) {
@@ -181,20 +142,46 @@ function upsert(body, token, retry = 0) {
     }
   }
 
-  requests = requests.slice(0, 135000);
-  console.log(requests.length);
+  return requests;
+}
 
-  const uid = '1oz4pZ0MTidjEteHbvlNdfvAu7p1';
-  const user = await getUser(uid);
+async function upload(body) {
+  for (let retry = 1; ; retry++) {
+    try {
+      const uid = '1oz4pZ0MTidjEteHbvlNdfvAu7p1';
+      const user = await getUser(uid);
+      const res = await request({
+        method: 'POST',
+        uri: 'https://kawal-c1.firebaseapp.com/api/upload',
+        body,
+        headers: {
+          Authorization: `Bearer ${user.idToken}`
+        },
+        timeout: 5000
+      });
+      if (!res.ok) throw new Error(`Result not OK: ${JSON.stringify(res)}`);
+      break;
+    } catch (e) {
+      if (retry > 2) console.warn(e.message, retry, body);
+      if (retry > 5) {
+        console.error(e.message, retry, body);
+        break;
+      }
+      await delay(retry * 1000);
+    }
+  }
+}
 
+async function parallelUpload(concurrency = 500) {
+  const requests = generateRequests();
   const promises: any = [];
-  for (let i = 0; i < 500 && i < requests.length; i++) {
+  for (let i = 0; i < concurrency && i < requests.length; i++) {
     promises.push(Promise.resolve());
   }
-  for (let i = 130000, j = 0; i < requests.length; i++) {
+  for (let i = 0, j = 0; i < requests.length; i++) {
     const idx = i;
     const req = requests[i];
-    promises[j] = promises[j].then(() => upsert(req, user.idToken));
+    promises[j] = promises[j].then(() => upload(req));
     if (j === 0) {
       promises[j] = promises[j].then(() => console.log('i', idx));
     }
@@ -207,4 +194,97 @@ function upsert(body, token, retry = 0) {
   console.log('seted up');
   await Promise.all(promises);
   console.log('done all');
-})().catch(console.error);
+}
+
+// In memory database containing the aggregates of all children.
+const c: { [key: string]: Aggregate } = {};
+
+function mergeAggregates(target: Aggregate, source: Aggregate) {
+  for (let j = 0; j < source.s.length; j++) {
+    target.s[j] = (target.s[j] || 0) + source.s[j];
+  }
+  for (let j = 0; j < source.x.length; j++) {
+    target.x[j] = Math.max(target.x[j] || source.x[j], source.x[j]);
+  }
+}
+
+function getEmptyAggregate(): Aggregate {
+  return { s: [], x: [] };
+}
+
+function updateAggregates(u: Upsert) {
+  console.log(u);
+
+  if (u.d) {
+    console.error(`Upsert is already done: ${JSON.stringify(u)}`);
+    return;
+  }
+
+  const kelurahanId = u.k;
+  const path = PARENT_IDS[kelurahanId].slice();
+  path.push(kelurahanId);
+
+  if (path.length !== 5) {
+    console.error(`Path length != 5: ${JSON.stringify(path)}`);
+    return;
+  }
+
+  for (const id of path) {
+    if (!c[id]) c[id] = getEmptyAggregate();
+    mergeAggregates(c[id], u.a);
+  }
+}
+
+async function processNewUpserts() {
+  const upserts: { [key: string]: Upsert } = {};
+
+  await new Promise((resolve, reject) => {
+    const unsub = fsdb
+      .collection(FsPath.upserts())
+      .where('d', '==', 0)
+      .limit(5)
+      .onSnapshot(
+        s => {
+          if (!s.empty) {
+            unsub();
+            s.forEach(doc => (upserts[doc.id] = doc.data() as Upsert));
+            resolve();
+          }
+        },
+        e => {
+          unsub();
+          reject(e);
+        }
+      );
+  }).catch(console.error);
+
+  console.log('processing ', Object.keys(upserts));
+
+  const batch = fsdb.batch();
+  for (const imageId of Object.keys(upserts)) {
+    updateAggregates(upserts[imageId]);
+    batch.update(fsdb.doc(FsPath.upserts(imageId)), { d: 1 });
+  }
+  await batch.commit().catch(console.error);
+
+  setTimeout(processNewUpserts, 1);
+}
+
+function continuousAggregation() {
+  setTimeout(processNewUpserts, 1);
+
+  const app = express();
+
+  app.get('/api/c/:id', async (req, res) => {
+    return res.json(c[req.params.id] || getEmptyAggregate());
+  });
+
+  const server = app.listen(8080, () => {
+    const port = server.address().port;
+    console.log(`App listening on port ${port}`);
+  });
+}
+
+continuousAggregation();
+
+// parallelUpload().catch(console.error);

@@ -5,5 +5,11 @@ service cloud.firestore {
       // Only alllow logged in user.
       allow read: if request.auth.uid != null;
     }
+
+    // Relawan database.
+    match /r/{userId} {
+      allow read: if request.auth.uid != null;
+      allow write: if request.auth.uid == userId;
+    }
   }
 }
