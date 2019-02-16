@@ -1,6 +1,7 @@
 import * as admin from 'firebase-admin';
 import * as express from 'express';
 import * as fs from 'fs';
+import * as util from 'util';
 
 import { H } from './hierarchy';
 import { FsPath, Upsert, Aggregate } from 'shared';
@@ -9,6 +10,13 @@ admin.initializeApp({
   credential: admin.credential.cert(require('./sa-key.json')),
   databaseURL: 'https://kawal-c1.firebaseio.com'
 });
+
+const writeFileAsync = util.promisify(fs.writeFile);
+const existsAsync = util.promisify(fs.exists);
+const renameAsync = util.promisify(fs.rename);
+const copyFileAsync = util.promisify(fs.copyFile);
+const readFileAsync = util.promisify(fs.readFile);
+const appendFileAsync = util.promisify(fs.appendFile);
 
 const fsdb = admin.firestore();
 fsdb.settings({ timestampsInSnapshots: true });
@@ -90,22 +98,22 @@ async function getUpsertBatch(limit: number) {
 }
 
 let lastBackupTs = Date.now();
-function doBackup() {
+async function doBackup() {
   const ts = Date.now();
-  if (fs.existsSync('upserts.log')) {
-    fs.renameSync('upserts.log', `data/upserts_${ts}.log`);
+  if (await existsAsync('upserts.log')) {
+    await renameAsync('upserts.log', `data/upserts_${ts}.log`);
   } else {
     console.log('No upserts.log found');
   }
-  fs.writeFileSync('h.json', JSON.stringify(h));
-  fs.copyFileSync('h.json', `data/h.json`);
+  await writeFileAsync('h.json', JSON.stringify(h));
+  await copyFileAsync('h.json', `data/h.json`);
   console.log('backed up', ts);
   lastBackupTs = ts;
 }
 
-function restoreFromBackup() {
+async function restoreFromBackup() {
   try {
-    h = JSON.parse(fs.readFileSync('h.json', 'utf8'));
+    h = JSON.parse(await readFileAsync('h.json', 'utf8'));
   } catch (e) {
     console.log('Unable to load h.json');
     throw e;
@@ -113,36 +121,43 @@ function restoreFromBackup() {
 }
 
 async function processNewUpserts() {
-  const upserts = await getUpsertBatch(5);
+  const upserts = await getUpsertBatch(100);
   if (!upserts) {
     console.warn('Empty upserts');
     setTimeout(processNewUpserts, 1);
     return;
   }
 
-  fs.appendFileSync('upserts.log', JSON.stringify(upserts) + '\n');
+  await appendFileAsync('upserts.log', JSON.stringify(upserts) + '\n');
 
+  const t0 = Date.now();
   const batch = fsdb.batch();
-  for (const imageId of Object.keys(upserts)) {
+  const imageIds = Object.keys(upserts);
+  for (const imageId of imageIds) {
     updateAggregates(upserts[imageId]);
     batch.update(fsdb.doc(FsPath.upserts(imageId)), { d: 1 });
   }
+  const t1 = Date.now();
+  if (t1 - t0 > 100) {
+    console.warn('Expensive update aggregates', t1 - t0, imageIds.length);
+  }
 
-  if (Date.now() - lastBackupTs > 60 * 60 * 1000) {
-    doBackup();
+  if (t1 - lastBackupTs > 60 * 60 * 1000) {
+    await doBackup();
   }
 
   await batch.commit().catch(console.error);
   setTimeout(processNewUpserts, 1);
 }
 
-function continuousAggregation() {
-  restoreFromBackup();
+async function continuousAggregation() {
+  await restoreFromBackup();
   setTimeout(processNewUpserts, 1);
 
-  process.on('SIGINT', function() {
+  process.on('SIGINT', async function() {
     console.log('Ctrl-C... do backup');
-    doBackup();
+    await doBackup();
+    console.log('Exiting...');
     process.exit(2);
   });
 
@@ -159,4 +174,4 @@ function continuousAggregation() {
   });
 }
 
-continuousAggregation();
+continuousAggregation().catch(console.error);
