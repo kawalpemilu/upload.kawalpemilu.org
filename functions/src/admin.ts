@@ -148,7 +148,10 @@ function continuousAggregation() {
 
   const app = express();
   app.get('/api/c/:id', async (req, res) => {
-    return res.json(h[req.params.id] || {});
+    const cid = req.params.id;
+    if (!H[cid]) return res.json({});
+    H[cid].aggregate = h[cid] || {};
+    return res.json(H[cid]);
   });
   const server = app.listen(8080, () => {
     const port = server.address().port;

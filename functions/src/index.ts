@@ -1,3 +1,5 @@
+const t0 = Date.now();
+
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import * as request from 'request-promise';
@@ -9,25 +11,32 @@ import {
   extractImageMetadata,
   TpsImage,
   ApiUploadRequest,
-  FsPath
+  FsPath,
+  HierarchyNode
 } from 'shared';
 
-import { H } from './hierarchy';
+const t1 = Date.now();
 
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
   databaseURL: 'https://kawal-c1.firebaseio.com'
 });
 
+const t2 = Date.now();
+
 const auth = admin.auth();
+
+const t3 = Date.now();
+
 const fsdb = admin.firestore();
 fsdb.settings({ timestampsInSnapshots: true });
+
+const t4 = Date.now();
 
 const app = express();
 app.use(require('cors')({ origin: true }));
 
 const delay = (ms: number) => new Promise(_ => setTimeout(_, ms));
-console.info('createdNewFunction');
 
 function getServingUrl(objectName: string, ithRetry = 0, maxRetry = 10) {
   const domain = 'kawal-c1.appspot.com';
@@ -94,26 +103,28 @@ function validateToken(
   });
 }
 
+function getChildren(cid): Promise<HierarchyNode> {
+  const host = '35.188.68.201:8080';
+  const options = { timeout: 3000, json: true };
+  return request(`http://${host}/api/c/${cid}`, options);
+}
+
 const CACHE_TIMEOUT = 5;
 const cache_c: any = {};
 app.get('/api/c/:id', async (req, res) => {
   const cid = req.params.id;
-  if (!H[cid]) return res.json({});
-
   let c = cache_c[cid];
   res.setHeader('Cache-Control', `max-age=${CACHE_TIMEOUT}`);
   if (c) return res.json(c);
 
   try {
-    const host = '35.188.68.201:8080';
-    const options = { timeout: 3000, json: true };
-    H[cid].aggregate = await request(`http://${host}/api/c/${cid}`, options);
+    c = await getChildren(cid);
   } catch (e) {
-    H[cid].aggregate = { s: [], x: [] };
     console.error(`API call failed on ${cid}: ${e.message}`);
+    c = {};
   }
 
-  c = cache_c[cid] = H[cid];
+  cache_c[cid] = c;
   setTimeout(() => delete cache_c[cid], CACHE_TIMEOUT * 1000);
   return res.json(c);
 });
@@ -160,15 +171,18 @@ app.post('/api/upload', async (req, res) => {
   if (!servingUrl) return null;
 
   const kelId = b.kelurahanId;
-  const pid = H[kelId].parentIds;
-  if (typeof kelId !== 'number' || (pid && pid.length) !== 4) {
-    return res.json({ error: 'Invalid kelurahanId' });
-  }
-
   const tpsNo = b.tpsNo;
-  const tpsNos = H[kelId].children;
-  if (!tpsNos || tpsNos.indexOf(tpsNo) === -1) {
-    return res.json({ error: 'tpsNo does not exists' });
+  try {
+    const c = await getChildren(kelId);
+    if (!c || !c.name) {
+      return res.json({ error: 'kelurahanId does not exists' });
+    }
+    const tpsNos = c.children;
+    if (!tpsNos || tpsNos.indexOf(tpsNo) === -1) {
+      return res.json({ error: 'tpsNo does not exists' });
+    }
+  } catch (e) {
+    return res.json({ error: 'Server error please retry in 1 minute' });
   }
 
   const a = b.aggregate;
@@ -211,3 +225,16 @@ exports.api = functions
     memory: '1GB'
   })
   .https.onRequest(app);
+
+const t5 = Date.now();
+
+const timings = {
+  imports: t1 - t0,
+  fireinit: t2 - t1,
+  auth: t3 - t2,
+  fsdb: t4 - t3,
+  express: t5 - t4,
+  total: t5 - t0
+};
+
+console.info(`createdNewFunction ${JSON.stringify(timings)}`);
