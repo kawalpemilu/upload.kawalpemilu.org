@@ -62,16 +62,8 @@
         <th class="wilayah" align="right">
           TOTAL ({{ state.children.length }}) &nbsp;
         </th>
-        <td class="paslon1">
-          <ng-container *ngIf="(sum$ | async) as s">
-            {{ s[0] | number }}
-          </ng-container>
-        </td>
-        <td class="paslon2">
-          <ng-container *ngIf="(sum$ | async) as s">
-            {{ s[1] | number }}
-          </ng-container>
-        </td>
+        <td class="paslon1">{{ sum(state, 0) }}</td>
+        <td class="paslon2">{{ sum(state, 1) }}</td>
       </tr>
     </tfoot>
   </table>

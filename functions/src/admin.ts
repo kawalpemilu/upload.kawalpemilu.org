@@ -78,7 +78,11 @@ async function getUpsertBatch(limit: number) {
 let lastBackupTs = Date.now();
 function doBackup() {
   const ts = Date.now();
-  fs.renameSync('upserts.log', `data/upserts_${ts}.log`);
+  if (fs.existsSync('upserts.log')) {
+    fs.renameSync('upserts.log', `data/upserts_${ts}.log`);
+  } else {
+    console.log('No upserts.log found');
+  }
   fs.writeFileSync('h.json', JSON.stringify(h));
   fs.copyFileSync('h.json', `data/h.json`);
   console.log('backed up', ts);
@@ -102,7 +106,6 @@ async function processNewUpserts() {
     return;
   }
 
-  console.log('processing ', Object.keys(upserts));
   fs.appendFileSync('upserts.log', JSON.stringify(upserts) + '\n');
 
   const batch = fsdb.batch();
@@ -122,6 +125,12 @@ async function processNewUpserts() {
 function continuousAggregation() {
   restoreFromBackup();
   setTimeout(processNewUpserts, 1);
+
+  process.on('SIGINT', function() {
+    console.log('Ctrl-C... do backup');
+    doBackup();
+    process.exit(2);
+  });
 
   const app = express();
   app.get('/api/c/:id', async (req, res) => {

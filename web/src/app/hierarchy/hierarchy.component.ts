@@ -21,7 +21,6 @@ export class HierarchyComponent implements OnInit {
   TOOLBAR_HEIGHT = AppComponent.TOOLBAR_HEIGHT;
   ROW_HEIGHT = 50;
   state$: Observable<HierarchyNode>;
-  sum$: Observable<number[]>;
   height: number;
   width: number;
 
@@ -45,22 +44,17 @@ export class HierarchyComponent implements OnInit {
       shareReplay(1)
     );
 
-    this.sum$ = this.state$.pipe(
-      map(node => {
-        const res = [0, 0, 0, 0, 0];
-        for (const cid of node.children) {
-          const a = node.aggregate[cid];
-          for (let i = 0; a && a.s && i < a.s.length; i++) {
-            res[i] = (res[i] || 0) + a.s[i];
-          }
-        }
-        return res;
-      }),
-      shareReplay(1)
-    );
-
     this.getScreenSize();
     console.log('Hierarchy Component Inited');
+  }
+
+  sum(state: HierarchyNode, index: number) {
+    let res = 0;
+    for (const c of state.children) {
+      const a = state.aggregate[c[0]];
+      res += (a && a.s && a.s[index]) || 0;
+    }
+    return res;
   }
 
   viewportHeight(rows: number) {
