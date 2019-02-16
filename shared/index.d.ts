@@ -18,10 +18,10 @@ export interface HierarchyNode {
     name: string;
     parentIds: number[];
     parentNames: string[];
-    children: any;
+    children: number[];
     depth: number;
-    aggregate$: {
-        [key: string]: any;
+    aggregate: {
+        [key: string]: Aggregate;
     };
 }
 export interface ImageMetadata {

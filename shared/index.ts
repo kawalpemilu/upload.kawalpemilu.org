@@ -21,10 +21,9 @@ export interface HierarchyNode {
   name: string;
   parentIds: number[];
   parentNames: string[];
-  children: any;
+  children: number[];
   depth: number;
-  // Observable<Aggregate>
-  aggregate$: { [key: string]: any };
+  aggregate: { [key: string]: Aggregate };
 }
 
 export interface ImageMetadata {
@@ -84,7 +83,7 @@ export class FsPath {
   static children(cid: number) {
     return `c/${cid}`;
   }
-  
+
   static imageMetadata(imageId: string) {
     return `i/${imageId}`;
   }

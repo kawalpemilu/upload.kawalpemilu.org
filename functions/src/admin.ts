@@ -3,7 +3,7 @@ import * as request from 'request-promise';
 import * as express from 'express';
 import * as fs from 'fs';
 
-import { PARENT_IDS, CHILDREN } from './hierarchy';
+import { H } from './hierarchy';
 import {
   ApiUploadRequest,
   ImageMetadata,
@@ -114,7 +114,7 @@ function makeRequest(kelurahanId, tpsNo) {
 }
 
 function rec(id, depth, requests) {
-  const arr = CHILDREN[id];
+  const arr = H[id].children;
   if (depth === 4) {
     for (const tpsNo of arr) {
       requests.push(makeRequest(id, tpsNo));
@@ -157,7 +157,8 @@ async function upload(body) {
         headers: {
           Authorization: `Bearer ${user.idToken}`
         },
-        timeout: 5000
+        timeout: 5000,
+        json: true
       });
       if (!res.ok) throw new Error(`Result not OK: ${JSON.stringify(res)}`);
       break;
@@ -197,7 +198,7 @@ async function parallelUpload(concurrency = 500) {
 }
 
 // In memory database containing the aggregates of all children.
-const c: { [key: string]: Aggregate } = {};
+const h: { [key: string]: { [key: string]: Aggregate } } = {};
 
 function mergeAggregates(target: Aggregate, source: Aggregate) {
   for (let j = 0; j < source.s.length; j++) {
@@ -206,10 +207,6 @@ function mergeAggregates(target: Aggregate, source: Aggregate) {
   for (let j = 0; j < source.x.length; j++) {
     target.x[j] = Math.max(target.x[j] || source.x[j], source.x[j]);
   }
-}
-
-function getEmptyAggregate(): Aggregate {
-  return { s: [], x: [] };
 }
 
 function updateAggregates(u: Upsert) {
@@ -221,17 +218,23 @@ function updateAggregates(u: Upsert) {
   }
 
   const kelurahanId = u.k;
-  const path = PARENT_IDS[kelurahanId].slice();
+  const path = H[kelurahanId].parentIds.slice();
   path.push(kelurahanId);
+  path.push(u.n);
 
-  if (path.length !== 5) {
+  if (path.length !== 6) {
     console.error(`Path length != 5: ${JSON.stringify(path)}`);
     return;
   }
 
-  for (const id of path) {
-    if (!c[id]) c[id] = getEmptyAggregate();
-    mergeAggregates(c[id], u.a);
+  for (let i = 0; i + 1 < path.length; i++) {
+    const id = path[i];
+    if (!h[id]) h[id] = {};
+
+    const c = h[id];
+    const cid = path[i + 1];
+    if (!c[cid]) c[cid] = { s: [], x: [] };
+    mergeAggregates(c[cid], u.a);
   }
 }
 
@@ -276,7 +279,7 @@ function continuousAggregation() {
   const app = express();
 
   app.get('/api/c/:id', async (req, res) => {
-    return res.json(c[req.params.id] || getEmptyAggregate());
+    return res.json(h[req.params.id] || {});
   });
 
   const server = app.listen(8080, () => {

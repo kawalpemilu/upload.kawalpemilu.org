@@ -12,7 +12,7 @@ import {
   FsPath
 } from 'shared';
 
-import { PARENT_IDS, CHILDREN } from './hierarchy';
+import { H } from './hierarchy';
 
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
@@ -32,7 +32,7 @@ console.info('createdNewFunction');
 function getServingUrl(objectName: string, ithRetry = 0, maxRetry = 10) {
   const domain = 'kawal-c1.appspot.com';
   const path = encodeURIComponent(`${domain}/${objectName}`);
-  return request(`https://${domain}/gsu?path=${path}`)
+  return request(`https://${domain}/gsu?path=${path}`, { timeout: 5000 })
     .then(res => {
       if (!res.startsWith('http')) {
         throw new Error('gsu failed: ' + path);
@@ -97,13 +97,15 @@ const CACHE_TIMEOUT = 5;
 const cache_c: any = {};
 app.get('/api/c/:id', async (req, res) => {
   const cid = req.params.id;
-  let c = cache_c[cid];
+  const c = cache_c[cid];
   res.setHeader('Cache-Control', `max-age=${CACHE_TIMEOUT}`);
   if (c) return res.json(c);
-  
-  const host = '10.128.0.2'; // 35.188.68.201
-  c = await request(`http://${host}/api/c/${cid}`);
-  cache_c[cid] = c;
+
+  const host = '35.188.68.201:8080';
+  const options = { timeout: 5000, json: true };
+  H[cid].aggregate = await request(`http://${host}/api/c/${cid}`, options);
+
+  cache_c[cid] = H[cid];
   setTimeout(() => delete cache_c[cid], CACHE_TIMEOUT * 1000);
   return res.json(c);
 });
@@ -150,13 +152,13 @@ app.post('/api/upload', async (req, res) => {
   if (!servingUrl) return null;
 
   const kelId = b.kelurahanId;
-  const pid = PARENT_IDS[kelId];
+  const pid = H[kelId].parentIds;
   if (typeof kelId !== 'number' || (pid && pid.length) !== 4) {
     return res.json({ error: 'Invalid kelurahanId' });
   }
 
   const tpsNo = b.tpsNo;
-  const tpsNos = CHILDREN[kelId];
+  const tpsNos = H[kelId].children;
   if (!tpsNos || tpsNos.indexOf(tpsNo) === -1) {
     return res.json({ error: 'tpsNo does not exists' });
   }
