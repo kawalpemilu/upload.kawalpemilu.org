@@ -2,7 +2,7 @@ import { Component, OnInit, HostListener } from '@angular/core';
 import { HierarchyService } from '../hierarchy.service';
 import { ActivatedRoute } from '@angular/router';
 import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { Aggregate, HierarchyNode } from 'shared';
 import { AppComponent } from '../app.component';
@@ -10,7 +10,7 @@ import { AppComponent } from '../app.component';
 interface Tps {
   tpsNo: number;
   address: string;
-  aggregate$: Observable<Aggregate>;
+  aggregate: Aggregate;
 }
 
 interface State extends HierarchyNode {
@@ -39,33 +39,27 @@ export class TpsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.state$ = this.route.paramMap
-      .pipe(
-        map(params => params.get('id')),
-        filter(Boolean),
-        map(id => parseInt(id, 10)),
-        distinctUntilChanged()
-      )
-      .pipe(
-        switchMap(id =>
-          this.hie.get$(id).pipe(
-            map((state: State) => {
-              state.tpsList = state.children.map(tpsNo => ({
-                tpsNo,
-                address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG 2)',
-                // TODO: use API.
-                aggregate$: of({ s: [0, 0, 0, 0, 0], x: [0] })
-              }));
-              return state;
-            })
-          )
-        )
-      );
+    this.state$ = this.route.paramMap.pipe(
+      map(params => params.get('id')),
+      filter(Boolean),
+      map(id => parseInt(id, 10)),
+      distinctUntilChanged(),
+      switchMap(id => this.hie.get$(id)),
+      map((state: State) => {
+        state.tpsList = state.children.map(tpsNo => ({
+          tpsNo,
+          address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG 2)',
+          aggregate: state.aggregate[tpsNo]
+        }));
+        return state;
+      })
+    );
 
     this.getScreenSize();
     console.log('TpsComponent inited');
   }
 
+  // TODO: use CSS rather than computing every time.
   viewportHeight(rows: number) {
     return this.height - this.TOOLBAR_HEIGHT * 3 - 15;
   }

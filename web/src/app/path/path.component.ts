@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnChanges } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { HierarchyService } from '../hierarchy.service';
 import { HierarchyNode } from 'shared';
 import { AppComponent } from '../app.component';
@@ -9,8 +9,9 @@ import { AppComponent } from '../app.component';
     <table>
       <tr>
         <td style="line-height: 175%" [style.height.px]="TOOLBAR_HEIGHT">
-          <span *ngFor="let p of parents()">
-            <a [routerLink]="['/h', p.id]">{{ p.name }}</a> &gt;&nbsp;
+          <span *ngFor="let id of node.parentIds; let i = index">
+            <a [routerLink]="['/h', id]">{{ node.parentNames[i] }}</a>
+            &gt;&nbsp;
           </span>
           {{ node.name }}
         </td>
@@ -26,28 +27,11 @@ import { AppComponent } from '../app.component';
     `
   ]
 })
-export class PathComponent implements OnInit, OnChanges {
+export class PathComponent {
   @Input()
   node: HierarchyNode;
 
   TOOLBAR_HEIGHT = AppComponent.TOOLBAR_HEIGHT;
 
   constructor(public hie: HierarchyService) {}
-
-  ngOnInit() {}
-
-  ngOnChanges() {}
-
-  parents() {
-    const arr = [];
-    if (this.node.parentIds) {
-      for (let i = 0; i < this.node.parentIds.length; i++) {
-        arr.push({
-          id: this.node.parentIds[i],
-          name: this.node.parentNames[i]
-        });
-      }
-    }
-    return arr;
-  }
 }

@@ -53,6 +53,7 @@ function getServingUrl(objectName: string, ithRetry = 0, maxRetry = 10) {
 exports.handlePhotoUpload = functions
   .runWith({
     timeoutSeconds: 300,
+    // TODO: it should not take this much!
     memory: '1GB'
   })
   .storage.object()
@@ -103,9 +104,14 @@ app.get('/api/c/:id', async (req, res) => {
   res.setHeader('Cache-Control', `max-age=${CACHE_TIMEOUT}`);
   if (c) return res.json(c);
 
-  const host = '35.188.68.201:8080';
-  const options = { timeout: 5000, json: true };
-  H[cid].aggregate = await request(`http://${host}/api/c/${cid}`, options);
+  try {
+    const host = '35.188.68.201:8080';
+    const options = { timeout: 3000, json: true };
+    H[cid].aggregate = await request(`http://${host}/api/c/${cid}`, options);
+  } catch (e) {
+    H[cid].aggregate = { s: [], x: [] };
+    console.error(`API call failed on ${cid}: ${e.message}`);
+  }
 
   c = cache_c[cid] = H[cid];
   setTimeout(() => delete cache_c[cid], CACHE_TIMEOUT * 1000);
