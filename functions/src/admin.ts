@@ -25,6 +25,25 @@ function mergeAggregates(target: Aggregate, source: Aggregate) {
   }
 }
 
+function getAggregate(parentId, childId) {
+  if (!h[parentId]) h[parentId] = {};
+  const c = h[parentId];
+  if (!c[childId]) c[childId] = { s: [], x: [] };
+  return c[childId];
+}
+
+function getDelta(parentId, childId, u: Upsert) {
+  const delta: Aggregate = { s: [], x: [] };
+  const current = getAggregate(parentId, childId);
+  for (let j = 0; j < u.a.s.length; j++) {
+    delta.s[j] = u.a.s[j] - (current.s[j] || 0);
+  }
+  for (let j = 0; j < u.a.x.length; j++) {
+    delta.x[j] = Math.max(u.a.s[j], current.s[j] || u.a.s[j]);
+  }
+  return delta;
+}
+
 function updateAggregates(u: Upsert) {
   if (u.d) {
     console.error(`Upsert is already done: ${JSON.stringify(u)}`);
@@ -41,14 +60,9 @@ function updateAggregates(u: Upsert) {
     return;
   }
 
+  const delta = getDelta(path[4], path[5], u);
   for (let i = 0; i + 1 < path.length; i++) {
-    const id = path[i];
-    if (!h[id]) h[id] = {};
-
-    const c = h[id];
-    const cid = path[i + 1];
-    if (!c[cid]) c[cid] = { s: [], x: [] };
-    mergeAggregates(c[cid], u.a);
+    mergeAggregates(getAggregate(path[i], path[i + 1]), delta);
   }
 }
 
