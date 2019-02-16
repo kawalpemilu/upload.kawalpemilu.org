@@ -52,15 +52,3 @@ var FsPath = /** @class */ (function () {
     return FsPath;
 }());
 exports.FsPath = FsPath;
-function getTpsNumbers(childrenBits) {
-    var tpsNumbers = [];
-    for (var i = 0; i < childrenBits.length; i++) {
-        for (var j = 0; j < 30; j++) {
-            if (childrenBits[i] & (1 << j)) {
-                tpsNumbers.push(i * 30 + j);
-            }
-        }
-    }
-    return tpsNumbers;
-}
-exports.getTpsNumbers = getTpsNumbers;

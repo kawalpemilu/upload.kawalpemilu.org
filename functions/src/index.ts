@@ -53,7 +53,7 @@ function getServingUrl(objectName: string, ithRetry = 0, maxRetry = 10) {
 exports.handlePhotoUpload = functions
   .runWith({
     timeoutSeconds: 300,
-    memory: '512MB'
+    memory: '1GB'
   })
   .storage.object()
   .onFinalize(async object => {
@@ -97,7 +97,9 @@ const CACHE_TIMEOUT = 5;
 const cache_c: any = {};
 app.get('/api/c/:id', async (req, res) => {
   const cid = req.params.id;
-  const c = cache_c[cid];
+  if (!H[cid]) return res.json({});
+
+  let c = cache_c[cid];
   res.setHeader('Cache-Control', `max-age=${CACHE_TIMEOUT}`);
   if (c) return res.json(c);
 
@@ -105,7 +107,7 @@ app.get('/api/c/:id', async (req, res) => {
   const options = { timeout: 5000, json: true };
   H[cid].aggregate = await request(`http://${host}/api/c/${cid}`, options);
 
-  cache_c[cid] = H[cid];
+  c = cache_c[cid] = H[cid];
   setTimeout(() => delete cache_c[cid], CACHE_TIMEOUT * 1000);
   return res.json(c);
 });
@@ -200,6 +202,6 @@ app.post('/api/upload', async (req, res) => {
 exports.api = functions
   .runWith({
     timeoutSeconds: 90,
-    memory: '512MB'
+    memory: '1GB'
   })
   .https.onRequest(app);

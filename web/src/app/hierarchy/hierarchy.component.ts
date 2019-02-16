@@ -46,23 +46,16 @@ export class HierarchyComponent implements OnInit {
     );
 
     this.sum$ = this.state$.pipe(
-      switchMap(node =>
-        node.depth > 0 && false
-          ? this.hie
-              .getAggregate$(node.parentIds[node.parentIds.length - 1], node.id)
-              .pipe(map(x => x.s))
-          : combineLatest(node.children.map(c => node.aggregate$[c[0]])).pipe(
-              map((arr: any) => {
-                const res = [0, 0, 0, 0, 0];
-                for (const a of arr) {
-                  for (let i = 0; a && a.s && i < a.s.length; i++) {
-                    res[i] = (res[i] || 0) + a.s[i];
-                  }
-                }
-                return res;
-              })
-            )
-      ),
+      map(node => {
+        const res = [0, 0, 0, 0, 0];
+        for (const cid of node.children) {
+          const a = node.aggregate[cid];
+          for (let i = 0; a && a.s && i < a.s.length; i++) {
+            res[i] = (res[i] || 0) + a.s[i];
+          }
+        }
+        return res;
+      }),
       shareReplay(1)
     );
 

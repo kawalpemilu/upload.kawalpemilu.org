@@ -40,9 +40,6 @@ export class PathComponent implements OnInit, OnChanges {
 
   parents() {
     const arr = [];
-    if (this.node.id) {
-      arr.push({ id: 0, name: 'IDN' });
-    }
     if (this.node.parentIds) {
       for (let i = 0; i < this.node.parentIds.length; i++) {
         arr.push({

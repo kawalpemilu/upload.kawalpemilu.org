@@ -21,7 +21,7 @@ export interface HierarchyNode {
   name: string;
   parentIds: number[];
   parentNames: string[];
-  children: number[];
+  children: any[];
   depth: number;
   aggregate: { [key: string]: Aggregate };
 }
@@ -104,16 +104,4 @@ export class FsPath {
   static tpsImage(kelurahanId: number, tpsNo: number, imageId: string) {
     return `${FsPath.tpsImages(kelurahanId, tpsNo)}/${imageId}`;
   }
-}
-
-export function getTpsNumbers(childrenBits: number[]) {
-  const tpsNumbers = [];
-  for (let i = 0; i < childrenBits.length; i++) {
-    for (let j = 0; j < 30; j++) {
-      if (childrenBits[i] & (1 << j)) {
-        tpsNumbers.push(i * 30 + j);
-      }
-    }
-  }
-  return tpsNumbers;
 }

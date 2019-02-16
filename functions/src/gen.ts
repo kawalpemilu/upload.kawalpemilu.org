@@ -42,8 +42,9 @@ function rec(id, name, depth) {
     for (const r of arr) {
       const a = data[r];
       const cid = a[TEMPAT_ID];
-      rec(cid, a[NAMA], depth + 1);
-      c.children.push(cid);
+      const cname = a[NAMA];
+      rec(cid, cname, depth + 1);
+      c.children.push([cid, cname]);
     }
   }
   path.pop();

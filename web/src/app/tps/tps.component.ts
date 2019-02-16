@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
 
-import { Aggregate, HierarchyNode, getTpsNumbers } from 'shared';
+import { Aggregate, HierarchyNode } from 'shared';
 import { AppComponent } from '../app.component';
 
 interface Tps {
@@ -50,8 +50,7 @@ export class TpsComponent implements OnInit {
         switchMap(id =>
           this.hie.get$(id).pipe(
             map((state: State) => {
-              const tpsNumbers = getTpsNumbers(state.children);
-              state.tpsList = tpsNumbers.map(tpsNo => ({
+              state.tpsList = state.children.map(tpsNo => ({
                 tpsNo,
                 address: 'JL.KARANG ANYAR RAYA (EX.PABRIK PAYUNG 2)',
                 // TODO: use API.
