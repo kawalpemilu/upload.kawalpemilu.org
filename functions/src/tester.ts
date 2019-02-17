@@ -95,8 +95,8 @@ function makeRequest(kelurahanId, tpsNo) {
     kelurahanId,
     tpsNo,
     aggregate: {
-      s: [0, 0, 0, 0, 0],
-      // s: [Math.floor(Math.random() * 999), 1, 3, 4, 0],
+        // s: [0, 0, 0, 0, 0],
+      s: [1, Math.floor(Math.random() * 999), 2, 4, 0],
       x: []
     },
     metadata: {} as ImageMetadata,
@@ -113,13 +113,13 @@ function rec(id, depth, requests) {
     }
   } else {
     for (const cid of arr) {
-      rec(cid, depth + 1, requests);
+      rec(cid[0], depth + 1, requests);
     }
   }
 }
 
 function generateRequests() {
-  const requests: ApiUploadRequest[] = [];
+  let requests: ApiUploadRequest[] = [];
 
   rec(0, 0, requests);
 
@@ -133,6 +133,9 @@ function generateRequests() {
       requests[j] = t;
     }
   }
+
+  requests = requests.slice(0, 100000);
+  console.log('len', requests.length);
 
   return requests;
 }
@@ -155,8 +158,8 @@ async function upload(body) {
       if (!res.ok) throw new Error(`Result not OK: ${JSON.stringify(res)}`);
       break;
     } catch (e) {
-      if (retry > 2) console.warn(e.message, retry, body);
-      if (retry > 5) {
+      if (retry > 3) console.warn(e.message, retry, body);
+      if (retry > 7) {
         console.error(e.message, retry, body);
         break;
       }

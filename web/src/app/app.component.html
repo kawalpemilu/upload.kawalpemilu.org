@@ -1,10 +1,29 @@
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
-  <tr>
-    <td>
-      <mat-toolbar color="primary">KawalPemilu 2019 (dev mode)</mat-toolbar>
-    </td>
-  </tr>
-  <tr>
-    <td><router-outlet></router-outlet></td>
-  </tr>
-</table>
+<mat-toolbar color="primary" class="toolbar">
+  <button mat-icon-button (click)="snav.toggle()">
+    <mat-icon>menu</mat-icon>
+  </button>
+  <h1 class="app-name">KawalPemilu 2019</h1>
+</mat-toolbar>
+
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav
+    #snav
+    [mode]="mobileQuery.matches ? 'over' : 'side'"
+    [fixedInViewport]="mobileQuery.matches"
+    fixedTopGap="56"
+  >
+    <mat-nav-list>
+      <a
+        mat-list-item
+        [routerLink]="['/h', 0]"
+        (click)="mobileQuery.matches && snav.toggle()"
+        >Home</a
+      >
+      <a mat-list-item [routerLink]="['/c', 0]">Coverage</a>
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <router-outlet></router-outlet>
+  </mat-sidenav-content>
+</mat-sidenav-container>

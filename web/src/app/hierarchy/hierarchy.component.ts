@@ -1,4 +1,10 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  HostListener,
+  ViewChild,
+  ElementRef
+} from '@angular/core';
 import { HierarchyService } from '../hierarchy.service';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -7,7 +13,8 @@ import {
   distinctUntilChanged,
   filter,
   switchMap,
-  shareReplay
+  shareReplay,
+  tap
 } from 'rxjs/operators';
 import { HierarchyNode } from 'shared';
 import { AppComponent } from '../app.component';
@@ -18,19 +25,46 @@ import { AppComponent } from '../app.component';
   styleUrls: ['./hierarchy.component.css']
 })
 export class HierarchyComponent implements OnInit {
-  TOOLBAR_HEIGHT = AppComponent.TOOLBAR_HEIGHT;
-  ROW_HEIGHT = 50;
+  @ViewChild('header') myHeaderEl: ElementRef;
+  @ViewChild('footer') myFooterEl: ElementRef;
+
+  ROW_HEIGHT = 40;
   state$: Observable<HierarchyNode>;
   height: number;
   width: number;
+  numRows = 0;
 
   constructor(private hie: HierarchyService, private route: ActivatedRoute) {}
 
+  get TOOLBAR_HEIGHT() {
+    return AppComponent.TOOLBAR_HEIGHT;
+  }
+
   @HostListener('window:resize', ['$event'])
-  getScreenSize() {
+  onWindowResize() {
     this.height = window.innerHeight;
     this.width = window.innerWidth;
-    console.log(this.width, this.height);
+
+    const effectiveHeight =
+      this.TOOLBAR_HEIGHT * 2 + (2 + this.numRows) * this.ROW_HEIGHT;
+
+    if (effectiveHeight < this.height) {
+      const footerTop = `${effectiveHeight - this.ROW_HEIGHT}px`;
+      this.myFooterEl.nativeElement.style.top = footerTop;
+      this.myFooterEl.nativeElement.style.bottom = '';
+    } else {
+      this.myFooterEl.nativeElement.style.top = '';
+      this.myFooterEl.nativeElement.style.bottom = '0px';
+    }
+  }
+
+  @HostListener('window:scroll', ['$event'])
+  scrollHandler() {
+    if (window.pageYOffset > this.TOOLBAR_HEIGHT * 2) {
+      this.myHeaderEl.nativeElement.classList.add('sticky');
+    } else {
+      this.myHeaderEl.nativeElement.classList.remove('sticky');
+    }
   }
 
   ngOnInit() {
@@ -41,10 +75,14 @@ export class HierarchyComponent implements OnInit {
       filter(id => !isNaN(id)),
       distinctUntilChanged(),
       switchMap(id => this.hie.get$(id)),
-      shareReplay(1)
+      shareReplay(1),
+      tap(state => {
+        this.numRows = state.children.length;
+        this.onWindowResize();
+      })
     );
 
-    this.getScreenSize();
+    this.onWindowResize();
     console.log('Hierarchy Component Inited');
   }
 

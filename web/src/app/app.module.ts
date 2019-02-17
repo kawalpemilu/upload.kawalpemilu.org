@@ -23,7 +23,10 @@ import {
   MatButtonModule,
   MatFormFieldModule,
   MatInputModule,
-  MatProgressSpinnerModule
+  MatProgressSpinnerModule,
+  MatIconModule,
+  MatSidenavModule,
+  MatListModule
 } from '@angular/material';
 import { MatToolbarModule } from '@angular/material/toolbar';
 
@@ -60,6 +63,9 @@ import { AdminComponent } from './admin/admin.component';
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatIconModule,
+    MatSidenavModule,
+    MatListModule,
     MatProgressSpinnerModule,
 
     MatToolbarModule

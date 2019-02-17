@@ -22,16 +22,11 @@ admin.initializeApp({
   databaseURL: 'https://kawal-c1.firebaseio.com'
 });
 
-const t2 = Date.now();
-
 const auth = admin.auth();
-
-const t3 = Date.now();
-
 const fsdb = admin.firestore();
 fsdb.settings({ timestampsInSnapshots: true });
 
-const t4 = Date.now();
+const t2 = Date.now();
 
 const app = express();
 app.use(require('cors')({ origin: true }));
@@ -59,13 +54,8 @@ function getServingUrl(objectName: string, ithRetry = 0, maxRetry = 10) {
 }
 
 // Creates a serving url for the uploaded images.
-exports.handlePhotoUpload = functions
-  .runWith({
-    timeoutSeconds: 300,
-    // TODO: it should not take this much!
-    memory: '1GB'
-  })
-  .storage.object()
+exports.handlePhotoUpload = functions.storage
+  .object()
   .onFinalize(async object => {
     // Exit if this is triggered on a file that is not an image.
     if (!object.contentType.startsWith('image/')) {
@@ -219,22 +209,15 @@ app.post('/api/upload', async (req, res) => {
   return res.json({ ok: true });
 });
 
-exports.api = functions
-  .runWith({
-    timeoutSeconds: 90,
-    memory: '1GB'
-  })
-  .https.onRequest(app);
+exports.api = functions.https.onRequest(app);
 
-const t5 = Date.now();
+const t3 = Date.now();
 
-const timings = {
-  imports: t1 - t0,
-  fireinit: t2 - t1,
-  auth: t3 - t2,
-  fsdb: t4 - t3,
-  express: t5 - t4,
-  total: t5 - t0
-};
-
-console.info(`createdNewFunction ${JSON.stringify(timings)}`);
+console.info(
+  `createdNewFunction ${JSON.stringify({
+    imports: t1 - t0,
+    fireinit: t2 - t1,
+    express: t3 - t2,
+    total: t3 - t0
+  })}`
+);

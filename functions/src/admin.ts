@@ -47,7 +47,7 @@ function getDelta(parentId, childId, u: Upsert) {
     delta.s[j] = u.a.s[j] - (current.s[j] || 0);
   }
   for (let j = 0; j < u.a.x.length; j++) {
-    delta.x[j] = Math.max(u.a.s[j], current.s[j] || u.a.s[j]);
+    delta.x[j] = Math.max(u.a.x[j], current.x[j] || u.a.x[j]);
   }
   return delta;
 }

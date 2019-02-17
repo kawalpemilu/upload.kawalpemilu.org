@@ -6,7 +6,7 @@ import { AppComponent } from '../app.component';
 @Component({
   selector: 'app-path',
   template: `
-    <table>
+    <table cellpadding="0" cellspacing="0">
       <tr>
         <td style="line-height: 175%" [style.height.px]="TOOLBAR_HEIGHT">
           <span *ngFor="let id of node.parentIds; let i = index">
@@ -31,7 +31,9 @@ export class PathComponent {
   @Input()
   node: HierarchyNode;
 
-  TOOLBAR_HEIGHT = AppComponent.TOOLBAR_HEIGHT;
-
   constructor(public hie: HierarchyService) {}
+
+  get TOOLBAR_HEIGHT() {
+    return AppComponent.TOOLBAR_HEIGHT;
+  }
 }

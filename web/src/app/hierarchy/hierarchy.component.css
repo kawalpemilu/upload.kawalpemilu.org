@@ -1,46 +1,80 @@
+.wrapper {
+  max-width: 500px;
+}
+
 table {
   width: 100%;
+  max-width: 500px;
 }
 
 th,
 td {
-  padding-left: 5px;
-  padding-right: 5px;
+  padding-right: 10px;
 }
 
 .index {
-  width: 30px;
+  width: 35px;
   padding-left: 3px;
   padding-right: 3px;
   text-align: center;
+  font-size: small;
+}
+
+.wilayah {
+  font-size: small;
 }
 
 .paslon1 {
-  width: 65px;
+  width: 80px;
   text-align: right;
+  font-size: small;
 }
 
 .paslon2 {
-  width: 65px;
+  width: 80px;
   text-align: right;
+  font-size: small;
 }
 
 a.link {
   text-decoration: none;
 }
 
-@media screen and (min-width: 370px) {
+.sticky {
+  position: fixed;
+  top: 0;
+}
+
+.content {
+  padding-bottom: 40px;
+}
+
+.sticky ~ .content {
+  padding-top: 40px;
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+}
+
+@media screen and (min-width: 400px) {
   .index {
-    width: 35px;
-    padding-left: 4px;
-    padding-right: 4px;
+    width: 40px;
+    font-size: medium;
+  }
+
+  .wilayah {
+    font-size: medium;
   }
 
   .paslon1 {
-    width: 80px;
+    width: 100px;
+    font-size: medium;
   }
 
   .paslon2 {
-    width: 80px;
+    width: 100px;
+    font-size: medium;
   }
 }

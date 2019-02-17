@@ -23,13 +23,16 @@ interface State extends HierarchyNode {
   styleUrls: ['./tps.component.css']
 })
 export class TpsComponent implements OnInit {
-  TOOLBAR_HEIGHT = AppComponent.TOOLBAR_HEIGHT;
   ROW_HEIGHT = 180;
   state$: Observable<State>;
   height: number;
   width: number;
 
   constructor(public hie: HierarchyService, private route: ActivatedRoute) {}
+
+  get TOOLBAR_HEIGHT() {
+    return AppComponent.TOOLBAR_HEIGHT;
+  }
 
   @HostListener('window:resize', ['$event'])
   getScreenSize() {

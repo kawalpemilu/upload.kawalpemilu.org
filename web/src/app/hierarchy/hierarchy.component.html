@@ -1,6 +1,9 @@
-<div *ngIf="(state$ | async) as state" style="margin: 0 5px">
-  <app-path [node]="state"></app-path>
-  <table>
+<div class="wrapper">
+  <div *ngIf="(state$ | async) as state" style="padding: 0 10px">
+    <app-path [node]="state$ | async"></app-path>
+  </div>
+
+  <table #header class="header" cellspacing="0">
     <thead>
       <tr [style.height.px]="ROW_HEIGHT" style="background-color: lightgray">
         <th class="index">#</th>
@@ -11,60 +14,54 @@
     </thead>
   </table>
 
-  <!-- TODO: SCROLL TO PARTICULAR ITEM -->
-  <div
-    style="overflow: scroll; -webkit-overflow-scrolling: touch;"
-    [style.height.px]="viewportHeight(state.children.length)"
-  >
-    <table>
-      <tbody>
-        <ng-container
-          *ngFor="
-            let c of state.children;
-            let index = index;
-            let odd = odd;
-            trackBy: trackByIdx
-          "
-        >
-          <tr
-            [style.height.px]="ROW_HEIGHT"
-            [style.background-color]="odd ? '#FFF' : '#EEE'"
-          >
-            <td class="index">{{ index + 1 }}</td>
-            <td class="wilayah">
-              <a
-                [routerLink]="[state.depth < 3 ? '/h' : '/t', c[0]]"
-                class="link"
-                >{{ c[1] }}</a
-              >
-              <span *ngIf="state.aggregate[c[0]] as s">{{ ago(s.x[0]) }}</span>
-            </td>
-            <td class="paslon1">
-              <span *ngIf="state.aggregate[c[0]] as s">{{
-                s.s[0] | number
-              }}</span>
-            </td>
-            <td class="paslon2">
-              <span *ngIf="state.aggregate[c[0]] as s">{{
-                s.s[1] | number
-              }}</span>
-            </td>
-          </tr>
-        </ng-container>
-      </tbody>
-    </table>
-  </div>
-
-  <table>
-    <tfoot>
+  <table #footer class="footer" cellspacing="0">
+    <tfoot *ngIf="(state$ | async) as state">
       <tr [style.height.px]="ROW_HEIGHT" style="background-color: lightgray">
         <th class="index"></th>
         <th class="wilayah" align="right">
           TOTAL ({{ state.children.length }}) &nbsp;
         </th>
-        <td class="paslon1">{{ sum(state, 0) }}</td>
-        <td class="paslon2">{{ sum(state, 1) }}</td>
+        <th class="paslon1">{{ sum(state, 0) | number }}</th>
+        <th class="paslon2">{{ sum(state, 1) | number }}</th>
       </tr>
     </tfoot>
+  </table>
+
+  <table #content class="content" cellspacing="0">
+    <tbody *ngIf="(state$ | async) as state">
+      <ng-container
+        *ngFor="
+          let c of state.children;
+          let index = index;
+          let odd = odd;
+          trackBy: trackByIdx
+        "
+      >
+        <tr
+          [style.height.px]="ROW_HEIGHT"
+          [style.background-color]="odd ? '#FFF' : '#EEE'"
+        >
+          <td class="index">{{ index + 1 }}</td>
+          <td class="wilayah">
+            <a
+              [routerLink]="[state.depth < 3 ? '/h' : '/t', c[0]]"
+              class="link"
+              >{{ c[1] }}</a
+            >
+            <span *ngIf="state.aggregate[c[0]] as s">{{ ago(s.x[0]) }}</span>
+          </td>
+          <td class="paslon1">
+            <span *ngIf="state.aggregate[c[0]] as s">{{
+              s.s[0] | number
+            }}</span>
+          </td>
+          <td class="paslon2">
+            <span *ngIf="state.aggregate[c[0]] as s">{{
+              s.s[1] | number
+            }}</span>
+          </td>
+        </tr>
+      </ng-container>
+    </tbody>
   </table>
 </div>
