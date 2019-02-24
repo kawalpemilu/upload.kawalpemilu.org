@@ -1,72 +1,74 @@
-<div *ngIf="(state$ | async) as state" style="margin: 0 5px">
-  <app-path [node]="state"></app-path>
-  <table>
-    <thead>
-      <tr
-        [style.height.px]="TOOLBAR_HEIGHT"
-        style="background-color: lightgray; "
-      >
-        <th class="coverage">Coverage</th>
-        <th class="lokasi">Lokasi dan Foto C1</th>
-      </tr>
-    </thead>
-  </table>
+<div class="wrapper">
+  <div *ngIf="(state$ | async) as state" style="padding: 0 10px">
+    <app-path [node]="state"></app-path>
+  </div>
 
-  <div
-    style="overflow: scroll; -webkit-overflow-scrolling: touch;"
-    [style.height.px]="viewportHeight(state.tpsList.length)"
-  >
-    <table>
-      <tbody>
-        <ng-container *ngFor="let tps of state.tpsList; let odd = odd">
-          <tr
-            [style.height.px]="ROW_HEIGHT"
-            [style.background-color]="odd ? '#FFF' : '#EEE'"
-          >
-            <td valign="top" class="coverage">
-              TPS #{{ tps.tpsNo }}<br />
-              ---<br />
-              <table
-                align="center"
-                border="1"
-                cellspacing="0"
-                cellpadding="4"
-                *ngIf="tps.aggregate as a"
-              >
-                <tr>
-                  <td class="label">Pas1:</td>
-                  <td class="angka">{{ a.s[0] }}</td>
-                </tr>
-                <tr>
-                  <td>Pas2:</td>
-                  <td class="angka">{{ a.s[1] }}</td>
-                </tr>
-                <tr>
-                  <td>Sah:</td>
-                  <td class="angka">{{ a.s[2] }}</td>
-                </tr>
-                <tr>
-                  <td>~Sah:</td>
-                  <td class="angka">{{ a.s[3] }}</td>
-                </tr>
-              </table>
-            </td>
-
-            <td class="lokasi">
-              {{ tps.address }}<br />
-              <app-tps-photos
-                [kelurahanId]="state.id"
-                [tpsNo]="tps.tpsNo"
-              ></app-tps-photos>
-              <br />
-              <app-upload
-                [kelurahanId]="state.id"
-                [tpsNo]="tps.tpsNo"
-              ></app-upload>
-            </td>
-          </tr>
-        </ng-container>
+  <ng-container *ngIf="!uploadService.task" cellspacing="0">
+    <table #header class="header" cellspacing="0">
+      <tbody *ngIf="(state$ | async) as state">
+        <tr [style.height.px]="ROW_HEIGHT" style="background-color: lightgray">
+          <th class="tps">TPS</th>
+          <th class="laki">Pria</th>
+          <th class="perempuan">Wanita</th>
+          <th class="dijaga">Dijaga oleh</th>
+        </tr>
       </tbody>
     </table>
-  </div>
+
+    <table #content class="content" cellspacing="0">
+      <tbody *ngIf="(state$ | async) as state">
+        <tr
+          *ngFor="let tps of state.tpsList; let odd = odd"
+          [style.background-color]="odd ? '#FFF' : '#EEE'"
+          [style.height.px]="ROW_HEIGHT"
+        >
+          <th class="tps">#{{ tps.tpsNo }}</th>
+          <td class="laki">{{ tps.laki }}</td>
+          <td class="perempuan">{{ tps.perempuan }}</td>
+          <td class="dijaga">
+            <ng-container
+              *ngIf="tps.aggregate && tps.aggregate.s[4] as cnt; else bisajaga"
+            >
+              {{ cnt }} orang
+            </ng-container>
+
+            <ng-template #bisajaga>
+              [ <a [routerLink]="['/u', state.id, tps.tpsNo]">Jaga TPS ini</a> ]
+            </ng-template>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </ng-container>
+
+  <!-- <table
+      *ngIf="tps.aggregate as a"
+    >
+      <tr>
+        <td class="label">Pas1:</td>
+        <td class="angka">{{ a.s[0] }}</td>
+      </tr>
+      <tr>
+        <td>Pas2:</td>
+        <td class="angka">{{ a.s[1] }}</td>
+      </tr>
+      <tr>
+        <td>Sah:</td>
+        <td class="angka">{{ a.s[2] }}</td>
+      </tr>
+      <tr>
+        <td>~Sah:</td>
+        <td class="angka">{{ a.s[3] }}</td>
+      </tr>
+    </table>
+  </td>
+
+  <td class="lokasi">
+    {{ tps.address }}<br />
+    <app-tps-photos
+      [kelurahanId]="state.id"
+      [tpsNo]="tps.tpsNo"
+    ></app-tps-photos>
+    <br />
+  </td> -->
 </div>

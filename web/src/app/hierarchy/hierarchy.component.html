@@ -4,12 +4,12 @@
   </div>
 
   <table #header class="header" cellspacing="0">
-    <thead>
+    <thead *ngIf="(state$ | async) as state">
       <tr [style.height.px]="ROW_HEIGHT" style="background-color: lightgray">
         <th class="index">#</th>
-        <th class="wilayah">Wilayah</th>
-        <th class="paslon1">Paslon 1</th>
-        <th class="paslon2">Paslon 2</th>
+        <th class="wilayah">{{ getWilayah(state) }}</th>
+        <th class="paslon1">Tercakup</th>
+        <th class="paslon2">Total TPS</th>
       </tr>
     </thead>
   </table>
@@ -21,8 +21,11 @@
         <th class="wilayah" align="right">
           TOTAL ({{ state.children.length }}) &nbsp;
         </th>
-        <th class="paslon1">{{ sum(state, 0) | number }}</th>
-        <th class="paslon2">{{ sum(state, 1) | number }}</th>
+        <th class="paslon1">
+          {{ sum(state, 4) | number }} /
+          {{ sum(state, 4) / sumTps(state) | number: '1.0-1' }}%
+        </th>
+        <th class="paslon2">{{ sumTps(state) | number }}</th>
       </tr>
     </tfoot>
   </table>
@@ -46,19 +49,16 @@
             <a
               [routerLink]="[state.depth < 3 ? '/h' : '/t', c[0]]"
               class="link"
-              >{{ c[1] }}</a
+              >{{ c[1] | uppercase }}</a
             >
-            <span *ngIf="state.aggregate[c[0]] as s">{{ ago(s.x[0]) }}</span>
+            {{ ago(state, c[0]) }}
           </td>
           <td class="paslon1">
-            <span *ngIf="state.aggregate[c[0]] as s">{{
-              s.s[0] | number
-            }}</span>
+            {{ coverage(state, c[0]) | number }} /
+            {{ coverage(state, c[0]) / c[2] | number: '1.0-1' }}%
           </td>
           <td class="paslon2">
-            <span *ngIf="state.aggregate[c[0]] as s">{{
-              s.s[1] | number
-            }}</span>
+            {{ c[2] | number }}
           </td>
         </tr>
       </ng-container>

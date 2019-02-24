@@ -67,6 +67,7 @@ export function extractImageMetadata(m: any): ImageMetadata | null {
 }
 
 export interface Upsert {
+  u: string; // The owner user ID
   k: number; // Kelurahan ID
   n: number; // Tps No
   i: string | string[]; // IP Address
@@ -75,13 +76,38 @@ export interface Upsert {
   m: ImageMetadata;
 }
 
+export interface CodeReferral {
+  i: string; // The issuer uid
+  n: string; // The issuer name
+  l: string; // The issuer profile link
+  t: number; // The issued timestamp
+  d: number; // The referral depth
+  m: string; // The intended claimer name
+  c: string; // The claimer uid
+  e: string; // The claimer name
+  r: string; // The claimer profile link
+  a: number; // The claimed timestamp
+}
+
+export interface Relawan {
+  f: string; // First name
+  l: string; // App scoped link to profile
+  n: string; // Full name
+  p: string; // Link to profile picture
+  d: number; // Referral depth (0: ninja, 1: admin, 2: trusted, 3+:normal)
+  b: string; // Referrer uid
+  e: string; // Referrer name
+  r: string; // Referrer profile link
+  c: { [code: string]: CodeReferral }; // Code referrals
+}
+
 export class FsPath {
   static relawan(uid: string) {
     return `r/${uid}`;
   }
 
-  static children(cid: number) {
-    return `c/${cid}`;
+  static codeReferral(code: string) {
+    return `c/${code}`;
   }
 
   static imageMetadata(imageId: string) {
@@ -104,4 +130,15 @@ export class FsPath {
   static tpsImage(kelurahanId: number, tpsNo: number, imageId: string) {
     return `${FsPath.tpsImages(kelurahanId, tpsNo)}/${imageId}`;
   }
+}
+
+/** Returns a random n-character identifier containing [a-zA-Z0-9]. */
+export function autoId(n = 20): string {
+  const chars =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let autoId = '';
+  for (let i = 0; i < n; i++) {
+    autoId += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return autoId;
 }

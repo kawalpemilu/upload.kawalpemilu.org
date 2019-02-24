@@ -1,0 +1,141 @@
+<div style="padding: 0 10px">
+  <ng-container *ngIf="(userService.user$ | async) as user; else login">
+    <p>
+      Halo,
+
+      {{ user.displayName }} [<a
+        style="color: blue; cursor: pointer;"
+        (click)="userService.logout()"
+        >Logout</a
+      >]
+    </p>
+
+    <ng-container
+      *ngIf="(userService.userRelawan$ | async) as relawan; else login"
+    >
+      <ng-container *ngIf="relawan.d === undefined; else terpercaya">
+        <ng-container *ngIf="(code$ | async) as code; else butuhkode">
+          <ng-container *ngIf="code.c; else bisaterima">
+            <p>Maaf, kode referral ini sudah tidak aktif.</p>
+          </ng-container>
+          <ng-template #bisaterima>
+            <p>
+              <a href="{{ getScopedUrl(code.l) }}" target="_blank">{{
+                code.n
+              }}</a>
+              mengundang anda untuk menjadi relawan terpercaya.
+            </p>
+
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="registerCode(user, code)"
+              [disabled]="isLoading"
+            >
+              Terima Undangan!
+            </button>
+          </ng-template>
+        </ng-container>
+
+        <ng-template #butuhkode>
+          <p>
+            Anda membutuhkan kode referral yang masih aktif dari teman anda yang
+            sudah menjadi relawan terpercaya.
+          </p>
+        </ng-template>
+      </ng-container>
+
+      <ng-template #terpercaya>
+        <p>
+          Selamat! Anda telah ditunjuk oleh
+          <a href="{{ getScopedUrl(relawan.r) }}" target="_blank">{{
+            relawan.e
+          }}</a>
+          sebagai relawan terpercaya level {{ relawan.d }}.
+        </p>
+
+        <ng-container *ngIf="uploads$ | async as uploads">
+        </ng-container>
+
+        <form [formGroup]="formGroup" *ngIf="relawan; else upload">
+          <p>
+            Anda dapat mengundang teman-teman anda untuk menjadi relawan
+            terpercaya:
+          </p>
+
+          <mat-form-field style="width: 225px">
+            <input
+              matInput
+              placeholder="Nama teman anda"
+              formControlName="namaCtrl"
+              type="text"
+              required
+            />
+          </mat-form-field>
+          &nbsp;
+          <span *ngIf="getError('namaCtrl') as error" class="alert">
+            {{ error }}
+          </span>
+          <br />
+
+          <button
+            type="submit"
+            [disabled]="formGroup.invalid || isLoading"
+            mat-raised-button
+            color="primary"
+            (click)="createReferralCode(user)"
+          >
+            Generate Kode Referral
+          </button>
+        </form>
+
+        <div *ngIf="(userService.userRelawan$ | async) as relawan">
+          <h3>Referrals Anda</h3>
+          <div *ngFor="let code of getReferralCodes(relawan)">
+            <p *ngIf="relawan.c[code].c">
+              <a href="{{ getScopedUrl(relawan.c[code].r) }}" target="_blank">{{
+                relawan.c[code].e
+              }}</a>
+              telah menggunakan kode anda.
+            </p>
+
+            <p *ngIf="!relawan.c[code].c">
+              Kirimkan link berikut ini ke {{ relawan.c[code].m }}:
+            </p>
+
+            <pre>https://kawal-c1.firebaseapp.com/c/{{ code }} </pre>
+          </div>
+        </div>
+
+        <ng-template #upload>
+          <p>
+            Untuk menjaga suara pada pilpres tanggal 17 April nanti, anda
+            diharapkan untuk mem-foto papan C1 plano di TPS terdekat anda.
+          </p>
+
+          <p>
+            Untuk uji coba upload foto: cari TPS di kelurahan anda
+            <b>yang akan anda jaga</b>, dan upload foto disana:
+          </p>
+
+          <p>
+            <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
+              Cari TPS di Kelurahan Anda
+            </a>
+          </p>
+
+          <p>
+            Setelah anda mengupload foto, anda baru dapat menunjuk teman anda
+            untuk ikutan menjadi relawan terpercaya.
+          </p>
+        </ng-template>
+      </ng-template>
+    </ng-container>
+  </ng-container>
+
+  <ng-template #login>
+    <app-login fitur="registrasi relawan"></app-login>
+  </ng-template>
+</div>
+
+<br /><br /><br /><br /><br />

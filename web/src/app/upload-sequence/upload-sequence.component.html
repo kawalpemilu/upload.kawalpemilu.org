@@ -1,14 +1,23 @@
-<div *ngIf="(state$ | async) as state" style="margin: 0 5px">
-  <div *ngIf="(userService.user$ | async) as user; else login">
-    <p>
-      Halo, {{ user.displayName }} (<a
-        style="color: blue; cursor: pointer;"
-        (click)="userService.logout()"
-        >logout</a
-      >)
-    </p>
+<div *ngIf="(state$ | async) as state" style="padding: 0 10px">
+  <app-path [node]="state.node"></app-path>
 
-    <p>Petunjuk pengambilan Foto C1:</p>
+  <div *ngIf="(userService.user$ | async) as user; else login">
+    Halo, {{ user.displayName }} (<a
+      style="color: blue; cursor: pointer;"
+      (click)="userService.logout()"
+      >logout</a
+    >)
+
+    <p>
+      Untuk menjaga TPS <b>#{{ state.tpsNo }}</b> di Kelurahan
+      <b>{{ state.node.name }}</b
+      >, silahkan upload foto pemandangan di daerah anda.
+    </p>
+    <p>
+      <b style="color:red">Catatan</b>: jika anda langsung memotret foto dari
+      aplikasi ini, fotonya <b>TIDAK AKAN</b> tersimpan di HP anda!
+    </p>
+    <!-- <p>Petunjuk pengambilan Foto C1:</p>
     <ol>
       <li>
         Setelah penghitungan suara selesai di TPS anda, ambillah foto formulir
@@ -25,7 +34,7 @@
         aplikasi ini, fotonya <b>TIDAK AKAN</b> tersimpan di HP anda!
       </li>
       <li>Jika sudah siap, klik tombol Upload dibawah:</li>
-    </ol>
+    </ol> -->
 
     <form [formGroup]="formGroup">
       <input
@@ -41,15 +50,21 @@
         </a>
       </p>
       <div *ngIf="imgURL">
-        <img [src]="imgURL" height="300" (click)="u.click()" />
-        <p>Pastikan lokasi TPS di foto sesuai dengan lokasi berikut:</p>
+        <img
+          [src]="imgURL"
+          width="100%"
+          style="max-width: 400px"
+          (click)="u.click()"
+        />
+        <!-- <p>Pastikan lokasi TPS di foto sesuai dengan lokasi berikut:</p> -->
 
-        <p>Terakhir, masukkan angka-angka yang tertera di foto tersebut:</p>
+        <!-- <p>Terakhir, masukkan angka-angka yang tertera di foto tersebut:</p> -->
 
+        <p>Masukkan angka antara 0 sampai 999:</p>
         <mat-form-field style="width: 225px">
           <input
             matInput
-            placeholder="Jumlah Suara Paslon 1"
+            placeholder="Angka antara 0 sampai 999"
             formControlName="paslon1Ctrl"
             type="number"
             required
@@ -61,7 +76,7 @@
         </span>
         <br />
 
-        <mat-form-field style="width: 225px">
+        <!-- <mat-form-field style="width: 225px">
           <input
             matInput
             placeholder="Jumlah Suara Paslon 2"
@@ -103,7 +118,7 @@
         &nbsp;
         <span *ngIf="getError('tidakSahCtrl') as error" class="alert">
           {{ error }}
-        </span>
+        </span> -->
 
         <p>
           <button
@@ -116,6 +131,23 @@
             Selesai!
           </button>
         </p>
+
+        <p *ngIf="isLoading">
+          Uploading: {{ uploadService.progress.toFixed(0) }}%
+          <progress max="100" [value]="uploadService.progress"></progress>
+          <!-- &nbsp;
+          <button
+            (click)="uploadService.task.cancel()"
+            [disabled]="
+              !(
+                uploadService.state === 'paused' ||
+                uploadService.state === 'running'
+              )
+            "
+          >
+            Cancel
+          </button> -->
+        </p>
       </div>
     </form>
   </div>
@@ -124,6 +156,7 @@
     <app-login fitur="mengupload foto"></app-login>
   </ng-template>
 
+  <br />
   <p>
     <button
       [routerLink]="['/t', state.kelurahanId]"

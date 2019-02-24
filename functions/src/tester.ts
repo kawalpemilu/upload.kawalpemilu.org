@@ -109,7 +109,7 @@ function rec(id, depth, requests) {
   const arr = H[id].children;
   if (depth === 4) {
     for (const tpsNo of arr) {
-      requests.push(makeRequest(id, tpsNo));
+      requests.push(makeRequest(id, tpsNo[0]));
     }
   } else {
     for (const cid of arr) {

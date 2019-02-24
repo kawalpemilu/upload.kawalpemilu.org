@@ -40,6 +40,14 @@ export class HierarchyComponent implements OnInit {
     return AppComponent.TOOLBAR_HEIGHT;
   }
 
+  getWilayah(state: HierarchyNode) {
+    if (!state) {
+      return '';
+    }
+    const level = ['Propinsi', 'Kabupaten', 'Kecamatan', 'Kelurahan'];
+    return `Nama ${level[state.depth]}`;
+  }
+
   @HostListener('window:resize', ['$event'])
   onWindowResize() {
     this.height = window.innerHeight;
@@ -75,11 +83,11 @@ export class HierarchyComponent implements OnInit {
       filter(id => !isNaN(id)),
       distinctUntilChanged(),
       switchMap(id => this.hie.get$(id)),
-      shareReplay(1),
       tap(state => {
         this.numRows = state.children.length;
         this.onWindowResize();
-      })
+      }),
+      shareReplay(1)
     );
 
     this.onWindowResize();
@@ -95,30 +103,35 @@ export class HierarchyComponent implements OnInit {
     return res;
   }
 
-  viewportHeight(rows: number) {
-    const height = rows * (this.ROW_HEIGHT + 2) + 2;
-    const slack =
-      this.height - this.TOOLBAR_HEIGHT * 2 - this.ROW_HEIGHT * 2 - 15;
-    return Math.min(height, slack);
+  sumTps(state: HierarchyNode) {
+    return state.children.map(c => c[2]).reduce((old, cur) => old + cur, 0);
   }
 
   trackByIdx(_, item) {
     return item[0]; // wilayah id.
   }
 
-  ago(ts: number) {
-    const m = (Date.now() - ts) / 1000 / 60;
-    if (m < 1) {
-      return ' (*)';
-    }
-    if (m < 5) {
-      return ' (x)';
-    }
-    if (m < 20) {
-      return ' (-)';
-    }
-    if (m < 60) {
-      return ' (.)';
+  coverage(state: HierarchyNode, cid: number) {
+    const s = state.aggregate[cid];
+    return (s && s.s[4]) || 0;
+  }
+
+  ago(state: HierarchyNode, cid: number) {
+    const s = state.aggregate[cid];
+    if (s) {
+      const m = (Date.now() - s.x[0]) / 1000 / 60;
+      if (m < 1) {
+        return ' (*)';
+      }
+      if (m < 5) {
+        return ' (x)';
+      }
+      if (m < 20) {
+        return ' (-)';
+      }
+      if (m < 60) {
+        return ' (.)';
+      }
     }
     return '';
   }

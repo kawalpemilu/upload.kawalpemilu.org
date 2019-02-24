@@ -3,7 +3,7 @@ import { Routes, RouterModule } from '@angular/router';
 import { HierarchyComponent } from './hierarchy/hierarchy.component';
 import { TpsComponent } from './tps/tps.component';
 import { UploadSequenceComponent } from './upload-sequence/upload-sequence.component';
-import { AdminComponent } from './admin/admin.component';
+import { RegistrasiComponent } from './registrasi/registrasi.component';
 
 const routes: Routes = [
   { path: '', redirectTo: '/h/0', pathMatch: 'full' },
@@ -13,14 +13,13 @@ const routes: Routes = [
     path: 'u/:kelurahanId/:tpsNo',
     component: UploadSequenceComponent
   },
-  {
-    path: 'admin',
-    component: AdminComponent
-  }
+  { path: 'c/:code', component: RegistrasiComponent }
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [
+    RouterModule.forRoot(routes, { scrollPositionRestoration: 'enabled' })
+  ],
   exports: [RouterModule]
 })
 export class AppRoutingModule {}

@@ -15,7 +15,6 @@ import { environment } from '../environments/environment';
 import { HierarchyComponent } from './hierarchy/hierarchy.component';
 import { TpsComponent } from './tps/tps.component';
 import { PathComponent } from './path/path.component';
-import { UploadComponent } from './upload/upload.component';
 import { TpsPhotosComponent } from './tps-photos/tps-photos.component';
 import { UploadSequenceComponent } from './upload-sequence/upload-sequence.component';
 
@@ -32,7 +31,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 
 import { HttpClientModule } from '@angular/common/http';
 import { LoginComponent } from './login/login.component';
-import { AdminComponent } from './admin/admin.component';
+import { RegistrasiComponent } from './registrasi/registrasi.component';
 
 @NgModule({
   declarations: [
@@ -40,11 +39,10 @@ import { AdminComponent } from './admin/admin.component';
     HierarchyComponent,
     TpsComponent,
     PathComponent,
-    UploadComponent,
     TpsPhotosComponent,
     UploadSequenceComponent,
     LoginComponent,
-    AdminComponent
+    RegistrasiComponent
   ],
   imports: [
     BrowserModule,

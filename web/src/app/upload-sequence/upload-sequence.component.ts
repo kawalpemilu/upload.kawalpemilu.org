@@ -1,20 +1,23 @@
 import { Component, OnInit } from '@angular/core';
-import { UploadService } from '../upload/upload.service';
+import { UploadService } from '../upload.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
-import { map } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
 import { UserService } from '../user.service';
 import { User } from 'firebase';
 import * as piexif from 'piexifjs';
-import { ImageMetadata, ApiUploadRequest } from 'shared';
+import { ImageMetadata, ApiUploadRequest, HierarchyNode } from 'shared';
 import { ApiService } from '../api.service';
+import { HierarchyService } from '../hierarchy.service';
 
 export class UploadState {
   kelurahanId: number;
   tpsNo: number;
+  node: HierarchyNode;
+  covered = 0;
 }
 
 @Component({
@@ -35,26 +38,39 @@ export class UploadSequenceComponent implements OnInit {
     public userService: UserService,
     public uploadService: UploadService,
     private formBuilder: FormBuilder,
-    private api: ApiService
+    private api: ApiService,
+    private hie: HierarchyService
   ) {}
 
   ngOnInit() {
     this.state$ = this.route.paramMap.pipe(
-      map(
-        p =>
-          <UploadState>{
-            kelurahanId: parseInt(p.get('kelurahanId'), 10),
-            tpsNo: parseInt(p.get('tpsNo'), 10)
-          }
-      )
+      switchMap(p => {
+        const state = {
+          kelurahanId: parseInt(p.get('kelurahanId'), 10),
+          tpsNo: parseInt(p.get('tpsNo'), 10)
+        } as UploadState;
+        return this.hie.get$(state.kelurahanId).pipe(
+          map((node: HierarchyNode) => {
+            state.covered = 0;
+            for (const [tpsNo] of node.children) {
+              if (tpsNo === state.tpsNo) {
+                const a = node.aggregate[tpsNo];
+                state.covered = (a && a.s[0]) || 0;
+              }
+            }
+            state.node = node;
+            return state;
+          })
+        );
+      })
     );
 
     const validators = [Validators.pattern('^[0-9]{1,3}$')];
     this.formGroup = this.formBuilder.group({
-      paslon1Ctrl: [null, validators],
-      paslon2Ctrl: [null, validators],
-      sahCtrl: [null, validators],
-      tidakSahCtrl: [null, validators]
+      paslon1Ctrl: [null, validators]
+      // paslon2Ctrl: [null, validators],
+      // sahCtrl: [null, validators],
+      // tidakSahCtrl: [null, validators]
     });
   }
 
@@ -105,7 +121,7 @@ export class UploadSequenceComponent implements OnInit {
   getError(ctrlName: string) {
     const ctrl = this.formGroup.get(ctrlName);
     if (ctrl.hasError('pattern')) {
-      return 'Jumlah hanya boleh antara 0 sampai 999';
+      return 'Angka hanya boleh antara 0 sampai 999';
     }
     return '';
   }
@@ -118,20 +134,22 @@ export class UploadSequenceComponent implements OnInit {
       tpsNo,
       aggregate: {
         s: [
+          1,
           this.formGroup.get('paslon1Ctrl').value,
-          this.formGroup.get('paslon2Ctrl').value,
-          this.formGroup.get('sahCtrl').value,
-          this.formGroup.get('tidakSahCtrl').value,
-          0
+          0,
+          0,
+          // this.formGroup.get('paslon2Ctrl').value,
+          // this.formGroup.get('sahCtrl').value,
+          // this.formGroup.get('tidakSahCtrl').value,
+          1
         ],
         x: []
       },
       metadata,
       imageId
     };
-    const url = `${ApiService.HOST}/api/upload`;
     try {
-      const res: any = await this.api.post(user, url, request);
+      const res: any = await this.api.post(user, `upload`, request);
       if (res.ok) {
         this.router.navigate(['/t', kelurahanId], { fragment: `${tpsNo}` });
       } else {

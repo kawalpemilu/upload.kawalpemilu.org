@@ -11,5 +11,16 @@ service cloud.firestore {
       allow read: if request.auth.uid != null;
       allow write: if request.auth.uid == userId;
     }
+ 
+    // Referral codes.
+    match /c/{code} {
+      allow read: if request.auth.uid != null;
+    }
+
+    // Upserts.
+    match /u/{imageId} {
+      allow list: if request.query.limit <= 10 &&
+                     request.auth.uid == resource.data.u;
+    }
   }
 }

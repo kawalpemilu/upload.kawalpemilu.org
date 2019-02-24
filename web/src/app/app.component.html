@@ -15,11 +15,16 @@
     <mat-nav-list>
       <a
         mat-list-item
+        [routerLink]="['/c', 0]"
+        (click)="mobileQuery.matches && snav.toggle()"
+        >Referral</a
+      >
+      <a
+        mat-list-item
         [routerLink]="['/h', 0]"
         (click)="mobileQuery.matches && snav.toggle()"
-        >Home</a
+        >Cakupan</a
       >
-      <a mat-list-item [routerLink]="['/c', 0]">Coverage</a>
     </mat-nav-list>
   </mat-sidenav>
 

@@ -4,6 +4,7 @@ import {
   AngularFireStorage,
   AngularFireUploadTask
 } from '@angular/fire/storage';
+import { autoId } from 'shared';
 
 @Injectable({
   providedIn: 'root'
@@ -29,7 +30,7 @@ export class UploadService {
       console.warn(`Upload canceled: ${this.kelurahanId}/${this.tpsNo}`);
       this.task.cancel();
     }
-    const imageId = this.autoId();
+    const imageId = autoId();
     const filePath = `/uploads/${kelurahanId}/${tpsNo}/${userId}/${imageId}`;
 
     this.kelurahanId = kelurahanId;
@@ -42,16 +43,5 @@ export class UploadService {
     this.kelurahanId = this.tpsNo = 0;
     this.task = null;
     return imageId;
-  }
-
-  /** Returns a unique 20-character wide identifier. */
-  autoId(): string {
-    const chars =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let autoId = '';
-    for (let i = 0; i < 20; i++) {
-      autoId += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return autoId;
   }
 }

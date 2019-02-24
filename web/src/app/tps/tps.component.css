@@ -1,22 +1,37 @@
+.wrapper {
+  max-width: 500px;
+}
+
 table {
   width: 100%;
+  max-width: 500px;
 }
 
-.coverage {
-  width: 100px;
+.tps {
+  width: 60px;
   text-align: center;
-  padding: 15px 5px 15px 5px;
 }
 
-.lokasi {
-  padding: 10px;
+.laki {
+  width: 80px;
+  text-align: center;
 }
 
-.label {
-  width: 40px;
+.perempuan {
+  width: 80px;
+  text-align: center;
 }
 
-.angka {
-  width: 30px;
-  text-align: right;
+.dijaga {
+  text-align: left;
+  padding-left: 10px;
+}
+
+.sticky {
+  position: fixed;
+  top: 0;
+}
+
+.sticky ~ .content {
+  padding-top: 50px;
 }

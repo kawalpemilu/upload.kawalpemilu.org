@@ -2,10 +2,10 @@ import { Injectable } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/auth';
 
 import { auth, User } from 'firebase/app';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { tap, switchMap, shareReplay } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
-import { FsPath } from 'shared';
+import { FsPath, Relawan } from 'shared';
 
 @Injectable({
   providedIn: 'root'
@@ -13,14 +13,18 @@ import { FsPath } from 'shared';
 export class UserService {
   static SCOPED_PREFIX = 'https://www.facebook.com/app_scoped_user_id/';
   user$: Observable<User>;
+  userRelawan$: Observable<Relawan>;
   isLoading = true;
 
-  constructor(
-    private afAuth: AngularFireAuth,
-    private fsdb: AngularFirestore
-  ) {
+  constructor(private afAuth: AngularFireAuth, private fsdb: AngularFirestore) {
     this.isLoading = true;
     this.user$ = this.afAuth.user.pipe(tap(() => (this.isLoading = false)));
+    this.userRelawan$ = this.user$.pipe(
+      switchMap(user =>
+        user ? this.fsdb.doc(FsPath.relawan(user.uid)).valueChanges() : of(null)
+      ),
+      shareReplay(1)
+    );
 
     this.afAuth.auth.getRedirectResult().then(result => {
       const profile: any =
@@ -42,7 +46,11 @@ export class UserService {
 
       if (profile) {
         const p = UserService.SCOPED_PREFIX;
-        this.fsdb.doc(FsPath.relawan(result.user.uid)).set({
+        if (!profile.link) {
+          profile.link = 'no permission';
+          console.warn('No user_link permission', profile);
+        }
+        this.fsdb.doc(FsPath.relawan(result.user.uid)).update({
           l: profile.link.startsWith(p)
             ? profile.link.substring(p.length)
             : profile.link,

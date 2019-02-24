@@ -12,7 +12,10 @@ import {
   TpsImage,
   ApiUploadRequest,
   FsPath,
-  HierarchyNode
+  HierarchyNode,
+  autoId,
+  CodeReferral,
+  Relawan
 } from 'shared';
 
 const t1 = Date.now();
@@ -74,6 +77,7 @@ exports.handlePhotoUpload = functions.storage
     await fsdb.doc(FsPath.imageMetadata(imageId)).set(m);
   });
 
+const rateLimit: { [uid: string]: number } = {};
 /**
  * Validates Firebase ID Tokens passed in the authorization HTTP header.
  * Returns the decoded ID Token content.
@@ -87,10 +91,25 @@ function validateToken(
     res.status(403).json({ error: 'Unauthorized' });
     return Promise.resolve(null);
   }
-  return auth.verifyIdToken(a.substring(7)).catch(() => {
-    res.status(403).json({ error: 'Unauthorized, invalid token' });
-    return null;
-  });
+  return auth
+    .verifyIdToken(a.substring(7))
+    .catch(() => {
+      res.status(403).json({ error: 'Unauthorized, invalid token' });
+      return null;
+    })
+    .then(user => {
+      if (user) {
+        const num = (rateLimit[user.uid] = (rateLimit[user.uid] || 0) + 1);
+        if (num > 30) {
+          console.warn(`User ${user.uid} is rate-limited`);
+          return null;
+        }
+        if (num === 1) {
+          setTimeout(() => delete rateLimit[user.uid], 60 * 1000);
+        }
+      }
+      return user;
+    });
 }
 
 function getChildren(cid): Promise<HierarchyNode> {
@@ -102,6 +121,7 @@ function getChildren(cid): Promise<HierarchyNode> {
 const CACHE_TIMEOUT = 5;
 const cache_c: any = {};
 app.get('/api/c/:id', async (req, res) => {
+  // TODO: validateToken, and use secretkey
   const cid = req.params.id;
   let c = cache_c[cid];
   res.setHeader('Cache-Control', `max-age=${CACHE_TIMEOUT}`);
@@ -168,7 +188,7 @@ app.post('/api/upload', async (req, res) => {
       return res.json({ error: 'kelurahanId does not exists' });
     }
     const tpsNos = c.children;
-    if (!tpsNos || tpsNos.indexOf(tpsNo) === -1) {
+    if (!tpsNos || tpsNos.findIndex(t => t[0] === tpsNo) === -1) {
       return res.json({ error: 'tpsNo does not exists' });
     }
   } catch (e) {
@@ -193,6 +213,7 @@ app.post('/api/upload', async (req, res) => {
     a: agg
   };
   const upsert: Upsert = {
+    u: user.uid,
     k: kelId,
     n: tpsNo,
     i: req.headers['fastly-client-ip'],
@@ -207,6 +228,127 @@ app.post('/api/upload', async (req, res) => {
   await batch.commit();
 
   return res.json({ ok: true });
+});
+
+app.post('/api/register/create_code', async (req, res) => {
+  const user = await validateToken(req, res);
+  if (!user) return null;
+
+  const nama = req.body.nama;
+  if (!nama || !nama.match(/^[A-Za-z ]{1,20}$/))
+    return res.json({ error: 'Nama tidak valid' });
+
+  const rRef = fsdb.doc(FsPath.relawan(user.uid));
+  const c = await fsdb.runTransaction(async t => {
+    const r = (await t.get(rRef)).data() as Relawan;
+    if (!r) return 'no_user';
+    if (r.d === undefined) return 'no_trust';
+    if (r.d > 2) return 'no_create';
+
+    let code;
+    for (let i = 0; ; i++) {
+      code = autoId(10);
+      if (!(await t.get(fsdb.doc(FsPath.codeReferral(code)))).data()) break;
+      console.warn(`Exists auto id ${code}`);
+      if (i > 10) return 'no_id';
+    }
+
+    const newCode: CodeReferral = {
+      i: user.uid,
+      n: r.n,
+      l: r.l,
+      t: Date.now(),
+      d: r.d + 1,
+      m: nama,
+      c: null,
+      e: null,
+      r: null,
+      a: null
+    };
+    t.set(fsdb.doc(FsPath.codeReferral(code)), newCode);
+
+    if (!r.c) r.c = {};
+    r.c[code] = { m: nama, t: newCode.t } as CodeReferral;
+    t.update(rRef, r);
+    return code;
+  });
+
+  switch (c) {
+    case 'no_user':
+      return res.json({ error: 'Data anda tidak ditemukan' });
+    case 'no_trust':
+      return res.json({ error: 'Maaf, status anda belum terpercaya' });
+    case 'no_create':
+      return res.json({ error: 'Maaf, pembuatan kode belum dibuka' });
+    case 'no_id':
+      return res.json({ error: 'Auto id failed' });
+    default:
+      return res.json({ code: c });
+  }
+});
+
+app.post('/api/register/:code', async (req, res) => {
+  const user = await validateToken(req, res);
+  if (!user) return null;
+
+  const code = req.params.code;
+  if (!new RegExp('^[a-zA-Z0-9]{10}$').test(code)) {
+    return res.json({ error: 'Kode referral tidak valid' });
+  }
+
+  const ts = Date.now();
+  const codeRef = fsdb.doc(FsPath.codeReferral(code));
+  const claimerRef = fsdb.doc(FsPath.relawan(user.uid));
+  const c = await fsdb.runTransaction(async t => {
+    // Abort if the code does not exist or already claimed.
+    const cd = (await t.get(codeRef)).data() as CodeReferral;
+    if (!cd || cd.c) return cd;
+
+    // Abort if the claimer does not have relawan entry.
+    const claimer = (await t.get(claimerRef)).data() as Relawan;
+    if (!claimer) {
+      console.error(`Claimer ${user.uid} is not in Firestore, ${code}`);
+      return null;
+    }
+
+    // Abort if the user is already trusted.
+    if (claimer.d && claimer.d <= cd.d && !req.query.abracadabra) {
+      console.log(`Attempt to downgrade ${user.uid}, ${code}`);
+      return null;
+    }
+
+    // Abort if the issuer does not have relawan entry.
+    const issuerRef = fsdb.doc(FsPath.relawan(cd.i));
+    const issuer = (await t.get(issuerRef)).data() as Relawan;
+    if (!issuer) {
+      console.error(`Issuer ${user.uid} is not in Firestore, ${code}`);
+      return null;
+    }
+
+    // Abort if the issuer never generate the code.
+    const i = issuer.c[code];
+    if (!i) {
+      console.error(`Issuer ${user.uid} never generate ${code}`);
+      return null;
+    }
+
+    i.c = cd.c = user.uid;
+    i.e = cd.e = claimer.n;
+    i.r = cd.r = claimer.l;
+    i.a = cd.a = ts;
+ 
+    claimer.d = cd.d;
+    claimer.b = cd.i;
+    claimer.e = cd.n;
+    claimer.r = cd.l;
+
+    t.update(codeRef, cd);
+    t.update(issuerRef, issuer);
+    t.update(claimerRef, claimer);
+    return cd;
+  });
+
+  return res.json(!c || c.c !== user.uid ? { error: 'Invalid' } : { code: c });
 });
 
 exports.api = functions.https.onRequest(app);
