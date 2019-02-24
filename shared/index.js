@@ -30,6 +30,7 @@ function isValidImageId(imageId) {
     return typeof imageId === 'string' && imageId.match(/^[A-Za-z0-9]{20}$/);
 }
 exports.isValidImageId = isValidImageId;
+exports.MAX_RELAWAN_TRUSTED_DEPTH = 2;
 var FsPath = /** @class */ (function () {
     function FsPath() {
     }

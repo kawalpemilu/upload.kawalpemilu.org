@@ -9,14 +9,14 @@ import {
   ImageMetadata,
   Upsert,
   extractImageMetadata,
-  TpsImage,
   ApiUploadRequest,
   FsPath,
   HierarchyNode,
   autoId,
   CodeReferral,
   Relawan,
-  isValidImageId
+  isValidImageId,
+  MAX_RELAWAN_TRUSTED_DEPTH
 } from 'shared';
 
 const t1 = Date.now();
@@ -258,7 +258,7 @@ app.post('/api/register/create_code', async (req, res) => {
     const r = (await t.get(rRef)).data() as Relawan;
     if (!r) return 'no_user';
     if (r.d === undefined) return 'no_trust';
-    if (r.d > 2) return 'no_create';
+    if (r.d >= MAX_RELAWAN_TRUSTED_DEPTH) return 'no_create';
 
     let code;
     for (let i = 0; ; i++) {

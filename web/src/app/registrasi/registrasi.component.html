@@ -161,84 +161,88 @@
         sebagai relawan terpercaya level {{ user.d }}.
       </p>
 
-      <p>
-        Anda dapat mengundang teman anda untuk menjadi relawan terpercaya dengan
-        membuat kode referral dibawah ini:
-      </p>
+      <ng-container *ngIf="user.d < MAX_TRUSTED_DEPTH">
+        <p>
+          Anda dapat mengundang teman anda untuk menjadi relawan terpercaya
+          dengan membuat kode referral dibawah ini:
+        </p>
 
-      <form [formGroup]="formGroup">
-        <mat-form-field style="width: 225px">
-          <input
-            matInput
-            placeholder="Nama teman anda"
-            formControlName="namaCtrl"
-            type="text"
-            required
-          />
-        </mat-form-field>
-        &nbsp;
-        <span *ngIf="getError('namaCtrl') as error" class="alert">
-          {{ error }}
-        </span>
+        <form [formGroup]="formGroup">
+          <mat-form-field style="width: 225px">
+            <input
+              matInput
+              placeholder="Nama teman anda"
+              formControlName="namaCtrl"
+              type="text"
+              required
+            />
+          </mat-form-field>
+          &nbsp;
+          <span *ngIf="getError('namaCtrl') as error" class="alert">
+            {{ error }}
+          </span>
 
-        <button
-          type="submit"
-          [disabled]="formGroup.invalid || isLoading"
-          mat-raised-button
-          color="primary"
-          (click)="createReferralCode(user.u)"
-        >
-          Buat Kode Referral
-        </button>
-      </form>
+          <button
+            type="submit"
+            [disabled]="formGroup.invalid || isLoading"
+            mat-raised-button
+            color="primary"
+            (click)="createReferralCode(user.u)"
+          >
+            Buat Kode Referral
+          </button>
+        </form>
 
-      <ng-container *ngIf="getReferralCodes(user, false) as codes">
-        <ng-container *ngIf="codes.length > 0">
-          <p>
-            Kirimkan URL kode referral dibawah ini ke teman anda (satu kode
-            referral hanya bisa dipakai oleh satu orang):
-          </p>
+        <ng-container *ngIf="getReferralCodes(user, false) as codes">
+          <ng-container *ngIf="codes.length > 0">
+            <p>
+              Kirimkan URL kode referral dibawah ini ke teman anda (satu kode
+              referral hanya bisa dipakai oleh satu orang):
+            </p>
 
-          <table border="1" cellpadding="0" cellspacing="0">
-            <tr bgcolor="lightgray">
-              <td><b>Nama</b></td>
-              <td><b>URL kode referral untuk dibagikan</b></td>
-            </tr>
-            <tr
-              *ngFor="let code of codes; let odd = odd"
-              [style.background-color]="odd ? '#FFF' : '#EEE'"
-            >
-              <td>{{ user.c[code].m }}</td>
-              <td>https://kawal-c1.firebaseapp.com/c/{{ code }}</td>
-            </tr>
-          </table>
+            <table border="1" cellpadding="0" cellspacing="0">
+              <tr bgcolor="lightgray">
+                <td><b>Nama</b></td>
+                <td><b>URL kode referral untuk dibagikan</b></td>
+              </tr>
+              <tr
+                *ngFor="let code of codes; let odd = odd"
+                [style.background-color]="odd ? '#FFF' : '#EEE'"
+              >
+                <td>{{ user.c[code].m }}</td>
+                <td>https://kawal-c1.firebaseapp.com/c/{{ code }}</td>
+              </tr>
+            </table>
+          </ng-container>
         </ng-container>
-      </ng-container>
 
-      <ng-container *ngIf="getReferralCodes(user, true) as codes">
-        <ng-container *ngIf="codes.length > 0">
-          <p>
-            Berikut ini adalah teman-teman ada yang sudah menerima undangan anda
-            dan telah menjadi relawan terpercaya:
-          </p>
+        <ng-container *ngIf="getReferralCodes(user, true) as codes">
+          <ng-container *ngIf="codes.length > 0">
+            <p>
+              Berikut ini adalah teman-teman ada yang sudah menerima undangan
+              anda dan telah menjadi relawan terpercaya:
+            </p>
 
-          <table border="1" cellpadding="0" cellspacing="0">
-            <tr bgcolor="lightgray">
-              <td><b>Nama</b></td>
-              <td><b>Profile teman anda</b></td>
-            </tr>
-            <tr
-              *ngFor="let code of codes; let odd = odd"
-              [style.background-color]="odd ? '#FFF' : '#EEE'"
-            >
-              <td>{{ user.c[code].m }}</td>
-              <td>
-                <a href="{{ getScopedUrl(user.c[code].r) }}" target="_blank">{{
-                  user.c[code].e
-                }}</a>
-              </td>
-            </tr>
-          </table>
+            <table border="1" cellpadding="0" cellspacing="0">
+              <tr bgcolor="lightgray">
+                <td><b>Nama</b></td>
+                <td><b>Profile teman anda</b></td>
+              </tr>
+              <tr
+                *ngFor="let code of codes; let odd = odd"
+                [style.background-color]="odd ? '#FFF' : '#EEE'"
+              >
+                <td>{{ user.c[code].m }}</td>
+                <td>
+                  <a
+                    href="{{ getScopedUrl(user.c[code].r) }}"
+                    target="_blank"
+                    >{{ user.c[code].e }}</a
+                  >
+                </td>
+              </tr>
+            </table>
+          </ng-container>
         </ng-container>
       </ng-container>
     </ng-template>

@@ -3,11 +3,6 @@ export interface Aggregate {
   x: number[]; // Max.
 }
 
-export interface TpsImage {
-  u: string; // The Serving URL of the image.
-  a: Aggregate;
-}
-
 export interface ApiUploadRequest {
   kelurahanId: number;
   tpsNo: number;
@@ -73,6 +68,8 @@ export function getServingUrl(url: string, size: number) {
 export function isValidImageId(imageId: string) {
   return typeof imageId === 'string' && imageId.match(/^[A-Za-z0-9]{20}$/);
 }
+
+export const MAX_RELAWAN_TRUSTED_DEPTH = 2;
 
 export interface Upsert {
   u: string; // The owner user ID

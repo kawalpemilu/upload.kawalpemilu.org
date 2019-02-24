@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from '../user.service';
 import { ActivatedRoute } from '@angular/router';
-import { map, switchMap, filter, take } from 'rxjs/operators';
+import { map, switchMap, take } from 'rxjs/operators';
 import { ApiService } from '../api.service';
 import { Observable, of } from 'rxjs';
 import { User } from 'firebase';
 import { FormGroup, Validators, FormBuilder } from '@angular/forms';
-import { Relawan, FsPath, CodeReferral, Upsert, getServingUrl } from 'shared';
+import { Relawan, FsPath, CodeReferral, Upsert, getServingUrl, MAX_RELAWAN_TRUSTED_DEPTH } from 'shared';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { HierarchyService } from '../hierarchy.service';
 
@@ -40,6 +40,10 @@ export class RegistrasiComponent implements OnInit {
     private api: ApiService,
     private formBuilder: FormBuilder
   ) {}
+
+  get MAX_TRUSTED_DEPTH() {
+    return MAX_RELAWAN_TRUSTED_DEPTH;
+  }
 
   ngOnInit() {
     this.code$ = this.route.paramMap.pipe(

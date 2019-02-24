@@ -2,10 +2,6 @@ export interface Aggregate {
     s: number[];
     x: number[];
 }
-export interface TpsImage {
-    u: string;
-    a: Aggregate;
-}
 export interface ApiUploadRequest {
     kelurahanId: number;
     tpsNo: number;
@@ -42,6 +38,7 @@ export interface ImageMetadata {
 export declare function extractImageMetadata(m: any): ImageMetadata | null;
 export declare function getServingUrl(url: string, size: number): string;
 export declare function isValidImageId(imageId: string): RegExpMatchArray;
+export declare const MAX_RELAWAN_TRUSTED_DEPTH = 2;
 export interface Upsert {
     u: string;
     k: number;
