@@ -15,7 +15,8 @@ import {
   HierarchyNode,
   autoId,
   CodeReferral,
-  Relawan
+  Relawan,
+  isValidImageId
 } from 'shared';
 
 const t1 = Date.now();
@@ -147,7 +148,7 @@ async function getServingUrlFromFirestore(imageId, res, uid) {
     );
   }
 
-  if (typeof imageId !== 'string' || !imageId.match(/^[A-Za-z0-9]{20}$/)) {
+  if (!isValidImageId(imageId)) {
     res.json({ error: 'Invalid imageId' });
     console.warn(`Metadata invalid ${imageId}, uid = ${uid}`);
     return false;
@@ -199,8 +200,7 @@ app.post('/api/upload', async (req, res) => {
   if (!a || !a.s || !a.s.length || a.s.length > 5) {
     return res.json({ error: 'Invalid aggregates sum' });
   }
-  const ts = Date.now();
-  const agg = { s: [], x: [ts] } as Aggregate;
+  const agg = { s: [], x: [Date.now()] } as Aggregate;
   for (const sum of a.s) {
     if (typeof sum !== 'number' || sum < 0 || sum > 1000) {
       return res.json({ error: 'Invalid sum range' });
@@ -208,25 +208,40 @@ app.post('/api/upload', async (req, res) => {
     agg.s.push(sum);
   }
 
-  const ti: TpsImage = {
-    u: servingUrl,
-    a: agg
-  };
   const upsert: Upsert = {
     u: user.uid,
     k: kelId,
     n: tpsNo,
+    s: servingUrl,
+    e: imageId,
+    p: false,
     i: req.headers['fastly-client-ip'],
     a: agg,
     d: 0,
     m: extractImageMetadata(b.metadata)
   };
 
-  const batch = fsdb.batch();
-  batch.set(fsdb.doc(FsPath.tpsImage(kelId, tpsNo, imageId)), ti);
-  batch.set(fsdb.doc(FsPath.upserts(imageId)), upsert);
-  await batch.commit();
+  await fsdb.doc(FsPath.upserts(imageId)).set(upsert);
 
+  return res.json({ ok: true });
+});
+
+app.post('/api/problem', async (req, res) => {
+  const user = await validateToken(req, res);
+  if (!user) return null;
+
+  const imageId = req.body.imageId;
+  if (!isValidImageId(imageId)) {
+    return res.json({ error: 'Invalid imageId' });
+  }
+
+  const iRef = fsdb.doc(FsPath.upserts(imageId));
+  const u = (await iRef.get()).data();
+  if (!u) {
+    return res.json({ error: 'Invalid imageId' });
+  }
+
+  await iRef.update({ p: true });
   return res.json({ ok: true });
 });
 
@@ -336,7 +351,7 @@ app.post('/api/register/:code', async (req, res) => {
     i.e = cd.e = claimer.n;
     i.r = cd.r = claimer.l;
     i.a = cd.a = ts;
- 
+
     claimer.d = cd.d;
     claimer.b = cd.i;
     claimer.e = cd.n;

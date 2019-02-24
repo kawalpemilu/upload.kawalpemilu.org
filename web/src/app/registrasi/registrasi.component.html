@@ -1,136 +1,247 @@
 <div style="padding: 0 10px">
-  <ng-container *ngIf="(userService.user$ | async) as user; else login">
+  <ng-container *ngIf="(userService.userRelawan$ | async) as user; else login">
     <p>
       Halo,
 
-      {{ user.displayName }} [<a
+      {{ user.u.displayName }} [<a
         style="color: blue; cursor: pointer;"
         (click)="userService.logout()"
         >Logout</a
       >]
     </p>
 
-    <ng-container
-      *ngIf="(userService.userRelawan$ | async) as relawan; else login"
-    >
-      <ng-container *ngIf="relawan.d === undefined; else terpercaya">
-        <ng-container *ngIf="(code$ | async) as code; else butuhkode">
-          <ng-container *ngIf="code.c; else bisaterima">
-            <p>Maaf, kode referral ini sudah tidak aktif.</p>
-          </ng-container>
-          <ng-template #bisaterima>
-            <p>
-              <a href="{{ getScopedUrl(code.l) }}" target="_blank">{{
-                code.n
-              }}</a>
-              mengundang anda untuk menjadi relawan terpercaya.
-            </p>
+    <p>
+      Selamat datang di halaman relawan Kawal Pemilu 2019!
+    </p>
 
-            <button
-              mat-raised-button
-              color="primary"
-              (click)="registerCode(user, code)"
-              [disabled]="isLoading"
-            >
-              Terima Undangan!
-            </button>
-          </ng-template>
-        </ng-container>
+    <p>
+      Tanggal 17 April 2019 nanti, setelah penghitungan suara selesai, anda
+      diharapkan untuk datang kembali ke TPS anda dan mem-foto formulir final
+      yang
+      <b>TELAH</b> ditanda-tangani semua saksi. Biasanya formulir ini dipajang
+      di papan besar seperti
+      <a href="/assets/contoh.jpeg" target="_blank">contoh foto ini</a>. Setelah
+      anda mengambil foto tersebut, upload-lah foto tersebut ke website ini.
+    </p>
 
-        <ng-template #butuhkode>
+    <ng-template #ujicoba>
+      <p>
+        Sekarang adalah masa uji-coba. Silahkan pilih TPS yang akan anda kawal
+        dan cobalah upload foto di TPS tersebut untuk memastikan ponsel anda
+        bisa mengupload foto dengan lancar:
+      </p>
+
+      <p>
+        <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
+          Cari TPS anda dan Tes Upload Foto
+        </a>
+      </p>
+    </ng-template>
+
+    <ng-container *ngIf="(uploads$ | async) as uploads; else ujicoba">
+      <ng-container *ngIf="uploads.length > 0; else ujicoba">
+        <mat-divider></mat-divider>
+        <h2>Tes Upload Foto anda</h2>
+
+        <ul>
+          <li>Semua tes foto akan dihapus pada tanggal 16 April 2019</li>
+          <li>
+            Jika anda tidak dapat melihat foto anda dibawah, pencet tombol
+            "Laporkan Foto ini bermasalah"
+          </li>
+        </ul>
+
+        <table border="1" cellpadding="0" cellspacing="0">
+          <tr bgcolor="lightgray">
+            <td width="120"><b>Tes Foto Anda</b></td>
+            <td width="300"><b>Details</b></td>
+          </tr>
+          <tr
+            *ngFor="let u of uploads; let odd = odd"
+            [style.background-color]="
+              u.hasProblem ? '#FDD' : odd ? '#FFF' : '#EEE'
+            "
+          >
+            <td align="center">
+              <a href="{{ imageUrl(u.servingUrl, 980) }}" target="_blank">
+                <img
+                  [src]="imageUrl(u.servingUrl, 125)"
+                  alt="foto"
+                  style="padding: 5px"
+              /></a>
+            </td>
+            <td>
+              <p>
+                Kelurahan:
+                <a [routerLink]="['/t', u.kelId]">{{ u.kelName }}</a
+                ><br />
+                TPS: #{{ u.tpsNo }}<br />
+                {{ u.uploadTs | date: 'medium' }}<br />
+              </p>
+
+              <p *ngIf="!u.hasProblem; else masalah">
+                <button
+                  mat-raised-button
+                  color="warn"
+                  (click)="fotoBermasalah(user.u, u)"
+                  [disabled]="isLoading"
+                >
+                  Laporkan Foto ini bermasalah
+                </button>
+              </p>
+
+              <ng-template #masalah>
+                <p>Anda melaporkan ada masalah di foto ini.</p>
+              </ng-template>
+            </td>
+          </tr>
+        </table>
+
+        <div *ngIf="uploads.length < 10">
           <p>
-            Anda membutuhkan kode referral yang masih aktif dari teman anda yang
-            sudah menjadi relawan terpercaya.
+            Jika foto anda gagal, anda bisa tes upload foto dengan ponsel anda
+            yang lain. Anda masih bisa tes upload foto
+            <b>{{ 10 - uploads.length }} kali lagi</b>.
           </p>
+
+          <p>
+            Jika anda ingin upload di Kelurahan yang sama, klik nama kelurahan
+            di tabel di atas untuk mempercepat pencarian. Jika tidak, klik
+            tombol di bawah:
+          </p>
+
+          <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
+            Cari TPS anda dan Tes Upload Foto
+          </a>
+        </div>
+
+        <p></p>
+      </ng-container>
+    </ng-container>
+
+    <mat-divider></mat-divider>
+    <h2>Registrasi Relawan Terpercaya</h2>
+
+    <ng-container *ngIf="user.d === undefined; else terpercaya">
+      <ng-container *ngIf="(code$ | async) as code; else butuhkode">
+        <ng-container *ngIf="code.c; else bisaterima">
+          <p>Maaf, kode referral "{{ theCode }}" sudah tidak aktif.</p>
+        </ng-container>
+        <ng-template #bisaterima>
+          <p>
+            <a href="{{ getScopedUrl(code.l) }}" target="_blank">{{
+              code.n
+            }}</a>
+            mengundang anda untuk menjadi relawan terpercaya.
+          </p>
+
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="registerCode(user.u, code)"
+            [disabled]="isLoading"
+          >
+            Terima Undangan!
+          </button>
         </ng-template>
       </ng-container>
 
-      <ng-template #terpercaya>
+      <ng-template #butuhkode>
         <p>
-          Selamat! Anda telah ditunjuk oleh
-          <a href="{{ getScopedUrl(relawan.r) }}" target="_blank">{{
-            relawan.e
-          }}</a>
-          sebagai relawan terpercaya level {{ relawan.d }}.
+          Untuk registrasi, anda membutuhkan kode referral yang masih aktif dari
+          teman anda yang sudah menjadi relawan terpercaya.
         </p>
-
-        <ng-container *ngIf="uploads$ | async as uploads">
-        </ng-container>
-
-        <form [formGroup]="formGroup" *ngIf="relawan; else upload">
-          <p>
-            Anda dapat mengundang teman-teman anda untuk menjadi relawan
-            terpercaya:
-          </p>
-
-          <mat-form-field style="width: 225px">
-            <input
-              matInput
-              placeholder="Nama teman anda"
-              formControlName="namaCtrl"
-              type="text"
-              required
-            />
-          </mat-form-field>
-          &nbsp;
-          <span *ngIf="getError('namaCtrl') as error" class="alert">
-            {{ error }}
-          </span>
-          <br />
-
-          <button
-            type="submit"
-            [disabled]="formGroup.invalid || isLoading"
-            mat-raised-button
-            color="primary"
-            (click)="createReferralCode(user)"
-          >
-            Generate Kode Referral
-          </button>
-        </form>
-
-        <div *ngIf="(userService.userRelawan$ | async) as relawan">
-          <h3>Referrals Anda</h3>
-          <div *ngFor="let code of getReferralCodes(relawan)">
-            <p *ngIf="relawan.c[code].c">
-              <a href="{{ getScopedUrl(relawan.c[code].r) }}" target="_blank">{{
-                relawan.c[code].e
-              }}</a>
-              telah menggunakan kode anda.
-            </p>
-
-            <p *ngIf="!relawan.c[code].c">
-              Kirimkan link berikut ini ke {{ relawan.c[code].m }}:
-            </p>
-
-            <pre>https://kawal-c1.firebaseapp.com/c/{{ code }} </pre>
-          </div>
-        </div>
-
-        <ng-template #upload>
-          <p>
-            Untuk menjaga suara pada pilpres tanggal 17 April nanti, anda
-            diharapkan untuk mem-foto papan C1 plano di TPS terdekat anda.
-          </p>
-
-          <p>
-            Untuk uji coba upload foto: cari TPS di kelurahan anda
-            <b>yang akan anda jaga</b>, dan upload foto disana:
-          </p>
-
-          <p>
-            <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
-              Cari TPS di Kelurahan Anda
-            </a>
-          </p>
-
-          <p>
-            Setelah anda mengupload foto, anda baru dapat menunjuk teman anda
-            untuk ikutan menjadi relawan terpercaya.
-          </p>
-        </ng-template>
       </ng-template>
     </ng-container>
+
+    <ng-template #terpercaya>
+      <p>
+        Selamat! Anda telah ditunjuk oleh
+        <a href="{{ getScopedUrl(user.r) }}" target="_blank">{{ user.e }}</a>
+        sebagai relawan terpercaya level {{ user.d }}.
+      </p>
+
+      <p>
+        Anda dapat mengundang teman anda untuk menjadi relawan terpercaya dengan
+        membuat kode referral dibawah ini:
+      </p>
+
+      <form [formGroup]="formGroup">
+        <mat-form-field style="width: 225px">
+          <input
+            matInput
+            placeholder="Nama teman anda"
+            formControlName="namaCtrl"
+            type="text"
+            required
+          />
+        </mat-form-field>
+        &nbsp;
+        <span *ngIf="getError('namaCtrl') as error" class="alert">
+          {{ error }}
+        </span>
+
+        <button
+          type="submit"
+          [disabled]="formGroup.invalid || isLoading"
+          mat-raised-button
+          color="primary"
+          (click)="createReferralCode(user.u)"
+        >
+          Buat Kode Referral
+        </button>
+      </form>
+
+      <ng-container *ngIf="getReferralCodes(user, false) as codes">
+        <ng-container *ngIf="codes.length > 0">
+          <p>
+            Kirimkan URL kode referral dibawah ini ke teman anda (satu kode
+            referral hanya bisa dipakai oleh satu orang):
+          </p>
+
+          <table border="1" cellpadding="0" cellspacing="0">
+            <tr bgcolor="lightgray">
+              <td><b>Nama</b></td>
+              <td><b>URL kode referral untuk dibagikan</b></td>
+            </tr>
+            <tr
+              *ngFor="let code of codes; let odd = odd"
+              [style.background-color]="odd ? '#FFF' : '#EEE'"
+            >
+              <td>{{ user.c[code].m }}</td>
+              <td>https://kawal-c1.firebaseapp.com/c/{{ code }}</td>
+            </tr>
+          </table>
+        </ng-container>
+      </ng-container>
+
+      <ng-container *ngIf="getReferralCodes(user, true) as codes">
+        <ng-container *ngIf="codes.length > 0">
+          <p>
+            Berikut ini adalah teman-teman ada yang sudah menerima undangan anda
+            dan telah menjadi relawan terpercaya:
+          </p>
+
+          <table border="1" cellpadding="0" cellspacing="0">
+            <tr bgcolor="lightgray">
+              <td><b>Nama</b></td>
+              <td><b>Profile teman anda</b></td>
+            </tr>
+            <tr
+              *ngFor="let code of codes; let odd = odd"
+              [style.background-color]="odd ? '#FFF' : '#EEE'"
+            >
+              <td>{{ user.c[code].m }}</td>
+              <td>
+                <a href="{{ getScopedUrl(user.c[code].r) }}" target="_blank">{{
+                  user.c[code].e
+                }}</a>
+              </td>
+            </tr>
+          </table>
+        </ng-container>
+      </ng-container>
+    </ng-template>
   </ng-container>
 
   <ng-template #login>

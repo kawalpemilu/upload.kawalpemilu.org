@@ -1,13 +1,24 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from '../user.service';
 import { ActivatedRoute } from '@angular/router';
-import { map, switchMap, filter } from 'rxjs/operators';
+import { map, switchMap, filter, take } from 'rxjs/operators';
 import { ApiService } from '../api.service';
 import { Observable, of } from 'rxjs';
 import { User } from 'firebase';
 import { FormGroup, Validators, FormBuilder } from '@angular/forms';
-import { Relawan, FsPath, CodeReferral, Upsert } from 'shared';
+import { Relawan, FsPath, CodeReferral, Upsert, getServingUrl } from 'shared';
 import { AngularFirestore } from '@angular/fire/firestore';
+import { HierarchyService } from '../hierarchy.service';
+
+interface UploadDetail {
+  kelId: number;
+  kelName: string;
+  tpsNo: number;
+  servingUrl: string;
+  hasProblem: boolean;
+  imageId: string;
+  uploadTs: number;
+}
 
 @Component({
   selector: 'app-registrasi',
@@ -23,6 +34,7 @@ export class RegistrasiComponent implements OnInit {
 
   constructor(
     public userService: UserService,
+    private hie: HierarchyService,
     private fsdb: AngularFirestore,
     private route: ActivatedRoute,
     private api: ApiService,
@@ -49,6 +61,26 @@ export class RegistrasiComponent implements OnInit {
                 ref.where('u', '==', user.uid).limit(10)
               )
               .valueChanges()
+              .pipe(
+                switchMap(async uploads => {
+                  const details: UploadDetail[] = [];
+                  for (const u of uploads) {
+                    details.push({
+                      kelId: u.k,
+                      kelName: (await this.hie
+                        .get$(u.k)
+                        .pipe(take(1))
+                        .toPromise()).name,
+                      tpsNo: u.n,
+                      servingUrl: u.s,
+                      imageId: u.e,
+                      hasProblem: u.p,
+                      uploadTs: u.a.x[0]
+                    });
+                  }
+                  return details.sort((a, b) => b.uploadTs - a.uploadTs);
+                })
+              )
           : of([])
       )
     );
@@ -70,15 +102,31 @@ export class RegistrasiComponent implements OnInit {
     return '';
   }
 
-  getReferralCodes(relawan: Relawan) {
-    console.log(relawan);
-    return Object.keys(relawan.c || {});
+  getReferralCodes(relawan: Relawan, claimed: boolean) {
+    return Object.keys(relawan.c || {})
+      .filter(code => !!relawan.c[code].c === claimed)
+      .sort((a, b) => {
+        const ca = relawan.c[a];
+        const cb = relawan.c[b];
+        return cb.t - ca.t;
+      });
   }
 
   async registerCode(user: User) {
     this.isLoading = true;
     const url = `register/${this.theCode}?abracadabra=true`;
     console.log('register', await this.api.post(user, url, {}));
+    this.isLoading = false;
+  }
+
+  imageUrl(url, size) {
+    return getServingUrl(url, size);
+  }
+
+  async fotoBermasalah(user: User, u: UploadDetail) {
+    this.isLoading = true;
+    const res = this.api.post(user, `problem`, { imageId: u.imageId });
+    console.log('problem', await res);
     this.isLoading = false;
   }
 

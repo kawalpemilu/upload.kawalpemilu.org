@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Aggregate, ImageMetadata, FsPath } from 'shared';
+import { Aggregate, ImageMetadata, FsPath, getServingUrl } from 'shared';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { shareReplay } from 'rxjs/operators';
 
@@ -52,14 +52,14 @@ export class TpsPhotosComponent implements OnInit {
   constructor(private fsdb: AngularFirestore) {}
 
   ngOnInit() {
-    this.photos$ = this.fsdb
-      .collection<Photo>(FsPath.tpsImages(this.kelurahanId, this.tpsNo))
-      .valueChanges()
-      .pipe(shareReplay(1));
+    // this.photos$ = this.fsdb
+    //   .collection<Photo>(FsPath.tpsImages(this.kelurahanId, this.tpsNo))
+    //   .valueChanges()
+    //   .pipe(shareReplay(1));
   }
 
   imageUrl(url, size) {
-    return url.replace(/^http:/, 'https:') + `=s${size}`;
+    return getServingUrl(url, size);
   }
 
   mapLink(m: ImageMetadata) {

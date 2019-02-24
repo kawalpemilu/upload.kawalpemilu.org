@@ -40,10 +40,15 @@ export interface ImageMetadata {
     x: number;
 }
 export declare function extractImageMetadata(m: any): ImageMetadata | null;
+export declare function getServingUrl(url: string, size: number): string;
+export declare function isValidImageId(imageId: string): RegExpMatchArray;
 export interface Upsert {
     u: string;
     k: number;
     n: number;
+    e: string;
+    s: string;
+    p: boolean;
     i: string | string[];
     a: Aggregate;
     d: number;
@@ -73,6 +78,7 @@ export interface Relawan {
     c: {
         [code: string]: CodeReferral;
     };
+    u: any;
 }
 export declare class FsPath {
     static relawan(uid: string): string;
@@ -81,8 +87,6 @@ export declare class FsPath {
     static imageMetadataUserId(imageId: string): string;
     static imageMetadataServingUrl(imageId: string): string;
     static upserts(imageId?: string): string;
-    static tpsImages(kelurahanId: number, tpsNo: number): string;
-    static tpsImage(kelurahanId: number, tpsNo: number, imageId: string): string;
 }
 /** Returns a random n-character identifier containing [a-zA-Z0-9]. */
 export declare function autoId(n?: number): string;

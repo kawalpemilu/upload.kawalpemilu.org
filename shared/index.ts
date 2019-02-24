@@ -66,10 +66,21 @@ export function extractImageMetadata(m: any): ImageMetadata | null {
   return !validM || Object.keys(validM).length == 0 ? null : validM;
 }
 
+export function getServingUrl(url: string, size: number) {
+  return url ? url.replace(/^http:/, 'https:') + `=s${size}` : '';
+}
+
+export function isValidImageId(imageId: string) {
+  return typeof imageId === 'string' && imageId.match(/^[A-Za-z0-9]{20}$/);
+}
+
 export interface Upsert {
   u: string; // The owner user ID
   k: number; // Kelurahan ID
   n: number; // Tps No
+  e: string; // Image ID
+  s: string; // Image serving url
+  p: boolean; // Has problem
   i: string | string[]; // IP Address
   a: Aggregate; // Value to set
   d: number; // Processed Timestamp
@@ -99,6 +110,7 @@ export interface Relawan {
   e: string; // Referrer name
   r: string; // Referrer profile link
   c: { [code: string]: CodeReferral }; // Code referrals
+  u: any; // firebaseUser reference.
 }
 
 export class FsPath {
@@ -122,13 +134,6 @@ export class FsPath {
 
   static upserts(imageId?: string) {
     return `u` + (imageId ? `/${imageId}` : '');
-  }
-
-  static tpsImages(kelurahanId: number, tpsNo: number) {
-    return `t/${kelurahanId}/n/${tpsNo}/i`;
-  }
-  static tpsImage(kelurahanId: number, tpsNo: number, imageId: string) {
-    return `${FsPath.tpsImages(kelurahanId, tpsNo)}/${imageId}`;
   }
 }
 

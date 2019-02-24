@@ -22,6 +22,14 @@ function extractImageMetadata(m) {
     return !validM || Object.keys(validM).length == 0 ? null : validM;
 }
 exports.extractImageMetadata = extractImageMetadata;
+function getServingUrl(url, size) {
+    return url ? url.replace(/^http:/, 'https:') + ("=s" + size) : '';
+}
+exports.getServingUrl = getServingUrl;
+function isValidImageId(imageId) {
+    return typeof imageId === 'string' && imageId.match(/^[A-Za-z0-9]{20}$/);
+}
+exports.isValidImageId = isValidImageId;
 var FsPath = /** @class */ (function () {
     function FsPath() {
     }
@@ -42,12 +50,6 @@ var FsPath = /** @class */ (function () {
     };
     FsPath.upserts = function (imageId) {
         return "u" + (imageId ? "/" + imageId : '');
-    };
-    FsPath.tpsImages = function (kelurahanId, tpsNo) {
-        return "t/" + kelurahanId + "/n/" + tpsNo + "/i";
-    };
-    FsPath.tpsImage = function (kelurahanId, tpsNo, imageId) {
-        return FsPath.tpsImages(kelurahanId, tpsNo) + "/" + imageId;
     };
     return FsPath;
 }());

@@ -3,7 +3,7 @@ import { AngularFireAuth } from '@angular/fire/auth';
 
 import { auth, User } from 'firebase/app';
 import { Observable, of } from 'rxjs';
-import { tap, switchMap, shareReplay } from 'rxjs/operators';
+import { tap, switchMap, shareReplay, filter } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { FsPath, Relawan } from 'shared';
 
@@ -21,19 +21,29 @@ export class UserService {
     this.user$ = this.afAuth.user.pipe(tap(() => (this.isLoading = false)));
     this.userRelawan$ = this.user$.pipe(
       switchMap(user =>
-        user ? this.fsdb.doc(FsPath.relawan(user.uid)).valueChanges() : of(null)
+        user
+          ? this.fsdb
+              .doc<Relawan>(FsPath.relawan(user.uid))
+              .valueChanges()
+              .pipe(
+                filter(r => !!r),
+                tap(r => (r.u = user))
+              )
+          : of(null)
       ),
       shareReplay(1)
     );
 
-    this.afAuth.auth.getRedirectResult().then(result => {
-      const profile: any =
-        result &&
-        result.user &&
-        result.additionalUserInfo &&
-        result.additionalUserInfo.profile;
+    this.afAuth.auth
+      .getRedirectResult()
+      .then(result => {
+        const profile: any =
+          result &&
+          result.user &&
+          result.additionalUserInfo &&
+          result.additionalUserInfo.profile;
 
-      /*
+        /*
       const profile = {
         link: 'https://www.facebook.com/app_scoped_user_id/YXNpZADpBWEZA6.../',
         name: 'Felix Halim',
@@ -44,22 +54,23 @@ export class UserService {
       };
       */
 
-      if (profile) {
-        const p = UserService.SCOPED_PREFIX;
-        if (!profile.link) {
-          profile.link = 'no permission';
-          console.warn('No user_link permission', profile);
+        if (profile) {
+          const p = UserService.SCOPED_PREFIX;
+          profile.link = profile.link || 'no permission';
+          const r = {
+            l: profile.link.startsWith(p)
+              ? profile.link.substring(p.length)
+              : profile.link,
+            n: profile.name,
+            f: profile.first_name,
+            p: result.user.photoURL
+          } as Relawan;
+          return this.fsdb
+            .doc(FsPath.relawan(result.user.uid))
+            .set(r, { merge: true });
         }
-        this.fsdb.doc(FsPath.relawan(result.user.uid)).update({
-          l: profile.link.startsWith(p)
-            ? profile.link.substring(p.length)
-            : profile.link,
-          n: profile.name,
-          f: profile.first_name,
-          p: result.user.photoURL
-        });
-      }
-    });
+      })
+      .catch(console.error);
   }
 
   login(method: string) {

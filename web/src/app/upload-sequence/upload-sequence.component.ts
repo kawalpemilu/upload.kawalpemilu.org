@@ -151,7 +151,7 @@ export class UploadSequenceComponent implements OnInit {
     try {
       const res: any = await this.api.post(user, `upload`, request);
       if (res.ok) {
-        this.router.navigate(['/t', kelurahanId], { fragment: `${tpsNo}` });
+        this.router.navigate(['/c', 0]);
       } else {
         console.error(res);
       }
