@@ -143,7 +143,8 @@ export class UploadSequenceComponent implements OnInit {
           // this.formGroup.get('tidakSahCtrl').value,
           1
         ],
-        x: []
+        x: [],
+        u: null
       },
       metadata,
       imageId

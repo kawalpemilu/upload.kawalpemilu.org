@@ -97,7 +97,8 @@ function makeRequest(kelurahanId, tpsNo) {
     aggregate: {
         // s: [0, 0, 0, 0, 0],
       s: [1, Math.floor(Math.random() * 999), 2, 4, 0],
-      x: []
+      x: [],
+      u: null
     },
     metadata: {} as ImageMetadata,
     imageId: `zzzzzzz${kelurahanId}t${tpsNo}`
