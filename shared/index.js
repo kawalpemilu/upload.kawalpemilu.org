@@ -1,5 +1,27 @@
 "use strict";
 exports.__esModule = true;
+function encodeAgg(a) {
+    return [
+        a.jokowi,
+        a.prabowo,
+        a.sah,
+        a.tidakSah,
+        a.pending,
+        a.masalah
+    ];
+}
+exports.encodeAgg = encodeAgg;
+function decodeAgg(sum) {
+    return {
+        jokowi: sum[0],
+        prabowo: sum[1],
+        sah: sum[2],
+        tidakSah: sum[3],
+        pending: sum[4],
+        masalah: sum[5]
+    };
+}
+exports.decodeAgg = decodeAgg;
 function extractImageMetadata(m) {
     var validM = null;
     if (m) {

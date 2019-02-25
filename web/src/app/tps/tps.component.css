@@ -12,17 +12,23 @@ table {
   text-align: center;
 }
 
-.laki {
-  width: 80px;
+.foto {
+  width: 120px;
   text-align: center;
 }
 
-.perempuan {
+.suara {
   width: 80px;
   text-align: center;
 }
 
 .dijaga {
+  width: 80px;
+  padding-left: 10px;
+  text-align: center;
+}
+
+.jaga {
   text-align: left;
   padding-left: 10px;
 }

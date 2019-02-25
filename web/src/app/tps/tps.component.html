@@ -8,9 +8,9 @@
       <tbody *ngIf="(state$ | async) as state">
         <tr [style.height.px]="ROW_HEIGHT" style="background-color: lightgray">
           <th class="tps">TPS</th>
-          <th class="laki">Pria</th>
-          <th class="perempuan">Wanita</th>
-          <th class="dijaga">Dijaga oleh</th>
+          <th class="foto">Tes Foto</th>
+          <th class="suara">Suara</th>
+          <th class="dijaga">Dijaga</th>
         </tr>
       </tbody>
     </table>
@@ -23,46 +23,54 @@
           [style.height.px]="ROW_HEIGHT"
         >
           <th class="tps">#{{ tps.tpsNo }}</th>
-          <td class="laki">{{ tps.laki }}</td>
-          <td class="perempuan">{{ tps.perempuan }}</td>
-          <td class="dijaga">
-            <ng-container
-              *ngIf="tps.aggregate && tps.aggregate.s[4] as cnt; else bisajaga"
-            >
-              {{ cnt }} orang
+          <td class="foto">
+            <ng-container *ngIf="tps.aggregate?.u as servingUrl; else belumada">
+              <app-thumbnail [url]="servingUrl"></app-thumbnail>
             </ng-container>
-
-            <ng-template #bisajaga>
-              [ <a [routerLink]="['/u', state.id, tps.tpsNo]">Jaga TPS ini</a> ]
-            </ng-template>
+          </td>
+          <td class="suara">
+            <table
+              *ngIf="tps.aggregate as a; else belumada"
+              border="1"
+              cellspacing="0"
+            >
+              <tr>
+                <td class="label">Pas1:</td>
+                <td class="angka">{{ a.s[0] }}</td>
+              </tr>
+              <tr>
+                <td>Pas2:</td>
+                <td class="angka">{{ a.s[1] }}</td>
+              </tr>
+              <tr>
+                <td>Sah:</td>
+                <td class="angka">{{ a.s[2] }}</td>
+              </tr>
+              <tr>
+                <td>~Sah:</td>
+                <td class="angka">{{ a.s[3] }}</td>
+              </tr>
+            </table>
+          </td>
+          <td class="dijaga">
+            <button
+              mat-raised-button
+              [routerLink]="['/u', state.id, tps.tpsNo]"
+              color="primary"
+            >
+              Jaga TPS ini
+            </button>
           </td>
         </tr>
       </tbody>
     </table>
   </ng-container>
 
-  <!-- <table
-      *ngIf="tps.aggregate as a"
-    >
-      <tr>
-        <td class="label">Pas1:</td>
-        <td class="angka">{{ a.s[0] }}</td>
-      </tr>
-      <tr>
-        <td>Pas2:</td>
-        <td class="angka">{{ a.s[1] }}</td>
-      </tr>
-      <tr>
-        <td>Sah:</td>
-        <td class="angka">{{ a.s[2] }}</td>
-      </tr>
-      <tr>
-        <td>~Sah:</td>
-        <td class="angka">{{ a.s[3] }}</td>
-      </tr>
-    </table>
-  </td>
+  <ng-template #belumada>
+    ---
+  </ng-template>
 
+  <!--
   <td class="lokasi">
     {{ tps.address }}<br />
     <app-tps-photos

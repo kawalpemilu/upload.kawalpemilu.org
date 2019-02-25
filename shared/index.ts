@@ -1,6 +1,38 @@
 export interface Aggregate {
   s: number[]; // Sum.
   x: number[]; // Max.
+  u: string; // URL proof of this Aggregate.
+}
+
+export interface DecodedAggregate {
+  jokowi: number;
+  prabowo: number;
+  sah: number;
+  tidakSah: number;
+  pending: number;
+  masalah: number;
+}
+
+export function encodeAgg(a: DecodedAggregate): number[] {
+  return [
+    a.jokowi,
+    a.prabowo,
+    a.sah,
+    a.tidakSah,
+    a.pending,
+    a.masalah
+  ];
+}
+
+export function decodeAgg(sum: number[]): DecodedAggregate {
+  return {
+    jokowi: sum[0],
+    prabowo: sum[1],
+    sah: sum[2],
+    tidakSah: sum[3],
+    pending: sum[4],
+    masalah: sum[5],
+  };
 }
 
 export interface ApiUploadRequest {
@@ -76,8 +108,7 @@ export interface Upsert {
   k: number; // Kelurahan ID
   n: number; // Tps No
   e: string; // Image ID
-  s: string; // Image serving url
-  p: boolean; // Has problem
+  p: number[]; // Process only these indices
   i: string | string[]; // IP Address
   a: Aggregate; // Value to set
   d: number; // Processed Timestamp

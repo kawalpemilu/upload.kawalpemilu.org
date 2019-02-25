@@ -13,18 +13,24 @@
     fixedTopGap="56"
   >
     <mat-nav-list>
-      <a
-        mat-list-item
-        [routerLink]="['/c', 0]"
-        (click)="mobileQuery.matches && snav.toggle()"
-        >Referral</a
-      >
-      <a
-        mat-list-item
-        [routerLink]="['/h', 0]"
-        (click)="mobileQuery.matches && snav.toggle()"
-        >Cakupan</a
-      >
+      <mat-list-item>
+        <mat-icon>home</mat-icon
+        ><a
+          mat-list-item
+          [routerLink]="['/c', 0]"
+          (click)="mobileQuery.matches && snav.toggle()"
+          >Dasbor</a
+        >
+      </mat-list-item>
+      <mat-list-item>
+        <mat-icon>table_chart</mat-icon
+        ><a
+          mat-list-item
+          [routerLink]="['/h', 0]"
+          (click)="mobileQuery.matches && snav.toggle()"
+          >Cakupan</a
+        >
+      </mat-list-item>
     </mat-nav-list>
   </mat-sidenav>
 

@@ -1,7 +1,18 @@
 export interface Aggregate {
     s: number[];
     x: number[];
+    u: string;
 }
+export interface DecodedAggregate {
+    jokowi: number;
+    prabowo: number;
+    sah: number;
+    tidakSah: number;
+    pending: number;
+    masalah: number;
+}
+export declare function encodeAgg(a: DecodedAggregate): number[];
+export declare function decodeAgg(sum: number[]): DecodedAggregate;
 export interface ApiUploadRequest {
     kelurahanId: number;
     tpsNo: number;
@@ -44,8 +55,7 @@ export interface Upsert {
     k: number;
     n: number;
     e: string;
-    s: string;
-    p: boolean;
+    p: number[];
     i: string | string[];
     a: Aggregate;
     d: number;

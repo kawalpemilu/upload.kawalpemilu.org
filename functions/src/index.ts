@@ -16,7 +16,9 @@ import {
   CodeReferral,
   Relawan,
   isValidImageId,
-  MAX_RELAWAN_TRUSTED_DEPTH
+  MAX_RELAWAN_TRUSTED_DEPTH,
+  decodeAgg,
+  encodeAgg
 } from 'shared';
 
 const t1 = Date.now();
@@ -200,7 +202,7 @@ app.post('/api/upload', async (req, res) => {
   if (!a || !a.s || !a.s.length || a.s.length > 5) {
     return res.json({ error: 'Invalid aggregates sum' });
   }
-  const agg = { s: [], x: [Date.now()] } as Aggregate;
+  const agg: Aggregate = { s: [], x: [Date.now()], u: servingUrl };
   for (const sum of a.s) {
     if (typeof sum !== 'number' || sum < 0 || sum > 1000) {
       return res.json({ error: 'Invalid sum range' });
@@ -212,9 +214,15 @@ app.post('/api/upload', async (req, res) => {
     u: user.uid,
     k: kelId,
     n: tpsNo,
-    s: servingUrl,
     e: imageId,
-    p: false,
+    p: encodeAgg({
+      jokowi: 0,
+      prabowo: 0,
+      sah: 0,
+      tidakSah: 0,
+      pending: 1,
+      masalah: 0
+    }),
     i: req.headers['fastly-client-ip'],
     a: agg,
     d: 0,
@@ -235,14 +243,28 @@ app.post('/api/problem', async (req, res) => {
     return res.json({ error: 'Invalid imageId' });
   }
 
-  const iRef = fsdb.doc(FsPath.upserts(imageId));
-  const u = (await iRef.get()).data();
-  if (!u) {
-    return res.json({ error: 'Invalid imageId' });
-  }
+  const uRef = fsdb.doc(FsPath.upserts(imageId));
+  const ok = await fsdb.runTransaction(async t => {
+    const u = (await t.get(uRef)).data() as Upsert;
+    if (!u || !u.a) {
+      return false;
+    }
+    const da = decodeAgg(u.a.s);
+    da.masalah = 1;
+    u.a.s = encodeAgg(da);
+    u.p = encodeAgg({
+      jokowi: 0,
+      prabowo: 0,
+      sah: 0,
+      tidakSah: 0,
+      pending: 0,
+      masalah: 1
+    });
+    t.update(uRef, u);
+    return true;
+  });
 
-  await iRef.update({ p: true });
-  return res.json({ ok: true });
+  return res.json(ok ? { ok: true } : { error: 'Invalid imageId' });
 });
 
 app.post('/api/register/create_code', async (req, res) => {

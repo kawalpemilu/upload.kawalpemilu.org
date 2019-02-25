@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as util from 'util';
 
 import { H } from './hierarchy';
-import { FsPath, Upsert, Aggregate } from 'shared';
+import { FsPath, Upsert, Aggregate, decodeAgg } from 'shared';
 
 admin.initializeApp({
   credential: admin.credential.cert(require('./sa-key.json')),
@@ -33,18 +33,18 @@ function mergeAggregates(target: Aggregate, source: Aggregate) {
   }
 }
 
-function getAggregate(parentId, childId) {
+function getAggregate(parentId, childId): Aggregate {
   if (!h[parentId]) h[parentId] = {};
   const c = h[parentId];
-  if (!c[childId]) c[childId] = { s: [], x: [] };
+  if (!c[childId]) c[childId] = { s: [], x: [], u: null };
   return c[childId];
 }
 
-function getDelta(parentId, childId, u: Upsert) {
-  const delta: Aggregate = { s: [], x: [] };
+function getDelta(parentId, childId, u: Upsert): Aggregate {
+  const delta: Aggregate = { s: [], x: [], u: null };
   const current = getAggregate(parentId, childId);
   for (let j = 0; j < u.a.s.length; j++) {
-    delta.s[j] = u.a.s[j] - (current.s[j] || 0);
+    delta.s[j] = (u.p[j] || 0) * (u.a.s[j] - (current.s[j] || 0));
   }
   for (let j = 0; j < u.a.x.length; j++) {
     delta.x[j] = Math.max(u.a.x[j], current.x[j] || u.a.x[j]);
@@ -71,6 +71,14 @@ function updateAggregates(u: Upsert) {
   const delta = getDelta(path[4], path[5], u);
   for (let i = 0; i + 1 < path.length; i++) {
     mergeAggregates(getAggregate(path[i], path[i + 1]), delta);
+  }
+
+  if (decodeAgg(u.p).pending === 1) {
+    // The pending flag is set to true, update the TPS serving url.
+    const a = getAggregate(path[4], path[5]);
+
+    // Set the proof URL if no longer pending, else nullify it.
+    a.u = decodeAgg(u.a.s).pending === 0 ? u.u : null;
   }
 }
 

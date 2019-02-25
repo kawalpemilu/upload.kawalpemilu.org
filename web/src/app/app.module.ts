@@ -32,6 +32,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { HttpClientModule } from '@angular/common/http';
 import { LoginComponent } from './login/login.component';
 import { RegistrasiComponent } from './registrasi/registrasi.component';
+import { ThumbnailComponent } from './thumbnail/thumbnail.component';
 
 @NgModule({
   declarations: [
@@ -42,7 +43,8 @@ import { RegistrasiComponent } from './registrasi/registrasi.component';
     TpsPhotosComponent,
     UploadSequenceComponent,
     LoginComponent,
-    RegistrasiComponent
+    RegistrasiComponent,
+    ThumbnailComponent
   ],
   imports: [
     BrowserModule,

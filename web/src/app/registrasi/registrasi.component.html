@@ -63,12 +63,11 @@
             "
           >
             <td align="center">
-              <a href="{{ imageUrl(u.servingUrl, 980) }}" target="_blank">
-                <img
-                  [src]="imageUrl(u.servingUrl, 125)"
-                  alt="foto"
-                  style="padding: 5px"
-              /></a>
+              <app-thumbnail
+                [url]="u.servingUrl"
+                [size]="125"
+                [esize]="980"
+              ></app-thumbnail>
             </td>
             <td>
               <p>

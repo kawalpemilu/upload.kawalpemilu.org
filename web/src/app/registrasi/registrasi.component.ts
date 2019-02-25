@@ -6,7 +6,14 @@ import { ApiService } from '../api.service';
 import { Observable, of } from 'rxjs';
 import { User } from 'firebase';
 import { FormGroup, Validators, FormBuilder } from '@angular/forms';
-import { Relawan, FsPath, CodeReferral, Upsert, getServingUrl, MAX_RELAWAN_TRUSTED_DEPTH } from 'shared';
+import {
+  Relawan,
+  FsPath,
+  CodeReferral,
+  Upsert,
+  MAX_RELAWAN_TRUSTED_DEPTH,
+  decodeAgg
+} from 'shared';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { HierarchyService } from '../hierarchy.service';
 
@@ -15,7 +22,7 @@ interface UploadDetail {
   kelName: string;
   tpsNo: number;
   servingUrl: string;
-  hasProblem: boolean;
+  hasProblem: number;
   imageId: string;
   uploadTs: number;
 }
@@ -76,9 +83,9 @@ export class RegistrasiComponent implements OnInit {
                         .pipe(take(1))
                         .toPromise()).name,
                       tpsNo: u.n,
-                      servingUrl: u.s,
+                      servingUrl: u.a.u,
                       imageId: u.e,
-                      hasProblem: u.p,
+                      hasProblem: decodeAgg(u.a.s).masalah,
                       uploadTs: u.a.x[0]
                     });
                   }
@@ -121,10 +128,6 @@ export class RegistrasiComponent implements OnInit {
     const url = `register/${this.theCode}?abracadabra=true`;
     console.log('register', await this.api.post(user, url, {}));
     this.isLoading = false;
-  }
-
-  imageUrl(url, size) {
-    return getServingUrl(url, size);
   }
 
   async fotoBermasalah(user: User, u: UploadDetail) {
