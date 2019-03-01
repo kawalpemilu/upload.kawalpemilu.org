@@ -14,7 +14,9 @@ service cloud.firestore {
     // Upserts.
     match /u/{imageId} {
       allow list: if request.query.limit <= 10 &&
-                     request.auth.uid == resource.data.u;
+                     (request.auth.uid == resource.data.u || 
+                      get(/databases/$(database)/documents/r/$(request.auth.uid)).data.d < 2
+                     );
     }
   }
 }

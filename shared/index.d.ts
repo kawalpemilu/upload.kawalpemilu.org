@@ -20,6 +20,13 @@ export interface ApiUploadRequest {
     metadata: ImageMetadata;
     imageId: string;
 }
+export interface ApiApproveRequest {
+    kelurahanId: number;
+    tpsNo: number;
+    aggregate: Aggregate;
+    imageId: string;
+    delete: boolean;
+}
 export interface HierarchyNode {
     id: number;
     name: string;
@@ -59,6 +66,12 @@ export interface Upsert {
     i: string | string[];
     a: Aggregate;
     d: number;
+    r: string;
+    w: string;
+    o: string;
+    g: Aggregate;
+    l: boolean;
+    t: number;
     m: ImageMetadata;
 }
 export interface CodeReferral {

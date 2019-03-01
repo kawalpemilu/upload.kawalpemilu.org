@@ -55,12 +55,8 @@ export class UserService {
       */
 
         if (profile) {
-          const p = UserService.SCOPED_PREFIX;
-          profile.link = profile.link || 'no permission';
           const r = {
-            l: profile.link.startsWith(p)
-              ? profile.link.substring(p.length)
-              : profile.link,
+            l: this.truncateProfile(profile.link),
             n: profile.name,
             f: profile.first_name,
             p: result.user.photoURL
@@ -71,6 +67,15 @@ export class UserService {
         }
       })
       .catch(console.error);
+  }
+
+  truncateProfile(link: string) {
+    const p = UserService.SCOPED_PREFIX;
+    return link
+      ? link.startsWith(p)
+        ? link.substring(p.length)
+        : link
+      : '';
   }
 
   login(method: string) {

@@ -1,82 +1,73 @@
-<div class="wrapper">
-  <div *ngIf="(state$ | async) as state" style="padding: 0 10px">
-    <app-path [node]="state"></app-path>
-  </div>
+<div *ngIf="(state$ | async) as state" class="wrapper">
+  <app-path [node]="state"></app-path>
 
-  <ng-container *ngIf="!uploadService.task" cellspacing="0">
-    <table #header class="header" cellspacing="0">
-      <tbody *ngIf="(state$ | async) as state">
-        <tr [style.height.px]="ROW_HEIGHT" style="background-color: lightgray">
-          <th class="tps">TPS</th>
-          <th class="foto">Tes Foto</th>
-          <th class="suara">Suara</th>
-          <th class="dijaga">Dijaga</th>
-        </tr>
-      </tbody>
-    </table>
+  <button
+    mat-raised-button
+    color="primary"
+    [routerLink]="['/d', state.id]"
+    *ngIf="(userService.userRelawan$ | async)?.d < MAX_TRUSTED_DEPTH"
+  >
+    Digitize {{ state.numPending }} uploads
+  </button>
 
-    <table #content class="content" cellspacing="0">
-      <tbody *ngIf="(state$ | async) as state">
-        <tr
-          *ngFor="let tps of state.tpsList; let odd = odd"
-          [style.background-color]="odd ? '#FFF' : '#EEE'"
-          [style.height.px]="ROW_HEIGHT"
+  <p></p>
+
+  <table cellspacing="0">
+    <tr [style.height.px]="40" style="background-color: lightgray">
+      <th class="tps">TPS</th>
+      <th class="foto">Tes Upload Foto</th>
+    </tr>
+    <tr
+      *ngFor="let tps of state.tpsList; let odd = odd"
+      [style.background-color]="odd ? '#FFF' : '#EEE'"
+    >
+      <th class="tps">
+        <p>TPS #{{ tps.tpsNo }}</p>
+        <table
+          *ngIf="tps.aggregate as a"
+          border="1"
+          style="margin: 0 auto"
+          cellspacing="0"
+          [style.backgroundColor]="a.s[5] ? '#FDD' : a.s[4] ? '#FFD' : ''"
         >
-          <th class="tps">#{{ tps.tpsNo }}</th>
-          <td class="foto">
-            <ng-container *ngIf="tps.aggregate?.u as servingUrl; else belumada">
-              <app-thumbnail [url]="servingUrl"></app-thumbnail>
-            </ng-container>
-          </td>
-          <td class="suara">
-            <table
-              *ngIf="tps.aggregate as a; else belumada"
-              border="1"
-              cellspacing="0"
-            >
-              <tr>
-                <td class="label">Pas1:</td>
-                <td class="angka">{{ a.s[0] }}</td>
-              </tr>
-              <tr>
-                <td>Pas2:</td>
-                <td class="angka">{{ a.s[1] }}</td>
-              </tr>
-              <tr>
-                <td>Sah:</td>
-                <td class="angka">{{ a.s[2] }}</td>
-              </tr>
-              <tr>
-                <td>~Sah:</td>
-                <td class="angka">{{ a.s[3] }}</td>
-              </tr>
-            </table>
-          </td>
-          <td class="dijaga">
-            <button
-              mat-raised-button
-              [routerLink]="['/u', state.id, tps.tpsNo]"
-              color="primary"
-            >
+          <tr>
+            <td class="label">Pas1:</td>
+            <td class="angka">{{ a.s[0] }}</td>
+          </tr>
+          <tr>
+            <td>Pas2:</td>
+            <td class="angka">{{ a.s[1] }}</td>
+          </tr>
+          <tr>
+            <td>Sah:</td>
+            <td class="angka">{{ a.s[2] }}</td>
+          </tr>
+          <tr>
+            <td>~Sah:</td>
+            <td class="angka">{{ a.s[3] }}</td>
+          </tr>
+        </table>
+
+        <p></p>
+      </th>
+      <td class="foto">
+        <ng-container *ngIf="tps.aggregate?.u as servingUrl; else belumada">
+          <app-thumbnail [url]="servingUrl"></app-thumbnail>
+          <p>
+            [ Laporkan adanya kesalahan ]
+          </p>
+        </ng-container>
+
+        <ng-template #belumada>
+          <p *ngIf="!uploadService.task">
+            [
+            <a [routerLink]="['/u', state.id, tps.tpsNo]" color="primary">
               Jaga TPS ini
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </ng-container>
-
-  <ng-template #belumada>
-    ---
-  </ng-template>
-
-  <!--
-  <td class="lokasi">
-    {{ tps.address }}<br />
-    <app-tps-photos
-      [kelurahanId]="state.id"
-      [tpsNo]="tps.tpsNo"
-    ></app-tps-photos>
-    <br />
-  </td> -->
+            </a>
+            ]
+          </p>
+        </ng-template>
+      </td>
+    </tr>
+  </table>
 </div>

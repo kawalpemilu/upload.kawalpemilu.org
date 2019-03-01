@@ -18,7 +18,8 @@ import {
   isValidImageId,
   MAX_RELAWAN_TRUSTED_DEPTH,
   decodeAgg,
-  encodeAgg
+  encodeAgg,
+  ApiApproveRequest
 } from 'shared';
 
 const t1 = Date.now();
@@ -124,7 +125,10 @@ function getChildren(cid): Promise<HierarchyNode> {
 const CACHE_TIMEOUT = 5;
 const cache_c: any = {};
 app.get('/api/c/:id', async (req, res) => {
-  // TODO: validateToken, and use secretkey
+  if (!req.query.abracadabra) {
+    const user = await validateToken(req, res);
+    if (!user) return null;
+  }
   const cid = req.params.id;
   let c = cache_c[cid];
   res.setHeader('Cache-Control', `max-age=${CACHE_TIMEOUT}`);
@@ -171,6 +175,36 @@ async function getServingUrlFromFirestore(imageId, res, uid) {
   return false;
 }
 
+async function parseLocationAndAgg(b: any, res, uid) {
+  const kelId = b.kelurahanId;
+  const tpsNo = b.tpsNo;
+  const a = b.aggregate;
+  try {
+    if (!a || !a.s || !a.s.length || a.s.length > 4) {
+      console.warn(`Invalid sum ${a}, uid = ${uid}`);
+      res.json({ error: 'Invalid aggregates sum' });
+      return [false];
+    }
+    const c = await getChildren(kelId);
+    if (!c || !c.name) {
+      console.warn(`Children missing ${kelId}, uid = ${uid}`);
+      res.json({ error: 'kelurahanId does not exists' });
+      return [false];
+    }
+    const tpsNos = c.children;
+    if (!tpsNos || tpsNos.findIndex(t => t[0] === tpsNo) === -1) {
+      console.warn(`TPS missing ${kelId} ${tpsNo}, uid = ${uid}`);
+      res.json({ error: 'tpsNo does not exists' });
+      return [false];
+    }
+  } catch (e) {
+    console.warn(`Error ${e.message}, uid = ${uid}`);
+    res.json({ error: 'Server error please retry in 1 minute' });
+    return [false];
+  }
+  return [kelId, tpsNo, a];
+}
+
 app.post('/api/upload', async (req, res) => {
   const user = await validateToken(req, res);
   if (!user) return null;
@@ -183,26 +217,11 @@ app.post('/api/upload', async (req, res) => {
   const servingUrl = await getServingUrlFromFirestore(imageId, res, user.uid);
   if (!servingUrl) return null;
 
-  const kelId = b.kelurahanId;
-  const tpsNo = b.tpsNo;
-  try {
-    const c = await getChildren(kelId);
-    if (!c || !c.name) {
-      return res.json({ error: 'kelurahanId does not exists' });
-    }
-    const tpsNos = c.children;
-    if (!tpsNos || tpsNos.findIndex(t => t[0] === tpsNo) === -1) {
-      return res.json({ error: 'tpsNo does not exists' });
-    }
-  } catch (e) {
-    return res.json({ error: 'Server error please retry in 1 minute' });
-  }
+  const [kelId, tpsNo, a] = await parseLocationAndAgg(b, res, user.uid);
+  if (!kelId) return null;
 
-  const a = b.aggregate;
-  if (!a || !a.s || !a.s.length || a.s.length > 5) {
-    return res.json({ error: 'Invalid aggregates sum' });
-  }
-  const agg: Aggregate = { s: [], x: [Date.now()], u: servingUrl };
+  const ts = Date.now();
+  const agg: Aggregate = { s: [], x: [ts], u: servingUrl };
   for (const sum of a.s) {
     if (typeof sum !== 'number' || sum < 0 || sum > 1000) {
       return res.json({ error: 'Invalid sum range' });
@@ -226,10 +245,62 @@ app.post('/api/upload', async (req, res) => {
     i: req.headers['fastly-client-ip'],
     a: agg,
     d: 0,
+    r: null,
+    w: null,
+    o: null,
+    g: null,
+    l: false,
+    t: ts,
     m: extractImageMetadata(b.metadata)
   };
 
   await fsdb.doc(FsPath.upserts(imageId)).set(upsert);
+
+  return res.json({ ok: true });
+});
+
+app.post('/api/approve', async (req, res) => {
+  const user = await validateToken(req, res);
+  if (!user) return null;
+
+  const b = req.body as ApiApproveRequest;
+  const imageId = b.imageId;
+  if (!isValidImageId(imageId)) {
+    console.warn(`Invalid imageId ${imageId}, uid = ${user.uid}`);
+    return res.json({ error: 'Invalid imageId' });
+  }
+
+  const [kelId, tpsNo, a] = await parseLocationAndAgg(b, res, user.uid);
+
+  const ts = Date.now();
+  const agg: Aggregate = { s: [], x: [ts], u: undefined };
+  for (const sum of a.s) {
+    if (typeof sum !== 'number' || sum < 0 || sum > 1000) {
+      console.warn(`Invalid sum ${sum}, uid = ${user.uid}`);
+      return res.json({ error: 'Invalid sum range' });
+    }
+    agg.s.push(sum);
+  }
+
+  const uRef = fsdb.doc(FsPath.upserts(imageId));
+  const rRef = fsdb.doc(FsPath.relawan(user.uid));
+  await fsdb.runTransaction(async t => {
+    const u = (await t.get(uRef)).data() as Upsert;
+    const r = (await t.get(rRef)).data() as Relawan;
+    u.k = kelId;
+    u.n = tpsNo;
+    u.r = user.uid;
+    u.w = r.n;
+    u.o = r.l;
+    u.g = a;
+    agg.u = a.u;
+    agg.s[4] = 0;
+    agg.s[5] = 0;
+    u.a = agg;
+    u.d = 0;
+    u.l = !!b.delete;
+    t.update(uRef, u);
+  });
 
   return res.json({ ok: true });
 });
@@ -260,6 +331,7 @@ app.post('/api/problem', async (req, res) => {
       pending: 0,
       masalah: 1
     });
+    u.d = 0;
     t.update(uRef, u);
     return true;
   });

@@ -51,6 +51,12 @@
               class="link"
               >{{ c[1] | uppercase }}</a
             >
+            <ng-container *ngIf="state.aggregate[c[0]] as a">
+              (<span style="color: orange">{{ a.s[4] || 0 }}</span
+              ><ng-container *ngIf="c[5]"
+                >/<span style="color: red">{{ a.s[5] }}</span></ng-container
+              >)
+            </ng-container>
             {{ ago(state, c[0]) }}
           </td>
           <td class="paslon1">

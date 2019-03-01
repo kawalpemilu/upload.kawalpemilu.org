@@ -24,6 +24,13 @@
       anda mengambil foto tersebut, upload-lah foto tersebut ke website ini.
     </p>
 
+    <p>
+      <b>Tips</b>: jika anda berencana untuk mengambil foto di beberapa TPS yang
+      berbeda, maka ambillah foto2 nya terlebih dahulu, setelah semua foto
+      tersimpan di ponsel anda, barulah anda cari wifi terdekat untuk mengupload
+      fotonya satu per satu.
+    </p>
+
     <ng-template #ujicoba>
       <p>
         Sekarang adalah masa uji-coba. Silahkan pilih TPS yang akan anda kawal
@@ -147,9 +154,31 @@
 
       <ng-template #butuhkode>
         <p>
-          Untuk registrasi, anda membutuhkan kode referral yang masih aktif dari
-          teman anda yang sudah menjadi relawan terpercaya.
+          Untuk registrasi menjadi relawan terpercaya, masukkan kode referral
+          yang masih aktif dari teman anda yang sudah menjadi relawan
+          terpercaya:
         </p>
+
+        <form>
+          <mat-form-field style="width: 225px">
+            <input
+              #inputCode
+              matInput
+              placeholder="Kode Referral"
+              type="text"
+            />
+          </mat-form-field>
+          &nbsp;
+
+          <button
+            type="submit"
+            mat-raised-button
+            color="primary"
+            [routerLink]="['/c', inputCode.value]"
+          >
+            Gunakan Kode Referral
+          </button>
+        </form>
       </ng-template>
     </ng-container>
 

@@ -30,7 +30,7 @@ class GetChildrenApi(webapp2.RequestHandler):
 
         try:
             # Fetch fresh from the real API and set it to memcache.
-            url = 'https://kawal-c1.firebaseapp.com/api/c/' + cid
+            url = 'https://kawal-c1.firebaseapp.com/api/c/' + cid + '?abracadabra=1'
             json = urlfetch.fetch(url).content
             self.response.headers['X-Cache'] = 'HIT-D'
             self.response.out.write(json)

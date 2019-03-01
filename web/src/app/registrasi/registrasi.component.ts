@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from '../user.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { map, switchMap, take } from 'rxjs/operators';
 import { ApiService } from '../api.service';
 import { Observable, of } from 'rxjs';
@@ -44,6 +44,7 @@ export class RegistrasiComponent implements OnInit {
     private hie: HierarchyService,
     private fsdb: AngularFirestore,
     private route: ActivatedRoute,
+    private router: Router,
     private api: ApiService,
     private formBuilder: FormBuilder
   ) {}
@@ -125,9 +126,10 @@ export class RegistrasiComponent implements OnInit {
 
   async registerCode(user: User) {
     this.isLoading = true;
-    const url = `register/${this.theCode}?abracadabra=true`;
+    const url = `register/${this.theCode}`;
     console.log('register', await this.api.post(user, url, {}));
     this.isLoading = false;
+    this.router.navigate(['/c', 0]);
   }
 
   async fotoBermasalah(user: User, u: UploadDetail) {

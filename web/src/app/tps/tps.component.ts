@@ -1,11 +1,10 @@
-import { Component, OnInit, HostListener, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { HierarchyService } from '../hierarchy.service';
 import { ActivatedRoute } from '@angular/router';
 import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
-import { Aggregate, HierarchyNode } from 'shared';
-import { AppComponent } from '../app.component';
+import { Aggregate, HierarchyNode, MAX_RELAWAN_TRUSTED_DEPTH } from 'shared';
 import { UploadService } from '../upload.service';
 import { UserService } from '../user.service';
 
@@ -18,6 +17,7 @@ interface Tps {
 
 interface State extends HierarchyNode {
   tpsList: Tps[];
+  numPending: number;
 }
 
 @Component({
@@ -26,12 +26,7 @@ interface State extends HierarchyNode {
   styleUrls: ['./tps.component.css']
 })
 export class TpsComponent implements OnInit {
-  @ViewChild('header') myHeaderEl: ElementRef;
-
-  ROW_HEIGHT = 50;
   state$: Observable<State>;
-  height: number;
-  width: number;
 
   constructor(
     public hie: HierarchyService,
@@ -40,24 +35,8 @@ export class TpsComponent implements OnInit {
     private route: ActivatedRoute
   ) {}
 
-  get TOOLBAR_HEIGHT() {
-    return AppComponent.TOOLBAR_HEIGHT;
-  }
-
-  @HostListener('window:resize', ['$event'])
-  onWindowResize() {
-    this.height = window.innerHeight;
-    this.width = window.innerWidth;
-    console.log(this.width, this.height);
-  }
-
-  @HostListener('window:scroll', ['$event'])
-  scrollHandler() {
-    if (window.pageYOffset > this.TOOLBAR_HEIGHT * 2) {
-      this.myHeaderEl.nativeElement.classList.add('sticky');
-    } else {
-      this.myHeaderEl.nativeElement.classList.remove('sticky');
-    }
+  get MAX_TRUSTED_DEPTH() {
+    return MAX_RELAWAN_TRUSTED_DEPTH;
   }
 
   ngOnInit() {
@@ -68,17 +47,22 @@ export class TpsComponent implements OnInit {
       distinctUntilChanged(),
       switchMap(id => this.hie.get$(id)),
       map((state: State) => {
-        state.tpsList = state.children.map(arr => ({
-          tpsNo: arr[0],
-          laki: arr[1],
-          perempuan: arr[2],
-          aggregate: state.aggregate[arr[0]]
-        }));
+        state.numPending = 0;
+        state.tpsList = [];
+        state.children.forEach(arr => {
+          const t: Tps = {
+            tpsNo: arr[0],
+            laki: arr[1],
+            perempuan: arr[2],
+            aggregate: state.aggregate[arr[0]]
+          };
+          state.numPending += (t.aggregate && t.aggregate.s[4]) || 0;
+          state.tpsList.push(t);
+        });
         return state;
       })
     );
 
-    this.onWindowResize();
     console.log('TpsComponent inited');
   }
 }

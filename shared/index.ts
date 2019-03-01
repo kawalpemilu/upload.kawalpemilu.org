@@ -5,12 +5,12 @@ export interface Aggregate {
 }
 
 export interface DecodedAggregate {
-  jokowi: number;
-  prabowo: number;
-  sah: number;
-  tidakSah: number;
-  pending: number;
-  masalah: number;
+  jokowi: number;   // 0
+  prabowo: number;  // 1
+  sah: number;      // 2
+  tidakSah: number; // 3
+  pending: number;  // 4
+  masalah: number;  // 5
 }
 
 export function encodeAgg(a: DecodedAggregate): number[] {
@@ -41,6 +41,14 @@ export interface ApiUploadRequest {
   aggregate: Aggregate;
   metadata: ImageMetadata;
   imageId: string;
+}
+
+export interface ApiApproveRequest {
+  kelurahanId: number;
+  tpsNo: number;
+  aggregate: Aggregate;
+  imageId: string;
+  delete: boolean;
 }
 
 export interface HierarchyNode {
@@ -112,6 +120,12 @@ export interface Upsert {
   i: string | string[]; // IP Address
   a: Aggregate; // Value to set
   d: number; // Processed Timestamp
+  r: string; // Approved by
+  w: string; // Approver name
+  o: string; // Approver profile link
+  g: Aggregate; // Previous value of 'a' before approval
+  l: boolean; // Deleted
+  t: number; // Creation Timestamp
   m: ImageMetadata;
 }
 

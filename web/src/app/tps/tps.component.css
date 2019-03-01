@@ -1,43 +1,23 @@
 .wrapper {
-  max-width: 500px;
-}
-
-table {
-  width: 100%;
-  max-width: 500px;
+  padding: 0 10px;
 }
 
 .tps {
-  width: 60px;
-  text-align: center;
-}
-
-.foto {
   width: 120px;
   text-align: center;
 }
 
-.suara {
-  width: 80px;
+.foto {
+  width: 200px;
   text-align: center;
 }
 
-.dijaga {
-  width: 80px;
-  padding-left: 10px;
-  text-align: center;
+.label {
+  width: 55px;
 }
 
-.jaga {
-  text-align: left;
-  padding-left: 10px;
-}
-
-.sticky {
-  position: fixed;
-  top: 0;
-}
-
-.sticky ~ .content {
-  padding-top: 50px;
+.angka {
+  width: 35px;
+  text-align: right;
+  padding-right: 5px;
 }

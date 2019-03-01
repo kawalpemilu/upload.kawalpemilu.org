@@ -1,0 +1,92 @@
+<table #tbl style="display: inline">
+  <tbody *ngIf="(upsert$ | async) as u">
+    <tr>
+      <td>
+        <img
+          [src]="gsu(u.a.u, 1240)"
+          width="400"
+          alt="thumbnail"
+          style="padding: 5px"
+        />
+      </td>
+      <td valign="top">
+        <form [formGroup]="formGroup">
+          <mat-form-field>
+            <input
+              class="angka"
+              matInput
+              placeholder="Suara Paslon 1"
+              formControlName="paslon1Ctrl"
+              type="number"
+              required
+            />
+          </mat-form-field>
+          <br />
+          <mat-form-field>
+            <input
+              class="angka"
+              matInput
+              placeholder="Suara Paslon 2"
+              formControlName="paslon2Ctrl"
+              type="number"
+              required
+            />
+          </mat-form-field>
+          <br />
+          <mat-form-field>
+            <input
+              class="angka"
+              matInput
+              placeholder="Suara Sah"
+              formControlName="sahCtrl"
+              type="number"
+              required
+            />
+          </mat-form-field>
+          <br />
+          <mat-form-field>
+            <input
+              class="angka"
+              matInput
+              placeholder="Suara Tidak Sah"
+              formControlName="tidakSahCtrl"
+              type="number"
+              required
+            />
+          </mat-form-field>
+          <br />
+
+          <ng-container *ngIf="u.m?.m">
+            {{ u.m.m[0] }}
+          </ng-container>
+          <ng-container *ngIf="u.m?.m"> ({{ u.m.m[1] }}) </ng-container>
+          <a *ngIf="u.m?.x" href="{{ mapLink(u.m) }}" target="_blank"
+            ><mat-icon>map</mat-icon></a
+          >
+
+          <p>
+            <button
+              type="submit"
+              [disabled]="formGroup.invalid || isLoading"
+              mat-raised-button
+              color="primary"
+              (click)="approve(u, false)"
+            >
+              Approve
+            </button>
+
+            &nbsp;
+            <button
+              mat-raised-button
+              color="warn"
+              (click)="approve(u, true)"
+              [disabled]="isLoading"
+            >
+              Reject
+            </button>
+          </p>
+        </form>
+      </td>
+    </tr>
+  </tbody>
+</table>

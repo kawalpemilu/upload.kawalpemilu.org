@@ -15,7 +15,6 @@ import { environment } from '../environments/environment';
 import { HierarchyComponent } from './hierarchy/hierarchy.component';
 import { TpsComponent } from './tps/tps.component';
 import { PathComponent } from './path/path.component';
-import { TpsPhotosComponent } from './tps-photos/tps-photos.component';
 import { UploadSequenceComponent } from './upload-sequence/upload-sequence.component';
 
 import {
@@ -33,6 +32,8 @@ import { HttpClientModule } from '@angular/common/http';
 import { LoginComponent } from './login/login.component';
 import { RegistrasiComponent } from './registrasi/registrasi.component';
 import { ThumbnailComponent } from './thumbnail/thumbnail.component';
+import { DigitizeComponent } from './digitize/digitize.component';
+import { ApproverComponent } from './approver/approver.component';
 
 @NgModule({
   declarations: [
@@ -40,11 +41,12 @@ import { ThumbnailComponent } from './thumbnail/thumbnail.component';
     HierarchyComponent,
     TpsComponent,
     PathComponent,
-    TpsPhotosComponent,
     UploadSequenceComponent,
     LoginComponent,
     RegistrasiComponent,
-    ThumbnailComponent
+    ThumbnailComponent,
+    DigitizeComponent,
+    ApproverComponent
   ],
   imports: [
     BrowserModule,

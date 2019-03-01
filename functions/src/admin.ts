@@ -78,7 +78,7 @@ function updateAggregates(u: Upsert) {
     const a = getAggregate(path[4], path[5]);
 
     // Set the proof URL if no longer pending, else nullify it.
-    a.u = decodeAgg(u.a.s).pending === 0 ? u.u : null;
+    a.u = decodeAgg(u.a.s).pending === 0 ? u.a.u : null;
   }
 }
 

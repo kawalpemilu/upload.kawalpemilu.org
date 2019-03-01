@@ -1,0 +1,28 @@
+<ng-container *ngIf="(userService.userRelawan$ | async) as user">
+  <div
+    *ngIf="user?.d < MAX_TRUSTED_DEPTH && (state$ | async) as state"
+    class="wrapper"
+  >
+    <app-path [node]="state"></app-path>
+
+    <ng-container *ngFor="let c of state.children">
+      <ng-container *ngIf="state.aggregate[c[0]] as a">
+        <ng-container *ngIf="a.s[4] || a.s[5]">
+          <app-approver
+            [kelurahanId]="state.id"
+            [tpsNo]="c[0]"
+            [color]="a.s[5] ? '#FDD' : a.s[4] ? '#FFD' : ''"
+            [user]="user"
+          ></app-approver>
+          <mat-divider></mat-divider>
+        </ng-container>
+      </ng-container>
+    </ng-container>
+
+    <p>
+      <button mat-raised-button color="primary" [routerLink]="['/t', state.id]">
+        Back to public view
+      </button>
+    </p>
+  </div>
+</ng-container>
