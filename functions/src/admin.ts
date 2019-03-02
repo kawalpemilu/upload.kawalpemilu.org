@@ -36,12 +36,12 @@ function mergeAggregates(target: Aggregate, source: Aggregate) {
 function getAggregate(parentId, childId): Aggregate {
   if (!h[parentId]) h[parentId] = {};
   const c = h[parentId];
-  if (!c[childId]) c[childId] = { s: [], x: [], u: null };
+  if (!c[childId]) c[childId] = { s: [], x: [], i: null, u: null };
   return c[childId];
 }
 
 function getDelta(parentId, childId, u: Upsert): Aggregate {
-  const delta: Aggregate = { s: [], x: [], u: null };
+  const delta: Aggregate = { s: [], x: [], i: null, u: null };
   const current = getAggregate(parentId, childId);
   for (let j = 0; j < u.a.s.length; j++) {
     delta.s[j] = (u.p[j] || 0) * (u.a.s[j] - (current.s[j] || 0));
@@ -78,7 +78,13 @@ function updateAggregates(u: Upsert) {
     const a = getAggregate(path[4], path[5]);
 
     // Set the proof URL if no longer pending, else nullify it.
-    a.u = decodeAgg(u.a.s).pending === 0 ? u.a.u : null;
+    if (decodeAgg(u.a.s).pending === 0) {
+      a.u = u.a.u;
+      u.i = u.a.i;
+    } else {
+      a.u = null;
+      a.i = null;
+    }
   }
 }
 

@@ -3,9 +3,12 @@
 
   <button
     mat-raised-button
-    color="primary"
+    color="warn"
     [routerLink]="['/d', state.id]"
-    *ngIf="(userService.userRelawan$ | async)?.d < MAX_TRUSTED_DEPTH"
+    *ngIf="
+      state.numPending > 0 &&
+      (userService.userRelawan$ | async)?.d < MAX_TRUSTED_DEPTH
+    "
   >
     Digitize {{ state.numPending }} uploads
   </button>
@@ -51,22 +54,50 @@
         <p></p>
       </th>
       <td class="foto">
-        <ng-container *ngIf="tps.aggregate?.u as servingUrl; else belumada">
-          <app-thumbnail [url]="servingUrl"></app-thumbnail>
-          <p>
-            [ Laporkan adanya kesalahan ]
-          </p>
-        </ng-container>
+        <table cellpadding="0" cellspacing="0" width="100%">
+          <tr>
+            <td width="125">
+              <ng-container
+                *ngIf="tps.aggregate?.u as servingUrl; else adapending"
+              >
+                <app-thumbnail [url]="servingUrl" [size]="125"></app-thumbnail>
+              </ng-container>
+              <ng-template #adapending>
+                <div *ngIf="(tps.aggregate?.s)[4]">
+                  Ada foto yang masuk dan belum diproses.
+                </div>
+              </ng-template>
+            </td>
+            <td align="center">
+              <p *ngIf="tps.aggregate as a">
+                <span *ngIf="a.s[5]; else bisalapor" style="color: red"
+                  >{{ 'nama' }} melaporkan ada kesalahan di TPS ini</span
+                >
+                <ng-template #bisalapor>
+                  <button
+                    *ngIf="(userService.user$ | async) as user"
+                    mat-raised-button
+                    color="warn"
+                    (click)="laporKesalahan(user, a.i)"
+                  >
+                    Laporkan Kesalahan
+                  </button>
+                </ng-template>
+              </p>
 
-        <ng-template #belumada>
-          <p *ngIf="!uploadService.task">
-            [
-            <a [routerLink]="['/u', state.id, tps.tpsNo]" color="primary">
-              Jaga TPS ini
-            </a>
-            ]
-          </p>
-        </ng-template>
+              <p>
+                <button
+                  *ngIf="!uploadService.task"
+                  mat-raised-button
+                  [routerLink]="['/u', state.id, tps.tpsNo]"
+                  color="primary"
+                >
+                  Jaga TPS / Upload Foto
+                </button>
+              </p>
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>
   </table>

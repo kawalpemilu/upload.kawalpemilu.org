@@ -128,9 +128,9 @@ export class ApproverComponent implements OnInit {
           this.formGroup.get('tidakSahCtrl').value
         ],
         x: [],
+        i: u.a.i,
         u: null
       },
-      imageId: u.e,
       delete: del,
     };
     try {

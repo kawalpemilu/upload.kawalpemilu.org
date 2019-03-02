@@ -210,7 +210,7 @@ app.post('/api/upload', async (req, res) => {
   if (!user) return null;
 
   const b = req.body as ApiUploadRequest;
-  const imageId = b.imageId;
+  const imageId = b.aggregate && b.aggregate.i;
 
   // TODO: limit number of photos per tps and per user.
 
@@ -221,19 +221,19 @@ app.post('/api/upload', async (req, res) => {
   if (!kelId) return null;
 
   const ts = Date.now();
-  const agg: Aggregate = { s: [], x: [ts], u: servingUrl };
+  const agg: Aggregate = { s: [], x: [ts], i: imageId, u: servingUrl };
   for (const sum of a.s) {
     if (typeof sum !== 'number' || sum < 0 || sum > 1000) {
       return res.json({ error: 'Invalid sum range' });
     }
     agg.s.push(sum);
   }
+  agg.s[4] = 1; // Set pending.
 
   const upsert: Upsert = {
     u: user.uid,
     k: kelId,
     n: tpsNo,
-    e: imageId,
     p: encodeAgg({
       jokowi: 0,
       prabowo: 0,
@@ -264,7 +264,7 @@ app.post('/api/approve', async (req, res) => {
   if (!user) return null;
 
   const b = req.body as ApiApproveRequest;
-  const imageId = b.imageId;
+  const imageId = b.aggregate && b.aggregate.i;
   if (!isValidImageId(imageId)) {
     console.warn(`Invalid imageId ${imageId}, uid = ${user.uid}`);
     return res.json({ error: 'Invalid imageId' });
@@ -273,7 +273,7 @@ app.post('/api/approve', async (req, res) => {
   const [kelId, tpsNo, a] = await parseLocationAndAgg(b, res, user.uid);
 
   const ts = Date.now();
-  const agg: Aggregate = { s: [], x: [ts], u: undefined };
+  const agg: Aggregate = { s: [], x: [ts], i: imageId, u: undefined };
   for (const sum of a.s) {
     if (typeof sum !== 'number' || sum < 0 || sum > 1000) {
       console.warn(`Invalid sum ${sum}, uid = ${user.uid}`);
@@ -292,11 +292,19 @@ app.post('/api/approve', async (req, res) => {
     u.r = user.uid;
     u.w = r.n;
     u.o = r.l;
-    u.g = a;
-    agg.u = a.u;
+    u.g = u.a;
+    agg.u = u.a.u;
     agg.s[4] = 0;
     agg.s[5] = 0;
     u.a = agg;
+    u.p = encodeAgg({
+      jokowi: 1,
+      prabowo: 1,
+      sah: 1,
+      tidakSah: 1,
+      pending: 1,
+      masalah: 1
+    });
     u.d = 0;
     u.l = !!b.delete;
     t.update(uRef, u);

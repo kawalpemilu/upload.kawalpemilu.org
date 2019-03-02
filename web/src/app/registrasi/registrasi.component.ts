@@ -85,7 +85,7 @@ export class RegistrasiComponent implements OnInit {
                         .toPromise()).name,
                       tpsNo: u.n,
                       servingUrl: u.a.u,
-                      imageId: u.e,
+                      imageId: u.a.i,
                       hasProblem: decodeAgg(u.a.s).masalah,
                       uploadTs: u.a.x[0]
                     });

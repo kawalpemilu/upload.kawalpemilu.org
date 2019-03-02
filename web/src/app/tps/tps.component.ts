@@ -7,6 +7,7 @@ import { Observable } from 'rxjs';
 import { Aggregate, HierarchyNode, MAX_RELAWAN_TRUSTED_DEPTH } from 'shared';
 import { UploadService } from '../upload.service';
 import { UserService } from '../user.service';
+import { ApiService } from '../api.service';
 
 interface Tps {
   tpsNo: number;
@@ -32,7 +33,8 @@ export class TpsComponent implements OnInit {
     public hie: HierarchyService,
     public uploadService: UploadService,
     public userService: UserService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private api: ApiService
   ) {}
 
   get MAX_TRUSTED_DEPTH() {
@@ -56,7 +58,8 @@ export class TpsComponent implements OnInit {
             perempuan: arr[2],
             aggregate: state.aggregate[arr[0]]
           };
-          state.numPending += (t.aggregate && t.aggregate.s[4]) || 0;
+          state.numPending +=
+            (t.aggregate && (t.aggregate.s[4] || t.aggregate.s[5])) || 0;
           state.tpsList.push(t);
         });
         return state;
@@ -64,5 +67,9 @@ export class TpsComponent implements OnInit {
     );
 
     console.log('TpsComponent inited');
+  }
+
+  async laporKesalahan(user, imageId) {
+    this.api.post(user, `problem`, { imageId });
   }
 }

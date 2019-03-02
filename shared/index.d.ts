@@ -2,6 +2,7 @@ export interface Aggregate {
     s: number[];
     x: number[];
     u: string;
+    i: string;
 }
 export interface DecodedAggregate {
     jokowi: number;
@@ -18,13 +19,11 @@ export interface ApiUploadRequest {
     tpsNo: number;
     aggregate: Aggregate;
     metadata: ImageMetadata;
-    imageId: string;
 }
 export interface ApiApproveRequest {
     kelurahanId: number;
     tpsNo: number;
     aggregate: Aggregate;
-    imageId: string;
     delete: boolean;
 }
 export interface HierarchyNode {
@@ -61,7 +60,6 @@ export interface Upsert {
     u: string;
     k: number;
     n: number;
-    e: string;
     p: number[];
     i: string | string[];
     a: Aggregate;

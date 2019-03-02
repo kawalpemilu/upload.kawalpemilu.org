@@ -2,6 +2,7 @@ export interface Aggregate {
   s: number[]; // Sum.
   x: number[]; // Max.
   u: string; // URL proof of this Aggregate.
+  i: string; // Image Id of in upserts.
 }
 
 export interface DecodedAggregate {
@@ -40,14 +41,12 @@ export interface ApiUploadRequest {
   tpsNo: number;
   aggregate: Aggregate;
   metadata: ImageMetadata;
-  imageId: string;
 }
 
 export interface ApiApproveRequest {
   kelurahanId: number;
   tpsNo: number;
   aggregate: Aggregate;
-  imageId: string;
   delete: boolean;
 }
 
@@ -115,7 +114,6 @@ export interface Upsert {
   u: string; // The owner user ID
   k: number; // Kelurahan ID
   n: number; // Tps No
-  e: string; // Image ID
   p: number[]; // Process only these indices
   i: string | string[]; // IP Address
   a: Aggregate; // Value to set

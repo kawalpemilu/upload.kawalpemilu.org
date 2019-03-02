@@ -13,11 +13,39 @@
       <b>{{ state.node.name }}</b
       >, silahkan upload foto pemandangan di daerah anda.
     </p>
-    <p>
-      <b style="color:red">Catatan</b>: jika anda langsung memotret foto dari
-      aplikasi ini, fotonya <b>TIDAK AKAN</b> tersimpan di HP anda!
-    </p>
-    <!-- <p>Petunjuk pengambilan Foto C1:</p>
+
+    <ng-container *ngIf="state.servingUrl; else uploadfoto">
+      <ng-container *ngIf="!state.adaKesalahan; else uploadfoto">
+        TPS ini telah difoto oleh {{ 'orang' }}:
+
+        <p>
+          <app-thumbnail [url]="state.servingUrl"></app-thumbnail>
+        </p>
+
+        <p>
+          Jika foto diatas sudah benar dan jelas, anda tidak perlu mengupload
+          foto lain di TPS ini.
+        </p>
+
+        <p>
+          Jika ada kesalahan di foto tersebut, laporkan kesalahan dahulu sebelum
+          anda bisa mengupload foto anda:
+        </p>
+
+        <p>
+          <button mat-raised-button color="warn">
+            Laporkan Kesalahan
+          </button>
+        </p>
+      </ng-container>
+    </ng-container>
+
+    <ng-template #uploadfoto>
+      <p>
+        <b style="color:red">Catatan</b>: jika anda langsung memotret foto dari
+        aplikasi ini, fotonya <b>TIDAK AKAN</b> tersimpan di HP anda!
+      </p>
+      <!-- <p>Petunjuk pengambilan Foto C1:</p>
     <ol>
       <li>
         Setelah penghitungan suara selesai di TPS anda, ambillah foto formulir
@@ -36,47 +64,47 @@
       <li>Jika sudah siap, klik tombol Upload dibawah:</li>
     </ol> -->
 
-    <form [formGroup]="formGroup">
-      <input
-        #u
-        type="file"
-        (change)="upload(user.uid, state, $event)"
-        accept=".png,.jpg"
-        style="display: none"
-      />
-      <p *ngIf="!imgURL">
-        <a mat-raised-button color="primary" (click)="u.click()">
-          Upload Foto yang SUDAH tersimpan di HP anda
-        </a>
-      </p>
-      <div *ngIf="imgURL">
-        <img
-          [src]="imgURL"
-          width="100%"
-          style="max-width: 400px"
-          (click)="u.click()"
+      <form [formGroup]="formGroup">
+        <input
+          #u
+          type="file"
+          (change)="upload(user.uid, state, $event)"
+          accept=".png,.jpg"
+          style="display: none"
         />
-        <!-- <p>Pastikan lokasi TPS di foto sesuai dengan lokasi berikut:</p> -->
-
-        <!-- <p>Terakhir, masukkan angka-angka yang tertera di foto tersebut:</p> -->
-
-        <p>Masukkan angka antara 0 sampai 999:</p>
-        <mat-form-field style="width: 225px">
-          <input
-            matInput
-            placeholder="Angka antara 0 sampai 999"
-            formControlName="paslon1Ctrl"
-            type="number"
-            required
+        <p *ngIf="!imgURL">
+          <a mat-raised-button color="primary" (click)="u.click()">
+            Upload Foto yang SUDAH tersimpan di HP anda
+          </a>
+        </p>
+        <div *ngIf="imgURL">
+          <img
+            [src]="imgURL"
+            width="100%"
+            style="max-width: 400px"
+            (click)="u.click()"
           />
-        </mat-form-field>
-        &nbsp;
-        <span *ngIf="getError('paslon1Ctrl') as error" class="alert">
-          {{ error }}
-        </span>
-        <br />
+          <!-- <p>Pastikan lokasi TPS di foto sesuai dengan lokasi berikut:</p> -->
 
-        <!-- <mat-form-field style="width: 225px">
+          <!-- <p>Terakhir, masukkan angka-angka yang tertera di foto tersebut:</p> -->
+
+          <p>Masukkan angka antara 0 sampai 999:</p>
+          <mat-form-field style="width: 225px">
+            <input
+              matInput
+              placeholder="Angka antara 0 sampai 999"
+              formControlName="sahCtrl"
+              type="number"
+              required
+            />
+          </mat-form-field>
+          &nbsp;
+          <span *ngIf="getError('sahCtrl') as error" class="alert">
+            {{ error }}
+          </span>
+          <br />
+
+          <!-- <mat-form-field style="width: 225px">
           <input
             matInput
             placeholder="Jumlah Suara Paslon 2"
@@ -120,22 +148,22 @@
           {{ error }}
         </span> -->
 
-        <p>
-          <button
-            type="submit"
-            mat-raised-button
-            color="primary"
-            (click)="selesai(user, state.kelurahanId, state.tpsNo)"
-            [disabled]="formGroup.invalid || isLoading"
-          >
-            Selesai!
-          </button>
-        </p>
+          <p>
+            <button
+              type="submit"
+              mat-raised-button
+              color="primary"
+              (click)="selesai(user, state.kelurahanId, state.tpsNo)"
+              [disabled]="formGroup.invalid || isLoading"
+            >
+              Selesai!
+            </button>
+          </p>
 
-        <p *ngIf="isLoading">
-          Uploading: {{ uploadService.progress.toFixed(0) }}%
-          <progress max="100" [value]="uploadService.progress"></progress>
-          <!-- &nbsp;
+          <p *ngIf="isLoading">
+            Uploading: {{ uploadService.progress.toFixed(0) }}%
+            <progress max="100" [value]="uploadService.progress"></progress>
+            <!-- &nbsp;
           <button
             (click)="uploadService.task.cancel()"
             [disabled]="
@@ -147,9 +175,10 @@
           >
             Cancel
           </button> -->
-        </p>
-      </div>
-    </form>
+          </p>
+        </div>
+      </form>
+    </ng-template>
   </div>
 
   <ng-template #login>

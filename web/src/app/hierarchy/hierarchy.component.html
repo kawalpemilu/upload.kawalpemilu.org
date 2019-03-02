@@ -52,10 +52,15 @@
               >{{ c[1] | uppercase }}</a
             >
             <ng-container *ngIf="state.aggregate[c[0]] as a">
-              (<span style="color: orange">{{ a.s[4] || 0 }}</span
-              ><ng-container *ngIf="c[5]"
-                >/<span style="color: red">{{ a.s[5] }}</span></ng-container
-              >)
+              <ng-container *ngIf="a.s[4] || a.s[5]">
+                (<span *ngIf="a.s[4]" style="color: orange">{{ a.s[4] }}</span
+                ><ng-container *ngIf="a.s[5]"
+                  ><ng-container *ngIf="a.s[4] && a.s[5]">/</ng-container
+                  ><span *ngIf="a.s[5]" style="color: red">{{
+                    a.s[5]
+                  }}</span></ng-container
+                >)
+              </ng-container>
             </ng-container>
             {{ ago(state, c[0]) }}
           </td>

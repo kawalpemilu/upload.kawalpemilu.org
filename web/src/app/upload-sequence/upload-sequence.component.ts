@@ -17,7 +17,8 @@ export class UploadState {
   kelurahanId: number;
   tpsNo: number;
   node: HierarchyNode;
-  covered = 0;
+  adaKesalahan: boolean;
+  servingUrl: string;
 }
 
 @Component({
@@ -51,11 +52,13 @@ export class UploadSequenceComponent implements OnInit {
         } as UploadState;
         return this.hie.get$(state.kelurahanId).pipe(
           map((node: HierarchyNode) => {
-            state.covered = 0;
+            state.servingUrl = '';
+            state.adaKesalahan = false;
             for (const [tpsNo] of node.children) {
               if (tpsNo === state.tpsNo) {
                 const a = node.aggregate[tpsNo];
-                state.covered = (a && a.s[0]) || 0;
+                state.servingUrl = (a && a.u) || '';
+                state.adaKesalahan = state.adaKesalahan || !!(a && a.s[5]);
               }
             }
             state.node = node;
@@ -67,9 +70,9 @@ export class UploadSequenceComponent implements OnInit {
 
     const validators = [Validators.pattern('^[0-9]{1,3}$')];
     this.formGroup = this.formBuilder.group({
-      paslon1Ctrl: [null, validators]
+      // paslon1Ctrl: [null, validators]
       // paslon2Ctrl: [null, validators],
-      // sahCtrl: [null, validators],
+      sahCtrl: [null, validators]
       // tidakSahCtrl: [null, validators]
     });
   }
@@ -135,19 +138,18 @@ export class UploadSequenceComponent implements OnInit {
       aggregate: {
         s: [
           1,
-          this.formGroup.get('paslon1Ctrl').value,
-          0,
+          // this.formGroup.get('paslon1Ctrl').value,
           0,
           // this.formGroup.get('paslon2Ctrl').value,
-          // this.formGroup.get('sahCtrl').value,
+          this.formGroup.get('sahCtrl').value,
           // this.formGroup.get('tidakSahCtrl').value,
-          1
+          0
         ],
         x: [],
+        i: imageId,
         u: null
       },
-      metadata,
-      imageId
+      metadata
     };
     try {
       const res: any = await this.api.post(user, `upload`, request);

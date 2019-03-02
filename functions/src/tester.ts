@@ -95,13 +95,13 @@ function makeRequest(kelurahanId, tpsNo) {
     kelurahanId,
     tpsNo,
     aggregate: {
-        // s: [0, 0, 0, 0, 0],
+      // s: [0, 0, 0, 0, 0],
       s: [1, Math.floor(Math.random() * 999), 2, 4, 0],
       x: [],
+      i: `zzzzzzz${kelurahanId}t${tpsNo}`,
       u: null
     },
-    metadata: {} as ImageMetadata,
-    imageId: `zzzzzzz${kelurahanId}t${tpsNo}`
+    metadata: {} as ImageMetadata
   };
   return body;
 }
