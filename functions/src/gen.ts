@@ -3,44 +3,70 @@ import * as parse from 'csv-parse/lib/sync';
 
 import { HierarchyNode } from 'shared';
 
-const h: { [key: string]: HierarchyNode } = {};
+function toInt(s: string): number {
+  const i = parseInt(s, 10);
+  if (i !== +s) throw new Error('Nih:' + s);
+  return i;
+}
 
-h[0] = {
-  id: 0,
-  name: 'IDN',
-  depth: 0,
-  parentIds: [],
-  parentNames: [],
-  children: [],
-  aggregate: {}
+import { H } from './hierarchy';
+
+const oldH: { [key: string]: HierarchyNode } = H;
+
+const h: { [key: string]: HierarchyNode } = {
+  '0': {
+    id: 0,
+    name: 'IDN',
+    depth: 0,
+    parentIds: [],
+    parentNames: [],
+    children: [],
+    data: {}
+  }
 };
 
-const ids = parse(fs.readFileSync('src/ids.csv', 'utf-8'));
-for (let i = 1; i + 1 < ids.length; i++) {
-  const row = ids[i];
-  for (let j = 0; j < row.length; j++) {
-    row[j] = row[j].trim();
-  }
+const dpt = fs.readFileSync('src/wilayah.csv', 'utf-8');
+const lines = parse(dpt, { delimiter: '#' });
+let tot = 0;
+for (let i = 1; i < lines.length; i++) {
+  const [
+    KD_PRO,
+    NAMA_PRO,
+    KD_KAB,
+    NAMA_KAB,
+    KD_KEC,
+    NAMA_KEC,
+    KD_KEL,
+    NAMA_KEL,
+    TPS,
+    LAKI,
+    PEREMPUAN,
+    TOTAL
+  ] = lines[i];
 
-  const [nTpsStr, lakiStr, perempuanStr, totalStr] = row.slice(8);
-  const nTps = parseInt(nTpsStr.replace(/ |,/g, ''), 10);
-  const laki = parseInt(lakiStr.replace(/ |,/g, ''), 10) || 0;
-  const perempuan = parseInt(perempuanStr.replace(/ |,/g, ''), 10) || 0;
-  const total = parseInt(totalStr.replace(/ |,/g, ''), 10);
-  if (+laki + +perempuan !== +total) {
-    throw new Error('Total mismatch: ' + row);
+  const ids = [toInt(KD_PRO), toInt(KD_KAB), toInt(KD_KEC), toInt(KD_KEL)];
+  const names = [NAMA_PRO, NAMA_KAB, NAMA_KEC, NAMA_KEL];
+
+  const tpsNo = toInt(TPS);
+  const laki = toInt(LAKI);
+  const perempuan = toInt(PEREMPUAN);
+  const total = toInt(TOTAL);
+  tot += total;
+
+  if (laki + perempuan !== total || !total) {
+    throw new Error('gimana ini???');
   }
 
   let node = h[0];
   for (let j = 0; j < 4; j++) {
-    const cid = +row[j];
-    const cname = row[4 + j];
+    const cid = ids[j];
+    const cname = names[j];
 
     const k = node.children.findIndex(c => c[0] === cid);
     if (k === -1) {
-      node.children.push([cid, cname, nTps, laki, perempuan]);
+      node.children.push([cid, cname, 1, laki, perempuan]);
     } else {
-      node.children[k][2] += nTps;
+      node.children[k][2] += 1;
       node.children[k][3] += laki;
       node.children[k][4] += perempuan;
     }
@@ -53,80 +79,51 @@ for (let i = 1; i + 1 < ids.length; i++) {
         parentIds: node.parentIds.slice(),
         parentNames: node.parentNames.slice(),
         children: [],
-        aggregate: {}
+        data: {}
       };
       h[cid].parentIds.push(node.id);
       h[cid].parentNames.push(node.name);
     }
     node = h[cid];
   }
-}
 
-console.log('ok', h[0].children.reduce((p, c) => p + c[2], 0));
-// console.log('ok', h[0].children.reduce((p, c) => p + c[3], 0));
-// console.log('ok', h[0].children.reduce((p, c) => p + c[4], 0));
-// console.log('ok', h[22135]);
+  const propId = h[0].children.filter(c => c[1] === NAMA_PRO).map(c => c[0])[0];
+  if (propId !== ids[0]) throw new Error(`Prop ${NAMA_PRO} not found`);
 
-const memo: any = {};
-const dpt = fs.readFileSync('src/dpt.csv', 'utf-8');
-const lines = parse(dpt);
-for (let i = 1; i < lines.length; i++) {
-  const row = lines[i];
-  const [prop, kab, kec, kelIdStr, kel] = row;
+  const kabId = h[propId].children
+    .filter(c => c[1] === NAMA_KAB)
+    .map(c => c[0])[0];
+  if (kabId !== ids[1]) throw new Error(`${NAMA_PRO},${NAMA_KAB}`);
 
-  const kelId = parseInt(kelIdStr, 10);
-  const tpsNo = parseInt(row[5], 10);
-  const laki = parseInt(row[6], 10);
-  const perempuan = parseInt(row[7], 10);
-  const total = parseInt(row[8], 10);
+  const kecId = h[kabId].children
+    .filter(c => c[1] === NAMA_KEC)
+    .map(c => c[0])[0];
+  if (kecId !== ids[2]) throw new Error(`${NAMA_PRO},${NAMA_KAB},${NAMA_KEC}`);
 
-  if (laki + perempuan !== total || !total) {
-    throw new Error('gimana ini???');
-  }
+  const kelId = h[kecId].children
+    .filter(c => c[1] === NAMA_KEL)
+    .map(c => c[0])[0];
+  if (kelId !== ids[3])
+    throw new Error(
+      `${kelId} !== ${
+        ids[3]
+      }\n${NAMA_PRO},${NAMA_KAB},${NAMA_KEC},${NAMA_KEL}\n${JSON.stringify(
+        h[kelId],
+        null,
+        2
+      )}`
+    );
 
-  const propId = h[0].children.filter(c => c[1] === prop).map(c => c[0])[0];
-  if (!propId) {
-    throw new Error(`Prop ${prop} not found`);
-  }
-  const kabId = h[propId].children.filter(c => c[1] === kab).map(c => c[0])[0];
-  if (!kabId) {
-    const key = `${prop},${kab}`;
-    if (memo[key]) {
-      continue;
-    }
-    memo[key] = true;
-    console.log(`Kab ${key} not found`);
-  }
-
-  const kecId = h[kabId].children.filter(c => c[1] === kec).map(c => c[0])[0];
-  if (!kecId) {
-    const key = `${prop},${kab},${kec}`;
-    if (memo[key]) {
-      continue;
-    }
-    memo[key] = true;
-    console.log(`Kec ${key} not found`);
-  }
-
-  const kid = h[kecId].children.filter(c => c[1] === kel).map(c => c[0])[0];
-  if (+kelId !== kid) {
-    const key = `${prop},${kab},${kec},${kel}  ${kelId}  !== ${kid}`;
-    if (memo[key]) {
-      continue;
-    }
-    memo[key] = true;
-    console.log(`Kel ${key} not found`);
-  }
-
-  const node = h[+kelId];
   node.children.push([tpsNo, laki, perempuan]);
 }
 
 let maxTps = 0;
 function rec(id, depth) {
   const node = h[id];
+  const onode = oldH[id];
   if (depth === 4) {
     const len = node.children.length;
+    if (len !== onode.children.length) throw new Error('Boom');
     if (len > maxTps) {
       maxTps = len;
       console.log('maxTps', len, id);
@@ -140,7 +137,21 @@ function rec(id, depth) {
     return len;
   }
   let ret = 0;
-  for (const c of node.children) {
+  const ochildren = onode.children.sort((a, b) => a[0] - b[0]);
+  for (const [i, c] of node.children.entries()) {
+    const oc = ochildren[i];
+    if (c[0] !== oc[0]) {
+      console.log('node', node);
+      console.log('onode', onode);
+      console.log('c', c);
+      console.log('oc', oc);
+      throw new Error('Boom ' + i);
+    }
+    if (c[1] !== oc[1]) {
+      console.log('diff', c[1], oc[1]);
+    }
+    if (c[2] !== oc[2]) throw new Error('Boom');
+
     if (rec(c[0], depth + 1) !== c[2]) {
       throw new Error('Ga sama tps');
     }
@@ -151,5 +162,10 @@ function rec(id, depth) {
 
 console.log('total tps', rec(0, 0));
 
-fs.writeFileSync(`src/hierarchy.js`, `exports.H = ${JSON.stringify(h)};`);
-console.log('all ok');
+console.log('ok', h[0].children.reduce((p, c) => p + c[2], 0));
+console.log('ok', h[0].children.reduce((p, c) => p + c[3], 0));
+console.log('ok', h[0].children.reduce((p, c) => p + c[4], 0));
+console.log(tot);
+
+// fs.writeFileSync(`src/hierarchy.js`, `exports.H = ${JSON.stringify(h)};`);
+// console.log('all ok');
