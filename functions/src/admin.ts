@@ -106,7 +106,7 @@ async function getUpsertBatch(limit: number) {
   return new Promise<{ [key: string]: Upsert }>((resolve, reject) => {
     const unsub = fsdb
       .collection(FsPath.upserts())
-      .where('d', '==', 0)
+      .where('done', '==', 0)
       .limit(limit)
       .onSnapshot(
         s => {
