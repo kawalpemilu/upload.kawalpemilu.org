@@ -163,7 +163,7 @@ async function processNewUpserts() {
   const imageIds = Object.keys(upserts);
   for (const imageId of imageIds) {
     updateAggregates(upserts[imageId]);
-    batch.update(fsdb.doc(FsPath.upserts(imageId)), { d: 1 });
+    batch.update(fsdb.doc(FsPath.upserts(imageId)), { done: 1 });
   }
   const t1 = Date.now();
   if (t1 - t0 > 100) {
@@ -193,7 +193,7 @@ async function continuousAggregation() {
   app.get('/api/c/:id', async (req, res) => {
     const cid = req.params.id;
     if (!H[cid]) return res.json({});
-    H[cid].aggregate = h[cid] || {};
+    H[cid].data = h[cid] || {};
     return res.json(H[cid]);
   });
   const server = app.listen(8080, () => {
