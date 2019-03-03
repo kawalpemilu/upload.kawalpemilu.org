@@ -1,27 +1,15 @@
 "use strict";
 exports.__esModule = true;
-function encodeAgg(a) {
-    return [
-        a.jokowi,
-        a.prabowo,
-        a.sah,
-        a.tidakSah,
-        a.pending,
-        a.masalah
-    ];
-}
-exports.encodeAgg = encodeAgg;
-function decodeAgg(sum) {
-    return {
-        jokowi: sum[0],
-        prabowo: sum[1],
-        sah: sum[2],
-        tidakSah: sum[3],
-        pending: sum[4],
-        masalah: sum[5]
-    };
-}
-exports.decodeAgg = decodeAgg;
+exports.MAX_RELAWAN_TRUSTED_DEPTH = 2;
+var SUM_KEY;
+(function (SUM_KEY) {
+    SUM_KEY["paslon1"] = "paslon1";
+    SUM_KEY["paslon2"] = "paslon2";
+    SUM_KEY["sah"] = "sah";
+    SUM_KEY["tidakSah"] = "tidakSah";
+    SUM_KEY["pending"] = "pending";
+    SUM_KEY["error"] = "error";
+})(SUM_KEY = exports.SUM_KEY || (exports.SUM_KEY = {}));
 function extractImageMetadata(m) {
     var validM = null;
     if (m) {
@@ -52,7 +40,6 @@ function isValidImageId(imageId) {
     return typeof imageId === 'string' && imageId.match(/^[A-Za-z0-9]{20}$/);
 }
 exports.isValidImageId = isValidImageId;
-exports.MAX_RELAWAN_TRUSTED_DEPTH = 2;
 var FsPath = /** @class */ (function () {
     function FsPath() {
     }

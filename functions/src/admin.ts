@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as util from 'util';
 
 import { H } from './hierarchy';
-import { FsPath, Upsert, Aggregate, decodeAgg } from 'shared';
+import { FsPath, Upsert, UpsertData, SUM_KEY } from 'shared';
 
 admin.initializeApp({
   credential: admin.credential.cert(require('./sa-key.json')),
@@ -22,46 +22,60 @@ const fsdb = admin.firestore();
 fsdb.settings({ timestampsInSnapshots: true });
 
 // In memory database containing the aggregates of all children.
-let h: { [key: string]: { [key: string]: Aggregate } } = {};
+let h: { [key: string]: { [key: string]: UpsertData } } = {};
 
-function mergeAggregates(target: Aggregate, source: Aggregate) {
-  for (let j = 0; j < source.s.length; j++) {
-    target.s[j] = (target.s[j] || 0) + source.s[j];
+function mergeAggregates(target: UpsertData, source: UpsertData) {
+  for (const key in SUM_KEY) {
+    target.sum[key] = (target.sum[key] || 0) + source.sum[key];
   }
-  for (let j = 0; j < source.x.length; j++) {
-    target.x[j] = Math.max(target.x[j] || source.x[j], source.x[j]);
-  }
+  target.updateTs = Math.max(
+    target.updateTs || source.updateTs,
+    source.updateTs
+  );
 }
 
-function getAggregate(parentId, childId): Aggregate {
+function getUpsertData(parentId, childId): UpsertData {
   if (!h[parentId]) h[parentId] = {};
   const c = h[parentId];
-  if (!c[childId]) c[childId] = { s: [], x: [], i: null, u: null };
+  if (!c[childId])
+    c[childId] = {
+      sum: {} as { [key in SUM_KEY]: number },
+      updateTs: 0,
+      imageId: null,
+      url: null
+    };
   return c[childId];
 }
 
-function getDelta(parentId, childId, u: Upsert): Aggregate {
-  const delta: Aggregate = { s: [], x: [], i: null, u: null };
-  const current = getAggregate(parentId, childId);
-  for (let j = 0; j < u.a.s.length; j++) {
-    delta.s[j] = (u.p[j] || 0) * (u.a.s[j] - (current.s[j] || 0));
+function getDelta(parentId, childId, u: Upsert): UpsertData {
+  const delta: UpsertData = {
+    sum: {} as { [key in SUM_KEY]: number },
+    updateTs: 0,
+    imageId: null,
+    url: null
+  };
+  const current = getUpsertData(parentId, childId);
+  for (const key in SUM_KEY) {
+    delta.sum[key] =
+      (u.delta[key] || 0) * (u.data.sum[key] - (current.sum[key] || 0));
   }
-  for (let j = 0; j < u.a.x.length; j++) {
-    delta.x[j] = Math.max(u.a.x[j], current.x[j] || u.a.x[j]);
-  }
+  delta.updateTs = Math.max(
+    u.data.updateTs,
+    current.updateTs || u.data.updateTs
+  );
   return delta;
 }
 
 function updateAggregates(u: Upsert) {
-  if (u.d) {
+  if (u.done) {
     console.error(`Upsert is already done: ${JSON.stringify(u)}`);
     return;
   }
 
-  const kelurahanId = u.k;
+  const kelurahanId = u.kelId;
   const path = H[kelurahanId].parentIds.slice();
   path.push(kelurahanId);
-  path.push(u.n);
+  path.push(u.tpsNo);
 
   if (path.length !== 6) {
     console.error(`Path length != 5: ${JSON.stringify(path)}`);
@@ -70,20 +84,20 @@ function updateAggregates(u: Upsert) {
 
   const delta = getDelta(path[4], path[5], u);
   for (let i = 0; i + 1 < path.length; i++) {
-    mergeAggregates(getAggregate(path[i], path[i + 1]), delta);
+    mergeAggregates(getUpsertData(path[i], path[i + 1]), delta);
   }
 
-  if (decodeAgg(u.p).pending === 1) {
+  if (u.delta.pending) {
     // The pending flag is set to true, update the TPS serving url.
-    const a = getAggregate(path[4], path[5]);
+    const data = getUpsertData(path[4], path[5]);
 
     // Set the proof URL if no longer pending, else nullify it.
-    if (decodeAgg(u.a.s).pending === 0) {
-      a.u = u.a.u;
-      u.i = u.a.i;
+    if (!u.data.sum.pending) {
+      data.url = u.data.url;
+      data.imageId = u.data.imageId;
     } else {
-      a.u = null;
-      a.i = null;
+      data.url = null;
+      data.imageId = null;
     }
   }
 }

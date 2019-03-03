@@ -1,29 +1,69 @@
-export interface Aggregate {
-    s: number[];
-    x: number[];
-    u: string;
-    i: string;
+export declare const MAX_RELAWAN_TRUSTED_DEPTH = 2;
+export interface PublicProfile {
+    uid: string;
+    link: string;
+    name: string;
+    pic: string;
 }
-export interface DecodedAggregate {
-    jokowi: number;
-    prabowo: number;
-    sah: number;
-    tidakSah: number;
-    pending: number;
-    masalah: number;
+export interface Relawan {
+    profile: PublicProfile;
+    referrer: PublicProfile;
+    depth: number;
+    code: {
+        [code: string]: CodeReferral;
+    };
+    auth: any;
 }
-export declare function encodeAgg(a: DecodedAggregate): number[];
-export declare function decodeAgg(sum: number[]): DecodedAggregate;
+export declare enum SUM_KEY {
+    paslon1 = "paslon1",
+    paslon2 = "paslon2",
+    sah = "sah",
+    tidakSah = "tidakSah",
+    pending = "pending",
+    error = "error"
+}
+export interface Upsert {
+    uploader: PublicProfile;
+    reviewer: PublicProfile;
+    reporter: PublicProfile;
+    data: UpsertData;
+    meta: ImageMetadata;
+    kelId: number;
+    tpsNo: number;
+    delta: {
+        [key in SUM_KEY]: 0 | 1;
+    };
+    ip: string | string[];
+    done: number;
+    deleted: boolean;
+    createdTs: number;
+}
+export interface CodeReferral {
+    issuer: PublicProfile;
+    issuedTs: number;
+    name: string;
+    claimer: PublicProfile;
+    claimedTs: number;
+    depth: number;
+}
+export interface UpsertData {
+    sum: {
+        [key in SUM_KEY]: number;
+    };
+    imageId: string;
+    url: string;
+    updateTs: number;
+}
 export interface ApiUploadRequest {
     kelurahanId: number;
     tpsNo: number;
-    aggregate: Aggregate;
+    data: UpsertData;
     metadata: ImageMetadata;
 }
 export interface ApiApproveRequest {
     kelurahanId: number;
     tpsNo: number;
-    aggregate: Aggregate;
+    data: UpsertData;
     delete: boolean;
 }
 export interface HierarchyNode {
@@ -33,8 +73,8 @@ export interface HierarchyNode {
     parentNames: string[];
     children: any[];
     depth: number;
-    aggregate: {
-        [key: string]: Aggregate;
+    data: {
+        [key: string]: UpsertData;
     };
 }
 export interface ImageMetadata {
@@ -55,49 +95,6 @@ export interface ImageMetadata {
 export declare function extractImageMetadata(m: any): ImageMetadata | null;
 export declare function getServingUrl(url: string, size: number): string;
 export declare function isValidImageId(imageId: string): RegExpMatchArray;
-export declare const MAX_RELAWAN_TRUSTED_DEPTH = 2;
-export interface Upsert {
-    u: string;
-    k: number;
-    n: number;
-    p: number[];
-    i: string | string[];
-    a: Aggregate;
-    d: number;
-    r: string;
-    w: string;
-    o: string;
-    g: Aggregate;
-    l: boolean;
-    t: number;
-    m: ImageMetadata;
-}
-export interface CodeReferral {
-    i: string;
-    n: string;
-    l: string;
-    t: number;
-    d: number;
-    m: string;
-    c: string;
-    e: string;
-    r: string;
-    a: number;
-}
-export interface Relawan {
-    f: string;
-    l: string;
-    n: string;
-    p: string;
-    d: number;
-    b: string;
-    e: string;
-    r: string;
-    c: {
-        [code: string]: CodeReferral;
-    };
-    u: any;
-}
 export declare class FsPath {
     static relawan(uid: string): string;
     static codeReferral(code: string): string;

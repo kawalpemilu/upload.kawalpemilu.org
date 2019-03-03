@@ -1,52 +1,71 @@
-export interface Aggregate {
-  s: number[]; // Sum.
-  x: number[]; // Max.
-  u: string; // URL proof of this Aggregate.
-  i: string; // Image Id of in upserts.
+export const MAX_RELAWAN_TRUSTED_DEPTH = 2;
+
+export interface PublicProfile {
+  uid: string; // Firebase User ID
+  link: string; // App scoped link to Facebook profile
+  name: string; // User Full Name
+  pic: string; // Link to user's profile picture
 }
 
-export interface DecodedAggregate {
-  jokowi: number;   // 0
-  prabowo: number;  // 1
-  sah: number;      // 2
-  tidakSah: number; // 3
-  pending: number;  // 4
-  masalah: number;  // 5
+export interface Relawan {
+  profile: PublicProfile;
+  referrer: PublicProfile;
+  depth: number; // Referral depth (0: ninja, 1: admin, 2: trusted, 3+:normal)
+  code: { [code: string]: CodeReferral }; // Code referrals
+  auth: any; // firebase.User reference.
 }
 
-export function encodeAgg(a: DecodedAggregate): number[] {
-  return [
-    a.jokowi,
-    a.prabowo,
-    a.sah,
-    a.tidakSah,
-    a.pending,
-    a.masalah
-  ];
+export enum SUM_KEY {
+  paslon1 = 'paslon1',
+  paslon2 = 'paslon2',
+  sah = 'sah',
+  tidakSah = 'tidakSah',
+  pending = 'pending',
+  error = 'error'
 }
 
-export function decodeAgg(sum: number[]): DecodedAggregate {
-  return {
-    jokowi: sum[0],
-    prabowo: sum[1],
-    sah: sum[2],
-    tidakSah: sum[3],
-    pending: sum[4],
-    masalah: sum[5],
-  };
+export interface Upsert {
+  uploader: PublicProfile;
+  reviewer: PublicProfile;
+  reporter: PublicProfile;
+  data: UpsertData;
+  meta: ImageMetadata;
+  kelId: number;
+  tpsNo: number;
+  delta: { [key in SUM_KEY]: 0 | 1 }; // Process only this keys if set.
+  ip: string | string[]; // IP Address
+  done: number; // Set to 0 to reprocess this upsert.
+  deleted: boolean; // Deleted
+  createdTs: number;
+}
+
+export interface CodeReferral {
+  issuer: PublicProfile;
+  issuedTs: number; // The issued timestamp
+  name: string; // The intended claimer name
+  claimer: PublicProfile;
+  claimedTs: number; // The claimed timestamp
+  depth: number; // The referral depth
+}
+
+export interface UpsertData {
+  sum: { [key in SUM_KEY]: number };
+  imageId: string;
+  url: string; // Proof of this Data.
+  updateTs: number; // Last update timestamp.
 }
 
 export interface ApiUploadRequest {
   kelurahanId: number;
   tpsNo: number;
-  aggregate: Aggregate;
+  data: UpsertData;
   metadata: ImageMetadata;
 }
 
 export interface ApiApproveRequest {
   kelurahanId: number;
   tpsNo: number;
-  aggregate: Aggregate;
+  data: UpsertData;
   delete: boolean;
 }
 
@@ -57,7 +76,7 @@ export interface HierarchyNode {
   parentNames: string[];
   children: any[];
   depth: number;
-  aggregate: { [key: string]: Aggregate };
+  data: { [key: string]: UpsertData };
 }
 
 export interface ImageMetadata {
@@ -106,51 +125,6 @@ export function getServingUrl(url: string, size: number) {
 
 export function isValidImageId(imageId: string) {
   return typeof imageId === 'string' && imageId.match(/^[A-Za-z0-9]{20}$/);
-}
-
-export const MAX_RELAWAN_TRUSTED_DEPTH = 2;
-
-export interface Upsert {
-  u: string; // The owner user ID
-  k: number; // Kelurahan ID
-  n: number; // Tps No
-  p: number[]; // Process only these indices
-  i: string | string[]; // IP Address
-  a: Aggregate; // Value to set
-  d: number; // Processed Timestamp
-  r: string; // Approved by
-  w: string; // Approver name
-  o: string; // Approver profile link
-  g: Aggregate; // Previous value of 'a' before approval
-  l: boolean; // Deleted
-  t: number; // Creation Timestamp
-  m: ImageMetadata;
-}
-
-export interface CodeReferral {
-  i: string; // The issuer uid
-  n: string; // The issuer name
-  l: string; // The issuer profile link
-  t: number; // The issued timestamp
-  d: number; // The referral depth
-  m: string; // The intended claimer name
-  c: string; // The claimer uid
-  e: string; // The claimer name
-  r: string; // The claimer profile link
-  a: number; // The claimed timestamp
-}
-
-export interface Relawan {
-  f: string; // First name
-  l: string; // App scoped link to profile
-  n: string; // Full name
-  p: string; // Link to profile picture
-  d: number; // Referral depth (0: ninja, 1: admin, 2: trusted, 3+:normal)
-  b: string; // Referrer uid
-  e: string; // Referrer name
-  r: string; // Referrer profile link
-  c: { [code: string]: CodeReferral }; // Code referrals
-  u: any; // firebaseUser reference.
 }
 
 export class FsPath {
