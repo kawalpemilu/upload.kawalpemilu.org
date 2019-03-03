@@ -94,12 +94,19 @@ function makeRequest(kelurahanId, tpsNo) {
   const body: ApiUploadRequest = {
     kelurahanId,
     tpsNo,
-    aggregate: {
+    data: {
       // s: [0, 0, 0, 0, 0],
-      s: [1, Math.floor(Math.random() * 999), 2, 4, 0],
-      x: [],
-      i: `zzzzzzz${kelurahanId}t${tpsNo}`,
-      u: null
+      sum: {
+        paslon1: Math.floor(Math.random() * 999),
+        paslon2: 0,
+        sah: 0,
+        tidakSah: 1,
+        pending: 0,
+        error: 0
+      },
+      updateTs: 0,
+      imageId: `zzzzzzz${kelurahanId}t${tpsNo}`,
+      url: null
     },
     metadata: {} as ImageMetadata
   };

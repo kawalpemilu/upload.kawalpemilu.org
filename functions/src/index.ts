@@ -5,7 +5,6 @@ import * as admin from 'firebase-admin';
 import * as request from 'request-promise';
 import * as express from 'express';
 import {
-  Aggregate,
   ImageMetadata,
   Upsert,
   extractImageMetadata,
@@ -17,9 +16,9 @@ import {
   Relawan,
   isValidImageId,
   MAX_RELAWAN_TRUSTED_DEPTH,
-  decodeAgg,
-  encodeAgg,
-  ApiApproveRequest
+  ApiApproveRequest,
+  UpsertData,
+  SUM_KEY
 } from 'shared';
 
 const t1 = Date.now();
@@ -178,13 +177,7 @@ async function getServingUrlFromFirestore(imageId, res, uid) {
 async function parseLocationAndAgg(b: any, res, uid) {
   const kelId = b.kelurahanId;
   const tpsNo = b.tpsNo;
-  const a = b.aggregate;
   try {
-    if (!a || !a.s || !a.s.length || a.s.length > 4) {
-      console.warn(`Invalid sum ${a}, uid = ${uid}`);
-      res.json({ error: 'Invalid aggregates sum' });
-      return [false];
-    }
     const c = await getChildren(kelId);
     if (!c || !c.name) {
       console.warn(`Children missing ${kelId}, uid = ${uid}`);
@@ -202,7 +195,26 @@ async function parseLocationAndAgg(b: any, res, uid) {
     res.json({ error: 'Server error please retry in 1 minute' });
     return [false];
   }
-  return [kelId, tpsNo, a];
+  return [kelId, tpsNo];
+}
+
+function getAggregate(res, uid, data: UpsertData, imageId, servingUrl) {
+  const ret: UpsertData = {
+    sum: {} as { [key in SUM_KEY]: number },
+    updateTs: 0,
+    imageId,
+    url: servingUrl
+  };
+  for (const key in SUM_KEY) {
+    if (key in ['pending', 'error']) continue;
+    const sum = data.sum[key];
+    if (typeof sum !== 'number' || sum < 0 || sum > 1000) {
+      console.error(`Upload data sum out of range ${uid}`);
+      return res.json({ error: 'Invalid sum range' });
+    }
+    ret.sum[key] = sum;
+  }
+  return ret;
 }
 
 app.post('/api/upload', async (req, res) => {
@@ -210,48 +222,56 @@ app.post('/api/upload', async (req, res) => {
   if (!user) return null;
 
   const b = req.body as ApiUploadRequest;
-  const imageId = b.aggregate && b.aggregate.i;
+  if (!b.data) {
+    console.error(`Upload data is missing ${user.uid}`);
+    return res.json({ error: 'Missing data' });
+  }
+  const imageId = b.data.imageId;
 
   // TODO: limit number of photos per tps and per user.
 
   const servingUrl = await getServingUrlFromFirestore(imageId, res, user.uid);
   if (!servingUrl) return null;
 
-  const [kelId, tpsNo, a] = await parseLocationAndAgg(b, res, user.uid);
+  const [kelId, tpsNo] = await parseLocationAndAgg(b, res, user.uid);
   if (!kelId) return null;
 
-  const ts = Date.now();
-  const agg: Aggregate = { s: [], x: [ts], i: imageId, u: servingUrl };
-  for (const sum of a.s) {
-    if (typeof sum !== 'number' || sum < 0 || sum > 1000) {
-      return res.json({ error: 'Invalid sum range' });
-    }
-    agg.s.push(sum);
+  if (!b.data.sum) {
+    console.error(`Upload data sum is missing ${user.uid}`);
+    return res.json({ error: 'Missing data sum' });
   }
-  agg.s[4] = 1; // Set pending.
+
+  const data = getAggregate(res, user.uid, b.data, imageId, servingUrl);
+  data.sum.pending = 1;
+
+  const uploader = (await fsdb
+    .doc(FsPath.relawan(user.uid))
+    .get()).data() as Relawan;
+  if (!uploader) {
+    console.error(`Uploader is missing ${user.uid}`);
+    return res.json({ error: 'Uploader not found' });
+  }
 
   const upsert: Upsert = {
-    u: user.uid,
-    k: kelId,
-    n: tpsNo,
-    p: encodeAgg({
-      jokowi: 0,
-      prabowo: 0,
+    uploader: uploader.profile,
+    reviewer: null,
+    reporter: null,
+    kelId,
+    tpsNo,
+    delta: {
+      paslon1: 0,
+      paslon2: 0,
       sah: 0,
       tidakSah: 0,
       pending: 1,
-      masalah: 0
-    }),
-    i: req.headers['fastly-client-ip'],
-    a: agg,
-    d: 0,
-    r: null,
-    w: null,
-    o: null,
-    g: null,
-    l: false,
-    t: ts,
-    m: extractImageMetadata(b.metadata)
+      error: 0
+    },
+    ip: JSON.stringify(req.headers['fastly-client-ip']),
+    data,
+    meta: extractImageMetadata(b.metadata),
+    done: 0,
+    deleted: false,
+    createdTs: Date.now()
   };
 
   await fsdb.doc(FsPath.upserts(imageId)).set(upsert);
@@ -264,49 +284,45 @@ app.post('/api/approve', async (req, res) => {
   if (!user) return null;
 
   const b = req.body as ApiApproveRequest;
-  const imageId = b.aggregate && b.aggregate.i;
+  if (!b.data) {
+    console.warn(`No data, uid = ${user.uid}`);
+    return res.json({ error: 'No data' });
+  }
+
+  const imageId = b.data.imageId;
   if (!isValidImageId(imageId)) {
     console.warn(`Invalid imageId ${imageId}, uid = ${user.uid}`);
     return res.json({ error: 'Invalid imageId' });
   }
 
-  const [kelId, tpsNo, a] = await parseLocationAndAgg(b, res, user.uid);
+  const [kelId, tpsNo] = await parseLocationAndAgg(b, res, user.uid);
 
+  const data = getAggregate(res, user.uid, b.data, imageId, null);
   const ts = Date.now();
-  const agg: Aggregate = { s: [], x: [ts], i: imageId, u: undefined };
-  for (const sum of a.s) {
-    if (typeof sum !== 'number' || sum < 0 || sum > 1000) {
-      console.warn(`Invalid sum ${sum}, uid = ${user.uid}`);
-      return res.json({ error: 'Invalid sum range' });
-    }
-    agg.s.push(sum);
-  }
+  data.updateTs = ts;
 
   const uRef = fsdb.doc(FsPath.upserts(imageId));
   const rRef = fsdb.doc(FsPath.relawan(user.uid));
   await fsdb.runTransaction(async t => {
     const u = (await t.get(uRef)).data() as Upsert;
     const r = (await t.get(rRef)).data() as Relawan;
-    u.k = kelId;
-    u.n = tpsNo;
-    u.r = user.uid;
-    u.w = r.n;
-    u.o = r.l;
-    u.g = u.a;
-    agg.u = u.a.u;
-    agg.s[4] = 0;
-    agg.s[5] = 0;
-    u.a = agg;
-    u.p = encodeAgg({
-      jokowi: 1,
-      prabowo: 1,
+    u.kelId = kelId;
+    u.tpsNo = tpsNo;
+    u.reviewer = r.profile;
+    data.url = u.data.url;
+    data.sum.pending = 0;
+    data.sum.error = 0;
+    u.data = data;
+    u.delta = {
+      paslon1: 1,
+      paslon2: 1,
       sah: 1,
       tidakSah: 1,
       pending: 1,
-      masalah: 1
-    });
-    u.d = 0;
-    u.l = !!b.delete;
+      error: 1
+    };
+    u.done = 0;
+    u.deleted = !!b.delete;
     t.update(uRef, u);
   });
 
@@ -325,21 +341,19 @@ app.post('/api/problem', async (req, res) => {
   const uRef = fsdb.doc(FsPath.upserts(imageId));
   const ok = await fsdb.runTransaction(async t => {
     const u = (await t.get(uRef)).data() as Upsert;
-    if (!u || !u.a) {
+    if (!u || !u.data) {
       return false;
     }
-    const da = decodeAgg(u.a.s);
-    da.masalah = 1;
-    u.a.s = encodeAgg(da);
-    u.p = encodeAgg({
-      jokowi: 0,
-      prabowo: 0,
+    u.data.sum.error = 1;
+    u.delta = {
+      paslon1: 0,
+      paslon2: 0,
       sah: 0,
       tidakSah: 0,
       pending: 0,
-      masalah: 1
-    });
-    u.d = 0;
+      error: 1
+    };
+    u.done = 0;
     t.update(uRef, u);
     return true;
   });
@@ -359,8 +373,8 @@ app.post('/api/register/create_code', async (req, res) => {
   const c = await fsdb.runTransaction(async t => {
     const r = (await t.get(rRef)).data() as Relawan;
     if (!r) return 'no_user';
-    if (r.d === undefined) return 'no_trust';
-    if (r.d >= MAX_RELAWAN_TRUSTED_DEPTH) return 'no_create';
+    if (r.depth === undefined) return 'no_trust';
+    if (r.depth >= MAX_RELAWAN_TRUSTED_DEPTH) return 'no_create';
 
     let code;
     for (let i = 0; ; i++) {
@@ -371,21 +385,17 @@ app.post('/api/register/create_code', async (req, res) => {
     }
 
     const newCode: CodeReferral = {
-      i: user.uid,
-      n: r.n,
-      l: r.l,
-      t: Date.now(),
-      d: r.d + 1,
-      m: nama,
-      c: null,
-      e: null,
-      r: null,
-      a: null
+      issuer: r.profile,
+      issuedTs: Date.now(),
+      depth: r.depth + 1,
+      name: nama,
+      claimer: null,
+      claimedTs: null
     };
     t.set(fsdb.doc(FsPath.codeReferral(code)), newCode);
 
-    if (!r.c) r.c = {};
-    r.c[code] = { m: nama, t: newCode.t } as CodeReferral;
+    if (!r.code) r.code = {};
+    r.code[code] = { name: nama, issuedTs: newCode.issuedTs } as CodeReferral;
     t.update(rRef, r);
     return code;
   });
@@ -419,7 +429,7 @@ app.post('/api/register/:code', async (req, res) => {
   const c = await fsdb.runTransaction(async t => {
     // Abort if the code does not exist or already claimed.
     const cd = (await t.get(codeRef)).data() as CodeReferral;
-    if (!cd || cd.c) return cd;
+    if (!cd || cd.claimer) return cd;
 
     // Abort if the claimer does not have relawan entry.
     const claimer = (await t.get(claimerRef)).data() as Relawan;
@@ -429,13 +439,13 @@ app.post('/api/register/:code', async (req, res) => {
     }
 
     // Abort if the user is already trusted.
-    if (claimer.d && claimer.d <= cd.d && !req.query.abracadabra) {
+    if (claimer.depth && claimer.depth <= cd.depth && !req.query.abracadabra) {
       console.log(`Attempt to downgrade ${user.uid}, ${code}`);
       return null;
     }
 
     // Abort if the issuer does not have relawan entry.
-    const issuerRef = fsdb.doc(FsPath.relawan(cd.i));
+    const issuerRef = fsdb.doc(FsPath.relawan(cd.issuer.uid));
     const issuer = (await t.get(issuerRef)).data() as Relawan;
     if (!issuer) {
       console.error(`Issuer ${user.uid} is not in Firestore, ${code}`);
@@ -443,21 +453,17 @@ app.post('/api/register/:code', async (req, res) => {
     }
 
     // Abort if the issuer never generate the code.
-    const i = issuer.c[code];
+    const i = issuer.code[code];
     if (!i) {
       console.error(`Issuer ${user.uid} never generate ${code}`);
       return null;
     }
 
-    i.c = cd.c = user.uid;
-    i.e = cd.e = claimer.n;
-    i.r = cd.r = claimer.l;
-    i.a = cd.a = ts;
+    i.claimer = cd.claimer = claimer.profile;
+    i.claimedTs = cd.claimedTs = ts;
 
-    claimer.d = cd.d;
-    claimer.b = cd.i;
-    claimer.e = cd.n;
-    claimer.r = cd.l;
+    claimer.depth = cd.depth;
+    claimer.referrer = cd.issuer;
 
     t.update(codeRef, cd);
     t.update(issuerRef, issuer);
@@ -465,7 +471,11 @@ app.post('/api/register/:code', async (req, res) => {
     return cd;
   });
 
-  return res.json(!c || c.c !== user.uid ? { error: 'Invalid' } : { code: c });
+  return res.json(
+    !c || !c.claimer || c.claimer.uid !== user.uid
+      ? { error: 'Invalid' }
+      : { code: c }
+  );
 });
 
 exports.api = functions.https.onRequest(app);
