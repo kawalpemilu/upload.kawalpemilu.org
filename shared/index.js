@@ -1,5 +1,6 @@
 "use strict";
 exports.__esModule = true;
+exports.APP_SCOPED_PREFIX_URL = 'https://www.facebook.com/app_scoped_user_id/';
 exports.MAX_RELAWAN_TRUSTED_DEPTH = 2;
 var SUM_KEY;
 (function (SUM_KEY) {

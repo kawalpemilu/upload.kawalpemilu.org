@@ -12,7 +12,8 @@ import {
   CodeReferral,
   Upsert,
   MAX_RELAWAN_TRUSTED_DEPTH,
-  decodeAgg
+  PublicProfile,
+  APP_SCOPED_PREFIX_URL
 } from 'shared';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { HierarchyService } from '../hierarchy.service';
@@ -70,7 +71,7 @@ export class RegistrasiComponent implements OnInit {
         user
           ? this.fsdb
               .collection<Upsert>(FsPath.upserts(), ref =>
-                ref.where('u', '==', user.uid).limit(10)
+                ref.where('uploader.uid', '==', user.uid).limit(10)
               )
               .valueChanges()
               .pipe(
@@ -78,16 +79,16 @@ export class RegistrasiComponent implements OnInit {
                   const details: UploadDetail[] = [];
                   for (const u of uploads) {
                     details.push({
-                      kelId: u.k,
+                      kelId: u.kelId,
                       kelName: (await this.hie
-                        .get$(u.k)
+                        .get$(u.kelId)
                         .pipe(take(1))
                         .toPromise()).name,
-                      tpsNo: u.n,
-                      servingUrl: u.a.u,
-                      imageId: u.a.i,
-                      hasProblem: decodeAgg(u.a.s).masalah,
-                      uploadTs: u.a.x[0]
+                      tpsNo: u.tpsNo,
+                      servingUrl: u.data.url,
+                      imageId: u.data.imageId,
+                      hasProblem: u.data.sum.error,
+                      uploadTs: u.data.updateTs
                     });
                   }
                   return details.sort((a, b) => b.uploadTs - a.uploadTs);
@@ -102,8 +103,8 @@ export class RegistrasiComponent implements OnInit {
     console.log('Registrasi inited');
   }
 
-  getScopedUrl(p) {
-    return UserService.SCOPED_PREFIX + p;
+  getScopedUrl(p: PublicProfile) {
+    return APP_SCOPED_PREFIX_URL + p.link;
   }
 
   getError(ctrlName: string) {
@@ -115,12 +116,12 @@ export class RegistrasiComponent implements OnInit {
   }
 
   getReferralCodes(relawan: Relawan, claimed: boolean) {
-    return Object.keys(relawan.c || {})
-      .filter(code => !!relawan.c[code].c === claimed)
+    return Object.keys(relawan.code || {})
+      .filter(code => !!relawan.code[code].claimer === claimed)
       .sort((a, b) => {
-        const ca = relawan.c[a];
-        const cb = relawan.c[b];
-        return cb.t - ca.t;
+        const ca = relawan.code[a];
+        const cb = relawan.code[b];
+        return cb.issuedTs - ca.issuedTs;
       });
   }
 

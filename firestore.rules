@@ -2,8 +2,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Relawan database.
     match /r/{userId} {
-      allow read: if request.auth.uid != null;
-      allow write: if request.auth.uid == userId;
+      allow read: if request.auth.uid == userId;
     }
  
     // Referral codes.

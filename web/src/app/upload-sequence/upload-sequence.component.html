@@ -16,26 +16,15 @@
 
     <ng-container *ngIf="state.servingUrl; else uploadfoto">
       <ng-container *ngIf="!state.adaKesalahan; else uploadfoto">
-        TPS ini telah difoto oleh {{ 'orang' }}:
+        TPS ini telah memiliki foto:
 
         <p>
           <app-thumbnail [url]="state.servingUrl"></app-thumbnail>
         </p>
 
         <p>
-          Jika foto diatas sudah benar dan jelas, anda tidak perlu mengupload
-          foto lain di TPS ini.
-        </p>
-
-        <p>
           Jika ada kesalahan di foto tersebut, laporkan kesalahan dahulu sebelum
-          anda bisa mengupload foto anda:
-        </p>
-
-        <p>
-          <button mat-raised-button color="warn">
-            Laporkan Kesalahan
-          </button>
+          anda bisa mengupload foto anda.
         </p>
       </ng-container>
     </ng-container>

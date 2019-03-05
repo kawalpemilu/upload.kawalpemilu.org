@@ -1,10 +1,13 @@
+export const APP_SCOPED_PREFIX_URL = 'https://www.facebook.com/app_scoped_user_id/';
 export const MAX_RELAWAN_TRUSTED_DEPTH = 2;
 
 export interface PublicProfile {
   uid: string; // Firebase User ID
   link: string; // App scoped link to Facebook profile
   name: string; // User Full Name
+  email: string; // User email
   pic: string; // Link to user's profile picture
+  loginTs: number; // The timestamp of last login
 }
 
 export interface Relawan {

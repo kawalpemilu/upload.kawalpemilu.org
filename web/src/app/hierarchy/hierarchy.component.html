@@ -22,8 +22,8 @@
           TOTAL ({{ state.children.length }}) &nbsp;
         </th>
         <th class="paslon1">
-          {{ sum(state, 4) | number }} /
-          {{ sum(state, 4) / sumTps(state) | number: '1.0-1' }}%
+          {{ sum(state, 'tidakSah') | number }} /
+          {{ sum(state, 'tidakSah') / sumTps(state) | number: '1.0-1' }}%
         </th>
         <th class="paslon2">{{ sumTps(state) | number }}</th>
       </tr>
@@ -51,13 +51,16 @@
               class="link"
               >{{ c[1] | uppercase }}</a
             >
-            <ng-container *ngIf="state.aggregate[c[0]] as a">
-              <ng-container *ngIf="a.s[4] || a.s[5]">
-                (<span *ngIf="a.s[4]" style="color: orange">{{ a.s[4] }}</span
-                ><ng-container *ngIf="a.s[5]"
-                  ><ng-container *ngIf="a.s[4] && a.s[5]">/</ng-container
-                  ><span *ngIf="a.s[5]" style="color: red">{{
-                    a.s[5]
+            <ng-container *ngIf="state.data[c[0]] as d">
+              <ng-container *ngIf="d.sum.pending || d.sum.error">
+                (<span *ngIf="d.sum.pending" style="color: orange">{{
+                  d.sum.pending
+                }}</span
+                ><ng-container *ngIf="d.sum.error"
+                  ><ng-container *ngIf="d.sum.pending && d.sum.error"
+                    >/</ng-container
+                  ><span *ngIf="d.sum.error" style="color: red">{{
+                    d.sum.error
                   }}</span></ng-container
                 >)
               </ng-container>

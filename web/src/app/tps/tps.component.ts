@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
-import { Aggregate, HierarchyNode, MAX_RELAWAN_TRUSTED_DEPTH } from 'shared';
+import { HierarchyNode, MAX_RELAWAN_TRUSTED_DEPTH, UpsertData } from 'shared';
 import { UploadService } from '../upload.service';
 import { UserService } from '../user.service';
 import { ApiService } from '../api.service';
@@ -13,7 +13,7 @@ interface Tps {
   tpsNo: number;
   laki: number;
   perempuan: number;
-  aggregate: Aggregate;
+  data: UpsertData;
 }
 
 interface State extends HierarchyNode {
@@ -28,6 +28,7 @@ interface State extends HierarchyNode {
 })
 export class TpsComponent implements OnInit {
   state$: Observable<State>;
+  isLoading = false;
 
   constructor(
     public hie: HierarchyService,
@@ -56,10 +57,10 @@ export class TpsComponent implements OnInit {
             tpsNo: arr[0],
             laki: arr[1],
             perempuan: arr[2],
-            aggregate: state.aggregate[arr[0]]
+            data: state.data[arr[0]]
           };
           state.numPending +=
-            (t.aggregate && (t.aggregate.s[4] || t.aggregate.s[5])) || 0;
+            (t.data && (t.data.sum.pending || t.data.sum.error)) || 0;
           state.tpsList.push(t);
         });
         return state;
@@ -69,7 +70,11 @@ export class TpsComponent implements OnInit {
     console.log('TpsComponent inited');
   }
 
-  async laporKesalahan(user, imageId) {
-    this.api.post(user, `problem`, { imageId });
+  async laporKesalahan(user, imageId, kelId) {
+    this.isLoading = true;
+    await this.api.post(user, `problem`, { imageId });
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    await this.hie.update(user, kelId);
+    this.isLoading = false;
   }
 }

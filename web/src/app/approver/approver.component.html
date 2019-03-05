@@ -1,91 +1,121 @@
-<table #tbl style="display: inline">
+<table #tbl style="display: inline; min-height: 400px">
   <tbody *ngIf="(upsert$ | async) as u">
     <tr>
       <td>
         <img
-          [src]="gsu(u.a.u, 1240)"
+          [src]="gsu(u.data.url, 1240)"
           width="400"
           alt="thumbnail"
           style="padding: 5px"
         />
       </td>
-      <td valign="top">
-        <form [formGroup]="formGroup">
-          <mat-form-field>
-            <input
-              class="angka"
-              matInput
-              placeholder="Suara Paslon 1"
-              formControlName="paslon1Ctrl"
-              type="number"
-              required
-            />
-          </mat-form-field>
-          <br />
-          <mat-form-field>
-            <input
-              class="angka"
-              matInput
-              placeholder="Suara Paslon 2"
-              formControlName="paslon2Ctrl"
-              type="number"
-              required
-            />
-          </mat-form-field>
-          <br />
-          <mat-form-field>
-            <input
-              class="angka"
-              matInput
-              placeholder="Suara Sah"
-              formControlName="sahCtrl"
-              type="number"
-              required
-            />
-          </mat-form-field>
-          <br />
-          <mat-form-field>
-            <input
-              class="angka"
-              matInput
-              placeholder="Suara Tidak Sah"
-              formControlName="tidakSahCtrl"
-              type="number"
-              required
-            />
-          </mat-form-field>
-          <br />
-
-          <ng-container *ngIf="u.m?.m">
-            {{ u.m.m[0] }}
-          </ng-container>
-          <ng-container *ngIf="u.m?.m"> ({{ u.m.m[1] }}) </ng-container>
-          <a *ngIf="u.m?.x" href="{{ mapLink(u.m) }}" target="_blank"
-            ><mat-icon>map</mat-icon></a
-          >
+      <td valign="top" width="200">
+        <ng-template #done>
+          Paslon1: {{ u.data.sum.paslon1 }}<br />
+          Paslon2: {{ u.data.sum.paslon2 }}<br />
+          Sah: {{ u.data.sum.sah }}<br />
+          TidakSah: {{ u.data.sum.tidakSah }}<br />
 
           <p>
-            <button
-              type="submit"
-              [disabled]="formGroup.invalid || isLoading"
-              mat-raised-button
-              color="primary"
-              (click)="approve(u, false)"
-            >
-              Approve
-            </button>
-
-            &nbsp;
-            <button
-              mat-raised-button
-              color="warn"
-              (click)="approve(u, true)"
-              [disabled]="isLoading"
-            >
-              Reject
-            </button>
+            Dicek oleh:
+            <a href="{{ SCOPED_PREFIX + u.reviewer.link }}" target="_blank">{{
+              u.reviewer.name
+            }}</a>
           </p>
-        </form>
+        </ng-template>
+
+        <ng-container *ngIf="u.data.sum.error || !u.reviewer; else done">
+          <p *ngIf="u.data.sum.error" style="background-color: #FDD">
+            Kesalahan dilaporkan oleh:
+            <a href="{{ SCOPED_PREFIX + u.reporter.link }}" target="_blank">{{
+              u.reporter.name
+            }}</a>
+          </p>
+
+          <p>
+            Foto diupload oleh:<br />
+            <a href="{{ SCOPED_PREFIX + u.uploader?.link }}" target="_blank">{{
+              u.uploader.name
+            }}</a>
+          </p>
+
+          <form [formGroup]="formGroup">
+            <mat-form-field>
+              <input
+                class="angka"
+                matInput
+                placeholder="Suara Paslon 1"
+                formControlName="paslon1Ctrl"
+                type="number"
+                required
+              />
+            </mat-form-field>
+            <br />
+            <mat-form-field>
+              <input
+                class="angka"
+                matInput
+                placeholder="Suara Paslon 2"
+                formControlName="paslon2Ctrl"
+                type="number"
+                required
+              />
+            </mat-form-field>
+            <br />
+            <mat-form-field>
+              <input
+                class="angka"
+                matInput
+                placeholder="Suara Sah"
+                formControlName="sahCtrl"
+                type="number"
+                required
+              />
+            </mat-form-field>
+            <br />
+            <mat-form-field>
+              <input
+                class="angka"
+                matInput
+                placeholder="Suara Tidak Sah"
+                formControlName="tidakSahCtrl"
+                type="number"
+                required
+              />
+            </mat-form-field>
+            <br />
+
+            <ng-container *ngIf="u.m?.m">
+              {{ u.m.m[0] }}
+            </ng-container>
+            <ng-container *ngIf="u.m?.m"> ({{ u.m.m[1] }}) </ng-container>
+            <a *ngIf="u.m?.x" href="{{ mapLink(u.m) }}" target="_blank"
+              ><mat-icon>map</mat-icon></a
+            >
+
+            <p>
+              <button
+                type="submit"
+                [disabled]="formGroup.invalid || isLoading"
+                mat-raised-button
+                color="primary"
+                (click)="approve(u, false)"
+              >
+                Approve
+              </button>
+
+              &nbsp;
+              <button
+                mat-raised-button
+                color="warn"
+                (click)="approve(u, true)"
+                [disabled]="isLoading"
+              >
+                Reject
+              </button>
+            </p>
+          </form>
+        </ng-container>
       </td>
     </tr>
   </tbody>

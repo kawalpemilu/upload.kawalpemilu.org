@@ -2,8 +2,9 @@ import { Injectable } from '@angular/core';
 import { HierarchyNode } from 'shared';
 import { ApiService } from './api.service';
 import { BehaviorSubject } from 'rxjs';
-import { filter, take } from 'rxjs/operators';
+import { filter, take, distinctUntilChanged, map } from 'rxjs/operators';
 import { UserService } from './user.service';
+import { User } from 'firebase';
 
 @Injectable({
   providedIn: 'root'
@@ -16,13 +17,23 @@ export class HierarchyService {
     console.log('Loaded HierarchyService');
   }
 
+  async update(user: User, id: number) {
+    console.log('Update node', id);
+    if (this.hierarchy$[id]) {
+      return this.api
+        .get(user, `c/${id}?${Date.now()}`)
+        .then((c: HierarchyNode) => this.hierarchy$[id].next(c))
+        .catch(console.error);
+    }
+  }
+
   get$(id: number) {
     console.log('Fetch node', id);
     if (!this.hierarchy$[id]) {
       this.hierarchy$[id] = new BehaviorSubject({} as HierarchyNode);
     }
     const ts = Date.now();
-    if (ts - this.lastTs > 5000) {
+    if (ts - this.lastTs > 1000) {
       this.lastTs = ts;
     }
     this.userService.user$
@@ -34,6 +45,11 @@ export class HierarchyService {
           .then((c: HierarchyNode) => this.hierarchy$[id].next(c))
           .catch(console.error)
       );
-    return this.hierarchy$[id].pipe(filter(s => !!s.children));
+    return this.hierarchy$[id].pipe(
+      map(x => JSON.stringify(x)),
+      distinctUntilChanged(),
+      map(x => JSON.parse(x)),
+      filter(s => !!s.children)
+    );
   }
 }

@@ -12,7 +12,9 @@ import {
   Upsert,
   FsPath,
   Relawan,
-  ApiApproveRequest
+  ApiApproveRequest,
+  SUM_KEY,
+  APP_SCOPED_PREFIX_URL
 } from 'shared';
 import { shareReplay, filter, map, tap } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
@@ -49,6 +51,10 @@ export class ApproverComponent implements OnInit {
     });
   }
 
+  get SCOPED_PREFIX() {
+    return APP_SCOPED_PREFIX_URL;
+  }
+
   ngOnInit() {
     this.checkVisibilityChange();
   }
@@ -64,7 +70,7 @@ export class ApproverComponent implements OnInit {
   }
 
   checkVisibilityChange() {
-    if (this.upsert$) {
+    if (this.upsert$ || !this.el) {
       return;
     }
     const el = this.el.nativeElement;
@@ -86,10 +92,10 @@ export class ApproverComponent implements OnInit {
     this.upsert$ = this.fsdb
       .collection<Upsert>(FsPath.upserts(), ref =>
         ref
-          .where('k', '==', this.kelurahanId)
-          .where('n', '==', this.tpsNo)
-          .where('l', '==', false)
-          .orderBy('t', 'desc')
+          .where('kelId', '==', this.kelurahanId)
+          .where('tpsNo', '==', this.tpsNo)
+          .where('deleted', '==', false)
+          .orderBy('createdTs')
           .limit(1)
       )
       .valueChanges()
@@ -97,10 +103,10 @@ export class ApproverComponent implements OnInit {
         filter(arr => arr.length > 0),
         map(arr => arr[0]),
         tap(u => {
-          this.formGroup.get('paslon1Ctrl').setValue(u.a.s[0]);
-          this.formGroup.get('paslon2Ctrl').setValue(u.a.s[1]);
-          this.formGroup.get('sahCtrl').setValue(u.a.s[2]);
-          this.formGroup.get('tidakSahCtrl').setValue(u.a.s[3]);
+          this.formGroup.get('paslon1Ctrl').setValue(u.data.sum.paslon1);
+          this.formGroup.get('paslon2Ctrl').setValue(u.data.sum.paslon2);
+          this.formGroup.get('sahCtrl').setValue(u.data.sum.sah);
+          this.formGroup.get('tidakSahCtrl').setValue(u.data.sum.tidakSah);
         }),
         shareReplay(1)
       );
@@ -117,31 +123,36 @@ export class ApproverComponent implements OnInit {
   async approve(u: Upsert, del: boolean) {
     this.isLoading = true;
     this.formGroup.disable();
+    const sum: { [key in SUM_KEY]: number } = {
+      paslon1: this.formGroup.get('paslon1Ctrl').value,
+      paslon2: this.formGroup.get('paslon2Ctrl').value,
+      sah: this.formGroup.get('sahCtrl').value,
+      tidakSah: this.formGroup.get('tidakSahCtrl').value,
+      pending: 0,
+      error: 0
+    };
     const request: ApiApproveRequest = {
-      kelurahanId: u.k,
-      tpsNo: u.n,
-      aggregate: {
-        s: [
-          this.formGroup.get('paslon1Ctrl').value,
-          this.formGroup.get('paslon2Ctrl').value,
-          this.formGroup.get('sahCtrl').value,
-          this.formGroup.get('tidakSahCtrl').value
-        ],
-        x: [],
-        i: u.a.i,
-        u: null
+      kelurahanId: u.kelId,
+      tpsNo: u.tpsNo,
+      data: {
+        sum,
+        updateTs: 0,
+        imageId: u.data.imageId,
+        url: null
       },
-      delete: del,
+      delete: del
     };
     try {
-      const res: any = await this.api.post(this.user.u, `approve`, request);
+      const res: any = await this.api.post(this.user.auth, `approve`, request);
       if (res.ok) {
         console.log('ok');
       } else {
         console.error(res);
+        alert(JSON.stringify(res));
       }
     } catch (e) {
       console.error(e.message);
+      alert(JSON.stringify(e.message));
     }
     this.formGroup.enable();
     this.isLoading = false;

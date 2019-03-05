@@ -9,7 +9,12 @@ import { Observable } from 'rxjs';
 import { UserService } from '../user.service';
 import { User } from 'firebase';
 import * as piexif from 'piexifjs';
-import { ImageMetadata, ApiUploadRequest, HierarchyNode } from 'shared';
+import {
+  ImageMetadata,
+  ApiUploadRequest,
+  HierarchyNode,
+  SUM_KEY
+} from 'shared';
 import { ApiService } from '../api.service';
 import { HierarchyService } from '../hierarchy.service';
 
@@ -56,9 +61,9 @@ export class UploadSequenceComponent implements OnInit {
             state.adaKesalahan = false;
             for (const [tpsNo] of node.children) {
               if (tpsNo === state.tpsNo) {
-                const a = node.aggregate[tpsNo];
-                state.servingUrl = (a && a.u) || '';
-                state.adaKesalahan = state.adaKesalahan || !!(a && a.s[5]);
+                const a = node.data[tpsNo];
+                state.servingUrl = (a && a.url) || '';
+                state.adaKesalahan = state.adaKesalahan || !!(a && a.sum.error);
               }
             }
             state.node = node;
@@ -132,22 +137,26 @@ export class UploadSequenceComponent implements OnInit {
   async selesai(user: User, kelurahanId: number, tpsNo: number) {
     this.isLoading = true;
     const [metadata, imageId] = await this.uploadedMetadata$;
+    const sum: { [key in SUM_KEY]: number } = {
+      paslon1: 0,
+      paslon2: 0,
+      // paslon1: this.formGroup.get('paslon1Ctrl').value,
+      // paslon2: this.formGroup.get('paslon2Ctrl').value,
+      sah: this.formGroup.get('sahCtrl').value,
+      tidakSah: 1,
+      // tidakSah: this.formGroup.get('tidakSahCtrl').value,
+      pending: 1,
+      error: 0
+    };
+
     const request: ApiUploadRequest = {
       kelurahanId,
       tpsNo,
-      aggregate: {
-        s: [
-          1,
-          // this.formGroup.get('paslon1Ctrl').value,
-          0,
-          // this.formGroup.get('paslon2Ctrl').value,
-          this.formGroup.get('sahCtrl').value,
-          // this.formGroup.get('tidakSahCtrl').value,
-          0
-        ],
-        x: [],
-        i: imageId,
-        u: null
+      data: {
+        sum,
+        updateTs: 0,
+        imageId,
+        url: null
       },
       metadata
     };

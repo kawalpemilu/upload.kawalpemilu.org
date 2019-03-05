@@ -16,7 +16,7 @@ import {
   shareReplay,
   tap
 } from 'rxjs/operators';
-import { HierarchyNode } from 'shared';
+import { HierarchyNode, SUM_KEY } from 'shared';
 import { AppComponent } from '../app.component';
 
 @Component({
@@ -94,11 +94,11 @@ export class HierarchyComponent implements OnInit {
     console.log('Hierarchy Component Inited');
   }
 
-  sum(state: HierarchyNode, index: number) {
+  sum(state: HierarchyNode, key: SUM_KEY) {
     let res = 0;
     for (const c of state.children) {
-      const a = state.aggregate[c[0]];
-      res += (a && a.s && a.s[index]) || 0;
+      const d = state.data[c[0]];
+      res += (d && d.sum && d.sum[key]) || 0;
     }
     return res;
   }
@@ -112,14 +112,14 @@ export class HierarchyComponent implements OnInit {
   }
 
   coverage(state: HierarchyNode, cid: number) {
-    const s = state.aggregate[cid];
-    return (s && s.s[4]) || 0;
+    const s = state.data[cid];
+    return (s && s.sum['tidakSah']) || 0;
   }
 
   ago(state: HierarchyNode, cid: number) {
-    const s = state.aggregate[cid];
+    const s = state.data[cid];
     if (s) {
-      const m = (Date.now() - s.x[0]) / 1000 / 60;
+      const m = (Date.now() - s.updateTs) / 1000 / 60;
       if (m < 1) {
         return ' (*)';
       }

@@ -18,7 +18,9 @@ import {
   MAX_RELAWAN_TRUSTED_DEPTH,
   ApiApproveRequest,
   UpsertData,
-  SUM_KEY
+  SUM_KEY,
+  APP_SCOPED_PREFIX_URL,
+  PublicProfile
 } from 'shared';
 
 const t1 = Date.now();
@@ -121,7 +123,7 @@ function getChildren(cid): Promise<HierarchyNode> {
   return request(`http://${host}/api/c/${cid}`, options);
 }
 
-const CACHE_TIMEOUT = 5;
+const CACHE_TIMEOUT = 1;
 const cache_c: any = {};
 app.get('/api/c/:id', async (req, res) => {
   if (!req.query.abracadabra) {
@@ -198,7 +200,13 @@ async function parseLocationAndAgg(b: any, res, uid) {
   return [kelId, tpsNo];
 }
 
-function getAggregate(res, uid, data: UpsertData, imageId, servingUrl) {
+function getAggregate(
+  res,
+  uid,
+  data: UpsertData,
+  imageId,
+  servingUrl
+): UpsertData {
   const ret: UpsertData = {
     sum: {} as { [key in SUM_KEY]: number },
     updateTs: 0,
@@ -241,8 +249,10 @@ app.post('/api/upload', async (req, res) => {
     return res.json({ error: 'Missing data sum' });
   }
 
+  const createdTs = Date.now();
   const data = getAggregate(res, user.uid, b.data, imageId, servingUrl);
   data.sum.pending = 1;
+  data.updateTs = createdTs;
 
   const uploader = (await fsdb
     .doc(FsPath.relawan(user.uid))
@@ -252,6 +262,7 @@ app.post('/api/upload', async (req, res) => {
     return res.json({ error: 'Uploader not found' });
   }
 
+  const ip = req.headers['fastly-client-ip'];
   const upsert: Upsert = {
     uploader: uploader.profile,
     reviewer: null,
@@ -266,12 +277,12 @@ app.post('/api/upload', async (req, res) => {
       pending: 1,
       error: 0
     },
-    ip: JSON.stringify(req.headers['fastly-client-ip']),
+    ip: typeof ip === 'string' ? ip : JSON.stringify(ip),
     data,
     meta: extractImageMetadata(b.metadata),
     done: 0,
     deleted: false,
-    createdTs: Date.now()
+    createdTs
   };
 
   await fsdb.doc(FsPath.upserts(imageId)).set(upsert);
@@ -339,11 +350,13 @@ app.post('/api/problem', async (req, res) => {
   }
 
   const uRef = fsdb.doc(FsPath.upserts(imageId));
+  const rRef = fsdb.doc(FsPath.relawan(user.uid));
   const ok = await fsdb.runTransaction(async t => {
     const u = (await t.get(uRef)).data() as Upsert;
     if (!u || !u.data) {
       return false;
     }
+    const r = (await t.get(rRef)).data() as Relawan;
     u.data.sum.error = 1;
     u.delta = {
       paslon1: 0,
@@ -353,12 +366,43 @@ app.post('/api/problem', async (req, res) => {
       pending: 0,
       error: 1
     };
+    u.reporter = r.profile;
     u.done = 0;
     t.update(uRef, u);
     return true;
   });
 
   return res.json(ok ? { ok: true } : { error: 'Invalid imageId' });
+});
+
+app.post('/api/register/login', async (req, res) => {
+  const user = await validateToken(req, res);
+  if (!user) return null;
+
+  let link = req.body.link;
+  const p = APP_SCOPED_PREFIX_URL;
+  if (!link || !link.startsWith(p) || !link.match(/[a-zA-Z0-9]+\//)) {
+    console.error(`Invalid login ${user.uid} link: ${link}`);
+    link = '';
+  } else {
+    link = link.substring(p.length);
+  }
+
+  if (user.uid !== user.user_id) {
+    console.error(`UID differs ${user.uid} !== ${user.user_id}`);
+  }
+
+  const profile: PublicProfile = {
+    uid: user.user_id,
+    link,
+    email: user.email || '',
+    name: user.name,
+    pic: user.picture,
+    loginTs: Date.now()
+  };
+  await fsdb.doc(FsPath.relawan(user.uid)).set({ profile }, { merge: true });
+
+  return res.json({ ok: true });
 });
 
 app.post('/api/register/create_code', async (req, res) => {

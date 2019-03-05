@@ -3,7 +3,7 @@
     <p>
       Halo,
 
-      {{ user.u.displayName }} [<a
+      {{ user.auth.displayName }} [<a
         style="color: blue; cursor: pointer;"
         (click)="userService.logout()"
         >Logout</a
@@ -128,15 +128,15 @@
     <mat-divider></mat-divider>
     <h2>Registrasi Relawan Terpercaya</h2>
 
-    <ng-container *ngIf="user.d === undefined; else terpercaya">
+    <ng-container *ngIf="user.depth === undefined; else terpercaya">
       <ng-container *ngIf="(code$ | async) as code; else butuhkode">
-        <ng-container *ngIf="code.c; else bisaterima">
+        <ng-container *ngIf="code.claimer; else bisaterima">
           <p>Maaf, kode referral "{{ theCode }}" sudah tidak aktif.</p>
         </ng-container>
         <ng-template #bisaterima>
           <p>
-            <a href="{{ getScopedUrl(code.l) }}" target="_blank">{{
-              code.n
+            <a href="{{ getScopedUrl(code.issuer) }}" target="_blank">{{
+              code.issuer.name
             }}</a>
             mengundang anda untuk menjadi relawan terpercaya.
           </p>
@@ -144,7 +144,7 @@
           <button
             mat-raised-button
             color="primary"
-            (click)="registerCode(user.u, code)"
+            (click)="registerCode(user.auth, code)"
             [disabled]="isLoading"
           >
             Terima Undangan!
@@ -185,11 +185,13 @@
     <ng-template #terpercaya>
       <p>
         Selamat! Anda telah ditunjuk oleh
-        <a href="{{ getScopedUrl(user.r) }}" target="_blank">{{ user.e }}</a>
-        sebagai relawan terpercaya level {{ user.d }}.
+        <a href="{{ getScopedUrl(user.referrer) }}" target="_blank">{{
+          user.referrer.name
+        }}</a>
+        sebagai relawan terpercaya level {{ user.depth }}.
       </p>
 
-      <ng-container *ngIf="user.d < MAX_TRUSTED_DEPTH">
+      <ng-container *ngIf="user.depth < MAX_TRUSTED_DEPTH">
         <p>
           Anda dapat mengundang teman anda untuk menjadi relawan terpercaya
           dengan membuat kode referral dibawah ini:
@@ -215,7 +217,7 @@
             [disabled]="formGroup.invalid || isLoading"
             mat-raised-button
             color="primary"
-            (click)="createReferralCode(user.u)"
+            (click)="createReferralCode(user.auth)"
           >
             Buat Kode Referral
           </button>
@@ -237,7 +239,7 @@
                 *ngFor="let code of codes; let odd = odd"
                 [style.background-color]="odd ? '#FFF' : '#EEE'"
               >
-                <td>{{ user.c[code].m }}</td>
+                <td>{{ user.code[code].name }}</td>
                 <td>https://kawal-c1.firebaseapp.com/c/{{ code }}</td>
               </tr>
             </table>
@@ -260,12 +262,12 @@
                 *ngFor="let code of codes; let odd = odd"
                 [style.background-color]="odd ? '#FFF' : '#EEE'"
               >
-                <td>{{ user.c[code].m }}</td>
+                <td>{{ user.code[code].name }}</td>
                 <td>
                   <a
-                    href="{{ getScopedUrl(user.c[code].r) }}"
+                    href="{{ getScopedUrl(user.code[code].claimer) }}"
                     target="_blank"
-                    >{{ user.c[code].e }}</a
+                    >{{ user.code[code].claimer.name }}</a
                   >
                 </td>
               </tr>
@@ -277,7 +279,7 @@
   </ng-container>
 
   <ng-template #login>
-    <app-login fitur="registrasi relawan"></app-login>
+    <app-login fitur="registrasi relawan terpercaya"></app-login>
   </ng-template>
 </div>
 

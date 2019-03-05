@@ -5,18 +5,22 @@ import { auth, User } from 'firebase/app';
 import { Observable, of } from 'rxjs';
 import { tap, switchMap, shareReplay, filter } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
-import { FsPath, Relawan } from 'shared';
+import { FsPath, Relawan, PublicProfile } from 'shared';
+import { ApiService } from './api.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
-  static SCOPED_PREFIX = 'https://www.facebook.com/app_scoped_user_id/';
   user$: Observable<User>;
   userRelawan$: Observable<Relawan>;
   isLoading = true;
 
-  constructor(private afAuth: AngularFireAuth, private fsdb: AngularFirestore) {
+  constructor(
+    private afAuth: AngularFireAuth,
+    private fsdb: AngularFirestore,
+    private api: ApiService
+  ) {
     this.isLoading = true;
     this.user$ = this.afAuth.user.pipe(tap(() => (this.isLoading = false)));
     this.userRelawan$ = this.user$.pipe(
@@ -27,12 +31,19 @@ export class UserService {
               .valueChanges()
               .pipe(
                 filter(r => !!r),
-                tap(r => (r.u = user))
+                tap(r => (r.auth = user))
               )
           : of(null)
       ),
       shareReplay(1)
     );
+
+    this.userRelawan$.pipe(filter(r => !!r)).subscribe(r => {
+      if (!r.profile || !r.profile.link) {
+        console.log(`User profile access is required`);
+        this.logout();
+      }
+    });
 
     this.afAuth.auth
       .getRedirectResult()
@@ -43,39 +54,12 @@ export class UserService {
           result.additionalUserInfo &&
           result.additionalUserInfo.profile;
 
-        /*
-      const profile = {
-        link: 'https://www.facebook.com/app_scoped_user_id/YXNpZADpBWEZA6.../',
-        name: 'Felix Halim',
-        last_name: 'Halim',
-        granted_scopes: ['user_link', 'email', 'public_profile'],
-        id: '10154284390372081',
-        first_name: 'Felix'
-      };
-      */
-
         if (profile) {
-          const r = {
-            l: this.truncateProfile(profile.link),
-            n: profile.name,
-            f: profile.first_name,
-            p: result.user.photoURL
-          } as Relawan;
-          return this.fsdb
-            .doc(FsPath.relawan(result.user.uid))
-            .set(r, { merge: true });
+          const body = { link: profile.link };
+          return this.api.post(result.user, `register/login`, body);
         }
       })
       .catch(console.error);
-  }
-
-  truncateProfile(link: string) {
-    const p = UserService.SCOPED_PREFIX;
-    return link
-      ? link.startsWith(p)
-        ? link.substring(p.length)
-        : link
-      : '';
   }
 
   login(method: string) {
@@ -86,13 +70,17 @@ export class UserService {
       case 'google':
         return a.signInWithRedirect(new auth.GoogleAuthProvider());
       case 'facebook':
-        return a.signInWithRedirect(new auth.FacebookAuthProvider());
+        const provider = new auth.FacebookAuthProvider();
+        provider.addScope('email');
+        provider.addScope('user_link');
+        provider.setCustomParameters({ auth_type: 'rerequest' });
+        return a.signInWithRedirect(provider);
       case 'twitter':
         return a.signInWithRedirect(new auth.TwitterAuthProvider());
     }
   }
 
   logout() {
-    this.afAuth.auth.signOut();
+    return this.afAuth.auth.signOut();
   }
 }
