@@ -14,12 +14,21 @@
   >
     <mat-nav-list>
       <mat-list-item>
-        <mat-icon>home</mat-icon
+        <mat-icon>group_add</mat-icon
         ><a
           mat-list-item
           [routerLink]="['/c', 0]"
           (click)="mobileQuery.matches && snav.toggle()"
-          >Dasbor</a
+          >Referral</a
+        >
+      </mat-list-item>
+      <mat-list-item>
+        <mat-icon>add_a_photo</mat-icon
+        ><a
+          mat-list-item
+          [routerLink]="['/f']"
+          (click)="mobileQuery.matches && snav.toggle()"
+          >Foto</a
         >
       </mat-list-item>
       <mat-list-item>

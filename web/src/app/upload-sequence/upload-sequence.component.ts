@@ -163,7 +163,7 @@ export class UploadSequenceComponent implements OnInit {
     try {
       const res: any = await this.api.post(user, `upload`, request);
       if (res.ok) {
-        this.router.navigate(['/c', 0]);
+        this.router.navigate(['/f']);
       } else {
         console.error(res);
       }

@@ -1,0 +1,96 @@
+<div style="padding: 0 10px">
+  <h2>Tes Upload Foto</h2>
+  <p>
+    Tanggal 17 April 2019, setelah penghitungan suara selesai, anda diharapkan
+    untuk datang kembali ke TPS anda dan mem-foto formulir final yang
+    <b>TELAH</b> ditanda-tangani semua saksi. Biasanya formulir ini dipajang di
+    papan besar seperti
+    <a href="/assets/contoh.jpeg" target="_blank">contoh foto ini</a>. Setelah
+    anda mengambil foto tersebut, upload-lah foto tersebut ke website ini.
+  </p>
+
+  <p>
+    <b>Tips</b>: jika anda berencana untuk mengambil foto di beberapa TPS yang
+    berbeda, maka ambillah foto2 nya terlebih dahulu, setelah semua foto
+    tersimpan di ponsel anda, barulah anda cari wifi terdekat untuk mengupload
+    fotonya satu per satu.
+  </p>
+
+  <ng-template #ujicoba>
+    <p>
+      Sekarang adalah masa uji-coba. Silahkan pilih TPS yang akan anda kawal dan
+      cobalah upload foto di TPS tersebut untuk memastikan ponsel anda bisa
+      mengupload foto dengan lancar:
+    </p>
+
+    <p>
+      <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
+        Cari TPS anda dan Tes Upload Foto
+      </a>
+    </p>
+  </ng-template>
+
+  <ng-container *ngIf="(uploads$ | async) as uploads; else ujicoba">
+    <ng-container *ngIf="uploads.length > 0; else ujicoba">
+      <ul>
+        <li>Semua tes foto akan dihapus pada tanggal 16 April 2019</li>
+      </ul>
+
+      <table border="1" cellpadding="5" cellspacing="0">
+        <tr bgcolor="lightgray" height="30">
+          <td width="120"><b>Tes Foto Anda</b></td>
+          <td width="300"><b>Details</b></td>
+        </tr>
+        <tr
+          *ngFor="let u of uploads; let odd = odd"
+          [style.background-color]="
+            u.data.sum.error ? '#FDD' : odd ? '#FFF' : '#EEE'
+          "
+        >
+          <td align="center">
+            <app-thumbnail
+              [url]="u.data.url"
+              [size]="125"
+              [esize]="980"
+            ></app-thumbnail>
+          </td>
+          <td>
+            <p>
+              Kelurahan:
+              <a [routerLink]="['/t', u.kelId]">{{
+                (hie$(u.kelId) | async)?.name
+              }}</a
+              ><br />
+              TPS: #{{ u.tpsNo }}<br />
+              {{ u.createdTs | date: 'medium' }}<br />
+            </p>
+
+            <p *ngIf="u.data.sum.error">
+              Ada laporan kesalahan di foto ini.
+            </p>
+          </td>
+        </tr>
+      </table>
+
+      <div *ngIf="uploads.length < 10">
+        <p>
+          Jika foto anda gagal, anda bisa tes upload foto dengan ponsel anda
+          yang lain. Anda masih bisa tes upload foto
+          <b>{{ 10 - uploads.length }} kali lagi</b>.
+        </p>
+
+        <p>
+          Jika anda ingin upload di Kelurahan yang sama, klik nama kelurahan di
+          tabel di atas untuk mempercepat pencarian. Jika tidak, klik tombol di
+          bawah:
+        </p>
+
+        <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
+          Cari TPS anda dan Tes Upload Foto
+        </a>
+      </div>
+
+      <p></p>
+    </ng-container>
+  </ng-container>
+</div>

@@ -1,7 +1,7 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { UserService } from '../user.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { map, switchMap, take } from 'rxjs/operators';
+import { map, switchMap, tap } from 'rxjs/operators';
 import { ApiService } from '../api.service';
 import { Observable, of } from 'rxjs';
 import { User } from 'firebase';
@@ -10,27 +10,15 @@ import {
   Relawan,
   FsPath,
   CodeReferral,
-  Upsert,
   MAX_RELAWAN_TRUSTED_DEPTH,
   PublicProfile,
   APP_SCOPED_PREFIX_URL
 } from 'shared';
 import { AngularFirestore } from '@angular/fire/firestore';
-import { HierarchyService } from '../hierarchy.service';
 import { MatSnackBar } from '@angular/material';
 
-interface UploadDetail {
-  kelId: number;
-  kelName: string;
-  tpsNo: number;
-  servingUrl: string;
-  hasProblem: number;
-  imageId: string;
-  uploadTs: number;
-}
-
 @Component({
-  selector: 'copy-snack-bar-component',
+  selector: 'app-copy-snack-bar-component',
   template: `
     Kode referral telah dicopy
   `,
@@ -46,13 +34,12 @@ export class CopySnackBarComponent {}
 export class RegistrasiComponent implements OnInit {
   theCode: string;
   code$: Observable<CodeReferral>;
-  uploads$: Observable<Upsert[]>;
   formGroup: FormGroup;
+  error: string;
   isLoading = false;
 
   constructor(
     public userService: UserService,
-    private hie: HierarchyService,
     private fsdb: AngularFirestore,
     private route: ActivatedRoute,
     private router: Router,
@@ -73,40 +60,29 @@ export class RegistrasiComponent implements OnInit {
           ? this.fsdb
               .doc(FsPath.codeReferral(this.theCode))
               .get()
-              .pipe(map(s => s.data() as CodeReferral))
+              .pipe(
+                map(s => s.data() as CodeReferral),
+                switchMap(code =>
+                  !code || code.claimer
+                    ? of(code)
+                    : this.userService.user$.pipe(
+                        switchMap(async user => {
+                          const url = `register/${this.theCode}`;
+                          const reg: any = await this.api.post(user, url, {});
+                          if (reg.error) {
+                            this.error = `Maaf, kode referral ${
+                              this.theCode
+                            } tidak dapat digunakan`;
+                          }
+                          console.log('register', reg);
+                          this.router.navigate(['/c', 0]);
+                          return code;
+                        })
+                      )
+                )
+              )
           : of(null);
       })
-    );
-    this.uploads$ = this.userService.user$.pipe(
-      switchMap(user =>
-        user
-          ? this.fsdb
-              .collection<Upsert>(FsPath.upserts(), ref =>
-                ref.where('uploader.uid', '==', user.uid).limit(10)
-              )
-              .valueChanges()
-              .pipe(
-                switchMap(async uploads => {
-                  const details: UploadDetail[] = [];
-                  for (const u of uploads) {
-                    details.push({
-                      kelId: u.kelId,
-                      kelName: (await this.hie
-                        .get$(u.kelId)
-                        .pipe(take(1))
-                        .toPromise()).name,
-                      tpsNo: u.tpsNo,
-                      servingUrl: u.data.url,
-                      imageId: u.data.imageId,
-                      hasProblem: u.data.sum.error,
-                      uploadTs: u.data.updateTs
-                    });
-                  }
-                  return details.sort((a, b) => b.uploadTs - a.uploadTs);
-                })
-              )
-          : of([])
-      )
     );
     this.formGroup = this.formBuilder.group({
       namaCtrl: [null, [Validators.pattern('^[a-zA-Z ]{1,20}$')]]
@@ -142,21 +118,6 @@ export class RegistrasiComponent implements OnInit {
     this.snackBar.openFromComponent(CopySnackBarComponent, {
       duration: 1500
     });
-  }
-
-  async registerCode(user: User) {
-    this.isLoading = true;
-    const url = `register/${this.theCode}`;
-    console.log('register', await this.api.post(user, url, {}));
-    this.isLoading = false;
-    this.router.navigate(['/c', 0]);
-  }
-
-  async fotoBermasalah(user: User, u: UploadDetail) {
-    this.isLoading = true;
-    const res = this.api.post(user, `problem`, { imageId: u.imageId });
-    console.log('problem', await res);
-    this.isLoading = false;
   }
 
   async createReferralCode(u: User) {

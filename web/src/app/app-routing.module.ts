@@ -5,6 +5,7 @@ import { TpsComponent } from './tps/tps.component';
 import { UploadSequenceComponent } from './upload-sequence/upload-sequence.component';
 import { RegistrasiComponent } from './registrasi/registrasi.component';
 import { DigitizeComponent } from './digitize/digitize.component';
+import { FotoComponent } from './foto/foto.component';
 
 const routes: Routes = [
   { path: '', redirectTo: '/c/0', pathMatch: 'full' },
@@ -15,7 +16,8 @@ const routes: Routes = [
     path: 'u/:kelurahanId/:tpsNo',
     component: UploadSequenceComponent
   },
-  { path: 'c/:code', component: RegistrasiComponent }
+  { path: 'c/:code', component: RegistrasiComponent },
+  { path: 'f', component: FotoComponent }
 ];
 
 @NgModule({

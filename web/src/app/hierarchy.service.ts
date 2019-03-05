@@ -27,24 +27,27 @@ export class HierarchyService {
     }
   }
 
-  get$(id: number) {
-    console.log('Fetch node', id);
+  get$(id: number, refresh = true) {
     if (!this.hierarchy$[id]) {
       this.hierarchy$[id] = new BehaviorSubject({} as HierarchyNode);
+      refresh = true;
     }
     const ts = Date.now();
     if (ts - this.lastTs > 1000) {
       this.lastTs = ts;
     }
-    this.userService.user$
-      .pipe(take(1))
-      .toPromise()
-      .then(user =>
-        this.api
-          .get(user, `c/${id}?${this.lastTs}`)
-          .then((c: HierarchyNode) => this.hierarchy$[id].next(c))
-          .catch(console.error)
-      );
+    if (refresh) {
+      console.log('Fetch node', id);
+      this.userService.user$
+        .pipe(take(1))
+        .toPromise()
+        .then(user =>
+          this.api
+            .get(user, `c/${id}?${this.lastTs}`)
+            .then((c: HierarchyNode) => this.hierarchy$[id].next(c))
+            .catch(console.error)
+        );
+    }
     return this.hierarchy$[id].pipe(
       map(x => JSON.stringify(x)),
       distinctUntilChanged(),

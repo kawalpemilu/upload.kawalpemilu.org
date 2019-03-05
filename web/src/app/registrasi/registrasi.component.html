@@ -1,5 +1,7 @@
 <div style="padding: 0 10px">
   <ng-container *ngIf="(userService.userRelawan$ | async) as user; else login">
+    <h2>Registrasi Relawan Terpercaya</h2>
+
     <p>
       Halo,
 
@@ -10,175 +12,21 @@
       >]
     </p>
 
-    <p>
-      Selamat datang di halaman relawan Kawal Pemilu 2019!
-    </p>
-
-    <p>
-      Tanggal 17 April 2019 nanti, setelah penghitungan suara selesai, anda
-      diharapkan untuk datang kembali ke TPS anda dan mem-foto formulir final
-      yang
-      <b>TELAH</b> ditanda-tangani semua saksi. Biasanya formulir ini dipajang
-      di papan besar seperti
-      <a href="/assets/contoh.jpeg" target="_blank">contoh foto ini</a>. Setelah
-      anda mengambil foto tersebut, upload-lah foto tersebut ke website ini.
-    </p>
-
-    <p>
-      <b>Tips</b>: jika anda berencana untuk mengambil foto di beberapa TPS yang
-      berbeda, maka ambillah foto2 nya terlebih dahulu, setelah semua foto
-      tersimpan di ponsel anda, barulah anda cari wifi terdekat untuk mengupload
-      fotonya satu per satu.
-    </p>
-
-    <ng-template #ujicoba>
-      <p>
-        Sekarang adalah masa uji-coba. Silahkan pilih TPS yang akan anda kawal
-        dan cobalah upload foto di TPS tersebut untuk memastikan ponsel anda
-        bisa mengupload foto dengan lancar:
-      </p>
-
-      <p>
-        <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
-          Cari TPS anda dan Tes Upload Foto
-        </a>
-      </p>
-    </ng-template>
-
-    <ng-container *ngIf="(uploads$ | async) as uploads; else ujicoba">
-      <ng-container *ngIf="uploads.length > 0; else ujicoba">
-        <mat-divider></mat-divider>
-        <h2>Tes Upload Foto anda</h2>
-
-        <ul>
-          <li>Semua tes foto akan dihapus pada tanggal 16 April 2019</li>
-          <li>
-            Jika anda tidak dapat melihat foto anda dibawah, pencet tombol
-            "Laporkan Foto ini bermasalah"
-          </li>
-        </ul>
-
-        <table border="1" cellpadding="0" cellspacing="0">
-          <tr bgcolor="lightgray">
-            <td width="120"><b>Tes Foto Anda</b></td>
-            <td width="300"><b>Details</b></td>
-          </tr>
-          <tr
-            *ngFor="let u of uploads; let odd = odd"
-            [style.background-color]="
-              u.hasProblem ? '#FDD' : odd ? '#FFF' : '#EEE'
-            "
-          >
-            <td align="center">
-              <app-thumbnail
-                [url]="u.servingUrl"
-                [size]="125"
-                [esize]="980"
-              ></app-thumbnail>
-            </td>
-            <td>
-              <p>
-                Kelurahan:
-                <a [routerLink]="['/t', u.kelId]">{{ u.kelName }}</a
-                ><br />
-                TPS: #{{ u.tpsNo }}<br />
-                {{ u.uploadTs | date: 'medium' }}<br />
-              </p>
-
-              <p *ngIf="!u.hasProblem; else masalah">
-                <button
-                  mat-raised-button
-                  color="warn"
-                  (click)="fotoBermasalah(user.u, u)"
-                  [disabled]="isLoading"
-                >
-                  Laporkan Foto ini bermasalah
-                </button>
-              </p>
-
-              <ng-template #masalah>
-                <p>Anda melaporkan ada masalah di foto ini.</p>
-              </ng-template>
-            </td>
-          </tr>
-        </table>
-
-        <div *ngIf="uploads.length < 10">
-          <p>
-            Jika foto anda gagal, anda bisa tes upload foto dengan ponsel anda
-            yang lain. Anda masih bisa tes upload foto
-            <b>{{ 10 - uploads.length }} kali lagi</b>.
-          </p>
-
-          <p>
-            Jika anda ingin upload di Kelurahan yang sama, klik nama kelurahan
-            di tabel di atas untuk mempercepat pencarian. Jika tidak, klik
-            tombol di bawah:
-          </p>
-
-          <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
-            Cari TPS anda dan Tes Upload Foto
-          </a>
-        </div>
-
-        <p></p>
-      </ng-container>
-    </ng-container>
-
-    <mat-divider></mat-divider>
-    <h2>Registrasi Relawan Terpercaya</h2>
+    <p style="font-weight: bold; color: red" *ngIf="error">{{ error }}</p>
 
     <ng-container *ngIf="user.depth === undefined; else terpercaya">
       <ng-container *ngIf="(code$ | async) as code; else butuhkode">
-        <ng-container *ngIf="code.claimer; else bisaterima">
+        <ng-container *ngIf="code.claimer">
           <p>Maaf, kode referral "{{ theCode }}" sudah tidak aktif.</p>
         </ng-container>
-        <ng-template #bisaterima>
-          <p>
-            <a href="{{ getScopedUrl(code.issuer) }}" target="_blank">{{
-              code.issuer.name
-            }}</a>
-            mengundang anda untuk menjadi relawan terpercaya.
-          </p>
-
-          <button
-            mat-raised-button
-            color="primary"
-            (click)="registerCode(user.auth, code)"
-            [disabled]="isLoading"
-          >
-            Terima Undangan!
-          </button>
-        </ng-template>
       </ng-container>
 
       <ng-template #butuhkode>
         <p>
-          Untuk registrasi menjadi relawan terpercaya, masukkan kode referral
-          yang masih aktif dari teman anda yang sudah menjadi relawan
-          terpercaya:
+          Untuk registrasi menjadi relawan terpercaya, mintalah URL kode
+          referral yang masih aktif dari teman anda yang sudah menjadi relawan
+          terpercaya.
         </p>
-
-        <form>
-          <mat-form-field style="width: 225px">
-            <input
-              #inputCode
-              matInput
-              placeholder="Kode Referral"
-              type="text"
-            />
-          </mat-form-field>
-          &nbsp;
-
-          <button
-            type="submit"
-            mat-raised-button
-            color="primary"
-            [routerLink]="['/c', inputCode.value]"
-          >
-            Gunakan Kode Referral
-          </button>
-        </form>
       </ng-template>
     </ng-container>
 
@@ -250,10 +98,12 @@
                 <td>{{ user.code[code].name }}</td>
                 <td style="padding: 7px">
                   <input
-                    type="text" style="width: 300px"
+                    type="text"
+                    style="width: 300px"
                     value="https://kawal-c1.firebaseapp.com/c/{{ code }}"
                     #ui
-                  /> &nbsp;
+                  />
+                  &nbsp;
                   <button
                     mat-raised-button
                     color="primary"

@@ -38,6 +38,7 @@ import {
 import { ThumbnailComponent } from './thumbnail/thumbnail.component';
 import { DigitizeComponent } from './digitize/digitize.component';
 import { ApproverComponent } from './approver/approver.component';
+import { FotoComponent } from './foto/foto.component';
 
 @NgModule({
   entryComponents: [RegistrasiComponent, CopySnackBarComponent],
@@ -52,7 +53,8 @@ import { ApproverComponent } from './approver/approver.component';
     CopySnackBarComponent,
     ThumbnailComponent,
     DigitizeComponent,
-    ApproverComponent
+    ApproverComponent,
+    FotoComponent
   ],
   imports: [
     BrowserModule,
