@@ -20,7 +20,8 @@ import {
   UpsertData,
   SUM_KEY,
   APP_SCOPED_PREFIX_URL,
-  PublicProfile
+  PublicProfile,
+  MAX_REFERRALS
 } from 'shared';
 
 const t1 = Date.now();
@@ -440,6 +441,7 @@ app.post('/api/register/create_code', async (req, res) => {
 
     if (!r.code) r.code = {};
     r.code[code] = { name: nama, issuedTs: newCode.issuedTs } as CodeReferral;
+    if (Object.keys(r.code).length > MAX_REFERRALS) return 'no_quota';
     t.update(rRef, r);
     return code;
   });
@@ -450,7 +452,13 @@ app.post('/api/register/create_code', async (req, res) => {
     case 'no_trust':
       return res.json({ error: 'Maaf, status anda belum terpercaya' });
     case 'no_create':
-      return res.json({ error: 'Maaf, pembuatan kode belum dibuka' });
+      return res.json({
+        error: 'Maaf, pembuatan kode belum dibuka untuk level anda'
+      });
+    case 'no_quota':
+      return res.json({
+        error: 'Maaf, anda telah melebihi jumlah pembuatan kode referrals'
+      });
     case 'no_id':
       return res.json({ error: 'Auto id failed' });
     default:

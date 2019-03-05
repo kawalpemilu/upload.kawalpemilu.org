@@ -24,18 +24,23 @@ import {
   MatProgressSpinnerModule,
   MatIconModule,
   MatSidenavModule,
-  MatListModule
+  MatListModule,
+  MatSnackBarModule
 } from '@angular/material';
 import { MatToolbarModule } from '@angular/material/toolbar';
 
 import { HttpClientModule } from '@angular/common/http';
 import { LoginComponent } from './login/login.component';
-import { RegistrasiComponent } from './registrasi/registrasi.component';
+import {
+  RegistrasiComponent,
+  CopySnackBarComponent
+} from './registrasi/registrasi.component';
 import { ThumbnailComponent } from './thumbnail/thumbnail.component';
 import { DigitizeComponent } from './digitize/digitize.component';
 import { ApproverComponent } from './approver/approver.component';
 
 @NgModule({
+  entryComponents: [RegistrasiComponent, CopySnackBarComponent],
   declarations: [
     AppComponent,
     HierarchyComponent,
@@ -44,6 +49,7 @@ import { ApproverComponent } from './approver/approver.component';
     UploadSequenceComponent,
     LoginComponent,
     RegistrasiComponent,
+    CopySnackBarComponent,
     ThumbnailComponent,
     DigitizeComponent,
     ApproverComponent
@@ -68,6 +74,7 @@ import { ApproverComponent } from './approver/approver.component';
     MatIconModule,
     MatSidenavModule,
     MatListModule,
+    MatSnackBarModule,
     MatProgressSpinnerModule,
 
     MatToolbarModule

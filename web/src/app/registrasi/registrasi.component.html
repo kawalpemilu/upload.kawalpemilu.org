@@ -193,15 +193,21 @@
 
       <ng-container *ngIf="user.depth < MAX_TRUSTED_DEPTH">
         <p>
-          Anda dapat mengundang teman anda untuk menjadi relawan terpercaya
-          dengan membuat kode referral dibawah ini:
+          Anda dapat mengundang teman Facebook anda untuk menjadi relawan
+          terpercaya dengan membuat kode referral dibawah ini.
+        </p>
+
+        <p>
+          <b style="color: red">Catatan</b>: nama depan teman anda harus sama
+          percis dengan nama teman anda di Facebook. Anda hanya bisa mengundang
+          maksimum <b></b>150 teman.
         </p>
 
         <form [formGroup]="formGroup">
           <mat-form-field style="width: 225px">
             <input
               matInput
-              placeholder="Nama teman anda"
+              placeholder="Nama depan teman anda"
               formControlName="namaCtrl"
               type="text"
               required
@@ -230,17 +236,32 @@
               referral hanya bisa dipakai oleh satu orang):
             </p>
 
-            <table border="1" cellpadding="0" cellspacing="0">
+            <table border="1" cellspacing="0">
               <tr bgcolor="lightgray">
-                <td><b>Nama</b></td>
+                <th width="30">#</th>
+                <td><b>Nama Depan</b></td>
                 <td><b>URL kode referral untuk dibagikan</b></td>
               </tr>
               <tr
-                *ngFor="let code of codes; let odd = odd"
+                *ngFor="let code of codes; let odd = odd; let i = index"
                 [style.background-color]="odd ? '#FFF' : '#EEE'"
               >
+                <td align="center">{{ i + 1 }}</td>
                 <td>{{ user.code[code].name }}</td>
-                <td>https://kawal-c1.firebaseapp.com/c/{{ code }}</td>
+                <td style="padding: 7px">
+                  <input
+                    type="text" style="width: 300px"
+                    value="https://kawal-c1.firebaseapp.com/c/{{ code }}"
+                    #ui
+                  /> &nbsp;
+                  <button
+                    mat-raised-button
+                    color="primary"
+                    (click)="copyCode(ui)"
+                  >
+                    <mat-icon>file_copy</mat-icon> Copy
+                  </button>
+                </td>
               </tr>
             </table>
           </ng-container>

@@ -2,6 +2,7 @@
 exports.__esModule = true;
 exports.APP_SCOPED_PREFIX_URL = 'https://www.facebook.com/app_scoped_user_id/';
 exports.MAX_RELAWAN_TRUSTED_DEPTH = 2;
+exports.MAX_REFERRALS = 150;
 var SUM_KEY;
 (function (SUM_KEY) {
     SUM_KEY["paslon1"] = "paslon1";

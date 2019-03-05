@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { UserService } from '../user.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map, switchMap, take } from 'rxjs/operators';
@@ -17,6 +17,7 @@ import {
 } from 'shared';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { HierarchyService } from '../hierarchy.service';
+import { MatSnackBar } from '@angular/material';
 
 interface UploadDetail {
   kelId: number;
@@ -27,6 +28,15 @@ interface UploadDetail {
   imageId: string;
   uploadTs: number;
 }
+
+@Component({
+  selector: 'copy-snack-bar-component',
+  template: `
+    Kode referral telah dicopy
+  `,
+  styles: ['']
+})
+export class CopySnackBarComponent {}
 
 @Component({
   selector: 'app-registrasi',
@@ -47,7 +57,8 @@ export class RegistrasiComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private api: ApiService,
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    private snackBar: MatSnackBar
   ) {}
 
   get MAX_TRUSTED_DEPTH() {
@@ -125,6 +136,14 @@ export class RegistrasiComponent implements OnInit {
       });
   }
 
+  copyCode(el) {
+    el.select();
+    document.execCommand('copy');
+    this.snackBar.openFromComponent(CopySnackBarComponent, {
+      duration: 1500
+    });
+  }
+
   async registerCode(user: User) {
     this.isLoading = true;
     const url = `register/${this.theCode}`;
@@ -143,9 +162,11 @@ export class RegistrasiComponent implements OnInit {
   async createReferralCode(u: User) {
     this.isLoading = true;
     const namaCtrl = this.formGroup.get('namaCtrl');
-    const code = await this.api.post(u, 'register/create_code', {
-      nama: namaCtrl.value
-    });
+    const nama = { nama: namaCtrl.value };
+    const code: any = await this.api.post(u, 'register/create_code', nama);
+    if (code.error) {
+      alert(code.error);
+    }
     console.log('got code', code);
     namaCtrl.setValue('');
     this.isLoading = false;
