@@ -2,11 +2,13 @@
   <app-path [node]="state.node"></app-path>
 
   <div *ngIf="(userService.user$ | async) as user; else login">
-    Halo, {{ user.displayName }} (<a
-      style="color: blue; cursor: pointer;"
-      (click)="userService.logout()"
-      >logout</a
-    >)
+    <p>
+      Halo, {{ user.displayName }} (<a
+        style="color: blue; cursor: pointer;"
+        (click)="userService.logout()"
+        >logout</a
+      >)
+    </p>
 
     <p>
       Untuk menjaga TPS <b>#{{ state.tpsNo }}</b> di Kelurahan

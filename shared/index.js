@@ -1,7 +1,7 @@
 "use strict";
 exports.__esModule = true;
 exports.APP_SCOPED_PREFIX_URL = 'https://www.facebook.com/app_scoped_user_id/';
-exports.MAX_RELAWAN_TRUSTED_DEPTH = 2;
+exports.MAX_RELAWAN_TRUSTED_DEPTH = 4;
 exports.MAX_REFERRALS = 150;
 var SUM_KEY;
 (function (SUM_KEY) {
@@ -16,7 +16,7 @@ function extractImageMetadata(m) {
     var validM = null;
     if (m) {
         validM = {};
-        ['u', 'k', 't', 'v', 'l', 's', 'z', 'w', 'h', 'o', 'y', 'x'].forEach(function (attr) {
+        ['u', 'k', 't', 'v', 'l', 'a', 's', 'z', 'w', 'h', 'o', 'y', 'x'].forEach(function (attr) {
             if (typeof m[attr] === 'number') {
                 validM[attr] = m[attr];
             }

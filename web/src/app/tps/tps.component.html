@@ -6,7 +6,7 @@
     [routerLink]="['/d', state.id]"
     *ngIf="
       state.numPending > 0 &&
-      (userService.userRelawan$ | async)?.depth < MAX_TRUSTED_DEPTH
+      (userService.userRelawan$ | async)?.depth <= MAX_TRUSTED_DEPTH
     "
   >
     Digitize {{ state.numPending }} uploads

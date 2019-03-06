@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { Upsert, FsPath } from 'shared';
 import { UserService } from '../user.service';
-import { switchMap, map } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { HierarchyService } from '../hierarchy.service';
 
@@ -25,10 +25,12 @@ export class FotoComponent implements OnInit {
         user
           ? this.fsdb
               .collection<Upsert>(FsPath.upserts(), ref =>
-                ref.where('uploader.uid', '==', user.uid).limit(10)
+                ref
+                  .where('uploader.uid', '==', user.uid)
+                  .orderBy('createdTs', 'desc')
+                  .limit(10)
               )
               .valueChanges()
-              .pipe(map(arr => arr.sort((a, b) => b.createdTs - a.createdTs)))
           : of([])
       )
     );
@@ -37,6 +39,6 @@ export class FotoComponent implements OnInit {
   ngOnInit() {}
 
   hie$(kelId) {
-    return this.hie.get$(kelId, false);
+    return this.hie.get$(kelId);
   }
 }

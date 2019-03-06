@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HierarchyNode } from 'shared';
 import { ApiService } from './api.service';
-import { BehaviorSubject } from 'rxjs';
+import { ReplaySubject } from 'rxjs';
 import { filter, take, distinctUntilChanged, map } from 'rxjs/operators';
 import { UserService } from './user.service';
 import { User } from 'firebase';
@@ -10,7 +10,7 @@ import { User } from 'firebase';
   providedIn: 'root'
 })
 export class HierarchyService {
-  hierarchy$: { [id: string]: BehaviorSubject<HierarchyNode> } = {};
+  hierarchy$: { [id: string]: ReplaySubject<HierarchyNode> } = {};
   lastTs = Date.now();
 
   constructor(private api: ApiService, private userService: UserService) {
@@ -27,17 +27,15 @@ export class HierarchyService {
     }
   }
 
-  get$(id: number, refresh = true) {
-    if (!this.hierarchy$[id]) {
-      this.hierarchy$[id] = new BehaviorSubject({} as HierarchyNode);
-      refresh = true;
-    }
+  get$(id: number) {
     const ts = Date.now();
-    if (ts - this.lastTs > 1000) {
-      this.lastTs = ts;
+    if (!this.hierarchy$[id]) {
+      this.hierarchy$[id] = new ReplaySubject();
+      this.lastTs = 0;
     }
-    if (refresh) {
+    if (ts - this.lastTs > 1000) {
       console.log('Fetch node', id);
+      this.lastTs = ts;
       this.userService.user$
         .pipe(take(1))
         .toPromise()

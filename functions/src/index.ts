@@ -80,6 +80,7 @@ exports.handlePhotoUpload = functions.storage
     m.k = parseInt(kelurahanId, 10);
     m.t = parseInt(tpsNo, 10);
     m.v = await getServingUrl(object.name);
+    m.a = Date.now();
     await fsdb.doc(FsPath.imageMetadata(imageId)).set(m);
   });
 
@@ -97,6 +98,7 @@ function validateToken(
     res.status(403).json({ error: 'Unauthorized' });
     return Promise.resolve(null);
   }
+  const trace = new Error().stack;
   return auth
     .verifyIdToken(a.substring(7))
     .catch(() => {
@@ -107,7 +109,8 @@ function validateToken(
       if (user) {
         const num = (rateLimit[user.uid] = (rateLimit[user.uid] || 0) + 1);
         if (num > 30) {
-          console.warn(`User ${user.uid} is rate-limited`);
+          console.warn(`User ${user.uid} is rate-limited: ${trace}`);
+          res.status(403).json({ error: 'Rate-limited' });
           return null;
         }
         if (num === 1) {
@@ -162,7 +165,7 @@ async function getServingUrlFromFirestore(imageId, res, uid) {
     return false;
   }
 
-  for (let i = 1; i <= 4; i++) {
+  for (let i = 1; i <= 5; i++) {
     const meta = (await fsdb
       .doc(FsPath.imageMetadata(imageId))
       .get()).data() as ImageMetadata;
@@ -267,7 +270,9 @@ app.post('/api/upload', async (req, res) => {
   const upsert: Upsert = {
     uploader: uploader.profile,
     reviewer: null,
+    reviewTs: null,
     reporter: null,
+    reportTs: null,
     kelId,
     tpsNo,
     delta: {
@@ -321,6 +326,7 @@ app.post('/api/approve', async (req, res) => {
     u.kelId = kelId;
     u.tpsNo = tpsNo;
     u.reviewer = r.profile;
+    u.reviewTs = ts;
     data.url = u.data.url;
     data.sum.pending = 0;
     data.sum.error = 0;
@@ -368,6 +374,7 @@ app.post('/api/problem', async (req, res) => {
       error: 1
     };
     u.reporter = r.profile;
+    u.reportTs = Date.now();
     u.done = 0;
     t.update(uRef, u);
     return true;

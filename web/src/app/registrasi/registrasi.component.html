@@ -15,19 +15,19 @@
     <p style="font-weight: bold; color: red" *ngIf="error">{{ error }}</p>
 
     <ng-container *ngIf="user.depth === undefined; else terpercaya">
-      <ng-container *ngIf="(code$ | async) as code; else butuhkode">
-        <ng-container *ngIf="code.claimer">
-          <p>Maaf, kode referral "{{ theCode }}" sudah tidak aktif.</p>
-        </ng-container>
-      </ng-container>
-
-      <ng-template #butuhkode>
-        <p>
-          Untuk registrasi menjadi relawan terpercaya, mintalah URL kode
-          referral yang masih aktif dari teman anda yang sudah menjadi relawan
-          terpercaya.
-        </p>
-      </ng-template>
+      <p *ngIf="(code$ | async)?.claimer">
+        Maaf, kode referral "{{ theCode }}" sudah tidak aktif.
+      </p>
+      <p>
+        Untuk registrasi menjadi relawan terpercaya, mintalah URL kode referral
+        yang masih aktif dari teman anda yang sudah menjadi relawan terpercaya.
+      </p>
+      <p>Relawan terpercaya akan mendapatkan fitur tambahan:</p>
+      <ul>
+        <li>Foto yang diupload akan didahulukan untuk dipilih</li>
+        <li>Dapat melihat foto-foto yang diupload dan belum direview</li>
+        <li>Dapat melihat updates angka lebih cepat</li>
+      </ul>
     </ng-container>
 
     <ng-template #terpercaya>
@@ -39,23 +39,22 @@
         sebagai relawan terpercaya level {{ user.depth }}.
       </p>
 
-      <ng-container *ngIf="user.depth < MAX_TRUSTED_DEPTH">
+      <ng-container *ngIf="user.depth <= MAX_TRUSTED_DEPTH">
         <p>
           Anda dapat mengundang teman Facebook anda untuk menjadi relawan
           terpercaya dengan membuat kode referral dibawah ini.
         </p>
 
         <p>
-          <b style="color: red">Catatan</b>: nama depan teman anda harus sama
-          percis dengan nama teman anda di Facebook. Anda hanya bisa mengundang
-          maksimum <b></b>150 teman.
+          <b style="color: red">Catatan</b>: Anda hanya bisa mengundang maksimum
+          <b></b>150 teman.
         </p>
 
         <form [formGroup]="formGroup">
           <mat-form-field style="width: 225px">
             <input
               matInput
-              placeholder="Nama depan teman anda"
+              placeholder="Nama teman anda"
               formControlName="namaCtrl"
               type="text"
               required
@@ -87,7 +86,7 @@
             <table border="1" cellspacing="0">
               <tr bgcolor="lightgray">
                 <th width="30">#</th>
-                <td><b>Nama Depan</b></td>
+                <td><b>Nama</b></td>
                 <td><b>URL kode referral untuk dibagikan</b></td>
               </tr>
               <tr

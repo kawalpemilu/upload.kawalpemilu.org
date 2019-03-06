@@ -1,5 +1,6 @@
-export const APP_SCOPED_PREFIX_URL = 'https://www.facebook.com/app_scoped_user_id/';
-export const MAX_RELAWAN_TRUSTED_DEPTH = 2;
+export const APP_SCOPED_PREFIX_URL =
+  'https://www.facebook.com/app_scoped_user_id/';
+export const MAX_RELAWAN_TRUSTED_DEPTH = 4;
 export const MAX_REFERRALS = 150;
 
 export interface PublicProfile {
@@ -30,8 +31,11 @@ export enum SUM_KEY {
 
 export interface Upsert {
   uploader: PublicProfile;
+  createdTs: number;
   reviewer: PublicProfile;
+  reviewTs: number;
   reporter: PublicProfile;
+  reportTs: number;
   data: UpsertData;
   meta: ImageMetadata;
   kelId: number;
@@ -40,7 +44,6 @@ export interface Upsert {
   ip: string | string[]; // IP Address
   done: number; // Set to 0 to reprocess this upsert.
   deleted: boolean; // Deleted
-  createdTs: number;
 }
 
 export interface CodeReferral {
@@ -88,7 +91,8 @@ export interface ImageMetadata {
   k: number; // Kelurahan ID wher it's set.
   t: number; // TPS Number where it's set.
   v: string; // The serving URL of the image.
-  l: number; // Last Modified.
+  l: number; // Last Modified Timestamp.
+  a: number; // Created Timestamp.
   s: number; // Size in Bytes.
   z: number; // Size in Bytes after compressed.
   w: number; // Original Width.
@@ -103,7 +107,7 @@ export function extractImageMetadata(m: any): ImageMetadata | null {
   let validM: ImageMetadata = null;
   if (m) {
     validM = {} as ImageMetadata;
-    ['u', 'k', 't', 'v', 'l', 's', 'z', 'w', 'h', 'o', 'y', 'x'].forEach(
+    ['u', 'k', 't', 'v', 'l', 'a', 's', 'z', 'w', 'h', 'o', 'y', 'x'].forEach(
       attr => {
         if (typeof m[attr] === 'number') {
           validM[attr] = m[attr];

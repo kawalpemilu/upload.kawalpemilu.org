@@ -1,5 +1,5 @@
 export declare const APP_SCOPED_PREFIX_URL = "https://www.facebook.com/app_scoped_user_id/";
-export declare const MAX_RELAWAN_TRUSTED_DEPTH = 2;
+export declare const MAX_RELAWAN_TRUSTED_DEPTH = 4;
 export declare const MAX_REFERRALS = 150;
 export interface PublicProfile {
     uid: string;
@@ -28,8 +28,11 @@ export declare enum SUM_KEY {
 }
 export interface Upsert {
     uploader: PublicProfile;
+    createdTs: number;
     reviewer: PublicProfile;
+    reviewTs: number;
     reporter: PublicProfile;
+    reportTs: number;
     data: UpsertData;
     meta: ImageMetadata;
     kelId: number;
@@ -40,7 +43,6 @@ export interface Upsert {
     ip: string | string[];
     done: number;
     deleted: boolean;
-    createdTs: number;
 }
 export interface CodeReferral {
     issuer: PublicProfile;
@@ -87,6 +89,7 @@ export interface ImageMetadata {
     t: number;
     v: string;
     l: number;
+    a: number;
     s: number;
     z: number;
     w: number;
