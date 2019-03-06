@@ -92,7 +92,7 @@ function updateAggregates(u: Upsert) {
     const data = getUpsertData(path[4], path[5]);
 
     // Set the proof URL if no longer pending, else nullify it.
-    if (!u.data.sum.pending) {
+    if (!u.data.sum.pending && !u.deleted) {
       data.url = u.data.url;
       data.imageId = u.data.imageId;
     } else {

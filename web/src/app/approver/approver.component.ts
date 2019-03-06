@@ -146,6 +146,7 @@ export class ApproverComponent implements OnInit {
       const res: any = await this.api.post(this.user.auth, `approve`, request);
       if (res.ok) {
         console.log('ok');
+        u.deleted = del;
       } else {
         console.error(res);
         alert(JSON.stringify(res));

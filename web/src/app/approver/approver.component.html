@@ -93,27 +93,32 @@
               ><mat-icon>map</mat-icon></a
             >
 
-            <p>
-              <button
-                type="submit"
-                [disabled]="formGroup.invalid || isLoading"
-                mat-raised-button
-                color="primary"
-                (click)="approve(u, false)"
-              >
-                Approve
-              </button>
-
-              &nbsp;
-              <button
-                mat-raised-button
-                color="warn"
-                (click)="approve(u, true)"
-                [disabled]="isLoading"
-              >
-                Reject
-              </button>
+            <p *ngIf="u.deleted; else decide">
+              Foto telah ditolak.
             </p>
+            <ng-template #decide>
+              <p>
+                <button
+                  type="submit"
+                  [disabled]="formGroup.invalid || isLoading"
+                  mat-raised-button
+                  color="primary"
+                  (click)="approve(u, false)"
+                >
+                  Approve
+                </button>
+
+                &nbsp;
+                <button
+                  mat-raised-button
+                  color="warn"
+                  (click)="approve(u, true)"
+                  [disabled]="isLoading"
+                >
+                  Reject
+                </button>
+              </p>
+            </ng-template>
           </form>
         </ng-container>
       </td>

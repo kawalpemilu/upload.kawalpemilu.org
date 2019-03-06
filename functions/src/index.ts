@@ -341,6 +341,12 @@ app.post('/api/approve', async (req, res) => {
     };
     u.done = 0;
     u.deleted = !!b.delete;
+    if (u.deleted) {
+      data.sum.paslon1 = 0;
+      data.sum.paslon2 = 0;
+      data.sum.sah = 0;
+      data.sum.tidakSah = 0;
+    }
     t.update(uRef, u);
   });
 
