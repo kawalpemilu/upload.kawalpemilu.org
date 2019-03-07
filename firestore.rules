@@ -12,6 +12,7 @@ service cloud.firestore {
 
     // Upserts.
     match /u/{imageId} {
+      allow get: if request.auth.uid == resource.data.uploader.uid;
       allow list: if request.query.limit <= 10 &&
                      (request.auth.uid == resource.data.uploader.uid || 
                       get(/databases/$(database)/documents/r/$(request.auth.uid)).data.depth > 0

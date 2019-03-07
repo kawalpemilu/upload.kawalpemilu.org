@@ -21,7 +21,8 @@ import {
   SUM_KEY,
   APP_SCOPED_PREFIX_URL,
   PublicProfile,
-  MAX_REFERRALS
+  MAX_REFERRALS,
+  MAX_NUM_UPLOADS
 } from 'shared';
 
 const t1 = Date.now();
@@ -238,10 +239,8 @@ app.post('/api/upload', async (req, res) => {
     console.error(`Upload data is missing ${user.uid}`);
     return res.json({ error: 'Missing data' });
   }
+
   const imageId = b.data.imageId;
-
-  // TODO: limit number of photos per tps and per user.
-
   const servingUrl = await getServingUrlFromFirestore(imageId, res, user.uid);
   if (!servingUrl) return null;
 
@@ -258,12 +257,20 @@ app.post('/api/upload', async (req, res) => {
   data.sum.pending = 1;
   data.updateTs = createdTs;
 
-  const uploader = (await fsdb
-    .doc(FsPath.relawan(user.uid))
-    .get()).data() as Relawan;
+  const uRef = fsdb.doc(FsPath.relawan(user.uid));
+  const uploader = (await uRef.get()).data() as Relawan;
   if (!uploader) {
     console.error(`Uploader is missing ${user.uid}`);
     return res.json({ error: 'Uploader not found' });
+  }
+
+  uploader.numUploads = (uploader.numUploads || 0) + 1;
+  uploader.imageIds = uploader.imageIds || [];
+  uploader.imageIds.unshift(imageId);
+
+  if (uploader.numUploads > MAX_NUM_UPLOADS) {
+    console.error(`Exceeded max uploads ${user.uid}`);
+    return res.json({ error: 'Exceeded max number of uploads' });
   }
 
   const ip = req.headers['fastly-client-ip'];
@@ -291,7 +298,10 @@ app.post('/api/upload', async (req, res) => {
     createdTs
   };
 
-  await fsdb.doc(FsPath.upserts(imageId)).set(upsert);
+  const batch = fsdb.batch();
+  batch.set(fsdb.doc(FsPath.upserts(imageId)), upsert);
+  batch.update(uRef, uploader);
+  await batch.commit();
 
   return res.json({ ok: true });
 });
@@ -463,7 +473,7 @@ app.post('/api/register/create_code', async (req, res) => {
     case 'no_user':
       return res.json({ error: 'Data anda tidak ditemukan' });
     case 'no_trust':
-      return res.json({ error: 'Maaf, status anda belum terpercaya' });
+      return res.json({ error: 'Maaf, anda belum berstatus relawan' });
     case 'no_create':
       return res.json({
         error: 'Maaf, pembuatan kode belum dibuka untuk level anda'

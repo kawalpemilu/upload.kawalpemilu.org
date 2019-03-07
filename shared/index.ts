@@ -2,6 +2,7 @@ export const APP_SCOPED_PREFIX_URL =
   'https://www.facebook.com/app_scoped_user_id/';
 export const MAX_RELAWAN_TRUSTED_DEPTH = 4;
 export const MAX_REFERRALS = 150;
+export const MAX_NUM_UPLOADS = 100;
 
 export interface PublicProfile {
   uid: string; // Firebase User ID
@@ -15,6 +16,8 @@ export interface PublicProfile {
 export interface Relawan {
   profile: PublicProfile;
   referrer: PublicProfile;
+  numUploads: number;
+  imageIds: string[];
   depth: number; // Referral depth (0: ninja, 1: admin, 2: trusted, 3+:normal)
   code: { [code: string]: CodeReferral }; // Code referrals
   auth: any; // firebase.User reference.

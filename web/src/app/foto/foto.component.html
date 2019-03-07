@@ -16,26 +16,30 @@
     fotonya satu per satu.
   </p>
 
-  <ng-template #ujicoba>
-    <p>
-      Sekarang adalah masa uji-coba. Silahkan pilih TPS yang akan anda kawal dan
-      cobalah upload foto di TPS tersebut untuk memastikan ponsel anda bisa
-      mengupload foto dengan lancar:
-    </p>
+  <p>
+    Sekarang adalah masa uji-coba. Silahkan pilih TPS yang akan anda kawal dan
+    upload foto di TPS tersebut untuk memastikan ponsel anda bisa mengupload
+    foto dengan lancar:
+  </p>
 
-    <p>
-      <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
-        Cari TPS anda dan Tes Upload Foto
-      </a>
-    </p>
-  </ng-template>
+  <ul>
+    <li>Semua tes foto akan dihapus pada tanggal 16 April 2019</li>
+    <li>Gunakan browser Chrome untuk upload foto.</li>
+    <li>Jika upload foto gagal, coba lagi dengan ponsel lain.</li>
+  </ul>
 
-  <ng-container *ngIf="(uploads$ | async) as uploads; else ujicoba">
-    <ng-container *ngIf="uploads.length > 0; else ujicoba">
-      <ul>
-        <li>Semua tes foto akan dihapus pada tanggal 16 April 2019</li>
-      </ul>
+  <p>
+    <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
+      Cari TPS anda dan Tes Upload Foto
+    </a>
+  </p>
 
+  <ng-container *ngIf="(uploads$ | async) as uploads">
+    <ng-container *ngIf="uploads.length > 0">
+      <p>
+        <b>Tips</b>: klik nama kelurahan di bawah untuk meng-upload foto lain di
+        kelurahan yang sama.
+      </p>
       <table border="1" cellpadding="5" cellspacing="0">
         <tr bgcolor="lightgray" height="30">
           <td width="120"><b>Tes Foto Anda</b></td>
@@ -46,6 +50,7 @@
           [style.background-color]="
             u.data.sum.error ? '#FDD' : odd ? '#FFF' : '#EEE'
           "
+          height="150"
         >
           <td align="center">
             <app-thumbnail
@@ -71,24 +76,6 @@
           </td>
         </tr>
       </table>
-
-      <div *ngIf="uploads.length < 10">
-        <p>
-          Jika foto anda gagal, anda bisa tes upload foto dengan ponsel anda
-          yang lain. Anda masih bisa tes upload foto
-          <b>{{ 10 - uploads.length }} kali lagi</b>.
-        </p>
-
-        <p>
-          Jika anda ingin upload di Kelurahan yang sama, klik nama kelurahan di
-          tabel di atas untuk mempercepat pencarian. Jika tidak, klik tombol di
-          bawah:
-        </p>
-
-        <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
-          Cari TPS anda dan Tes Upload Foto
-        </a>
-      </div>
 
       <p></p>
     </ng-container>

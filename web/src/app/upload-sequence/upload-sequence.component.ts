@@ -75,10 +75,10 @@ export class UploadSequenceComponent implements OnInit {
 
     const validators = [Validators.pattern('^[0-9]{1,3}$')];
     this.formGroup = this.formBuilder.group({
-      // paslon1Ctrl: [null, validators]
-      // paslon2Ctrl: [null, validators],
-      sahCtrl: [null, validators]
-      // tidakSahCtrl: [null, validators]
+      paslon1Ctrl: [0, validators],
+      paslon2Ctrl: [0, validators],
+      sahCtrl: [1, validators],
+      tidakSahCtrl: [1, validators]
     });
   }
 
@@ -138,13 +138,10 @@ export class UploadSequenceComponent implements OnInit {
     this.isLoading = true;
     const [metadata, imageId] = await this.uploadedMetadata$;
     const sum: { [key in SUM_KEY]: number } = {
-      paslon1: 0,
-      paslon2: 0,
-      // paslon1: this.formGroup.get('paslon1Ctrl').value,
-      // paslon2: this.formGroup.get('paslon2Ctrl').value,
+      paslon1: this.formGroup.get('paslon1Ctrl').value,
+      paslon2: this.formGroup.get('paslon2Ctrl').value,
       sah: this.formGroup.get('sahCtrl').value,
-      tidakSah: 1,
-      // tidakSah: this.formGroup.get('tidakSahCtrl').value,
+      tidakSah: this.formGroup.get('tidakSahCtrl').value,
       pending: 1,
       error: 0
     };

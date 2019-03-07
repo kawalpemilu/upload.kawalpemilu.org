@@ -2,13 +2,14 @@
   <button mat-icon-button (click)="snav.toggle()">
     <mat-icon>menu</mat-icon>
   </button>
-  <h1 class="app-name">KawalPemilu 2019</h1>
+  <h1 class="app-name">KawalPemilu - Jaga Suara 2019</h1>
 </mat-toolbar>
 
 <mat-sidenav-container class="sidenav-container">
   <mat-sidenav
     #snav
     [mode]="mobileQuery.matches ? 'over' : 'side'"
+    [opened]="!mobileQuery.matches"
     [fixedInViewport]="mobileQuery.matches"
     fixedTopGap="56"
   >
@@ -19,7 +20,7 @@
           mat-list-item
           [routerLink]="['/c', 0]"
           (click)="mobileQuery.matches && snav.toggle()"
-          >Referral</a
+          >Registrasi Relawan</a
         >
       </mat-list-item>
       <mat-list-item>
@@ -28,7 +29,7 @@
           mat-list-item
           [routerLink]="['/f']"
           (click)="mobileQuery.matches && snav.toggle()"
-          >Foto</a
+          >Upload Foto</a
         >
       </mat-list-item>
       <mat-list-item>
@@ -37,7 +38,7 @@
           mat-list-item
           [routerLink]="['/h', 0]"
           (click)="mobileQuery.matches && snav.toggle()"
-          >Cakupan</a
+          >Hasil Upload</a
         >
       </mat-list-item>
     </mat-nav-list>

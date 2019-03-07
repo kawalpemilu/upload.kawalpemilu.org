@@ -1,6 +1,7 @@
 export declare const APP_SCOPED_PREFIX_URL = "https://www.facebook.com/app_scoped_user_id/";
 export declare const MAX_RELAWAN_TRUSTED_DEPTH = 4;
 export declare const MAX_REFERRALS = 150;
+export declare const MAX_NUM_UPLOADS = 100;
 export interface PublicProfile {
     uid: string;
     link: string;
@@ -12,6 +13,8 @@ export interface PublicProfile {
 export interface Relawan {
     profile: PublicProfile;
     referrer: PublicProfile;
+    numUploads: number;
+    imageIds: string[];
     depth: number;
     code: {
         [code: string]: CodeReferral;

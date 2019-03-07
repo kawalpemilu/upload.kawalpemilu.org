@@ -1,6 +1,6 @@
 <div style="padding: 0 10px">
   <ng-container *ngIf="(userService.userRelawan$ | async) as user; else login">
-    <h2>Registrasi Relawan Terpercaya</h2>
+    <h2>Registrasi Relawan</h2>
 
     <p>
       Halo,
@@ -14,35 +14,61 @@
 
     <p style="font-weight: bold; color: red" *ngIf="error">{{ error }}</p>
 
-    <ng-container *ngIf="user.depth === undefined; else terpercaya">
-      <p *ngIf="(code$ | async)?.claimer">
-        Maaf, kode referral "{{ theCode }}" sudah tidak aktif.
-      </p>
-      <p>
-        Untuk registrasi menjadi relawan terpercaya, mintalah URL kode referral
-        yang masih aktif dari teman anda yang sudah menjadi relawan terpercaya.
-      </p>
-      <p>Relawan terpercaya akan mendapatkan fitur tambahan:</p>
-      <ul>
-        <li>Foto yang diupload akan didahulukan untuk dipilih</li>
-        <li>Dapat melihat foto-foto yang diupload dan belum direview</li>
-        <li>Dapat melihat updates angka lebih cepat</li>
-      </ul>
-    </ng-container>
+    <p *ngIf="(code$ | async)?.claimer">
+      Maaf, kode referral "{{ theCode }}" sudah tidak aktif.
+    </p>
 
-    <ng-template #terpercaya>
+    <p>
+      Relawan KawalPemilu memiliki tanggung jawab besar untuk mengawal suara
+      rakyat. Relawan akan diberikan akses tambahan untuk mereview foto-foto
+      yang masuk ke dalam sistem. Untuk mendaftar sebagai relawan, ada beberapa
+      hal yang harus anda lakukan dan setujui:
+    </p>
+    <ol>
+      <li>
+        Mengupload setidaknya satu test foto di TPS terdekat anda di masa uji
+        coba ini.<br />Status:
+        <ng-container *ngIf="user.numUploads > 0; else belumupload"
+          ><b style="color: green">OK</b>.</ng-container
+        >
+        <ng-template #belumupload
+          ><b style="color: red">belum dilakukan</b>. Silahkan tes
+          <a [routerLink]="['/f']">upload foto</a> dahulu.</ng-template
+        >
+      </li>
+      <li>
+        Mintalah URL kode referral yang masih aktif dari teman anda yang sudah
+        menjadi relawan.<br />Status:
+        <ng-container *ngIf="user.depth; else belumdirefer"
+          ><b style="color: green">OK</b>. Anda telah direfer oleh
+          <a href="{{ getScopedUrl(user.referrer) }}" target="_blank">{{
+            user.referrer.name
+          }}</a>
+        </ng-container>
+        <ng-template #belumdirefer
+          ><b style="color: red">belum dilakukan</b>.</ng-template
+        >
+      </li>
+      <li>
+        Nama dan profil Facebook anda akan dikaitkan dengan aktifitas anda di
+        sistem KawalPemilu ini
+      </li>
+      <li>
+        Admin KawalPemilu berhak untuk mencabut status relawan anda jika
+        terdapat aktifitas yang tidak berkenan
+      </li>
+    </ol>
+
+    <ng-container *ngIf="user.depth > 0 && user.numUploads > 0">
       <p>
-        Selamat! Anda telah ditunjuk oleh
-        <a href="{{ getScopedUrl(user.referrer) }}" target="_blank">{{
-          user.referrer.name
-        }}</a>
-        sebagai relawan terpercaya level {{ user.depth }}.
+        Selamat! anda telah memenuhi persyaratan sebagai relawan. Terima kasih
+        atas ketersediaan anda menjadi relawan.
       </p>
 
       <ng-container *ngIf="user.depth <= MAX_TRUSTED_DEPTH">
         <p>
-          Anda dapat mengundang teman Facebook anda untuk menjadi relawan
-          terpercaya dengan membuat kode referral dibawah ini.
+          Anda dapat mengundang teman Facebook anda untuk menjadi relawan dengan
+          membuat kode referral dibawah ini.
         </p>
 
         <p>
@@ -120,18 +146,20 @@
           <ng-container *ngIf="codes.length > 0">
             <p>
               Berikut ini adalah teman-teman ada yang sudah menerima undangan
-              anda dan telah menjadi relawan terpercaya:
+              anda dan telah menjadi relawan:
             </p>
 
             <table border="1" cellpadding="0" cellspacing="0">
               <tr bgcolor="lightgray">
+                <th width="30">#</th>
                 <td><b>Nama</b></td>
                 <td><b>Profile teman anda</b></td>
               </tr>
               <tr
-                *ngFor="let code of codes; let odd = odd"
+                *ngFor="let code of codes; let odd = odd; let i = index"
                 [style.background-color]="odd ? '#FFF' : '#EEE'"
               >
+                <td align="center">{{i + 1}}</td>
                 <td>{{ user.code[code].name }}</td>
                 <td>
                   <a
@@ -145,11 +173,11 @@
           </ng-container>
         </ng-container>
       </ng-container>
-    </ng-template>
+    </ng-container>
   </ng-container>
 
   <ng-template #login>
-    <app-login fitur="registrasi relawan terpercaya"></app-login>
+    <app-login fitur="registrasi relawan"></app-login>
   </ng-template>
 </div>
 

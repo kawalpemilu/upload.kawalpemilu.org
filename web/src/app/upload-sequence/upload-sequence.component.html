@@ -79,11 +79,41 @@
 
           <!-- <p>Terakhir, masukkan angka-angka yang tertera di foto tersebut:</p> -->
 
-          <p>Masukkan angka antara 0 sampai 999:</p>
+          <p>(Opsional) masukkan jumlah suara:</p>
           <mat-form-field style="width: 225px">
             <input
               matInput
-              placeholder="Angka antara 0 sampai 999"
+              placeholder="Jumlah Suara Paslon 1"
+              formControlName="paslon1Ctrl"
+              type="number"
+              required
+            />
+          </mat-form-field>
+          &nbsp;
+          <span *ngIf="getError('sahCtrl') as error" class="alert">
+            {{ error }}
+          </span>
+          <br />
+
+          <mat-form-field style="width: 225px">
+            <input
+              matInput
+              placeholder="Jumlah Suara Paslon 2"
+              formControlName="paslon2Ctrl"
+              type="number"
+              required
+            />
+          </mat-form-field>
+          &nbsp;
+          <span *ngIf="getError('paslon2Ctrl') as error" class="alert">
+            {{ error }}
+          </span>
+          <br />
+
+          <mat-form-field style="width: 225px">
+            <input
+              matInput
+              placeholder="Jumlah Suara Sah"
               formControlName="sahCtrl"
               type="number"
               required
@@ -95,49 +125,19 @@
           </span>
           <br />
 
-          <!-- <mat-form-field style="width: 225px">
-          <input
-            matInput
-            placeholder="Jumlah Suara Paslon 2"
-            formControlName="paslon2Ctrl"
-            type="number"
-            required
-          />
-        </mat-form-field>
-        &nbsp;
-        <span *ngIf="getError('paslon2Ctrl') as error" class="alert">
-          {{ error }}
-        </span>
-        <br />
-
-        <mat-form-field style="width: 225px">
-          <input
-            matInput
-            placeholder="Jumlah Suara Sah"
-            formControlName="sahCtrl"
-            type="number"
-            required
-          />
-        </mat-form-field>
-        &nbsp;
-        <span *ngIf="getError('sahCtrl') as error" class="alert">
-          {{ error }}
-        </span>
-        <br />
-
-        <mat-form-field style="width: 225px">
-          <input
-            matInput
-            placeholder="Jumlah Suara Tidak Sah"
-            formControlName="tidakSahCtrl"
-            type="number"
-            required
-          />
-        </mat-form-field>
-        &nbsp;
-        <span *ngIf="getError('tidakSahCtrl') as error" class="alert">
-          {{ error }}
-        </span> -->
+          <mat-form-field style="width: 225px">
+            <input
+              matInput
+              placeholder="Jumlah Suara Tidak Sah"
+              formControlName="tidakSahCtrl"
+              type="number"
+              required
+            />
+          </mat-form-field>
+          &nbsp;
+          <span *ngIf="getError('tidakSahCtrl') as error" class="alert">
+            {{ error }}
+          </span>
 
           <p>
             <button

@@ -85,7 +85,7 @@ export class RegistrasiComponent implements OnInit {
       })
     );
     this.formGroup = this.formBuilder.group({
-      namaCtrl: [null, [Validators.pattern('^[a-zA-Z ]{1,20}$')]]
+      namaCtrl: [null, [Validators.pattern('^[a-zA-Z ]{1,30}$')]]
     });
     console.log('Registrasi inited');
   }
@@ -97,7 +97,7 @@ export class RegistrasiComponent implements OnInit {
   getError(ctrlName: string) {
     const ctrl = this.formGroup.get(ctrlName);
     if (ctrl.hasError('pattern')) {
-      return 'Panjang nama maksimum 20 huruf';
+      return 'Panjang nama maksimum 30 huruf';
     }
     return '';
   }
@@ -114,7 +114,27 @@ export class RegistrasiComponent implements OnInit {
 
   copyCode(el) {
     el.select();
+
+    // https://stackoverflow.com/questions/34045777/copy-to-clipboard-using-javascript-in-ios
+    const oldContentEditable = el.contentEditable,
+      oldReadOnly = el.readOnly,
+      range = document.createRange();
+
+    el.contentEditable = true;
+    el.readOnly = false;
+    range.selectNodeContents(el);
+
+    const s = window.getSelection();
+    s.removeAllRanges();
+    s.addRange(range);
+
+    el.setSelectionRange(0, 999); // A big number, to cover anything that could be inside the element.
+
+    el.contentEditable = oldContentEditable;
+    el.readOnly = oldReadOnly;
+
     document.execCommand('copy');
+
     this.snackBar.openFromComponent(CopySnackBarComponent, {
       duration: 1500
     });
