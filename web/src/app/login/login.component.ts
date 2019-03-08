@@ -4,7 +4,7 @@ import { UserService } from '../user.service';
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  styles: ['']
 })
 export class LoginComponent implements OnInit {
   @Input() fitur: string;

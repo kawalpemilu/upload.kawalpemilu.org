@@ -29,7 +29,7 @@ export class UploadState {
 @Component({
   selector: 'app-upload-sequence',
   templateUrl: './upload-sequence.component.html',
-  styleUrls: ['./upload-sequence.component.css']
+  styles: ['']
 })
 export class UploadSequenceComponent implements OnInit {
   state$: Observable<UploadState>;

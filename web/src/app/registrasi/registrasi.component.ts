@@ -29,7 +29,7 @@ export class CopySnackBarComponent {}
 @Component({
   selector: 'app-registrasi',
   templateUrl: './registrasi.component.html',
-  styleUrls: ['./registrasi.component.css']
+  styles: ['']
 })
 export class RegistrasiComponent implements OnInit {
   theCode: string;

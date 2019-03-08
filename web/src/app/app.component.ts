@@ -5,7 +5,13 @@ import { UserService } from './user.service';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styles: [
+    `
+      h1.app-name {
+        margin-left: 8px;
+      }
+    `
+  ]
 })
 export class AppComponent implements OnDestroy {
   static TOOLBAR_HEIGHT = 64;

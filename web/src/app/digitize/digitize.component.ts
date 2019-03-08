@@ -10,7 +10,7 @@ import { map, filter, distinctUntilChanged, switchMap } from 'rxjs/operators';
 @Component({
   selector: 'app-digitize',
   templateUrl: './digitize.component.html',
-  styleUrls: ['./digitize.component.css']
+  styles: ['']
 })
 export class DigitizeComponent implements OnInit {
   state$: Observable<HierarchyNode>;

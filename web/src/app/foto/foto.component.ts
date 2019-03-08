@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Upsert, FsPath } from 'shared';
 import { UserService } from '../user.service';
-import { switchMap, take, filter } from 'rxjs/operators';
+import { switchMap, take } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { HierarchyService } from '../hierarchy.service';
 
@@ -13,7 +13,6 @@ import { HierarchyService } from '../hierarchy.service';
 })
 export class FotoComponent implements OnInit {
   uploads$: Observable<Upsert[]>;
-  isLoading = false;
 
   constructor(
     public userService: UserService,

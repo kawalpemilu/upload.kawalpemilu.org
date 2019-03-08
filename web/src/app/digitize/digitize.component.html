@@ -1,7 +1,7 @@
 <ng-container *ngIf="(userService.userRelawan$ | async) as user">
   <div
     *ngIf="user?.depth <= MAX_TRUSTED_DEPTH && (state$ | async) as state"
-    class="wrapper"
+    style="padding: 0 10px"
   >
     <app-path [node]="state"></app-path>
 
