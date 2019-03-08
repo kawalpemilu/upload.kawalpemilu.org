@@ -8,8 +8,7 @@
       <tr [style.height.px]="ROW_HEIGHT" style="background-color: lightgray">
         <th class="index">#</th>
         <th class="wilayah">{{ getWilayah(state) }}</th>
-        <th class="paslon1">Tercakup</th>
-        <th class="paslon2">Total TPS</th>
+        <th class="paslon1">TPS Tercakup</th>
       </tr>
     </thead>
   </table>
@@ -22,10 +21,9 @@
           TOTAL ({{ state.children.length }}) &nbsp;
         </th>
         <th class="paslon1">
-          {{ sum(state, 'tidakSah') | number }} /
+          {{ sum(state, 'tidakSah') | number }} / {{ sumTps(state) | number }} =
           {{ sum(state, 'tidakSah') / sumTps(state) | number: '1.0-1' }}%
         </th>
-        <th class="paslon2">{{ sumTps(state) | number }}</th>
       </tr>
     </tfoot>
   </table>
@@ -64,11 +62,8 @@
             {{ ago(state, c[0]) }}
           </td>
           <td class="paslon1">
-            {{ coverage(state, c[0]) | number }} /
+            {{ coverage(state, c[0]) | number }} / {{ c[2] | number }} =
             {{ coverage(state, c[0]) / c[2] | number: '1.0-1' }}%
-          </td>
-          <td class="paslon2">
-            {{ c[2] | number }}
           </td>
         </tr>
       </ng-container>

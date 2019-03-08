@@ -101,6 +101,7 @@ function makeRequest(kelurahanId, tpsNo) {
         paslon2: 0,
         sah: 0,
         tidakSah: 1,
+        cakupan: 1,
         pending: 0,
         error: 0
       },

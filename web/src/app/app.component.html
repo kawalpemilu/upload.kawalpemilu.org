@@ -41,6 +41,15 @@
           >Hasil Upload</a
         >
       </mat-list-item>
+      <mat-list-item>
+        <mat-icon>announcement</mat-icon
+        ><a
+          mat-list-item
+          [routerLink]="['/p']"
+          (click)="mobileQuery.matches && snav.toggle()"
+          >Pengumuman</a
+        >
+      </mat-list-item>
       <mat-list-item *ngIf="(userService.user$ | async)">
         <mat-icon>power_settings_new</mat-icon
         ><a
@@ -52,7 +61,7 @@
     </mat-nav-list>
   </mat-sidenav>
 
-  <mat-sidenav-content>
+  <mat-sidenav-content style="min-height: 260px">
     <router-outlet></router-outlet>
   </mat-sidenav-content>
 </mat-sidenav-container>

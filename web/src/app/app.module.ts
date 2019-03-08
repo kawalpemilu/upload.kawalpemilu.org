@@ -1,7 +1,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NgModule } from '@angular/core';
+import { NgModule, LOCALE_ID } from '@angular/core';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -41,6 +41,9 @@ import { ApproverComponent } from './approver/approver.component';
 import { FotoComponent } from './foto/foto.component';
 import { HieLinkComponent } from './hie-link/hie-link.component';
 import { LaporButtonComponent } from './lapor-button/lapor-button.component';
+import { ChatComponent } from './chat/chat.component';
+import { registerLocaleData } from '@angular/common';
+import localeId from '@angular/common/locales/id';
 
 @NgModule({
   entryComponents: [RegistrasiComponent, CopySnackBarComponent],
@@ -58,7 +61,8 @@ import { LaporButtonComponent } from './lapor-button/lapor-button.component';
     ApproverComponent,
     FotoComponent,
     HieLinkComponent,
-    LaporButtonComponent
+    LaporButtonComponent,
+    ChatComponent
   ],
   imports: [
     BrowserModule,
@@ -85,7 +89,9 @@ import { LaporButtonComponent } from './lapor-button/lapor-button.component';
 
     MatToolbarModule
   ],
-  providers: [],
+  providers: [{ provide: LOCALE_ID, useValue: 'id' }],
   bootstrap: [AppComponent]
 })
 export class AppModule {}
+
+registerLocaleData(localeId, 'id');

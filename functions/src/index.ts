@@ -252,10 +252,10 @@ app.post('/api/upload', async (req, res) => {
     return res.json({ error: 'Missing data sum' });
   }
 
-  const createdTs = Date.now();
   const data = getAggregate(res, user.uid, b.data, imageId, servingUrl);
+  data.sum.cakupan = 1;
   data.sum.pending = 1;
-  data.updateTs = createdTs;
+  data.updateTs = Date.now();
 
   const uRef = fsdb.doc(FsPath.relawan(user.uid));
   const uploader = (await uRef.get()).data() as Relawan;
@@ -276,6 +276,7 @@ app.post('/api/upload', async (req, res) => {
   const ip = req.headers['fastly-client-ip'];
   const upsert: Upsert = {
     uploader: uploader.profile,
+    uploadTs: data.updateTs,
     reviewer: null,
     reviewTs: null,
     reporter: null,
@@ -287,6 +288,7 @@ app.post('/api/upload', async (req, res) => {
       paslon2: 0,
       sah: 0,
       tidakSah: 0,
+      cakupan: 1,
       pending: 1,
       error: 0
     },
@@ -295,7 +297,6 @@ app.post('/api/upload', async (req, res) => {
     meta: extractImageMetadata(b.metadata),
     done: 0,
     deleted: false,
-    createdTs
   };
 
   const batch = fsdb.batch();
@@ -337,7 +338,9 @@ app.post('/api/approve', async (req, res) => {
     u.tpsNo = tpsNo;
     u.reviewer = r.profile;
     u.reviewTs = ts;
+    u.deleted = !!b.delete;
     data.url = u.data.url;
+    data.sum.cakupan = u.deleted ? 0 : 1;
     data.sum.pending = 0;
     data.sum.error = 0;
     u.data = data;
@@ -346,11 +349,11 @@ app.post('/api/approve', async (req, res) => {
       paslon2: 1,
       sah: 1,
       tidakSah: 1,
+      cakupan: 1,
       pending: 1,
       error: 1
     };
     u.done = 0;
-    u.deleted = !!b.delete;
     if (u.deleted) {
       data.sum.paslon1 = 0;
       data.sum.paslon2 = 0;
@@ -386,6 +389,7 @@ app.post('/api/problem', async (req, res) => {
       paslon2: 0,
       sah: 0,
       tidakSah: 0,
+      cakupan: 0,
       pending: 0,
       error: 1
     };

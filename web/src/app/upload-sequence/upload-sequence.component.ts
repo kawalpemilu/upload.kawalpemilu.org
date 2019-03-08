@@ -142,6 +142,7 @@ export class UploadSequenceComponent implements OnInit {
       paslon2: this.formGroup.get('paslon2Ctrl').value,
       sah: this.formGroup.get('sahCtrl').value,
       tidakSah: this.formGroup.get('tidakSahCtrl').value,
+      cakupan: 1,
       pending: 1,
       error: 0
     };

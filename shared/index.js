@@ -10,6 +10,7 @@ var SUM_KEY;
     SUM_KEY["paslon2"] = "paslon2";
     SUM_KEY["sah"] = "sah";
     SUM_KEY["tidakSah"] = "tidakSah";
+    SUM_KEY["cakupan"] = "cakupan";
     SUM_KEY["pending"] = "pending";
     SUM_KEY["error"] = "error";
 })(SUM_KEY = exports.SUM_KEY || (exports.SUM_KEY = {}));

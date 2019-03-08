@@ -28,13 +28,14 @@ export enum SUM_KEY {
   paslon2 = 'paslon2',
   sah = 'sah',
   tidakSah = 'tidakSah',
+  cakupan = 'cakupan',
   pending = 'pending',
   error = 'error'
 }
 
 export interface Upsert {
   uploader: PublicProfile;
-  createdTs: number;
+  uploadTs: number;
   reviewer: PublicProfile;
   reviewTs: number;
   reporter: PublicProfile;

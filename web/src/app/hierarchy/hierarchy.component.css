@@ -26,7 +26,7 @@ td {
 }
 
 .paslon1 {
-  width: 80px;
+  width: 160px;
   text-align: right;
   font-size: small;
 }
@@ -70,7 +70,7 @@ a.link {
   }
 
   .paslon1 {
-    width: 100px;
+    width: 200px;
     font-size: medium;
   }
 

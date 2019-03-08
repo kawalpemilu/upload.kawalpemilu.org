@@ -128,6 +128,7 @@ export class ApproverComponent implements OnInit {
       paslon2: this.formGroup.get('paslon2Ctrl').value,
       sah: this.formGroup.get('sahCtrl').value,
       tidakSah: this.formGroup.get('tidakSahCtrl').value,
+      cakupan: del ? 0 : 1,
       pending: 0,
       error: 0
     };
