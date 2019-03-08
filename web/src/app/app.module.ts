@@ -39,6 +39,7 @@ import { ThumbnailComponent } from './thumbnail/thumbnail.component';
 import { DigitizeComponent } from './digitize/digitize.component';
 import { ApproverComponent } from './approver/approver.component';
 import { FotoComponent } from './foto/foto.component';
+import { HieLinkComponent } from './hie-link/hie-link.component';
 
 @NgModule({
   entryComponents: [RegistrasiComponent, CopySnackBarComponent],
@@ -54,7 +55,8 @@ import { FotoComponent } from './foto/foto.component';
     ThumbnailComponent,
     DigitizeComponent,
     ApproverComponent,
-    FotoComponent
+    FotoComponent,
+    HieLinkComponent
   ],
   imports: [
     BrowserModule,

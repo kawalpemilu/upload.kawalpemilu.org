@@ -10,9 +10,7 @@ import { AppComponent } from '../app.component';
       <tr>
         <td style="line-height: 175%" [style.height.px]="TOOLBAR_HEIGHT">
           <span *ngFor="let id of node.parentIds; let i = index">
-            <a [routerLink]="['/h', id]">{{
-              node.parentNames[i] | uppercase
-            }}</a>
+            <app-hie-link [id]="id" [name]="node.parentNames[i]"></app-hie-link>
             &gt;&nbsp;
           </span>
           {{ node.name | uppercase }}

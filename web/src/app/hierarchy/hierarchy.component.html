@@ -46,11 +46,7 @@
         >
           <td class="index">{{ index + 1 }}</td>
           <td class="wilayah">
-            <a
-              [routerLink]="[state.depth < 3 ? '/h' : '/t', c[0]]"
-              class="link"
-              >{{ c[1] | uppercase }}</a
-            >
+            <app-hie-link [id]="c[0]" [name]="c[1]"></app-hie-link>
             <ng-container *ngIf="state.data[c[0]] as d">
               <ng-container *ngIf="d.sum.pending || d.sum.error">
                 (<span *ngIf="d.sum.pending" style="color: orange">{{

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HierarchyNode } from 'shared';
 import { ApiService } from './api.service';
-import { ReplaySubject } from 'rxjs';
+import { ReplaySubject, Observable } from 'rxjs';
 import { filter, take, distinctUntilChanged, map } from 'rxjs/operators';
 import { UserService } from './user.service';
 import { User } from 'firebase';
@@ -27,7 +27,7 @@ export class HierarchyService {
     }
   }
 
-  get$(id: number) {
+  get$(id: number): Observable<HierarchyNode> {
     const ts = Date.now();
     if (!this.hierarchy$[id]) {
       this.hierarchy$[id] = new ReplaySubject();
