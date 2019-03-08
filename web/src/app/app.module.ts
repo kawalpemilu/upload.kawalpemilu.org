@@ -40,6 +40,7 @@ import { DigitizeComponent } from './digitize/digitize.component';
 import { ApproverComponent } from './approver/approver.component';
 import { FotoComponent } from './foto/foto.component';
 import { HieLinkComponent } from './hie-link/hie-link.component';
+import { LaporButtonComponent } from './lapor-button/lapor-button.component';
 
 @NgModule({
   entryComponents: [RegistrasiComponent, CopySnackBarComponent],
@@ -56,7 +57,8 @@ import { HieLinkComponent } from './hie-link/hie-link.component';
     DigitizeComponent,
     ApproverComponent,
     FotoComponent,
-    HieLinkComponent
+    HieLinkComponent,
+    LaporButtonComponent
   ],
   imports: [
     BrowserModule,

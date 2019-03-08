@@ -78,15 +78,11 @@
                     >
                     <ng-container *ngTemplateOutlet="bisaupload"></ng-container>
                   </ng-container>
-                  <button
-                    *ngIf="!d.sum.error && (userService.user$ | async) as user"
-                    mat-raised-button
-                    color="warn"
-                    (click)="laporKesalahan(user, d.imageId, state.id)"
-                    [disabled]="isLoading"
-                  >
-                    Laporkan Kesalahan
-                  </button>
+                  <app-lapor-button
+                    *ngIf="!d.sum.error"
+                    [id]="state.id"
+                    [imageId]="d.imageId"
+                  ></app-lapor-button>
                 </ng-container>
               </p>
               <ng-template #bisaupload>

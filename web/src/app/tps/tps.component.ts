@@ -7,7 +7,6 @@ import { Observable } from 'rxjs';
 import { HierarchyNode, MAX_RELAWAN_TRUSTED_DEPTH, UpsertData } from 'shared';
 import { UploadService } from '../upload.service';
 import { UserService } from '../user.service';
-import { ApiService } from '../api.service';
 
 interface Tps {
   tpsNo: number;
@@ -28,14 +27,12 @@ interface State extends HierarchyNode {
 })
 export class TpsComponent implements OnInit {
   state$: Observable<State>;
-  isLoading = false;
 
   constructor(
     public hie: HierarchyService,
     public uploadService: UploadService,
     public userService: UserService,
-    private route: ActivatedRoute,
-    private api: ApiService
+    private route: ActivatedRoute
   ) {}
 
   get MAX_TRUSTED_DEPTH() {
@@ -68,13 +65,5 @@ export class TpsComponent implements OnInit {
     );
 
     console.log('TpsComponent inited');
-  }
-
-  async laporKesalahan(user, imageId, kelId) {
-    this.isLoading = true;
-    await this.api.post(user, `problem`, { imageId });
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    await this.hie.update(user, kelId);
-    this.isLoading = false;
   }
 }
