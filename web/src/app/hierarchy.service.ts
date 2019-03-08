@@ -27,13 +27,13 @@ export class HierarchyService {
     }
   }
 
-  get$(id: number): Observable<HierarchyNode> {
+  get$(id: number, refresh = true): Observable<HierarchyNode> {
     const ts = Date.now();
     if (!this.hierarchy$[id]) {
       this.hierarchy$[id] = new ReplaySubject();
       this.lastTs = 0;
     }
-    if (ts - this.lastTs > 1000) {
+    if (ts - this.lastTs > 1000 && (refresh || this.lastTs === 0)) {
       console.log('Fetch node', id);
       this.lastTs = ts;
       this.userService.user$

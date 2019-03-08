@@ -11,9 +11,6 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  // TODO: get user_link for app scoped url:
-  // curl -i -X GET "https://graph.facebook.com/v3.2/101540840984083?fields=link&access_token=EA..."
-
   async get(user: User, path: string) {
     const url = `${ApiService.API_PREFIX}/${path}`;
     return this.http

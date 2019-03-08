@@ -40,10 +40,11 @@
         Mintalah URL kode referral yang masih aktif dari teman anda yang sudah
         menjadi relawan.<br />Status:
         <ng-container *ngIf="user.depth; else belumdirefer"
-          ><b style="color: green">OK</b>. Anda telah direfer oleh
-          <a href="{{ getScopedUrl(user.referrer) }}" target="_blank">{{
-              user.referrer && user.referrer.name
-          }}</a>
+          ><b style="color: green">OK</b>.
+          <ng-container *ngIf="user.referrer">
+            Anda direfer oleh
+            <app-orang [profile]="user.referrer"></app-orang>
+          </ng-container>
         </ng-container>
         <ng-template #belumdirefer
           ><b style="color: red">belum dilakukan</b>.</ng-template
@@ -159,14 +160,10 @@
                 *ngFor="let code of codes; let odd = odd; let i = index"
                 [style.background-color]="odd ? '#FFF' : '#EEE'"
               >
-                <td align="center">{{i + 1}}</td>
+                <td align="center">{{ i + 1 }}</td>
                 <td>{{ user.code[code].name }}</td>
                 <td>
-                  <a
-                    href="{{ getScopedUrl(user.code[code].claimer) }}"
-                    target="_blank"
-                    >{{ user.code[code].claimer.name }}</a
-                  >
+                  <app-orang [profile]="user.code[code].claimer"></app-orang>
                 </td>
               </tr>
             </table>

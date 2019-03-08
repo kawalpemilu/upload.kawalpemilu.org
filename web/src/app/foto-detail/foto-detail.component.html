@@ -1,0 +1,73 @@
+<table #tbl [attr.height]="HEIGHT" cellpadding="0" cellspacing="0" width="100%">
+  <tbody *ngIf="(upsert$ | async) as u">
+    <tr>
+      <td align="center" width="140" valign="middle">
+        <app-thumbnail
+          [url]="u.data.url"
+          [size]="125"
+          [esize]="980"
+        ></app-thumbnail>
+        <br />
+        {{ u.uploadTs | date: 'short' }}
+      </td>
+      <td
+        valign="middle"
+        style="padding: 5px"
+        [style.background-color]="color(u)"
+      >
+        <table width="100%">
+          <tr>
+            <td>
+              Kelurahan:
+            </td>
+            <td>
+              <a [routerLink]="['/t', u.kelId]">{{
+                (hie$(u.kelId) | async)?.name
+              }}</a>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              TPS:
+            </td>
+            <td>#{{ u.tpsNo }}</td>
+          </tr>
+
+          <tr>
+            <td colspan="2">
+              &nbsp;<ng-container [ngSwitch]="status(u)">
+                <span *ngSwitchCase="'error'" style="color: red">
+                  Ada laporan kesalahan di foto ini.
+                </span>
+                <span *ngSwitchCase="'pending'" style="color: orange">
+                  Foto ini belum diproses.
+                </span>
+                <span *ngSwitchCase="'deleted'" style="color: red">
+                  Foto ini ditolak.
+                </span>
+              </ng-container>
+            </td>
+          </tr>
+
+          <tr>
+            <td>Paslon1:</td>
+            <td>{{ u.data.sum.paslon1 }}</td>
+          </tr>
+          <tr>
+            <td>Paslon2:</td>
+            <td>{{ u.data.sum.paslon2 }}</td>
+          </tr>
+          <tr>
+            <td>Sah:</td>
+            <td>{{ u.data.sum.sah }}</td>
+          </tr>
+          <tr>
+            <td>Tidak Sah:</td>
+            <td>{{ u.data.sum.tidakSah }}</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+</table>

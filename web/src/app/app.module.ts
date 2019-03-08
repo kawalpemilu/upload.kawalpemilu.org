@@ -44,6 +44,8 @@ import { LaporButtonComponent } from './lapor-button/lapor-button.component';
 import { ChatComponent } from './chat/chat.component';
 import { registerLocaleData } from '@angular/common';
 import localeId from '@angular/common/locales/id';
+import { OrangComponent } from './orang/orang.component';
+import { FotoDetailComponent } from './foto-detail/foto-detail.component';
 
 @NgModule({
   entryComponents: [RegistrasiComponent, CopySnackBarComponent],
@@ -62,7 +64,9 @@ import localeId from '@angular/common/locales/id';
     FotoComponent,
     HieLinkComponent,
     LaporButtonComponent,
-    ChatComponent
+    ChatComponent,
+    OrangComponent,
+    FotoDetailComponent
   ],
   imports: [
     BrowserModule,

@@ -1,4 +1,4 @@
-<table #tbl style="display: inline; min-height: 400px">
+<table #tbl style="display: inline" [style.min-height]="HEIGHT">
   <tbody *ngIf="(upsert$ | async) as u">
     <tr>
       <td>
@@ -16,27 +16,18 @@
           Sah: {{ u.data.sum.sah }}<br />
           TidakSah: {{ u.data.sum.tidakSah }}<br />
 
-          <p>
-            Dicek oleh:
-            <a href="{{ SCOPED_PREFIX + u.reviewer.link }}" target="_blank">{{
-              u.reviewer.name
-            }}</a>
-          </p>
+          <p>Dicek oleh: <app-orang [profile]="u.reviewer"></app-orang></p>
         </ng-template>
 
         <ng-container *ngIf="u.data.sum.error || !u.reviewer; else done">
           <p *ngIf="u.data.sum.error" style="background-color: #FDD">
-            Kesalahan dilaporkan oleh:
-            <a href="{{ SCOPED_PREFIX + u.reporter.link }}" target="_blank">{{
-              u.reporter.name
-            }}</a>
+            Kesalahan dilaporkan oleh:<br />
+            <app-orang [profile]="u.reporter"></app-orang>
           </p>
 
           <p>
             Foto diupload oleh:<br />
-            <a href="{{ SCOPED_PREFIX + u.uploader?.link }}" target="_blank">{{
-              u.uploader.name
-            }}</a>
+            <app-orang [profile]="u.uploader"></app-orang>
           </p>
 
           <form [formGroup]="formGroup">

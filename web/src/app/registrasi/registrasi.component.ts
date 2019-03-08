@@ -10,9 +10,7 @@ import {
   Relawan,
   FsPath,
   CodeReferral,
-  MAX_RELAWAN_TRUSTED_DEPTH,
-  PublicProfile,
-  APP_SCOPED_PREFIX_URL
+  MAX_RELAWAN_TRUSTED_DEPTH
 } from 'shared';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { MatSnackBar } from '@angular/material';
@@ -88,10 +86,6 @@ export class RegistrasiComponent implements OnInit {
       namaCtrl: [null, [Validators.pattern('^[a-zA-Z ]{1,50}$')]]
     });
     console.log('Registrasi inited');
-  }
-
-  getScopedUrl(p: PublicProfile) {
-    return APP_SCOPED_PREFIX_URL + (p && p.link);
   }
 
   getError(ctrlName: string) {

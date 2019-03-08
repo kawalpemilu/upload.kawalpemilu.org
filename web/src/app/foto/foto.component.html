@@ -34,45 +34,24 @@
     </a>
   </p>
 
-  <ng-container *ngIf="(uploads$ | async) as uploads">
-    <ng-container *ngIf="uploads.length > 0">
+  <ng-container *ngIf="(userService.userRelawan$ | async) as user">
+    <ng-container *ngIf="user.numUploads > 0">
       <p>
         <b>Tips</b>: klik nama kelurahan di bawah untuk meng-upload foto lain di
         kelurahan yang sama.
       </p>
       <table border="1" cellpadding="5" cellspacing="0">
         <tr bgcolor="lightgray" height="30">
-          <td width="120"><b>Tes Foto Anda</b></td>
-          <td width="300"><b>Details</b></td>
+          <th width="30">#</th>
+          <td width="400"><b>Tes Foto</b></td>
         </tr>
         <tr
-          *ngFor="let u of uploads; let odd = odd"
-          [style.background-color]="
-            u.data.sum.error ? '#FDD' : odd ? '#FFF' : '#EEE'
-          "
-          height="150"
+          *ngFor="let imageId of user.imageIds; let odd = odd; let i = index"
+          [style.background-color]="odd ? '#FFF' : '#EEE'"
         >
-          <td align="center">
-            <app-thumbnail
-              [url]="u.data.url"
-              [size]="125"
-              [esize]="980"
-            ></app-thumbnail>
-          </td>
+          <td align="center">{{ user.imageIds.length - i }}</td>
           <td>
-            <p>
-              Kelurahan:
-              <a [routerLink]="['/t', u.kelId]">{{
-                (hie$(u.kelId) | async)?.name
-              }}</a
-              ><br />
-              TPS: #{{ u.tpsNo }}<br />
-              {{ u.uploadTs | date: 'medium' }}<br />
-            </p>
-
-            <p *ngIf="u.data.sum.error">
-              Ada laporan kesalahan di foto ini.
-            </p>
+            <app-foto-detail [imageId]="imageId"></app-foto-detail>
           </td>
         </tr>
       </table>

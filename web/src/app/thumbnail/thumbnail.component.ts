@@ -51,15 +51,13 @@ export class ThumbnailComponent implements OnInit {
     const visible =
       r.top >= 0 &&
       r.left >= 0 &&
-      r.bottom <=
+      r.bottom - this.size <=
         (window.innerHeight || document.documentElement.clientHeight) &&
       r.right <= (window.innerWidth || document.documentElement.clientWidth);
     if (visible) {
       this.elink = getServingUrl(this.url, this.esize);
       el.src = getServingUrl(this.url, this.size);
       this.isSet = true;
-    } else {
-      console.log('notset');
     }
   }
 }

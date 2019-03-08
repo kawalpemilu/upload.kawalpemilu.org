@@ -13,8 +13,7 @@ import {
   FsPath,
   Relawan,
   ApiApproveRequest,
-  SUM_KEY,
-  APP_SCOPED_PREFIX_URL
+  SUM_KEY
 } from 'shared';
 import { shareReplay, filter, map, tap } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
@@ -34,6 +33,8 @@ export class ApproverComponent implements OnInit {
   @Input() color = '';
   @Input() user: Relawan;
 
+  HEIGHT = 400;
+
   upsert$: Observable<Upsert>;
   formGroup: FormGroup;
   isLoading = false;
@@ -49,10 +50,6 @@ export class ApproverComponent implements OnInit {
       sahCtrl: [null, [Validators.pattern('^[0-9]{1,3}$')]],
       tidakSahCtrl: [null, [Validators.pattern('^[0-9]{1,3}$')]]
     });
-  }
-
-  get SCOPED_PREFIX() {
-    return APP_SCOPED_PREFIX_URL;
   }
 
   ngOnInit() {
@@ -78,7 +75,7 @@ export class ApproverComponent implements OnInit {
     const visible =
       r.top >= 0 &&
       r.left >= 0 &&
-      r.bottom <=
+      r.bottom - this.HEIGHT <=
         (window.innerHeight || document.documentElement.clientHeight) &&
       r.right <= (window.innerWidth || document.documentElement.clientWidth);
     if (visible) {
