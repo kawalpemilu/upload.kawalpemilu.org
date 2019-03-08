@@ -42,7 +42,7 @@
         <ng-container *ngIf="user.depth; else belumdirefer"
           ><b style="color: green">OK</b>. Anda telah direfer oleh
           <a href="{{ getScopedUrl(user.referrer) }}" target="_blank">{{
-            user.referrer.name
+              user.referrer && user.referrer.name
           }}</a>
         </ng-container>
         <ng-template #belumdirefer

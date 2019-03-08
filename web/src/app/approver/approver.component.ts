@@ -95,7 +95,7 @@ export class ApproverComponent implements OnInit {
           .where('kelId', '==', this.kelurahanId)
           .where('tpsNo', '==', this.tpsNo)
           .where('deleted', '==', false)
-          .orderBy('createdTs')
+          .orderBy('uploadTs')
           .limit(1)
       )
       .valueChanges()

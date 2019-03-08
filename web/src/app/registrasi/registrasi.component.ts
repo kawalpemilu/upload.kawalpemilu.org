@@ -91,7 +91,7 @@ export class RegistrasiComponent implements OnInit {
   }
 
   getScopedUrl(p: PublicProfile) {
-    return APP_SCOPED_PREFIX_URL + p.link;
+    return APP_SCOPED_PREFIX_URL + (p && p.link);
   }
 
   getError(ctrlName: string) {

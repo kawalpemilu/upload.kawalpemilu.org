@@ -67,7 +67,7 @@
               }}</a
               ><br />
               TPS: #{{ u.tpsNo }}<br />
-              {{ u.createdTs | date: 'medium' }}<br />
+              {{ u.uploadTs | date: 'medium' }}<br />
             </p>
 
             <p *ngIf="u.data.sum.error">
