@@ -434,7 +434,7 @@ app.post('/api/register/create_code', async (req, res) => {
   if (!user) return null;
 
   const nama = req.body.nama;
-  if (!nama || !nama.match(/^[A-Za-z ]{1,20}$/))
+  if (!nama || !nama.match(/^[A-Za-z ]{1,50}$/))
     return res.json({ error: 'Nama tidak valid' });
 
   const rRef = fsdb.doc(FsPath.relawan(user.uid));

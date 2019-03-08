@@ -41,6 +41,14 @@
           >Hasil Upload</a
         >
       </mat-list-item>
+      <mat-list-item *ngIf="(userService.user$ | async)">
+        <mat-icon>power_settings_new</mat-icon
+        ><a
+          mat-list-item
+          (click)="userService.logout(); mobileQuery.matches && snav.toggle()"
+          >Logout</a
+        >
+      </mat-list-item>
     </mat-nav-list>
   </mat-sidenav>
 

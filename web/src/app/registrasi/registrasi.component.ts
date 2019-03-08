@@ -85,7 +85,7 @@ export class RegistrasiComponent implements OnInit {
       })
     );
     this.formGroup = this.formBuilder.group({
-      namaCtrl: [null, [Validators.pattern('^[a-zA-Z ]{1,30}$')]]
+      namaCtrl: [null, [Validators.pattern('^[a-zA-Z ]{1,50}$')]]
     });
     console.log('Registrasi inited');
   }
@@ -97,7 +97,7 @@ export class RegistrasiComponent implements OnInit {
   getError(ctrlName: string) {
     const ctrl = this.formGroup.get(ctrlName);
     if (ctrl.hasError('pattern')) {
-      return 'Panjang nama maksimum 30 huruf';
+      return 'Panjang nama maksimum 50 huruf';
     }
     return '';
   }
