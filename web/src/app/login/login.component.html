@@ -1,8 +1,9 @@
-<div *ngIf="userService.isLoading"><br /><mat-spinner></mat-spinner></div>
-<div *ngIf="!userService.isLoading">
-  <p>Untuk {{ fitur }}, anda harus login dahulu:</p>
+<div style="padding: 0 10px">
+  <div *ngIf="userService.isLoading"><br /><mat-spinner></mat-spinner></div>
+  <div *ngIf="!userService.isLoading">
+    <p>Untuk mengakses sistem KawalPemilu, anda harus login dahulu:</p>
 
-  <!-- <p></p>
+    <!-- <p></p>
   <button
     style="width: 250px; text-align: left"
     mat-raised-button
@@ -15,20 +16,20 @@
     Login with Google
   </button> -->
 
-  <p></p>
-  <button
-    style="width: 250px; text-align: left"
-    mat-raised-button
-    (click)="userService.login('facebook')"
-  >
-    <img
-      style="padding:8px"
-      src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHsSURBVGhD7ZjNLgNhGEZ7ZS1i5a/TEvdDLCywE0sXoTMSEZZW4t8FWEqIlg0Lo41nIprzxfv1pWMxJzm7d56e9GfTWkVFRcX/ptFMk3orPa63Oi+NVpqPw8Frfb7m3oIyRqORpOv0AmN2TTlxTCSdJoyVYr2ZzSvLzuAjpLFSTNIjZdkZ53feYE9ZdmCkVJVlh0bKVFl2aMTr1FKWb+xc5efXD3m395q/v+ffoGcKlWWHRjxOLmb5yem9Uhl6rlBZdmjE42b/nf8Jeq5QWXZoxOPFzYMyw9BzhcqyQyMeu89vyvxidessn17ex/thlWWHRjwO/2AHTLYzvCWVZYdGPBJ0F1JZdmjEI0F3IZVlh0ZijeGp+4obhcqyQyOxxnB5+4gbhcqyQyOxxrB3cIcbhcqyQyOxxrC9e4sbhcqyQyMeCboLqSw7NOKRoLuQyrJDIx4JugupLDs04pGgu5DKskMjHgm6C6ksOzTikaC7kMqyQyMeCboLqSw7NOKRoLuQyrJDIx4JugupLDs04pGgu5DKskMjHgm6C6ksOzTikaC7kMqy89t/LRJ0F3CEvxaT9AiGynGkP3eb2TyOleBEqzOrrDj6D68Nj5XginJGo//xzenr1Bsa/kt7/d/gYb2dzSijoqKi4l9Sq30A+M9r/MIZv3oAAAAASUVORK5CYII="
-    />
-    Login with Facebook
-  </button>
+    <p></p>
+    <button
+      style="width: 250px; text-align: left"
+      mat-raised-button
+      (click)="userService.login('facebook')"
+    >
+      <img
+        style="padding:8px"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHsSURBVGhD7ZjNLgNhGEZ7ZS1i5a/TEvdDLCywE0sXoTMSEZZW4t8FWEqIlg0Lo41nIprzxfv1pWMxJzm7d56e9GfTWkVFRcX/ptFMk3orPa63Oi+NVpqPw8Frfb7m3oIyRqORpOv0AmN2TTlxTCSdJoyVYr2ZzSvLzuAjpLFSTNIjZdkZ53feYE9ZdmCkVJVlh0bKVFl2aMTr1FKWb+xc5efXD3m395q/v+ffoGcKlWWHRjxOLmb5yem9Uhl6rlBZdmjE42b/nf8Jeq5QWXZoxOPFzYMyw9BzhcqyQyMeu89vyvxidessn17ex/thlWWHRjwO/2AHTLYzvCWVZYdGPBJ0F1JZdmjEI0F3IZVlh0ZijeGp+4obhcqyQyOxxnB5+4gbhcqyQyOxxrB3cIcbhcqyQyOxxrC9e4sbhcqyQyMeCboLqSw7NOKRoLuQyrJDIx4JugupLDs04pGgu5DKskMjHgm6C6ksOzTikaC7kMqyQyMeCboLqSw7NOKRoLuQyrJDIx4JugupLDs04pGgu5DKskMjHgm6C6ksOzTikaC7kMqy89t/LRJ0F3CEvxaT9AiGynGkP3eb2TyOleBEqzOrrDj6D68Nj5XginJGo//xzenr1Bsa/kt7/d/gYb2dzSijoqKi4l9Sq30A+M9r/MIZv3oAAAAASUVORK5CYII="
+      />
+      Login with Facebook
+    </button>
 
-  <!-- <p></p>
+    <!-- <p></p>
   <button
     style="width: 250px; text-align: left"
     mat-raised-button
@@ -40,4 +41,5 @@
     />
     Login with Twitter
   </button> -->
+  </div>
 </div>

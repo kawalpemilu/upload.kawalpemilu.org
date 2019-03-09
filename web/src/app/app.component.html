@@ -23,41 +23,43 @@
           >Registrasi Relawan</a
         >
       </mat-list-item>
-      <mat-list-item>
-        <mat-icon>add_a_photo</mat-icon
-        ><a
-          mat-list-item
-          [routerLink]="['/f']"
-          (click)="mobileQuery.matches && snav.toggle()"
-          >Upload Foto</a
-        >
-      </mat-list-item>
-      <mat-list-item>
-        <mat-icon>table_chart</mat-icon
-        ><a
-          mat-list-item
-          [routerLink]="['/h', 0]"
-          (click)="mobileQuery.matches && snav.toggle()"
-          >Hasil Upload</a
-        >
-      </mat-list-item>
-      <mat-list-item>
-        <mat-icon>announcement</mat-icon
-        ><a
-          mat-list-item
-          [routerLink]="['/p']"
-          (click)="mobileQuery.matches && snav.toggle()"
-          >Pengumuman</a
-        >
-      </mat-list-item>
-      <mat-list-item *ngIf="(userService.user$ | async)">
-        <mat-icon>power_settings_new</mat-icon
-        ><a
-          mat-list-item
-          (click)="userService.logout(); mobileQuery.matches && snav.toggle()"
-          >Logout</a
-        >
-      </mat-list-item>
+      <ng-container *ngIf="(userService.user$ | async)">
+        <mat-list-item>
+          <mat-icon>add_a_photo</mat-icon
+          ><a
+            mat-list-item
+            [routerLink]="['/f']"
+            (click)="mobileQuery.matches && snav.toggle()"
+            >Upload Foto</a
+          >
+        </mat-list-item>
+        <mat-list-item>
+          <mat-icon>table_chart</mat-icon
+          ><a
+            mat-list-item
+            [routerLink]="['/h', 0]"
+            (click)="mobileQuery.matches && snav.toggle()"
+            >Hasil Upload</a
+          >
+        </mat-list-item>
+        <mat-list-item>
+          <mat-icon>announcement</mat-icon
+          ><a
+            mat-list-item
+            [routerLink]="['/p']"
+            (click)="mobileQuery.matches && snav.toggle()"
+            >Pengumuman</a
+          >
+        </mat-list-item>
+        <mat-list-item>
+          <mat-icon>power_settings_new</mat-icon
+          ><a
+            mat-list-item
+            (click)="logout(); mobileQuery.matches && snav.toggle()"
+            >Logout</a
+          >
+        </mat-list-item>
+      </ng-container>
     </mat-nav-list>
   </mat-sidenav>
 

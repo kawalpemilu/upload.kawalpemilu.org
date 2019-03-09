@@ -1,6 +1,7 @@
 import { Component, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { MediaMatcher } from '@angular/cdk/layout';
 import { UserService } from './user.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
@@ -23,7 +24,8 @@ export class AppComponent implements OnDestroy {
   constructor(
     changeDetectorRef: ChangeDetectorRef,
     media: MediaMatcher,
-    public userService: UserService
+    public userService: UserService,
+    private router: Router
   ) {
     this.mobileQuery = media.matchMedia('(max-width: 599px)');
     this._mobileQueryListener = () => {
@@ -48,5 +50,10 @@ export class AppComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.mobileQuery.removeListener(this._mobileQueryListener);
+  }
+
+  async logout() {
+    await this.userService.logout();
+    this.router.navigate(['/c', 0]);
   }
 }

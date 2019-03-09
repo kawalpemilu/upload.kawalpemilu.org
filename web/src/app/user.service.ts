@@ -5,8 +5,9 @@ import { auth, User } from 'firebase/app';
 import { Observable, of } from 'rxjs';
 import { tap, switchMap, shareReplay, filter } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
-import { FsPath, Relawan, PublicProfile } from 'shared';
+import { FsPath, Relawan, LOCAL_STORAGE_LAST_URL } from 'shared';
 import { ApiService } from './api.service';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -19,7 +20,8 @@ export class UserService {
   constructor(
     private afAuth: AngularFireAuth,
     private fsdb: AngularFirestore,
-    private api: ApiService
+    private api: ApiService,
+    private router: Router
   ) {
     this.isLoading = true;
     this.user$ = this.afAuth.user.pipe(tap(() => (this.isLoading = false)));
@@ -55,6 +57,10 @@ export class UserService {
           result.additionalUserInfo.profile;
 
         if (profile) {
+          const url = localStorage.getItem(LOCAL_STORAGE_LAST_URL);
+          console.log('Navigate to last url: ', url);
+          this.router.navigateByUrl(url);
+
           const body = { link: profile.link };
           return this.api.post(result.user, `register/login`, body);
         }

@@ -1,5 +1,5 @@
 <div style="padding: 0 10px">
-  <ng-container *ngIf="(userService.userRelawan$ | async) as user; else login">
+  <ng-container *ngIf="(userService.userRelawan$ | async) as user">
     <h2>Registrasi Relawan</h2>
 
     <p>
@@ -34,20 +34,6 @@
         <ng-template #belumupload
           ><b style="color: red">belum dilakukan</b>. Silahkan tes
           <a [routerLink]="['/f']">upload foto</a> dahulu.</ng-template
-        >
-      </li>
-      <li>
-        Mintalah URL kode referral yang masih aktif dari teman anda yang sudah
-        menjadi relawan.<br />Status:
-        <ng-container *ngIf="user.depth; else belumdirefer"
-          ><b style="color: green">OK</b>.
-          <ng-container *ngIf="user.referrer">
-            Anda direfer oleh
-            <app-orang [profile]="user.referrer"></app-orang>
-          </ng-container>
-        </ng-container>
-        <ng-template #belumdirefer
-          ><b style="color: red">belum dilakukan</b>.</ng-template
         >
       </li>
       <li>
@@ -150,7 +136,7 @@
               anda dan telah menjadi relawan:
             </p>
 
-            <table border="1" cellpadding="0" cellspacing="0">
+            <table border="1" cellpadding="5" cellspacing="0">
               <tr bgcolor="lightgray">
                 <th width="30">#</th>
                 <td><b>Nama</b></td>
@@ -172,10 +158,6 @@
       </ng-container>
     </ng-container>
   </ng-container>
-
-  <ng-template #login>
-    <app-login fitur="registrasi relawan"></app-login>
-  </ng-template>
 </div>
 
 <br /><br /><br /><br /><br />

@@ -2,6 +2,7 @@ export declare const APP_SCOPED_PREFIX_URL = "https://www.facebook.com/app_scope
 export declare const MAX_RELAWAN_TRUSTED_DEPTH = 4;
 export declare const MAX_REFERRALS = 150;
 export declare const MAX_NUM_UPLOADS = 100;
+export declare const LOCAL_STORAGE_LAST_URL = "last_url";
 export interface PublicProfile {
     uid: string;
     link: string;

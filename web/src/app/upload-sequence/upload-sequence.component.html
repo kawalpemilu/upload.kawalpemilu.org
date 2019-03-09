@@ -1,7 +1,7 @@
 <div *ngIf="(state$ | async) as state" style="padding: 0 10px">
   <app-path [node]="state.node"></app-path>
 
-  <div *ngIf="(userService.user$ | async) as user; else login">
+  <div *ngIf="(userService.user$ | async) as user">
     <p>
       Halo, {{ user.displayName }} (<a
         style="color: blue; cursor: pointer;"
@@ -171,10 +171,6 @@
       </form>
     </ng-template>
   </div>
-
-  <ng-template #login>
-    <app-login fitur="mengupload foto"></app-login>
-  </ng-template>
 
   <br />
   <p>
