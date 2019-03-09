@@ -15,7 +15,6 @@ import {
   CodeReferral,
   Relawan,
   isValidImageId,
-  MAX_RELAWAN_TRUSTED_DEPTH,
   ApiApproveRequest,
   UpsertData,
   SUM_KEY,
@@ -459,7 +458,6 @@ app.post('/api/register/create_code', async (req, res) => {
     const r = (await t.get(rRef)).data() as Relawan;
     if (!r) return 'no_user';
     if (r.depth === undefined) return 'no_trust';
-    if (r.depth >= MAX_RELAWAN_TRUSTED_DEPTH) return 'no_create';
 
     let code;
     for (let i = 0; ; i++) {
@@ -491,10 +489,6 @@ app.post('/api/register/create_code', async (req, res) => {
       return res.json({ error: 'Data anda tidak ditemukan' });
     case 'no_trust':
       return res.json({ error: 'Maaf, anda belum berstatus relawan' });
-    case 'no_create':
-      return res.json({
-        error: 'Maaf, pembuatan kode belum dibuka untuk level anda'
-      });
     case 'no_quota':
       return res.json({
         error: 'Maaf, anda telah melebihi jumlah pembuatan kode referrals'

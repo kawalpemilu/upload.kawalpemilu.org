@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
-import { HierarchyNode, MAX_RELAWAN_TRUSTED_DEPTH } from 'shared';
+import { HierarchyNode } from 'shared';
 import { HierarchyService } from '../hierarchy.service';
 import { UploadService } from '../upload.service';
 import { UserService } from '../user.service';
@@ -21,10 +21,6 @@ export class DigitizeComponent implements OnInit {
     public userService: UserService,
     private route: ActivatedRoute
   ) {}
-
-  get MAX_TRUSTED_DEPTH() {
-    return MAX_RELAWAN_TRUSTED_DEPTH;
-  }
 
   ngOnInit() {
     this.state$ = this.route.paramMap.pipe(

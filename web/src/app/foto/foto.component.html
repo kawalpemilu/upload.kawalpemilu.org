@@ -1,44 +1,45 @@
 <div style="padding: 0 10px">
   <h2>Tes Upload Foto</h2>
   <p>
-    Tanggal 17 April 2019, setelah penghitungan suara selesai, anda diharapkan
-    untuk datang kembali ke TPS anda dan mem-foto formulir final yang
-    <b>TELAH</b> ditanda-tangani semua saksi. Biasanya formulir ini dipajang di
-    papan besar seperti
+    Tanggal 17 April 2019, setelah penghitungan suara selesai, Anda diharapkan
+    datang kembali ke TPS anda dan memfoto Formulir C1 Plano yang TELAH
+    ditandatangani oleh semua saksi. Biasanya, formulir ini dipajang di papan
+    besar seperti
     <a href="/assets/contoh.jpeg" target="_blank">contoh foto ini</a>. Setelah
-    anda mengambil foto tersebut, upload-lah foto tersebut ke website ini.
+    Anda mengambil foto tersebut, unggah lah foto tersebut ke situs ini.
   </p>
 
   <p>
-    <b>Tips</b>: jika anda berencana untuk mengambil foto di beberapa TPS yang
-    berbeda, maka ambillah foto2 nya terlebih dahulu, setelah semua foto
-    tersimpan di ponsel anda, barulah anda cari wifi terdekat untuk mengupload
-    fotonya satu per satu.
+    <b>Tips</b>: jika Anda berencana untuk mengambil foto di beberapa TPS yang
+    berbeda, maka ambillah foto-foto tersebut terlebih dahulu. Setelah semua
+    foto tersimpan di ponsel Anda, barulah Anda mengunggah fotonya satu per satu
+    setelah mendapat koneksi internet yang stabil, disarankan pada jaringan wifi
+    terdekat.
   </p>
 
   <p>
-    Sekarang adalah masa uji-coba. Silahkan pilih TPS yang akan anda kawal dan
-    upload foto di TPS tersebut untuk memastikan ponsel anda bisa mengupload
+    Sekarang adalah masa uji coba. Silakan pilih TPS yang akan Anda kawal dan
+    unggah foto di TPS tersebut untuk memastikan ponsel Anda dapat mengunggah
     foto dengan lancar:
   </p>
 
   <ul>
-    <li>Semua tes foto akan dihapus pada tanggal 16 April 2019</li>
-    <li>Gunakan browser Chrome atau Safari untuk upload foto.</li>
-    <li>Jika upload foto gagal, coba lagi dengan ponsel lain.</li>
+    <li>Semua tes foto akan dihapus pada tanggal 16 April 2019.</li>
+    <li>Gunakan browser Chrome atau Safari untuk mengunggah foto.</li>
+    <li>Jika unggahan/upload foto gagal, coba lagi dengan ponsel lain.</li>
   </ul>
 
   <p>
     <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
-      Cari TPS anda dan Tes Upload Foto
+      Cari TPS Anda dan Tes Menggunggah / Upload Foto
     </a>
   </p>
 
   <ng-container *ngIf="(userService.userRelawan$ | async) as user">
     <ng-container *ngIf="user.numUploads > 0">
       <p>
-        <b>Tips</b>: klik nama kelurahan di bawah untuk meng-upload foto lain di
-        kelurahan yang sama.
+        <b>Tips</b>: klik nama kelurahan di bawah untuk mengunggah upload foto
+        lain di kelurahan yang sama.
       </p>
       <table border="1" cellpadding="5" cellspacing="0">
         <tr bgcolor="lightgray" height="30">

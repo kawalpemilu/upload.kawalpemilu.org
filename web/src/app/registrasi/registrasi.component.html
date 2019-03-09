@@ -20,140 +20,121 @@
 
     <p>
       Relawan KawalPemilu memiliki tanggung jawab besar untuk mengawal suara
-      rakyat. Relawan akan diberikan akses tambahan untuk mereview foto-foto
-      yang masuk ke dalam sistem. Untuk mendaftar sebagai relawan, ada beberapa
-      hal yang harus anda lakukan dan setujui:
+      rakyat. Anda telah direfer oleh
+      <app-orang [profile]="user.referral"></app-orang>.
     </p>
-    <ol>
-      <li>
-        Mengupload setidaknya satu test foto di TPS terdekat anda di masa uji
-        coba ini.<br />Status:
-        <ng-container *ngIf="user.numUploads > 0; else belumupload"
-          ><b style="color: green">OK</b>.</ng-container
-        >
-        <ng-template #belumupload
-          ><b style="color: red">belum dilakukan</b>. Silahkan tes
-          <a [routerLink]="['/f']">upload foto</a> dahulu.</ng-template
-        >
-      </li>
-      <li>
-        Nama dan profil Facebook anda akan dikaitkan dengan aktifitas anda di
-        sistem KawalPemilu ini
-      </li>
-      <li>
-        Admin KawalPemilu berhak untuk mencabut status relawan anda jika
-        terdapat aktifitas yang tidak berkenan
-      </li>
-    </ol>
+    <p>
+      Tugas anda adalah mencari TPS di kelurahan mana saja yang belum ada
+      relawan, dan undanglah teman anda yang tinggal di kelurahan itu untuk
+      menjaga TPS disana.
+    </p>
+    <p>
+      <button mat-raised-button color="primary" [routerLink]="['/h', 0]">
+        Lihat Cakupan TPS
+      </button>
+    </p>
 
-    <ng-container *ngIf="user.depth > 0 && user.numUploads > 0">
+    <ng-container *ngIf="user.depth > 0">
       <p>
-        Selamat! anda telah memenuhi persyaratan sebagai relawan. Terima kasih
-        atas ketersediaan anda menjadi relawan.
+        Anda dapat mengundang teman Facebook Anda dengan membuat kode referral
+        di bawah ini:
       </p>
 
-      <ng-container *ngIf="user.depth <= MAX_TRUSTED_DEPTH">
-        <p>
-          Anda dapat mengundang teman Facebook anda untuk menjadi relawan dengan
-          membuat kode referral dibawah ini.
-        </p>
+      <p>
+        <b style="color: red">Catatan</b>: Anda hanya bisa mengundang maksimum
+        <b></b>150 teman.
+      </p>
 
-        <p>
-          <b style="color: red">Catatan</b>: Anda hanya bisa mengundang maksimum
-          <b></b>150 teman.
-        </p>
+      <form [formGroup]="formGroup">
+        <mat-form-field style="width: 225px">
+          <input
+            matInput
+            placeholder="Nama teman anda"
+            formControlName="namaCtrl"
+            type="text"
+            required
+          />
+        </mat-form-field>
+        &nbsp;
+        <span *ngIf="getError('namaCtrl') as error" class="alert">
+          {{ error }}
+        </span>
 
-        <form [formGroup]="formGroup">
-          <mat-form-field style="width: 225px">
-            <input
-              matInput
-              placeholder="Nama teman anda"
-              formControlName="namaCtrl"
-              type="text"
-              required
-            />
-          </mat-form-field>
-          &nbsp;
-          <span *ngIf="getError('namaCtrl') as error" class="alert">
-            {{ error }}
-          </span>
+        <button
+          type="submit"
+          [disabled]="formGroup.invalid || isLoading"
+          mat-raised-button
+          color="primary"
+          (click)="createReferralCode(user.auth)"
+        >
+          Buat Kode Referral
+        </button>
+      </form>
 
-          <button
-            type="submit"
-            [disabled]="formGroup.invalid || isLoading"
-            mat-raised-button
-            color="primary"
-            (click)="createReferralCode(user.auth)"
-          >
-            Buat Kode Referral
-          </button>
-        </form>
+      <ng-container *ngIf="getReferralCodes(user, false) as codes">
+        <ng-container *ngIf="codes.length > 0">
+          <p>
+            Kirimkan URL kode referral dibawah ini ke teman anda (satu kode
+            referral hanya bisa dipakai oleh satu orang):
+          </p>
 
-        <ng-container *ngIf="getReferralCodes(user, false) as codes">
-          <ng-container *ngIf="codes.length > 0">
-            <p>
-              Kirimkan URL kode referral dibawah ini ke teman anda (satu kode
-              referral hanya bisa dipakai oleh satu orang):
-            </p>
-
-            <table border="1" cellspacing="0">
-              <tr bgcolor="lightgray">
-                <th width="30">#</th>
-                <td><b>Nama</b></td>
-                <td><b>URL kode referral untuk dibagikan</b></td>
-              </tr>
-              <tr
-                *ngFor="let code of codes; let odd = odd; let i = index"
-                [style.background-color]="odd ? '#FFF' : '#EEE'"
-              >
-                <td align="center">{{ i + 1 }}</td>
-                <td>{{ user.code[code].name }}</td>
-                <td style="padding: 7px">
-                  <input
-                    type="text"
-                    style="width: 300px"
-                    value="https://kawal-c1.firebaseapp.com/c/{{ code }}"
-                    #ui
-                  />
-                  &nbsp;
-                  <button
-                    mat-raised-button
-                    color="primary"
-                    (click)="copyCode(ui)"
-                  >
-                    <mat-icon>file_copy</mat-icon> Copy
-                  </button>
-                </td>
-              </tr>
-            </table>
-          </ng-container>
+          <table border="1" cellspacing="0">
+            <tr bgcolor="lightgray">
+              <th width="30">#</th>
+              <td><b>Nama</b></td>
+              <td><b>URL kode referral untuk dibagikan</b></td>
+            </tr>
+            <tr
+              *ngFor="let code of codes; let odd = odd; let i = index"
+              [style.background-color]="odd ? '#FFF' : '#EEE'"
+            >
+              <td align="center">{{ i + 1 }}</td>
+              <td>{{ user.code[code].name }}</td>
+              <td style="padding: 7px">
+                <input
+                  type="text"
+                  style="width: 300px"
+                  value="https://kawal-c1.firebaseapp.com/c/{{ code }}"
+                  #ui
+                />
+                &nbsp;
+                <button
+                  mat-raised-button
+                  color="primary"
+                  (click)="copyCode(ui)"
+                >
+                  <mat-icon>file_copy</mat-icon> Copy
+                </button>
+              </td>
+            </tr>
+          </table>
         </ng-container>
+      </ng-container>
 
-        <ng-container *ngIf="getReferralCodes(user, true) as codes">
-          <ng-container *ngIf="codes.length > 0">
-            <p>
-              Berikut ini adalah teman-teman ada yang sudah menerima undangan
-              anda dan telah menjadi relawan:
-            </p>
+      <ng-container *ngIf="getReferralCodes(user, true) as codes">
+        <ng-container *ngIf="codes.length > 0">
+          <p>
+            Berikut ini adalah teman-teman ada yang sudah menerima undangan anda
+            dan telah menjadi relawan:
+          </p>
 
-            <table border="1" cellpadding="5" cellspacing="0">
-              <tr bgcolor="lightgray">
-                <th width="30">#</th>
-                <td><b>Nama</b></td>
-                <td><b>Profile teman anda</b></td>
-              </tr>
-              <tr
-                *ngFor="let code of codes; let odd = odd; let i = index"
-                [style.background-color]="odd ? '#FFF' : '#EEE'"
-              >
-                <td align="center">{{ i + 1 }}</td>
-                <td>{{ user.code[code].name }}</td>
-                <td>
-                  <app-orang [profile]="user.code[code].claimer"></app-orang>
-                </td>
-              </tr>
-            </table>
-          </ng-container>
+          <table border="1" cellpadding="5" cellspacing="0">
+            <tr bgcolor="lightgray">
+              <th width="30">#</th>
+              <td><b>Nama</b></td>
+              <td><b>Profile teman anda</b></td>
+            </tr>
+            <tr
+              *ngFor="let code of codes; let odd = odd; let i = index"
+              [style.background-color]="odd ? '#FFF' : '#EEE'"
+            >
+              <td align="center">{{ i + 1 }}</td>
+              <td>{{ user.code[code].name }}</td>
+              <td>
+                <app-orang [profile]="user.code[code].claimer"></app-orang>
+              </td>
+            </tr>
+          </table>
         </ng-container>
       </ng-container>
     </ng-container>

@@ -6,12 +6,7 @@ import { ApiService } from '../api.service';
 import { Observable, of } from 'rxjs';
 import { User } from 'firebase';
 import { FormGroup, Validators, FormBuilder } from '@angular/forms';
-import {
-  Relawan,
-  FsPath,
-  CodeReferral,
-  MAX_RELAWAN_TRUSTED_DEPTH
-} from 'shared';
+import { Relawan, FsPath, CodeReferral } from 'shared';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { MatSnackBar } from '@angular/material';
 
@@ -45,10 +40,6 @@ export class RegistrasiComponent implements OnInit {
     private formBuilder: FormBuilder,
     private snackBar: MatSnackBar
   ) {}
-
-  get MAX_TRUSTED_DEPTH() {
-    return MAX_RELAWAN_TRUSTED_DEPTH;
-  }
 
   ngOnInit() {
     this.code$ = this.route.paramMap.pipe(

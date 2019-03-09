@@ -1,13 +1,12 @@
 <div *ngIf="(state$ | async) as state" class="wrapper">
   <app-path [node]="state"></app-path>
+
+  <!-- TODO: buat terpisah -->
   <button
     mat-raised-button
     color="warn"
     [routerLink]="['/d', state.id]"
-    *ngIf="
-      state.numPending > 0 &&
-      (userService.userRelawan$ | async)?.depth <= MAX_TRUSTED_DEPTH
-    "
+    *ngIf="state.numPending > 0 && false"
   >
     Digitize {{ state.numPending }} uploads
   </button>

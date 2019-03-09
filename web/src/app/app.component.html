@@ -15,48 +15,43 @@
   >
     <mat-nav-list>
       <mat-list-item>
-        <mat-icon>group_add</mat-icon
-        ><a
+        <a
           mat-list-item
-          [routerLink]="['/c', 0]"
+          [routerLink]="['/f']"
           (click)="mobileQuery.matches && snav.toggle()"
-          >Registrasi Relawan</a
-        >
+          ><mat-icon>add_a_photo</mat-icon> &nbsp; Upload Foto &nbsp; &nbsp;
+        </a>
       </mat-list-item>
-      <ng-container *ngIf="(userService.user$ | async)">
+      <ng-container *ngIf="(userService.userRelawan$ | async) as user">
         <mat-list-item>
-          <mat-icon>add_a_photo</mat-icon
-          ><a
-            mat-list-item
-            [routerLink]="['/f']"
-            (click)="mobileQuery.matches && snav.toggle()"
-            >Upload Foto</a
-          >
-        </mat-list-item>
-        <mat-list-item>
-          <mat-icon>table_chart</mat-icon
-          ><a
+          <a
             mat-list-item
             [routerLink]="['/h', 0]"
             (click)="mobileQuery.matches && snav.toggle()"
-            >Hasil Upload</a
+            ><mat-icon>table_chart</mat-icon> &nbsp; Hasil Upload</a
           >
         </mat-list-item>
-        <mat-list-item>
-          <mat-icon>announcement</mat-icon
-          ><a
+        <mat-list-item *ngIf="user.depth > 0">
+          <a
+            mat-list-item
+            [routerLink]="['/c', 0]"
+            (click)="mobileQuery.matches && snav.toggle()"
+            ><mat-icon>group_add</mat-icon> &nbsp; Referral</a
+          >
+        </mat-list-item>
+        <!-- <mat-list-item>
+          <a
             mat-list-item
             [routerLink]="['/p']"
             (click)="mobileQuery.matches && snav.toggle()"
-            >Pengumuman</a
+            ><mat-icon>announcement</mat-icon> &nbsp; Pengumuman</a
           >
-        </mat-list-item>
+        </mat-list-item> -->
         <mat-list-item>
-          <mat-icon>power_settings_new</mat-icon
-          ><a
+          <a
             mat-list-item
             (click)="logout(); mobileQuery.matches && snav.toggle()"
-            >Logout</a
+            ><mat-icon>power_settings_new</mat-icon> &nbsp; Logout</a
           >
         </mat-list-item>
       </ng-container>

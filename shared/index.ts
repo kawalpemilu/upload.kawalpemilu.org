@@ -1,6 +1,5 @@
 export const APP_SCOPED_PREFIX_URL =
   'https://www.facebook.com/app_scoped_user_id/';
-export const MAX_RELAWAN_TRUSTED_DEPTH = 4;
 export const MAX_REFERRALS = 150;
 export const MAX_NUM_UPLOADS = 100;
 export const LOCAL_STORAGE_LAST_URL = 'last_url';

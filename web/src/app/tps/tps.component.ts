@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
-import { HierarchyNode, MAX_RELAWAN_TRUSTED_DEPTH, UpsertData } from 'shared';
+import { HierarchyNode, UpsertData } from 'shared';
 import { UploadService } from '../upload.service';
 import { UserService } from '../user.service';
 
@@ -34,10 +34,6 @@ export class TpsComponent implements OnInit {
     public userService: UserService,
     private route: ActivatedRoute
   ) {}
-
-  get MAX_TRUSTED_DEPTH() {
-    return MAX_RELAWAN_TRUSTED_DEPTH;
-  }
 
   ngOnInit() {
     this.state$ = this.route.paramMap.pipe(
