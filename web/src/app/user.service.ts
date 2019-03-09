@@ -5,7 +5,7 @@ import { auth, User } from 'firebase/app';
 import { Observable, of } from 'rxjs';
 import { tap, switchMap, shareReplay, filter } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
-import { FsPath, Relawan, LOCAL_STORAGE_LAST_URL } from 'shared';
+import { FsPath, Relawan, LOCAL_STORAGE_LAST_URL, Upsert } from 'shared';
 import { ApiService } from './api.service';
 import { Router } from '@angular/router';
 
@@ -15,6 +15,7 @@ import { Router } from '@angular/router';
 export class UserService {
   user$: Observable<User>;
   userRelawan$: Observable<Relawan>;
+  upsert$: { [imageId: string]: Observable<Upsert> } = {};
   isLoading = true;
 
   constructor(
@@ -88,5 +89,15 @@ export class UserService {
 
   logout() {
     return this.afAuth.auth.signOut();
+  }
+
+  getUpsert$(imageId: string) {
+    if (!this.upsert$[imageId]) {
+      this.upsert$[imageId] = this.fsdb
+        .doc<Upsert>(FsPath.upserts(imageId))
+        .valueChanges()
+        .pipe(shareReplay(1));
+    }
+    return this.upsert$[imageId];
   }
 }

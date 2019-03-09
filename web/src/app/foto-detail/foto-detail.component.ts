@@ -6,10 +6,10 @@ import {
   ViewChild,
   ElementRef
 } from '@angular/core';
-import { AngularFirestore } from '@angular/fire/firestore';
-import { Upsert, FsPath } from 'shared';
+import { Upsert } from 'shared';
 import { Observable } from 'rxjs';
 import { HierarchyService } from '../hierarchy.service';
+import { UserService } from '../user.service';
 
 @Component({
   selector: 'app-foto-detail',
@@ -25,16 +25,13 @@ export class FotoDetailComponent implements OnInit {
 
   HEIGHT = 150;
 
-  constructor(private fsdb: AngularFirestore, private hie: HierarchyService) {}
+  constructor(
+    private hie: HierarchyService,
+    private userService: UserService
+  ) {}
 
   ngOnInit() {
     this.checkVisibilityChange();
-  }
-
-  setUpsert() {
-    this.upsert$ = this.fsdb
-      .doc<Upsert>(FsPath.upserts(this.imageId))
-      .valueChanges();
   }
 
   @HostListener('window:resize', ['$event'])
@@ -60,7 +57,7 @@ export class FotoDetailComponent implements OnInit {
         (window.innerHeight || document.documentElement.clientHeight) &&
       r.right <= (window.innerWidth || document.documentElement.clientWidth);
     if (visible) {
-      this.setUpsert();
+      this.upsert$ = this.userService.getUpsert$(this.imageId);
     }
   }
 
