@@ -1,7 +1,7 @@
 "use strict";
 exports.__esModule = true;
 exports.APP_SCOPED_PREFIX_URL = 'https://www.facebook.com/app_scoped_user_id/';
-exports.MAX_REFERRALS = 150;
+exports.MAX_REFERRALS = 1000;
 exports.MAX_NUM_UPLOADS = 100;
 exports.LOCAL_STORAGE_LAST_URL = 'last_url';
 var SUM_KEY;

@@ -1,48 +1,43 @@
 <div style="padding: 0 10px">
   <ng-container *ngIf="(userService.userRelawan$ | async) as user">
-    <h2>Registrasi Relawan</h2>
-
-    <p>
-      Halo,
-
-      {{ user.auth.displayName }} [<a
-        style="color: blue; cursor: pointer;"
-        (click)="userService.logout()"
-        >Logout</a
-      >]
-    </p>
-
-    <p style="font-weight: bold; color: red" *ngIf="error">{{ error }}</p>
-
-    <p *ngIf="(code$ | async)?.claimer">
-      Maaf, kode referral "{{ theCode }}" sudah tidak aktif.
-    </p>
-
-    <p>
-      Relawan KawalPemilu memiliki tanggung jawab besar untuk mengawal suara
-      rakyat. Anda telah direfer oleh
-      <app-orang [profile]="user.referral"></app-orang>.
-    </p>
-    <p>
-      Tugas anda adalah mencari TPS di kelurahan mana saja yang belum ada
-      relawan, dan undanglah teman anda yang tinggal di kelurahan itu untuk
-      menjaga TPS disana.
-    </p>
-    <p>
-      <button mat-raised-button color="primary" [routerLink]="['/h', 0]">
-        Lihat Cakupan TPS
-      </button>
-    </p>
-
     <ng-container *ngIf="user.depth > 0">
+      <h2>Rekrutmen Relawan</h2>
+
       <p>
-        Anda dapat mengundang teman Facebook Anda dengan membuat kode referral
-        di bawah ini:
+        Halo,
+
+        {{ user.auth.displayName }} [<a
+          style="color: blue; cursor: pointer;"
+          (click)="userService.logout()"
+          >Logout</a
+        >]
+      </p>
+
+      <p style="font-weight: bold; color: red" *ngIf="error">{{ error }}</p>
+
+      <p *ngIf="(code$ | async)?.claimer">
+        Maaf, kode referral "{{ theCode }}" sudah tidak aktif.
       </p>
 
       <p>
-        <b style="color: red">Catatan</b>: Anda hanya bisa mengundang maksimum
-        <b></b>150 teman.
+        Relawan KawalPemilu memiliki tanggung jawab besar untuk mengawal suara
+        rakyat. Idealnya, dibutuhkan sekitar 800.000 Relawan yang terpencar di
+        seluruh kelurahan di Indonesia untuk standby menjaga TPS nya
+        masing-masing. Ya, ada lebih dari 800.000 TPS yang perlu dijaga! banyak
+        bener kan?
+      </p>
+      <p>
+        Semua Relawan diharapkan untuk tes upload foto di TPS yang akan dia
+        jaga, dengan itulah kita tahu bahwa TPS tersebut sudah tercakup. Anda
+        bisa melihat persebaran Relawan saat ini di
+        <a [routerLink]="['/h', 0]">Hasil Upload</a>.
+      </p>
+
+      <p>
+        Bantuan Anda sangat diharapkan untuk merekrut Relawan di kelurahan
+        dimana TPS nya BELUM DIJAGA siapapun. Jika ada teman Facebook anda yang
+        bertempat tinggal di kelurahan tersebut, undanglah teman anda dengan
+        membuat kode referral di bawah:
       </p>
 
       <form [formGroup]="formGroup">
