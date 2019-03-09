@@ -17,7 +17,7 @@ import {
 } from 'shared';
 import { shareReplay, filter, map, tap } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
+import { Observable, combineLatest } from 'rxjs';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { ApiService } from '../api.service';
 
@@ -49,6 +49,13 @@ export class ApproverComponent implements OnInit {
       paslon2Ctrl: [null, [Validators.pattern('^[0-9]{1,3}$')]],
       sahCtrl: [null, [Validators.pattern('^[0-9]{1,3}$')]],
       tidakSahCtrl: [null, [Validators.pattern('^[0-9]{1,3}$')]]
+    });
+
+    combineLatest(
+      this.formGroup.get('paslon1Ctrl').valueChanges,
+      this.formGroup.get('paslon2Ctrl').valueChanges
+    ).subscribe(([p1, p2]) => {
+      this.formGroup.get('sahCtrl').setValue((p1 || 0) + (p2 || 0));
     });
   }
 

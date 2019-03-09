@@ -1,5 +1,5 @@
 <div class="wrapper">
-  <div *ngIf="(state$ | async) as state" style="padding: 0 10px">
+  <div *ngIf="(state$ | async) as state; else loading" style="padding: 0 10px">
     <app-path [node]="state$ | async"></app-path>
   </div>
 
@@ -69,4 +69,10 @@
       </ng-container>
     </tbody>
   </table>
+
+  <ng-template #loading>
+    <div style="padding: 10px">
+      <mat-spinner></mat-spinner>
+    </div>
+  </ng-template>
 </div>

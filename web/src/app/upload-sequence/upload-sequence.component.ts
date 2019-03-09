@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 import { map, switchMap } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { Observable, combineLatest } from 'rxjs';
 
 import { UserService } from '../user.service';
 import { User } from 'firebase';
@@ -77,8 +77,15 @@ export class UploadSequenceComponent implements OnInit {
     this.formGroup = this.formBuilder.group({
       paslon1Ctrl: [0, validators],
       paslon2Ctrl: [0, validators],
-      sahCtrl: [1, validators],
-      tidakSahCtrl: [1, validators]
+      sahCtrl: [0, validators],
+      tidakSahCtrl: [10, validators]
+    });
+
+    combineLatest(
+      this.formGroup.get('paslon1Ctrl').valueChanges,
+      this.formGroup.get('paslon2Ctrl').valueChanges
+    ).subscribe(([p1, p2]) => {
+      this.formGroup.get('sahCtrl').setValue((p1 || 0) + (p2 || 0));
     });
   }
 
