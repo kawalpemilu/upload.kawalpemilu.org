@@ -1,13 +1,24 @@
-<table #tbl style="display: inline" [style.min-height]="HEIGHT">
+<table #tbl style="margin-bottom: 15px" [style.min-height]="HEIGHT">
   <tbody *ngIf="(upsert$ | async) as u">
     <tr>
-      <td>
+      <td align="right">
         <img
           [src]="gsu(u.data.url, 1240)"
           width="400"
           alt="thumbnail"
           style="padding: 5px"
         />
+        <br />
+        Foto by:
+        <app-orang [profile]="u.uploader"></app-orang>
+        <ng-container *ngIf="u.meta.m">
+          via
+          {{ u.meta.m[0] }}
+          ({{ u.meta.m[1] }})
+        </ng-container>
+        <a *ngIf="u.meta.x" href="{{ mapLink(u.meta) }}" target="_blank"
+          ><mat-icon>map</mat-icon></a
+        >
       </td>
       <td valign="top" width="200">
         <ng-template #done>
@@ -23,11 +34,6 @@
           <p *ngIf="u.data.sum.error" style="background-color: #FDD">
             Kesalahan dilaporkan oleh:<br />
             <app-orang [profile]="u.reporter"></app-orang>
-          </p>
-
-          <p>
-            Foto diupload oleh:<br />
-            <app-orang [profile]="u.uploader"></app-orang>
           </p>
 
           <form [formGroup]="formGroup">
@@ -75,14 +81,6 @@
               />
             </mat-form-field>
             <br />
-
-            <ng-container *ngIf="u.m?.m">
-              {{ u.m.m[0] }}
-            </ng-container>
-            <ng-container *ngIf="u.m?.m"> ({{ u.m.m[1] }}) </ng-container>
-            <a *ngIf="u.m?.x" href="{{ mapLink(u.m) }}" target="_blank"
-              ><mat-icon>map</mat-icon></a
-            >
 
             <p *ngIf="u.deleted; else decide">
               Foto telah ditolak.

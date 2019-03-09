@@ -273,14 +273,15 @@ app.post('/api/upload', async (req, res) => {
     return res.json({ error: 'Exceeded max number of uploads' });
   }
 
-  const ip = req.headers['fastly-client-ip'];
   const upsert: Upsert = {
-    uploader: uploader.profile,
-    uploadTs: data.updateTs,
+    uploader: {
+      ...uploader.profile,
+      ts: data.updateTs,
+      ua: req.headers['user-agent'],
+      ip: getIp(req)
+    },
     reviewer: null,
-    reviewTs: null,
     reporter: null,
-    reportTs: null,
     kelId,
     tpsNo,
     delta: {
@@ -292,11 +293,10 @@ app.post('/api/upload', async (req, res) => {
       pending: 1,
       error: 0
     },
-    ip: typeof ip === 'string' ? ip : JSON.stringify(ip),
     data,
     meta: extractImageMetadata(b.metadata),
     done: 0,
-    deleted: false,
+    deleted: false
   };
 
   const batch = fsdb.batch();
@@ -306,6 +306,11 @@ app.post('/api/upload', async (req, res) => {
 
   return res.json({ ok: true });
 });
+
+function getIp(req: express.Request) {
+  const ip = req.headers['fastly-client-ip'];
+  return typeof ip === 'string' ? ip : JSON.stringify(ip);
+}
 
 app.post('/api/approve', async (req, res) => {
   const user = await validateToken(req, res);
@@ -336,8 +341,12 @@ app.post('/api/approve', async (req, res) => {
     const r = (await t.get(rRef)).data() as Relawan;
     u.kelId = kelId;
     u.tpsNo = tpsNo;
-    u.reviewer = r.profile;
-    u.reviewTs = ts;
+    u.reviewer = {
+      ...r.profile,
+      ts,
+      ua: req.headers['user-agent'],
+      ip: getIp(req)
+    };
     u.deleted = !!b.delete;
     data.url = u.data.url;
     data.sum.cakupan = u.deleted ? 0 : 1;
@@ -393,8 +402,12 @@ app.post('/api/problem', async (req, res) => {
       pending: 0,
       error: 1
     };
-    u.reporter = r.profile;
-    u.reportTs = Date.now();
+    u.reporter = {
+      ...r.profile,
+      ts: Date.now(),
+      ua: req.headers['user-agent'],
+      ip: getIp(req)
+    };
     u.done = 0;
     t.update(uRef, u);
     return true;

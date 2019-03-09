@@ -34,19 +34,21 @@ export enum SUM_KEY {
   error = 'error'
 }
 
+export interface UpsertProfile extends PublicProfile {
+  ts: number; // The timestamp of the activity.
+  ua: string; // The request header 'user-agent'.
+  ip: string; // The ip address the request is coming from.
+}
+
 export interface Upsert {
-  uploader: PublicProfile;
-  uploadTs: number;
-  reviewer: PublicProfile;
-  reviewTs: number;
-  reporter: PublicProfile;
-  reportTs: number;
+  uploader: UpsertProfile;
+  reviewer: UpsertProfile;
+  reporter: UpsertProfile;
   data: UpsertData;
   meta: ImageMetadata;
   kelId: number;
   tpsNo: number;
   delta: { [key in SUM_KEY]: 0 | 1 }; // Process only this keys if set.
-  ip: string | string[]; // IP Address
   done: number; // Set to 0 to reprocess this upsert.
   deleted: boolean; // Deleted
 }

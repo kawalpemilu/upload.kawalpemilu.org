@@ -31,13 +31,15 @@ export declare enum SUM_KEY {
     pending = "pending",
     error = "error"
 }
+export interface UpsertProfile extends PublicProfile {
+    ts: number;
+    ua: string;
+    ip: string;
+}
 export interface Upsert {
-    uploader: PublicProfile;
-    uploadTs: number;
-    reviewer: PublicProfile;
-    reviewTs: number;
-    reporter: PublicProfile;
-    reportTs: number;
+    uploader: UpsertProfile;
+    reviewer: UpsertProfile;
+    reporter: UpsertProfile;
     data: UpsertData;
     meta: ImageMetadata;
     kelId: number;
@@ -45,7 +47,6 @@ export interface Upsert {
     delta: {
         [key in SUM_KEY]: 0 | 1;
     };
-    ip: string | string[];
     done: number;
     deleted: boolean;
 }

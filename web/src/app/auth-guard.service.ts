@@ -6,7 +6,7 @@ import {
   RouterStateSnapshot
 } from '@angular/router';
 import { UserService } from './user.service';
-import { map } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 import { LOCAL_STORAGE_LAST_URL } from 'shared';
 
 @Injectable({
@@ -16,10 +16,13 @@ export class AuthGuardService implements CanActivate {
   constructor(private userService: UserService, private router: Router) {}
 
   canActivate(next: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
-    return this.userService.user$.pipe(
-      map(user => {
+    return this.userService.userRelawan$.pipe(
+      switchMap(async user => {
         if (user) {
-          return true;
+          if (user.profile.link) {
+            return true;
+          }
+          await this.userService.logout();
         }
         console.log('Save last url: ', state.url);
         localStorage.setItem(LOCAL_STORAGE_LAST_URL, state.url);
