@@ -1,17 +1,12 @@
 <table #tbl style="margin-bottom: 15px" [style.min-height]="HEIGHT">
   <tbody *ngIf="(upsert$ | async) as u">
     <tr>
-      <td align="right">
-        <img
-          [src]="gsu(u.data.url, 1240)"
-          width="400"
-          alt="thumbnail"
-          style="padding: 5px"
-        />
+      <td align="right" style="padding: 5px">
+        <img [src]="gsu(u.data.url, 1240)" width="400" alt="thumbnail" />
         <br />
         Foto by:
         <app-orang [profile]="u.uploader"></app-orang>
-        <ng-container *ngIf="u.meta.m">
+        <ng-container *ngIf="u.meta?.m && (u.meta?.m)[0]">
           via
           {{ u.meta.m[0] }}
           ({{ u.meta.m[1] }})
