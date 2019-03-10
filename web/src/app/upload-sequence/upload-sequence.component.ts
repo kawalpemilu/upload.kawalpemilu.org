@@ -78,7 +78,7 @@ export class UploadSequenceComponent implements OnInit {
       paslon1Ctrl: [0, validators],
       paslon2Ctrl: [0, validators],
       sahCtrl: [0, validators],
-      tidakSahCtrl: [10, validators]
+      tidakSahCtrl: [0, validators]
     });
 
     combineLatest(

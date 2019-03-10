@@ -113,7 +113,7 @@ export class HierarchyComponent implements OnInit {
 
   coverage(state: HierarchyNode, cid: number) {
     const s = state.data[cid];
-    return (s && s.sum['tidakSah']) || 0;
+    return (s && s.sum.cakupan) || 0;
   }
 
   ago(state: HierarchyNode, cid: number) {

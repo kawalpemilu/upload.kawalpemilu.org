@@ -6,10 +6,10 @@ import { UploadSequenceComponent } from './upload-sequence/upload-sequence.compo
 import { RegistrasiComponent } from './registrasi/registrasi.component';
 import { DigitizeComponent } from './digitize/digitize.component';
 import { FotoComponent } from './foto/foto.component';
-import { ChatComponent } from './chat/chat.component';
 import { AuthGuardService } from './auth-guard.service';
 import { LoginComponent } from './login/login.component';
 import { USER_ROLE } from 'shared';
+import { ProfileComponent } from './profile/profile.component';
 
 const routes: Routes = [
   { path: '', redirectTo: '/c/0', pathMatch: 'full' },
@@ -21,14 +21,6 @@ const routes: Routes = [
   },
   { path: 't/:id', component: TpsComponent, canActivate: [AuthGuardService] },
   {
-    path: 'd/:id',
-    component: DigitizeComponent,
-    canActivate: [AuthGuardService],
-    data: {
-      role: USER_ROLE.MODERATOR
-    }
-  },
-  {
     path: 'u/:kelurahanId/:tpsNo',
     component: UploadSequenceComponent,
     canActivate: [AuthGuardService]
@@ -39,7 +31,19 @@ const routes: Routes = [
     canActivate: [AuthGuardService]
   },
   { path: 'f', component: FotoComponent, canActivate: [AuthGuardService] },
-  { path: 'p', component: ChatComponent, canActivate: [AuthGuardService] },
+  {
+    path: 'p/:uid',
+    component: ProfileComponent,
+    canActivate: [AuthGuardService]
+  },
+  {
+    path: 'd/:id',
+    component: DigitizeComponent,
+    canActivate: [AuthGuardService],
+    data: {
+      role: USER_ROLE.MODERATOR
+    }
+  },
   { path: '**', redirectTo: '/c/0' }
 ];
 

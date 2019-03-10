@@ -4,42 +4,51 @@
 
     <p>
       Halo,
-
-      {{ user.auth.displayName }} [<a
-        style="color: blue; cursor: pointer;"
-        (click)="userService.logout()"
-        >Logout</a
-      >]
+      <app-orang [profile]="user.profile"></app-orang>
     </p>
 
-    <p style="font-weight: bold; color: red" *ngIf="error">{{ error }}</p>
+    <ng-template #register>
+      <ng-container *ngIf="(code$ | async) as code">
+        <p>
+          <app-orang [profile]="code.issuer"></app-orang>
+          mengundang Anda untuk menjadi Relawan.
+        </p>
 
-    <p *ngIf="(code$ | async)?.claimer">
-      Maaf, kode referral "{{ theCode }}" sudah tidak aktif.
-    </p>
+        <button
+          [disabled]="isLoading"
+          mat-raised-button
+          color="primary"
+          (click)="registerCode(user.auth, code)"
+        >
+          Terima Undangan
+        </button>
+      </ng-container>
 
-    <p>
-      Relawan KawalPemilu memiliki tanggung jawab besar untuk mengawal suara
-      rakyat. Idealnya, dibutuhkan sekitar 800.000 Relawan yang terpencar di
-      seluruh kelurahan di Indonesia untuk standby menjaga TPS nya
-      masing-masing. Ya, ada lebih dari 800.000 TPS yang perlu dijaga! banyak
-      bener kan?
-    </p>
-    <p>
-      Semua Relawan diharapkan untuk tes upload foto di TPS yang akan dia jaga,
-      dengan itulah kita tahu bahwa TPS tersebut sudah tercakup. Anda bisa
-      melihat persebaran Relawan saat ini di
-      <a [routerLink]="['/h', 0]">Hasil Upload</a>.
-    </p>
+      <p style="font-weight: bold; color: red" *ngIf="error">{{ error }}</p>
+    </ng-template>
 
-    <p>
-      Bantuan Anda sangat diharapkan untuk merekrut Relawan di kelurahan dimana
-      TPS nya BELUM DIJAGA siapapun. Jika ada teman Facebook anda yang bertempat
-      tinggal di kelurahan tersebut, undanglah teman anda dengan membuat kode
-      referral di bawah:
-    </p>
+    <ng-container *ngIf="user.depth > 0; else register">
+      <p>
+        Relawan KawalPemilu memiliki tanggung jawab besar untuk mengawal suara
+        rakyat. Idealnya, dibutuhkan sekitar 800.000 Relawan yang terpencar di
+        seluruh kelurahan di Indonesia untuk standby menjaga TPS nya
+        masing-masing. Ya, ada lebih dari 800.000 TPS yang perlu dijaga! banyak
+        bener kan?
+      </p>
+      <p>
+        Semua Relawan diharapkan untuk tes upload foto di TPS yang akan dia
+        jaga, dengan itulah kita tahu bahwa TPS tersebut sudah tercakup. Anda
+        bisa melihat persebaran Relawan saat ini di
+        <a [routerLink]="['/h', 0]">Hasil Upload</a>.
+      </p>
 
-    <ng-container *ngIf="user.depth > 0">
+      <p>
+        Bantuan Anda sangat diharapkan untuk merekrut Relawan di kelurahan
+        dimana TPS nya BELUM DIJAGA siapapun. Jika ada teman Facebook anda yang
+        bertempat tinggal di kelurahan tersebut, undanglah teman anda dengan
+        membuat kode referral di bawah:
+      </p>
+
       <form [formGroup]="formGroup">
         <mat-form-field style="width: 225px">
           <input

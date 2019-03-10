@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from '../user.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { map, switchMap } from 'rxjs/operators';
+import { switchMap, catchError } from 'rxjs/operators';
 import { ApiService } from '../api.service';
 import { Observable, of } from 'rxjs';
 import { User } from 'firebase';
@@ -55,32 +55,17 @@ export class RegistrasiComponent implements OnInit {
     this.code$ = this.route.paramMap.pipe(
       switchMap(params => {
         this.theCode = params.get('code');
-        return this.theCode && this.theCode.length === 10
-          ? this.fsdb
-              .doc(FsPath.codeReferral(this.theCode))
-              .get()
+        return !this.theCode || this.theCode.length !== 10
+          ? of(null)
+          : this.fsdb
+              .doc<CodeReferral>(FsPath.codeReferral(this.theCode))
+              .valueChanges()
               .pipe(
-                map(s => s.data() as CodeReferral),
-                switchMap(code =>
-                  !code || code.claimer
-                    ? of(code)
-                    : this.userService.user$.pipe(
-                        switchMap(async user => {
-                          const url = `register/${this.theCode}`;
-                          const reg: any = await this.api.post(user, url, {});
-                          if (reg.error) {
-                            this.error = `Maaf, kode referral ${
-                              this.theCode
-                            } tidak dapat digunakan`;
-                          }
-                          console.log('register', reg);
-                          this.router.navigate(['/c', 0]);
-                          return code;
-                        })
-                      )
-                )
-              )
-          : of(null);
+                catchError(e => {
+                  this.error = e.message;
+                  return of(null);
+                })
+              );
       })
     );
     this.formGroup = this.formBuilder.group({
@@ -89,10 +74,23 @@ export class RegistrasiComponent implements OnInit {
     console.log('Registrasi inited');
   }
 
+  async registerCode(user: User, code: CodeReferral) {
+    this.isLoading = true;
+    const url = `register/${this.theCode}`;
+    const reg: any = await this.api.post(user, url, {});
+    console.log('register', reg);
+    if (reg.error) {
+      this.error = reg.error;
+    } else {
+      this.router.navigate(['/c', 0]);
+    }
+    this.isLoading = false;
+  }
+
   getError(ctrlName: string) {
     const ctrl = this.formGroup.get(ctrlName);
     if (ctrl.hasError('pattern')) {
-      return 'Panjang nama maksimum 50 huruf';
+      return 'Nama hanya boleh alphabet, max 50 huruf';
     }
     return '';
   }

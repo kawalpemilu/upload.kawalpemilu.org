@@ -19,7 +19,7 @@
           mat-list-item
           [routerLink]="['/f']"
           (click)="mobileQuery.matches && snav.toggle()"
-          ><mat-icon>add_a_photo</mat-icon> &nbsp; Upload Foto &nbsp; &nbsp;
+          ><mat-icon>add_a_photo</mat-icon> &nbsp; Upload Foto
         </a>
       </mat-list-item>
       <ng-container *ngIf="(userService.userRelawan$ | async) as user">
@@ -59,11 +59,7 @@
       <p>
         <mat-divider></mat-divider>
       </p>
-      <img
-        width="150"
-        style="display: block; margin: 0 auto"
-        src="/assets/logo.png"
-      />
+      <img style="display: block; margin-left: 15px" src="/assets/logo.png" />
     </mat-nav-list>
   </mat-sidenav>
 
