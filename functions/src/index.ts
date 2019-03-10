@@ -210,7 +210,7 @@ function getAggregate(
   data: UpsertData,
   imageId,
   servingUrl
-): UpsertData {
+): UpsertData | null {
   const ret: UpsertData = {
     sum: {} as { [key in SUM_KEY]: number },
     updateTs: 0,
@@ -222,7 +222,8 @@ function getAggregate(
     const sum = data.sum[key];
     if (typeof sum !== 'number' || sum < 0 || sum > 1000) {
       console.error(`Upload data sum out of range ${uid}`);
-      return res.json({ error: 'Invalid sum range' });
+      res.json({ error: 'Invalid sum range' });
+      return null;
     }
     ret.sum[key] = sum;
   }
@@ -252,6 +253,7 @@ app.post('/api/upload', async (req, res) => {
   }
 
   const data = getAggregate(res, user.uid, b.data, imageId, servingUrl);
+  if (!data) return null;
   data.sum.cakupan = 1;
   data.sum.pending = 1;
   data.updateTs = Date.now();
@@ -298,10 +300,15 @@ app.post('/api/upload', async (req, res) => {
     deleted: false
   };
 
-  const batch = fsdb.batch();
-  batch.set(fsdb.doc(FsPath.upserts(imageId)), upsert);
-  batch.update(uRef, uploader);
-  await batch.commit();
+  try {
+    const batch = fsdb.batch();
+    batch.create(fsdb.doc(FsPath.upserts(imageId)), upsert);
+    batch.update(uRef, uploader);
+    await batch.commit();
+  } catch (e) {
+    console.error(`Database error for ${user.uid}`);
+    return res.json({ error: 'Database error' });
+  }
 
   return res.json({ ok: true });
 });
@@ -330,6 +337,8 @@ app.post('/api/approve', async (req, res) => {
   const [kelId, tpsNo] = await parseLocationAndAgg(b, res, user.uid);
 
   const data = getAggregate(res, user.uid, b.data, imageId, null);
+  if (!data) return null;
+
   const ts = Date.now();
   data.updateTs = ts;
 
@@ -563,7 +572,7 @@ app.post('/api/register/:code', async (req, res) => {
 
   return res.json(
     !c || !c.claimer || c.claimer.uid !== user.uid
-      ? { error: 'Invalid' }
+      ? { error: `Maaf, kode ${code} tidak dapat digunakan` }
       : { code: c }
   );
 });
