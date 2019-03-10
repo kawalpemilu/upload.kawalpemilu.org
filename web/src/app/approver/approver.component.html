@@ -5,7 +5,7 @@
         <img [src]="gsu(u.data.url, 1240)" width="400" alt="thumbnail" />
         <br />
         Foto by:
-        <app-orang [profile]="u.uploader"></app-orang>
+        <app-orang [profile]="u.uploader" [activity]="true"></app-orang>
         <ng-container *ngIf="u.meta?.m && (u.meta?.m)[0]">
           via
           {{ u.meta.m[0] }}
@@ -22,13 +22,13 @@
           Sah: {{ u.data.sum.sah }}<br />
           TidakSah: {{ u.data.sum.tidakSah }}<br />
 
-          <p>Dicek oleh: <app-orang [profile]="u.reviewer"></app-orang></p>
+          <p>Dicek oleh: <app-orang [profile]="u.reviewer" [activity]="true"></app-orang></p>
         </ng-template>
 
         <ng-container *ngIf="u.data.sum.error || !u.reviewer; else done">
           <p *ngIf="u.data.sum.error" style="background-color: #FDD">
             Kesalahan dilaporkan oleh:<br />
-            <app-orang [profile]="u.reporter"></app-orang>
+            <app-orang [profile]="u.reporter" [activity]="true"></app-orang>
           </p>
 
           <form [formGroup]="formGroup">

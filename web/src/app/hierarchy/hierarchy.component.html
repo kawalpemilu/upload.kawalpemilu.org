@@ -1,78 +1,76 @@
-<div class="wrapper">
-  <div *ngIf="(state$ | async) as state; else loading" style="padding: 0 10px">
+<div style="padding: 0 10px">
+  <ng-container *ngIf="(state$ | async) as state; else loading">
     <app-path [node]="state$ | async"></app-path>
-  </div>
-
-  <table #header class="header" cellspacing="0">
-    <thead *ngIf="(state$ | async) as state">
-      <tr [style.height.px]="ROW_HEIGHT" style="background-color: lightgray">
-        <th class="index">#</th>
-        <th class="wilayah">{{ getWilayah(state) }}</th>
-        <th class="paslon1">Cakupan TPS</th>
-      </tr>
-    </thead>
-  </table>
-
-  <table #footer class="footer" cellspacing="0">
-    <tfoot *ngIf="(state$ | async) as state">
-      <tr [style.height.px]="ROW_HEIGHT" style="background-color: lightgray">
-        <th class="index"></th>
-        <th class="wilayah" align="right">
-          TOTAL ({{ state.children.length }}) &nbsp;
-        </th>
-        <th class="paslon1">
-          {{ sum(state, 'tidakSah') | number }} / {{ sumTps(state) | number }} =
-          {{ sum(state, 'tidakSah') / sumTps(state) | number: '1.0-1' }}%
-        </th>
-      </tr>
-    </tfoot>
-  </table>
-
-  <table #content class="content" cellspacing="0">
-    <tbody *ngIf="(state$ | async) as state">
-      <ng-container
-        *ngFor="
-          let c of state.children;
-          let index = index;
-          let odd = odd;
-          trackBy: trackByIdx
-        "
-      >
-        <tr
-          [style.height.px]="ROW_HEIGHT"
-          [style.background-color]="odd ? '#FFF' : '#EEE'"
-        >
-          <td class="index">{{ index + 1 }}</td>
-          <td class="wilayah">
-            <app-hie-link [id]="c[0]" [name]="c[1]"></app-hie-link>
-            <ng-container *ngIf="state.data[c[0]] as d">
-              <ng-container *ngIf="d.sum.pending || d.sum.error">
-                (<span *ngIf="d.sum.pending" style="color: orange">{{
-                  d.sum.pending
-                }}</span
-                ><ng-container *ngIf="d.sum.error"
-                  ><ng-container *ngIf="d.sum.pending && d.sum.error"
-                    >/</ng-container
-                  ><span *ngIf="d.sum.error" style="color: red">{{
-                    d.sum.error
-                  }}</span></ng-container
-                >)
-              </ng-container>
-            </ng-container>
-            {{ ago(state, c[0]) }}
-          </td>
-          <td class="paslon1">
-            {{ coverage(state, c[0]) | number }} / {{ c[2] | number }} =
-            {{ coverage(state, c[0]) / c[2] | number: '1.0-1' }}%
-          </td>
-        </tr>
-      </ng-container>
-    </tbody>
-  </table>
+  </ng-container>
 
   <ng-template #loading>
-    <div style="padding: 10px">
-      <mat-spinner></mat-spinner>
-    </div>
+    <mat-spinner></mat-spinner>
   </ng-template>
 </div>
+
+<table #header class="header" cellspacing="0" [style.width.px]="width">
+  <thead *ngIf="(state$ | async) as state">
+    <tr [style.height.px]="ROW_HEIGHT" style="background-color: lightgray">
+      <th class="index">#</th>
+      <th class="wilayah">{{ getWilayah(state) }}</th>
+      <th class="paslon1">Cakupan TPS</th>
+    </tr>
+  </thead>
+</table>
+
+<table #footer class="footer" cellspacing="0" [style.width.px]="width">
+  <tfoot *ngIf="(state$ | async) as state">
+    <tr [style.height.px]="ROW_HEIGHT" style="background-color: lightgray">
+      <th class="index"></th>
+      <th class="wilayah" align="right">
+        TOTAL ({{ state.children.length }}) &nbsp;
+      </th>
+      <th class="paslon1">
+        {{ sum(state, 'tidakSah') | number }} / {{ sumTps(state) | number }} =
+        {{ sum(state, 'tidakSah') / sumTps(state) | number: '1.0-1' }}%
+      </th>
+    </tr>
+  </tfoot>
+</table>
+
+<table #content class="content" cellspacing="0" [style.width.px]="width">
+  <tbody *ngIf="(state$ | async) as state">
+    <ng-container
+      *ngFor="
+        let c of state.children;
+        let index = index;
+        let odd = odd;
+        trackBy: trackByIdx
+      "
+    >
+      <tr
+        [style.height.px]="ROW_HEIGHT"
+        [style.background-color]="odd ? '#FFF' : '#EEE'"
+      >
+        <td class="index">{{ index + 1 }}</td>
+        <td class="wilayah">
+          <app-hie-link [id]="c[0]" [name]="c[1]"></app-hie-link>
+          <ng-container *ngIf="state.data[c[0]] as d">
+            <ng-container *ngIf="d.sum.pending || d.sum.error">
+              (<span *ngIf="d.sum.pending" style="color: orange">{{
+                d.sum.pending
+              }}</span
+              ><ng-container *ngIf="d.sum.error"
+                ><ng-container *ngIf="d.sum.pending && d.sum.error"
+                  >/</ng-container
+                ><span *ngIf="d.sum.error" style="color: red">{{
+                  d.sum.error
+                }}</span></ng-container
+              >)
+            </ng-container>
+          </ng-container>
+          {{ ago(state, c[0]) }}
+        </td>
+        <td class="paslon1">
+          {{ coverage(state, c[0]) | number }} / {{ c[2] | number }} =
+          {{ coverage(state, c[0]) / c[2] | number: '1.0-1' }}%
+        </td>
+      </tr>
+    </ng-container>
+  </tbody>
+</table>

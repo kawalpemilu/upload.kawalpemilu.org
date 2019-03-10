@@ -16,6 +16,7 @@ import { Router } from '@angular/router';
 })
 export class AppComponent implements OnDestroy {
   static TOOLBAR_HEIGHT = 64;
+  static PADDING = 10;
 
   mobileQuery: MediaQueryList;
 
@@ -38,6 +39,10 @@ export class AppComponent implements OnDestroy {
 
   get TOOLBAR_HEIGHT() {
     return AppComponent.TOOLBAR_HEIGHT;
+  }
+
+  get PADDING() {
+    return AppComponent.PADDING;
   }
 
   adjustToolbarHeight() {

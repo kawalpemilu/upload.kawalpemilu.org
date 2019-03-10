@@ -1,4 +1,4 @@
-<div *ngIf="(state$ | async) as state" style="padding: 0 10px">
+<ng-container *ngIf="(state$ | async) as state">
   <app-path [node]="state.node"></app-path>
 
   <div *ngIf="(userService.user$ | async) as user">
@@ -183,4 +183,4 @@
       Batalkan Upload
     </button>
   </p>
-</div>
+</ng-container>

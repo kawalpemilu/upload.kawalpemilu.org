@@ -1,5 +1,5 @@
-<ng-container *ngIf="(userService.userRelawan$ | async) as user">
-  <div *ngIf="(state$ | async) as state" style="padding: 0 10px">
+<ng-container *ngIf="(userService.relawan$ | async) as relawan">
+  <div *ngIf="(state$ | async) as state">
     <app-path [node]="state"></app-path>
 
     <ng-container *ngFor="let c of state.children">
@@ -9,7 +9,7 @@
             [kelurahanId]="state.id"
             [tpsNo]="c[0]"
             [color]="d.sum.error ? '#FDD' : d.sum.pending ? '#FFD' : ''"
-            [user]="user"
+            [user]="relawan"
           ></app-approver>
           <mat-divider></mat-divider>
         </ng-container>

@@ -3,7 +3,8 @@ import {
   OnInit,
   HostListener,
   ViewChild,
-  ElementRef
+  ElementRef,
+  OnDestroy
 } from '@angular/core';
 import { HierarchyService } from '../hierarchy.service';
 import { ActivatedRoute } from '@angular/router';
@@ -24,11 +25,12 @@ import { AppComponent } from '../app.component';
   templateUrl: './hierarchy.component.html',
   styleUrls: ['./hierarchy.component.css']
 })
-export class HierarchyComponent implements OnInit {
+export class HierarchyComponent implements OnInit, OnDestroy {
   @ViewChild('header') myHeaderEl: ElementRef;
   @ViewChild('footer') myFooterEl: ElementRef;
 
   ROW_HEIGHT = 40;
+  paddingTemp;
   state$: Observable<HierarchyNode>;
   height: number;
   width: number;
@@ -91,7 +93,13 @@ export class HierarchyComponent implements OnInit {
     );
 
     this.onWindowResize();
+    this.paddingTemp = AppComponent.PADDING;
+    AppComponent.PADDING = 0;
     console.log('Hierarchy Component Inited');
+  }
+
+  ngOnDestroy() {
+    AppComponent.PADDING = this.paddingTemp;
   }
 
   sum(state: HierarchyNode, key: SUM_KEY) {

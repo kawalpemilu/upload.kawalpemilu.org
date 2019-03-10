@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
 })
 export class UserService {
   user$: Observable<User>;
-  userRelawan$: Observable<Relawan>;
+  relawan$: Observable<Relawan>;
   upsert$: { [imageId: string]: Observable<Upsert> } = {};
   isLoading = true;
 
@@ -26,7 +26,7 @@ export class UserService {
   ) {
     this.isLoading = true;
     this.user$ = this.afAuth.user.pipe(tap(() => (this.isLoading = false)));
-    this.userRelawan$ = this.user$.pipe(
+    this.relawan$ = this.user$.pipe(
       switchMap(user =>
         user
           ? this.fsdb
@@ -41,7 +41,7 @@ export class UserService {
       shareReplay(1)
     );
 
-    this.userRelawan$.pipe(filter(r => !!r)).subscribe(r => {
+    this.relawan$.pipe(filter(r => !!r)).subscribe(r => {
       if (!r.profile || !r.profile.link) {
         console.log(`User profile access is required`);
         this.logout();

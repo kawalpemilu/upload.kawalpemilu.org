@@ -22,7 +22,7 @@
           ><mat-icon>add_a_photo</mat-icon> &nbsp; Upload Foto
         </a>
       </mat-list-item>
-      <ng-container *ngIf="(userService.userRelawan$ | async) as user">
+      <ng-container *ngIf="(userService.relawan$ | async) as relawan">
         <mat-list-item>
           <a
             mat-list-item
@@ -31,7 +31,7 @@
             ><mat-icon>table_chart</mat-icon> &nbsp; Hasil Upload</a
           >
         </mat-list-item>
-        <mat-list-item *ngIf="user.depth > 0">
+        <mat-list-item *ngIf="relawan.depth > 0">
           <a
             mat-list-item
             [routerLink]="['/c', 0]"
@@ -59,11 +59,18 @@
       <p>
         <mat-divider></mat-divider>
       </p>
-      <img style="display: block; margin-left: 15px" src="/assets/logo.png" />
+      <img style="margin-left: 15px" src="/assets/sidebar-logo.png" />
     </mat-nav-list>
   </mat-sidenav>
 
-  <mat-sidenav-content style="min-height: 360px">
-    <router-outlet></router-outlet>
+  <mat-sidenav-content
+    [style.padding-left.px]="PADDING"
+    [style.padding-right.px]="PADDING"
+    style="min-height: 400px"
+  >
+    <router-outlet *ngIf="!userService.isLoading; else loading"></router-outlet>
+    <ng-template #loading>
+      <mat-spinner></mat-spinner>
+    </ng-template>
   </mat-sidenav-content>
 </mat-sidenav-container>

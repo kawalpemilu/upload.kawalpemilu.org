@@ -1,63 +1,61 @@
-<div style="padding: 0 10px">
-  <h2>Tes Upload Foto</h2>
-  <p>
-    Tanggal 17 April 2019, setelah penghitungan suara selesai, Anda diharapkan
-    datang kembali ke TPS anda dan memfoto Formulir C1 Plano yang TELAH
-    ditandatangani oleh semua saksi. Biasanya, formulir ini dipajang di papan
-    besar seperti
-    <a href="/assets/contoh.jpeg" target="_blank">contoh foto ini</a>. Setelah
-    Anda mengambil foto tersebut, unggah lah foto tersebut ke situs ini.
-  </p>
+<h2>Tes Upload Foto</h2>
+<p>
+  Tanggal 17 April 2019, setelah penghitungan suara selesai, Anda diharapkan
+  datang kembali ke TPS anda dan memfoto Formulir C1 Plano yang TELAH
+  ditandatangani oleh semua saksi. Biasanya, formulir ini dipajang di papan
+  besar seperti
+  <a href="/assets/contoh.jpeg" target="_blank">contoh foto ini</a>. Setelah
+  Anda mengambil foto tersebut, unggah lah foto tersebut ke situs ini.
+</p>
 
-  <p>
-    <b>Tips</b>: jika Anda berencana untuk mengambil foto di beberapa TPS yang
-    berbeda, maka ambillah foto-foto tersebut terlebih dahulu. Setelah semua
-    foto tersimpan di ponsel Anda, barulah Anda mengunggah fotonya satu per satu
-    setelah mendapat koneksi internet yang stabil, disarankan pada jaringan wifi
-    terdekat.
-  </p>
+<p>
+  <b>Tips</b>: jika Anda berencana untuk mengambil foto di beberapa TPS yang
+  berbeda, maka ambillah foto-foto tersebut terlebih dahulu. Setelah semua foto
+  tersimpan di ponsel Anda, barulah Anda mengunggah fotonya satu per satu
+  setelah mendapat koneksi internet yang stabil, disarankan pada jaringan wifi
+  terdekat.
+</p>
 
-  <p>
-    Sekarang adalah masa uji coba. Silakan pilih TPS yang akan Anda kawal dan
-    unggah foto di TPS tersebut untuk memastikan ponsel Anda dapat mengunggah
-    foto dengan lancar:
-  </p>
+<p>
+  Sekarang adalah masa uji coba. Silakan pilih TPS yang akan Anda kawal dan
+  unggah foto di TPS tersebut untuk memastikan ponsel Anda dapat mengunggah foto
+  dengan lancar:
+</p>
 
-  <ul>
-    <li>Semua tes foto akan dihapus pada tanggal 16 April 2019.</li>
-    <li>Gunakan browser Chrome atau Safari untuk mengunggah foto.</li>
-    <li>Jika unggahan/upload foto gagal, coba lagi dengan ponsel lain.</li>
-  </ul>
+<ul>
+  <li>Semua tes foto akan dihapus pada tanggal 16 April 2019.</li>
+  <li>Gunakan browser Chrome atau Safari untuk mengunggah foto.</li>
+  <li>Jika unggahan/upload foto gagal, coba lagi dengan ponsel lain.</li>
+</ul>
 
-  <p>
-    <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
-      Cari TPS Anda dan Tes Menggunggah / Upload Foto
-    </a>
-  </p>
+<p>
+  <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
+    Cari TPS Anda dan Tes Menggunggah / Upload Foto
+  </a>
+</p>
 
-  <ng-container *ngIf="(userService.userRelawan$ | async) as user">
-    <ng-container *ngIf="user.numUploads > 0">
-      <p>
-        <b>Tips</b>: klik nama kelurahan di bawah untuk mengunggah upload foto
-        lain di kelurahan yang sama.
-      </p>
-      <table border="1" cellpadding="5" cellspacing="0">
-        <tr bgcolor="lightgray" height="30">
-          <th width="30">#</th>
-          <td width="400"><b>Tes Foto</b></td>
-        </tr>
-        <tr
-          *ngFor="let imageId of user.imageIds; let odd = odd; let i = index"
-          [style.background-color]="odd ? '#FFF' : '#EEE'"
-        >
-          <td align="center">{{ user.imageIds.length - i }}</td>
-          <td>
-            <app-foto-detail [imageId]="imageId"></app-foto-detail>
-          </td>
-        </tr>
-      </table>
+<ng-container *ngIf="(userService.relawan$ | async) as relawan">
+  <ng-container *ngIf="relawan.numUploads > 0">
+    <p>
+      <b>Tips</b>: klik nama kelurahan di bawah untuk mengunggah upload foto
+      lain di kelurahan yang sama.
+    </p>
+    <table border="1" cellpadding="5" cellspacing="0">
+      <tr bgcolor="lightgray" height="30">
+        <th width="30">#</th>
+        <td width="400"><b>Tes Foto</b></td>
+      </tr>
+      <tr
+        *ngFor="let imageId of relawan.imageIds; let odd = odd; let i = index"
+        [style.background-color]="odd ? '#FFF' : '#EEE'"
+      >
+        <td align="center">{{ relawan.imageIds.length - i }}</td>
+        <td>
+          <app-foto-detail [imageId]="imageId"></app-foto-detail>
+        </td>
+      </tr>
+    </table>
 
-      <p></p>
-    </ng-container>
+    <p></p>
   </ng-container>
-</div>
+</ng-container>

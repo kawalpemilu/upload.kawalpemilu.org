@@ -16,14 +16,14 @@ export class AuthGuardService implements CanActivate {
   constructor(private userService: UserService, private router: Router) {}
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
-    return this.userService.userRelawan$.pipe(
-      switchMap(async user => {
-        if (user) {
-          if (user.profile.link) {
-            if ((user.profile.role || 0) >= (route.data.role || 0)) {
+    return this.userService.relawan$.pipe(
+      switchMap(async relawan => {
+        if (relawan) {
+          if (relawan.profile.link) {
+            if ((relawan.profile.role || 0) >= (route.data.role || 0)) {
               return true;
             }
-            console.log('No access ', user.profile.role, route.data.role);
+            console.log('No access ', relawan.profile.role, route.data.role);
             this.router.navigate(['/f']);
             return false;
           }
