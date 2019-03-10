@@ -15,12 +15,17 @@ import { LOCAL_STORAGE_LAST_URL } from 'shared';
 export class AuthGuardService implements CanActivate {
   constructor(private userService: UserService, private router: Router) {}
 
-  canActivate(next: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.userService.userRelawan$.pipe(
       switchMap(async user => {
         if (user) {
           if (user.profile.link) {
-            return true;
+            if ((user.profile.role || 0) >= (route.data.role || 0)) {
+              return true;
+            }
+            console.log('No access ', user.profile.role, route.data.role);
+            this.router.navigate(['/f']);
+            return false;
           }
           await this.userService.logout();
         }

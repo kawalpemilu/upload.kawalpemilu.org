@@ -9,6 +9,7 @@ import { FotoComponent } from './foto/foto.component';
 import { ChatComponent } from './chat/chat.component';
 import { AuthGuardService } from './auth-guard.service';
 import { LoginComponent } from './login/login.component';
+import { USER_ROLE } from 'shared';
 
 const routes: Routes = [
   { path: '', redirectTo: '/c/0', pathMatch: 'full' },
@@ -22,7 +23,10 @@ const routes: Routes = [
   {
     path: 'd/:id',
     component: DigitizeComponent,
-    canActivate: [AuthGuardService]
+    canActivate: [AuthGuardService],
+    data: {
+      role: USER_ROLE.MODERATOR
+    }
   },
   {
     path: 'u/:kelurahanId/:tpsNo',

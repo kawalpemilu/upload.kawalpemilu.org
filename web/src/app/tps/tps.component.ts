@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
-import { HierarchyNode, UpsertData } from 'shared';
+import { HierarchyNode, UpsertData, USER_ROLE } from 'shared';
 import { UploadService } from '../upload.service';
 import { UserService } from '../user.service';
 
@@ -27,6 +27,7 @@ interface State extends HierarchyNode {
 })
 export class TpsComponent implements OnInit {
   state$: Observable<State>;
+  USER_ROLE = USER_ROLE;
 
   constructor(
     public hie: HierarchyService,

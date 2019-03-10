@@ -19,9 +19,9 @@ import {
   UpsertData,
   SUM_KEY,
   APP_SCOPED_PREFIX_URL,
-  PublicProfile,
   MAX_REFERRALS,
-  MAX_NUM_UPLOADS
+  MAX_NUM_UPLOADS,
+  USER_ROLE
 } from 'shared';
 
 const t1 = Date.now();
@@ -432,15 +432,19 @@ app.post('/api/register/login', async (req, res) => {
     console.error(`UID differs ${user.uid} !== ${user.user_id}`);
   }
 
-  const profile: PublicProfile = {
-    uid: user.user_id,
-    link,
-    email: user.email || '',
-    name: user.name,
-    pic: user.picture,
-    loginTs: Date.now()
-  };
-  await fsdb.doc(FsPath.relawan(user.uid)).set({ profile }, { merge: true });
+  await fsdb.doc(FsPath.relawan(user.uid)).set(
+    {
+      profile: {
+        uid: user.user_id,
+        link,
+        email: user.email || '',
+        name: user.name,
+        pic: user.picture,
+        loginTs: Date.now()
+      }
+    },
+    { merge: true }
+  );
 
   return res.json({ ok: true });
 });
@@ -562,6 +566,48 @@ app.post('/api/register/:code', async (req, res) => {
       ? { error: 'Invalid' }
       : { code: c }
   );
+});
+
+app.post('/api/change_role', async (req, res) => {
+  const user = await validateToken(req, res);
+  if (!user) return null;
+
+  const code = req.body.code;
+  const role = req.body.role;
+  if (!USER_ROLE[role]) {
+    console.error(`Invalid role ${user.uid} to ${role} for ${code}`);
+    return res.json({ error: 'Invalid role' });
+  }
+
+  const uRef = fsdb.doc(FsPath.relawan(user.uid));
+  const ok = await fsdb.runTransaction(async t => {
+    const u = (await t.get(uRef)).data() as Relawan;
+    if (!u) return `No relawan for ${user.uid}`;
+    const c = u.code[code];
+    if (!c) return `No code for ${user.uid} ${code}`;
+    if (!c.claimer) return `Not clamied yet ${user.uid} ${code}`;
+
+    const claimerRef = fsdb.doc(FsPath.relawan(c.claimer.uid));
+    const claimer = (await t.get(claimerRef)).data() as Relawan;
+    if (!claimer) return `No claimer for ${user.uid} : ${c.claimer.uid}`;
+
+    const c1 = c.claimer.role || 0;
+    const c2 = claimer.profile.role || 0;
+    if (c1 !== c2) return `Mismatch role ${user.uid}: ${c1} !== ${c2}`;
+
+    c.claimer.role = role;
+    claimer.profile.role = role;
+    t.update(uRef, u);
+    t.update(claimerRef, claimer);
+    return true;
+  });
+
+  if (ok !== true) {
+    console.error(ok);
+    return res.json({ error: 'Unable to change role' });
+  }
+
+  return res.json({ ok: true });
 });
 
 exports.api = functions.https.onRequest(app);

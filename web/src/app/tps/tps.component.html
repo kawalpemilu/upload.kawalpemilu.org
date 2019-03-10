@@ -1,12 +1,14 @@
-<div *ngIf="(state$ | async) as state" class="wrapper">
+<div *ngIf="(state$ | async) as state; else loading" class="wrapper">
   <app-path [node]="state"></app-path>
 
-  <!-- TODO: buat terpisah -->
   <button
     mat-raised-button
     color="warn"
     [routerLink]="['/d', state.id]"
-    *ngIf="state.numPending > 0 && false"
+    *ngIf="
+      state.numPending > 0 &&
+      (userService.userRelawan$ | async).profile.role >= USER_ROLE.MODERATOR
+    "
   >
     Digitize {{ state.numPending }} uploads
   </button>
@@ -103,3 +105,9 @@
     </tr>
   </table>
 </div>
+
+<ng-template #loading>
+  <div style="padding: 10px">
+    <mat-spinner></mat-spinner>
+  </div>
+</ng-template>

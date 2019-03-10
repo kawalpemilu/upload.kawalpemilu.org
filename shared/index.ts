@@ -4,6 +4,12 @@ export const MAX_REFERRALS = 1000;
 export const MAX_NUM_UPLOADS = 100;
 export const LOCAL_STORAGE_LAST_URL = 'last_url';
 
+export enum USER_ROLE {
+  RELAWAN = 0,
+  MODERATOR = 1,
+  ADMIN = 2
+}
+
 export interface PublicProfile {
   uid: string; // Firebase User ID
   link: string; // App scoped link to Facebook profile
@@ -11,6 +17,7 @@ export interface PublicProfile {
   email: string; // User email
   pic: string; // Link to user's profile picture
   loginTs: number; // The timestamp of last login
+  role: USER_ROLE;
 }
 
 export interface Relawan {
@@ -18,7 +25,7 @@ export interface Relawan {
   referrer: PublicProfile;
   numUploads: number;
   imageIds: string[];
-  depth: number; // Referral depth (0: ninja, 1: admin, 2: trusted, 3+:normal)
+  depth: number; // Referral depth
   code: { [code: string]: CodeReferral }; // Code referrals
   auth: any; // firebase.User reference.
 }

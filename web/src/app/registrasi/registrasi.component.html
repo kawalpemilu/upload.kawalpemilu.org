@@ -106,28 +106,91 @@
         </ng-container>
       </ng-container>
 
+      <p *ngIf="user.profile.role == USER_ROLE.MODERATOR; else cekIsAdmin">
+        Anda mempunyai Role <b class="moderator">Moderator</b>. Anda bisa
+        merekrut teman anda menjadi <b class="moderator">Moderator</b> dengan
+        cara memberikan mereka kode referral. Setelah teman anda menggunakan
+        kode referral tersebut, profilenya akan muncul dibawah untuk diupgrade
+        menjadi <b class="moderator">Moderator</b>.
+      </p>
+
+      <ng-template #cekIsAdmin>
+        <p *ngIf="user.profile.role == USER_ROLE.ADMIN">
+          Anda mempunyai Role <b class="admin">Admin</b>. Anda bisa merekrut
+          teman anda menjadi <b class="admin">Admin</b> atau
+          <b class="moderator">Moderator</b> dengan cara memberikan mereka kode
+          referral. Setelah teman anda menggunakan kode referral tersebut,
+          profilenya akan muncul dibawah untuk diupgrade menjadi
+          <b class="admin">Admin</b> atau <b class="moderator">Moderator</b>.
+        </p>
+      </ng-template>
+
       <ng-container *ngIf="getReferralCodes(user, true) as codes">
         <ng-container *ngIf="codes.length > 0">
           <p>
-            Berikut ini adalah teman-teman ada yang sudah menerima undangan anda
-            dan telah menjadi relawan:
+            Berikut ini adalah teman-teman yang sudah menerima undangan anda:
           </p>
 
           <table border="1" cellpadding="5" cellspacing="0">
             <tr bgcolor="lightgray">
               <th width="30">#</th>
-              <td><b>Nama</b></td>
-              <td><b>Profile teman anda</b></td>
+              <th>Nama</th>
+              <th>Profile teman anda</th>
+              <th *ngIf="user.profile.role">Role</th>
             </tr>
             <tr
               *ngFor="let code of codes; let odd = odd; let i = index"
               [style.background-color]="odd ? '#FFF' : '#EEE'"
             >
-              <td align="center">{{ i + 1 }}</td>
-              <td>{{ user.code[code].name }}</td>
-              <td>
-                <app-orang [profile]="user.code[code].claimer"></app-orang>
-              </td>
+              <ng-container *ngIf="user.code[code] as c">
+                <td align="center">{{ codes.length - i }}</td>
+                <td>{{ c.name }}</td>
+                <td>
+                  <app-orang [profile]="c.claimer"></app-orang>
+                </td>
+                <td *ngIf="user.profile.role">
+                  <mat-radio-group
+                    [ngModel]="c.claimer.role || 0"
+                    (ngModelChange)="changeRole(user.auth, code, $event)"
+                  >
+                    <mat-radio-button [value]="USER_ROLE.RELAWAN"
+                      ><span
+                        [style.font-weight]="
+                          (c.claimer.role || 0) == USER_ROLE.RELAWAN
+                            ? 'bold'
+                            : ''
+                        "
+                        >Relawan</span
+                      ></mat-radio-button
+                    >
+                    &nbsp;
+                    <mat-radio-button [value]="USER_ROLE.MODERATOR">
+                      <b
+                        class="moderator"
+                        *ngIf="
+                          c.claimer.role == USER_ROLE.MODERATOR;
+                          else notmod
+                        "
+                        >Moderator</b
+                      >
+                      <ng-template #notmod>
+                        Moderator
+                      </ng-template>
+                    </mat-radio-button>
+                    &nbsp;
+                    <mat-radio-button [value]="USER_ROLE.ADMIN">
+                      <b
+                        class="admin"
+                        *ngIf="c.claimer.role == USER_ROLE.ADMIN; else notadmin"
+                        >Admin</b
+                      >
+                      <ng-template #notadmin>
+                        Admin
+                      </ng-template>
+                    </mat-radio-button>
+                  </mat-radio-group>
+                </td>
+              </ng-container>
             </tr>
           </table>
         </ng-container>

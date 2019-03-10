@@ -2,6 +2,11 @@ export declare const APP_SCOPED_PREFIX_URL = "https://www.facebook.com/app_scope
 export declare const MAX_REFERRALS = 1000;
 export declare const MAX_NUM_UPLOADS = 100;
 export declare const LOCAL_STORAGE_LAST_URL = "last_url";
+export declare enum USER_ROLE {
+    RELAWAN = 0,
+    MODERATOR = 1,
+    ADMIN = 2
+}
 export interface PublicProfile {
     uid: string;
     link: string;
@@ -9,6 +14,7 @@ export interface PublicProfile {
     email: string;
     pic: string;
     loginTs: number;
+    role: USER_ROLE;
 }
 export interface Relawan {
     profile: PublicProfile;

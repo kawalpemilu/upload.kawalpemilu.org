@@ -28,6 +28,7 @@ import {
   MatSnackBarModule
 } from '@angular/material';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatRadioModule } from '@angular/material/radio';
 
 import { HttpClientModule } from '@angular/common/http';
 import { LoginComponent } from './login/login.component';
@@ -91,7 +92,8 @@ import { FotoDetailComponent } from './foto-detail/foto-detail.component';
     MatSnackBarModule,
     MatProgressSpinnerModule,
 
-    MatToolbarModule
+    MatToolbarModule,
+    MatRadioModule
   ],
   providers: [{ provide: LOCALE_ID, useValue: 'id' }],
   bootstrap: [AppComponent]

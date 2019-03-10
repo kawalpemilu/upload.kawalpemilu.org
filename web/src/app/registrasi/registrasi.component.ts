@@ -6,7 +6,7 @@ import { ApiService } from '../api.service';
 import { Observable, of } from 'rxjs';
 import { User } from 'firebase';
 import { FormGroup, Validators, FormBuilder } from '@angular/forms';
-import { Relawan, FsPath, CodeReferral } from 'shared';
+import { Relawan, FsPath, CodeReferral, USER_ROLE } from 'shared';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { MatSnackBar } from '@angular/material';
 
@@ -22,13 +22,23 @@ export class CopySnackBarComponent {}
 @Component({
   selector: 'app-registrasi',
   templateUrl: './registrasi.component.html',
-  styles: ['']
+  styles: [
+    `
+      .moderator {
+        color: brown;
+      }
+      .admin {
+        color: red;
+      }
+    `
+  ]
 })
 export class RegistrasiComponent implements OnInit {
   theCode: string;
   code$: Observable<CodeReferral>;
   formGroup: FormGroup;
   error: string;
+  USER_ROLE = USER_ROLE;
   isLoading = false;
 
   constructor(
@@ -136,5 +146,10 @@ export class RegistrasiComponent implements OnInit {
     console.log('got code', code);
     namaCtrl.setValue('');
     this.isLoading = false;
+  }
+
+  async changeRole(user: User, code: string, role: number) {
+    const res = await this.api.post(user, `change_role`, { code, role });
+    console.log(`Change role ${code} to ${role}`, res);
   }
 }

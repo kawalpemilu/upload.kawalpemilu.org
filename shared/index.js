@@ -4,6 +4,12 @@ exports.APP_SCOPED_PREFIX_URL = 'https://www.facebook.com/app_scoped_user_id/';
 exports.MAX_REFERRALS = 1000;
 exports.MAX_NUM_UPLOADS = 100;
 exports.LOCAL_STORAGE_LAST_URL = 'last_url';
+var USER_ROLE;
+(function (USER_ROLE) {
+    USER_ROLE[USER_ROLE["RELAWAN"] = 0] = "RELAWAN";
+    USER_ROLE[USER_ROLE["MODERATOR"] = 1] = "MODERATOR";
+    USER_ROLE[USER_ROLE["ADMIN"] = 2] = "ADMIN";
+})(USER_ROLE = exports.USER_ROLE || (exports.USER_ROLE = {}));
 var SUM_KEY;
 (function (SUM_KEY) {
     SUM_KEY["paslon1"] = "paslon1";
