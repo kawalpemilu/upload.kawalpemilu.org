@@ -16,9 +16,17 @@ export interface PublicProfile {
     loginTs: number;
     role: USER_ROLE;
 }
+export interface UploadSnippet {
+    kelId: number;
+    tpsNo: number;
+    data: UpsertData;
+    meta: ImageMetadata;
+}
 export interface Relawan {
+    lowerCaseName: string;
     profile: PublicProfile;
     referrer: PublicProfile;
+    uploads: UploadSnippet[];
     numUploads: number;
     imageIds: string[];
     depth: number;
@@ -114,7 +122,7 @@ export declare function extractImageMetadata(m: any): ImageMetadata | null;
 export declare function getServingUrl(url: string, size: number): string;
 export declare function isValidImageId(imageId: string): RegExpMatchArray;
 export declare class FsPath {
-    static relawan(uid: string): string;
+    static relawan(uid?: string): string;
     static codeReferral(code: string): string;
     static imageMetadata(imageId: string): string;
     static imageMetadataUserId(imageId: string): string;

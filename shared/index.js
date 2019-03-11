@@ -54,7 +54,7 @@ var FsPath = /** @class */ (function () {
     function FsPath() {
     }
     FsPath.relawan = function (uid) {
-        return "r/" + uid;
+        return "r" + (uid ? '/' + uid : '');
     };
     FsPath.codeReferral = function (code) {
         return "c/" + code;
@@ -69,7 +69,7 @@ var FsPath = /** @class */ (function () {
         return FsPath.imageMetadata(imageId) + "/v";
     };
     FsPath.upserts = function (imageId) {
-        return "u" + (imageId ? "/" + imageId : '');
+        return "u" + (imageId ? '/' + imageId : '');
     };
     return FsPath;
 }());

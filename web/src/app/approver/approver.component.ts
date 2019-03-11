@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 import {
   getServingUrl,
-  ImageMetadata,
   Upsert,
   FsPath,
   Relawan,
@@ -118,10 +117,6 @@ export class ApproverComponent implements OnInit {
 
   gsu(url, size) {
     return getServingUrl(url, size);
-  }
-
-  mapLink(m: ImageMetadata) {
-    return `https://www.google.com/maps/place/${m.y},${m.x}/@${m.y},${m.x},15z`;
   }
 
   async approve(u: Upsert, del: boolean) {

@@ -12,7 +12,7 @@ import { USER_ROLE } from 'shared';
 import { ProfileComponent } from './profile/profile.component';
 
 const routes: Routes = [
-  { path: '', redirectTo: '/c/0', pathMatch: 'full' },
+  { path: '', redirectTo: '/f', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
   {
     path: 'h/:id',
@@ -32,11 +32,6 @@ const routes: Routes = [
   },
   { path: 'f', component: FotoComponent, canActivate: [AuthGuardService] },
   {
-    path: 'p/:uid',
-    component: ProfileComponent,
-    canActivate: [AuthGuardService]
-  },
-  {
     path: 'd/:id',
     component: DigitizeComponent,
     canActivate: [AuthGuardService],
@@ -44,7 +39,15 @@ const routes: Routes = [
       role: USER_ROLE.MODERATOR
     }
   },
-  { path: '**', redirectTo: '/c/0' }
+  {
+    path: 'p/:uid',
+    component: ProfileComponent,
+    canActivate: [AuthGuardService],
+    data: {
+      role: USER_ROLE.MODERATOR
+    }
+  },
+  { path: '**', redirectTo: '/f' }
 ];
 
 @NgModule({

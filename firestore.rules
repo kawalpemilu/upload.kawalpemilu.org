@@ -7,7 +7,8 @@ service cloud.firestore {
 
     // Relawan database.
     match /r/{userId} {
-      allow read: if request.auth.uid == userId;
+      allow get: if request.auth.uid == userId || getUserRole() > 0;
+      allow list: if request.query.limit <= 10 && getUserRole() > 0;
     }
  
     // Referral codes.

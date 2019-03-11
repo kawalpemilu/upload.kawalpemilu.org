@@ -46,12 +46,12 @@
         <td width="400"><b>Tes Foto</b></td>
       </tr>
       <tr
-        *ngFor="let imageId of relawan.imageIds; let odd = odd; let i = index"
+        *ngFor="let u of relawan.uploads; let odd = odd; let i = index"
         [style.background-color]="odd ? '#FFF' : '#EEE'"
       >
-        <td align="center">{{ relawan.imageIds.length - i }}</td>
+        <td align="center">{{ relawan.uploads.length - i }}</td>
         <td>
-          <app-foto-detail [imageId]="imageId"></app-foto-detail>
+          <app-foto-detail [imageId]="u.data.imageId"></app-foto-detail>
         </td>
       </tr>
     </table>

@@ -1,0 +1,76 @@
+<mat-form-field style="width: 225px">
+  <input
+    matInput
+    placeholder="Cari Nama User"
+    type="text"
+    autocomplete="off"
+    (input)="cari$.next($event.target.value)"
+  />
+</mat-form-field>
+
+<table
+  *ngIf="(relawans$ | async) as arr"
+  border="1"
+  cellspacing="0"
+  cellpadding="5"
+>
+  <tr>
+    <th>Orang</th>
+    <th>Role</th>
+    <th>Referrer</th>
+  </tr>
+  <tr *ngFor="let r of arr; let i = index">
+    <td><app-orang [profile]="r.profile" [activity]="true"></app-orang></td>
+    <td>{{ USER_ROLE[r.profile.role] }}</td>
+    <td><app-orang [profile]="r.referrer" [activity]="true"></app-orang></td>
+  </tr>
+</table>
+
+<p>
+  <mat-divider></mat-divider>
+</p>
+
+<ng-container *ngIf="(relawan$ | async) as relawan">
+  <table>
+    <tr>
+      <td><img [src]="relawan.profile.pic" height="60" /></td>
+      <td>
+        <app-orang [profile]="relawan.profile"></app-orang><br />
+        {{ relawan.profile.email }}<br />
+        {{ relawan.profile.loginTs | date: 'medium' }}<br />
+        Referrer:
+        <app-orang [profile]="relawan.referrer" [activity]="true"></app-orang>
+      </td>
+    </tr>
+  </table>
+
+  <table border="1" cellspacing="0" cellpadding="5" width="400">
+    <tr>
+      <th width="40">#</th>
+      <th width="125">Foto</th>
+      <th width="300">Detil</th>
+    </tr>
+    <tr *ngFor="let u of relawan.uploads; let i = index">
+      <th>
+        {{ relawan.numUploads - i }}
+      </th>
+      <td>
+        <app-thumbnail [url]="u.data.url"></app-thumbnail><br />
+        {{ u.data.updateTs | date: 'medium' }}
+      </td>
+      <td>
+        Kelurahan: {{ u.kelId }}<br />
+        TPS: #{{ u.tpsNo }} <br />
+
+        <!-- <a [routerLink]="['/upert', u.data.imageId]">Detail</a> -->
+
+        <p><app-meta [meta]="u.meta"></app-meta></p>
+
+        Paslon1: {{ u.data.sum.paslon1 }}<br />
+        Paslon2: {{ u.data.sum.paslon2 }}<br />
+        Sah: {{ u.data.sum.sah }}<br />
+        TidakSah: {{ u.data.sum.tidakSah }}<br />
+      </td>
+    </tr>
+  </table>
+</ng-container>

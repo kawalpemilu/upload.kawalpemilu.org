@@ -6,14 +6,7 @@
         <br />
         Foto by:
         <app-orang [profile]="u.uploader" [activity]="true"></app-orang>
-        <ng-container *ngIf="u.meta?.m && (u.meta?.m)[0]">
-          via
-          {{ u.meta.m[0] }}
-          ({{ u.meta.m[1] }})
-        </ng-container>
-        <a *ngIf="u.meta.x" href="{{ mapLink(u.meta) }}" target="_blank"
-          ><mat-icon>map</mat-icon></a
-        >
+        <app-meta [meta]="u.meta"></app-meta>
       </td>
       <td valign="top" width="200">
         <ng-template #done>

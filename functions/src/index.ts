@@ -32,6 +32,7 @@ admin.initializeApp({
 });
 
 const auth = admin.auth();
+const rtdb = admin.database();
 const fsdb = admin.firestore();
 fsdb.settings({ timestampsInSnapshots: true });
 
@@ -265,9 +266,10 @@ app.post('/api/upload', async (req, res) => {
     return res.json({ error: 'Uploader not found' });
   }
 
+  const meta = extractImageMetadata(b.metadata);
+  uploader.uploads = uploader.uploads || [];
+  uploader.uploads.unshift({ kelId, tpsNo, data, meta });
   uploader.numUploads = (uploader.numUploads || 0) + 1;
-  uploader.imageIds = uploader.imageIds || [];
-  uploader.imageIds.unshift(imageId);
 
   if (uploader.numUploads > MAX_NUM_UPLOADS) {
     console.error(`Exceeded max uploads ${user.uid}`);
@@ -295,7 +297,7 @@ app.post('/api/upload', async (req, res) => {
       error: 0
     },
     data,
-    meta: extractImageMetadata(b.metadata),
+    meta,
     done: 0,
     deleted: false
   };
@@ -443,6 +445,7 @@ app.post('/api/register/login', async (req, res) => {
 
   await fsdb.doc(FsPath.relawan(user.uid)).set(
     {
+      lowerCaseName: user.name.toLowerCase(),
       profile: {
         uid: user.user_id,
         link,
@@ -570,11 +573,11 @@ app.post('/api/register/:code', async (req, res) => {
     return cd;
   });
 
-  return res.json(
-    !c || !c.claimer || c.claimer.uid !== user.uid
-      ? { error: `Maaf, kode ${code} tidak dapat digunakan` }
-      : { code: c }
-  );
+  if (!c || !c.claimer || c.claimer.uid !== user.uid) {
+    return res.json({ error: `Maaf, kode ${code} tidak dapat digunakan` });
+  }
+  await rtdb.ref(`r/${user.uid}`).set([c.issuer.uid, ts]);
+  return res.json({ code: c });
 });
 
 app.post('/api/change_role', async (req, res) => {

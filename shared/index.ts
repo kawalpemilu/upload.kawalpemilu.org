@@ -20,9 +20,18 @@ export interface PublicProfile {
   role: USER_ROLE;
 }
 
+export interface UploadSnippet {
+  kelId: number;
+  tpsNo: number;
+  data: UpsertData;
+  meta: ImageMetadata;
+}
+
 export interface Relawan {
+  lowerCaseName: string; // For prefix search.
   profile: PublicProfile;
   referrer: PublicProfile;
+  uploads: UploadSnippet[];
   numUploads: number;
   imageIds: string[];
   depth: number; // Referral depth
@@ -149,8 +158,8 @@ export function isValidImageId(imageId: string) {
 }
 
 export class FsPath {
-  static relawan(uid: string) {
-    return `r/${uid}`;
+  static relawan(uid?: string) {
+    return `r${uid ? '/' + uid : ''}`;
   }
 
   static codeReferral(code: string) {
@@ -168,7 +177,7 @@ export class FsPath {
   }
 
   static upserts(imageId?: string) {
-    return `u` + (imageId ? `/${imageId}` : '');
+    return `u${imageId ? '/' + imageId : ''}`;
   }
 }
 

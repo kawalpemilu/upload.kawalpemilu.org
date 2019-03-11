@@ -48,6 +48,7 @@ import localeId from '@angular/common/locales/id';
 import { OrangComponent } from './orang/orang.component';
 import { FotoDetailComponent } from './foto-detail/foto-detail.component';
 import { ProfileComponent } from './profile/profile.component';
+import { MetaComponent } from './meta/meta.component';
 
 @NgModule({
   entryComponents: [RegistrasiComponent, CopySnackBarComponent],
@@ -69,7 +70,8 @@ import { ProfileComponent } from './profile/profile.component';
     ChatComponent,
     OrangComponent,
     FotoDetailComponent,
-    ProfileComponent
+    ProfileComponent,
+    MetaComponent
   ],
   imports: [
     BrowserModule,

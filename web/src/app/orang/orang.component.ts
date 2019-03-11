@@ -5,9 +5,12 @@ import { APP_SCOPED_PREFIX_URL, PublicProfile } from 'shared';
   selector: 'app-orang',
   template: `
     <ng-container *ngIf="profile; else siapaini">
-      <a *ngIf="activity; else fblink" [routerLink]="['/p', profile.uid]">{{
-        profile.name
-      }}</a>
+      <a
+        *ngIf="activity; else fblink"
+        style="text-decoration: none"
+        [routerLink]="['/p', profile.uid]"
+        >{{ profile.name }}</a
+      >
     </ng-container>
 
     <ng-template #fblink>
