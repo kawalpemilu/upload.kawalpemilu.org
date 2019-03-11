@@ -39,12 +39,12 @@
             ><mat-icon>group_add</mat-icon> &nbsp; Rekrutmen</a
           >
         </mat-list-item>
-        <mat-list-item *ngIf="relawan.profile.role > 0">
+        <mat-list-item *ngIf="relawan.profile.role >= USER_ROLE.ADMIN">
           <a
             mat-list-item
             [routerLink]="['/p', relawan.auth.uid]"
             (click)="mobileQuery.matches && snav.toggle()"
-            ><mat-icon>search</mat-icon> &nbsp; Profil User</a
+            ><mat-icon>security</mat-icon> &nbsp; Admin Page</a
           >
         </mat-list-item>
         <mat-list-item>

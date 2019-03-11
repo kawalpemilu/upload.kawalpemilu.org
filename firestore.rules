@@ -7,8 +7,11 @@ service cloud.firestore {
 
     // Relawan database.
     match /r/{userId} {
-      allow get: if request.auth.uid == userId || getUserRole() > 0;
-      allow list: if request.query.limit <= 10 && getUserRole() > 0;
+      // Moderator can read user profile if know the uid.
+      allow get: if request.auth.uid == userId || getUserRole() >= 1;
+
+      // Only Admin can perform search for user profile.
+      allow list: if request.query.limit <= 10 && getUserRole() >= 2;
     }
  
     // Referral codes.
@@ -17,10 +20,13 @@ service cloud.firestore {
                      resource.data.claimer == null;
     }
 
-    // Upserts.
+    // Photo Uploads.
     match /u/{imageId} {
+      // User can see their own uploaded photos.
       allow get: if request.auth.uid == resource.data.uploader.uid;
-      allow list: if request.query.limit <= 1 && getUserRole() > 0;
+
+      // Moderator can see the uploaded photos.
+      allow list: if request.query.limit <= 1 && getUserRole() >= 1;
     }
   }
 }

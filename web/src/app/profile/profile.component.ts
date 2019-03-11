@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { UserService } from '../user.service';
 import { APP_SCOPED_PREFIX_URL, Relawan, FsPath, USER_ROLE } from 'shared';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { Observable, of, Subject } from 'rxjs';
@@ -9,8 +8,10 @@ import {
   catchError,
   debounceTime,
   distinctUntilChanged,
-  startWith
 } from 'rxjs/operators';
+import { User } from 'firebase';
+import { ApiService } from '../api.service';
+import { UserService } from '../user.service';
 
 @Component({
   selector: 'app-profile',
@@ -20,6 +21,7 @@ import {
 export class ProfileComponent implements OnInit {
   cari$ = new Subject<string>();
   USER_ROLE = USER_ROLE;
+  Object = Object;
 
   relawan$: Observable<Relawan>;
   relawans$: Observable<Relawan[]>;
@@ -27,7 +29,8 @@ export class ProfileComponent implements OnInit {
   constructor(
     public userService: UserService,
     private fsdb: AngularFirestore,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private api: ApiService
   ) {
     this.relawan$ = this.route.paramMap.pipe(
       switchMap(params =>
@@ -44,7 +47,6 @@ export class ProfileComponent implements OnInit {
     );
 
     this.relawans$ = this.cari$.pipe(
-      startWith(''),
       debounceTime(500),
       distinctUntilChanged(),
       switchMap(prefix =>
@@ -64,5 +66,10 @@ export class ProfileComponent implements OnInit {
 
   get SCOPED_PREFIX() {
     return APP_SCOPED_PREFIX_URL;
+  }
+
+  async changeRole(user: User, uid: string, role: number) {
+    const res = await this.api.post(user, `change_role`, { uid, role });
+    console.log(`Change role to ${role}`, res);
   }
 }

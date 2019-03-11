@@ -29,6 +29,7 @@ import {
 } from '@angular/material';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatRadioModule } from '@angular/material/radio';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 import { HttpClientModule } from '@angular/common/http';
 import { LoginComponent } from './login/login.component';
@@ -97,7 +98,8 @@ import { MetaComponent } from './meta/meta.component';
     MatProgressSpinnerModule,
 
     MatToolbarModule,
-    MatRadioModule
+    MatRadioModule,
+    MatCheckboxModule
   ],
   providers: [{ provide: LOCALE_ID, useValue: 'id' }],
   bootstrap: [AppComponent]

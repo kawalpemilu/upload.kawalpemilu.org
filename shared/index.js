@@ -50,6 +50,10 @@ function isValidImageId(imageId) {
     return typeof imageId === 'string' && imageId.match(/^[A-Za-z0-9]{20}$/);
 }
 exports.isValidImageId = isValidImageId;
+function isValidUserId(uid) {
+    return typeof uid === 'string' && uid.match(/^[A-Za-z0-9]{20,35}$/);
+}
+exports.isValidUserId = isValidUserId;
 var FsPath = /** @class */ (function () {
     function FsPath() {
     }
@@ -58,6 +62,9 @@ var FsPath = /** @class */ (function () {
     };
     FsPath.codeReferral = function (code) {
         return "c/" + code;
+    };
+    FsPath.changeLog = function (logId) {
+        return "l/" + logId;
     };
     FsPath.imageMetadata = function (imageId) {
         return "i/" + imageId;

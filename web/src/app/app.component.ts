@@ -2,6 +2,7 @@ import { Component, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { MediaMatcher } from '@angular/cdk/layout';
 import { UserService } from './user.service';
 import { Router } from '@angular/router';
+import { USER_ROLE } from 'shared';
 
 @Component({
   selector: 'app-root',
@@ -17,6 +18,8 @@ import { Router } from '@angular/router';
 export class AppComponent implements OnDestroy {
   static TOOLBAR_HEIGHT = 64;
   static PADDING = 10;
+
+  USER_ROLE = USER_ROLE;
 
   mobileQuery: MediaQueryList;
 

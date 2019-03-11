@@ -110,25 +110,6 @@
       </ng-container>
     </ng-container>
 
-    <p *ngIf="relawan.profile.role == USER_ROLE.MODERATOR; else cekIsAdmin">
-      Anda mempunyai Role <b class="moderator">Moderator</b>. Anda bisa merekrut
-      teman anda menjadi <b class="moderator">Moderator</b> dengan cara
-      memberikan mereka kode referral. Setelah teman anda menggunakan kode
-      referral tersebut, profilenya akan muncul dibawah untuk diupgrade menjadi
-      <b class="moderator">Moderator</b>.
-    </p>
-
-    <ng-template #cekIsAdmin>
-      <p *ngIf="relawan.profile.role == USER_ROLE.ADMIN">
-        Anda mempunyai Role <b class="admin">Admin</b>. Anda bisa merekrut teman
-        anda menjadi <b class="admin">Admin</b> atau
-        <b class="moderator">Moderator</b> dengan cara memberikan mereka kode
-        referral. Setelah teman anda menggunakan kode referral tersebut,
-        profilenya akan muncul dibawah untuk diupgrade menjadi
-        <b class="admin">Admin</b> atau <b class="moderator">Moderator</b>.
-      </p>
-    </ng-template>
-
     <ng-container *ngIf="getReferralCodes(relawan, true) as codes">
       <ng-container *ngIf="codes.length > 0">
         <p>
@@ -140,7 +121,6 @@
             <th width="30">#</th>
             <th>Nama</th>
             <th>Profile teman anda</th>
-            <th *ngIf="relawan.profile.role">Role</th>
           </tr>
           <tr
             *ngFor="let code of codes; let odd = odd; let i = index"
@@ -151,43 +131,6 @@
               <td>{{ c.name }}</td>
               <td>
                 <app-orang [profile]="c.claimer"></app-orang>
-              </td>
-              <td *ngIf="relawan.profile.role">
-                <mat-radio-group
-                  [ngModel]="c.claimer.role || 0"
-                  (ngModelChange)="changeRole(relawan.auth, code, $event)"
-                >
-                  <mat-radio-button [value]="USER_ROLE.RELAWAN"
-                    ><span
-                      [style.font-weight]="
-                        (c.claimer.role || 0) == USER_ROLE.RELAWAN ? 'bold' : ''
-                      "
-                      >Relawan</span
-                    ></mat-radio-button
-                  >
-                  &nbsp;
-                  <mat-radio-button [value]="USER_ROLE.MODERATOR">
-                    <b
-                      class="moderator"
-                      *ngIf="c.claimer.role == USER_ROLE.MODERATOR; else notmod"
-                      >Moderator</b
-                    >
-                    <ng-template #notmod>
-                      Moderator
-                    </ng-template>
-                  </mat-radio-button>
-                  &nbsp;
-                  <mat-radio-button [value]="USER_ROLE.ADMIN">
-                    <b
-                      class="admin"
-                      *ngIf="c.claimer.role == USER_ROLE.ADMIN; else notadmin"
-                      >Admin</b
-                    >
-                    <ng-template #notadmin>
-                      Admin
-                    </ng-template>
-                  </mat-radio-button>
-                </mat-radio-group>
               </td>
             </ng-container>
           </tr>

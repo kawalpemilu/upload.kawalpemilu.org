@@ -39,6 +39,13 @@ export interface Relawan {
   auth: any; // firebase.User reference.
 }
 
+export interface ChangeLog {
+  auid: string; // Actor uid that initiates the change.
+  tuid: string; // Target uid that received the change.
+  role: USER_ROLE; // The new role of the target uid.
+  ts: number; // The timestamp of this change log.
+}
+
 export enum SUM_KEY {
   paslon1 = 'paslon1',
   paslon2 = 'paslon2',
@@ -157,6 +164,10 @@ export function isValidImageId(imageId: string) {
   return typeof imageId === 'string' && imageId.match(/^[A-Za-z0-9]{20}$/);
 }
 
+export function isValidUserId(uid: string) {
+  return typeof uid === 'string' && uid.match(/^[A-Za-z0-9]{20,35}$/);
+}
+
 export class FsPath {
   static relawan(uid?: string) {
     return `r${uid ? '/' + uid : ''}`;
@@ -164,6 +175,10 @@ export class FsPath {
 
   static codeReferral(code: string) {
     return `c/${code}`;
+  }
+
+  static changeLog(logId: string) {
+    return `l/${logId}`;
   }
 
   static imageMetadata(imageId: string) {

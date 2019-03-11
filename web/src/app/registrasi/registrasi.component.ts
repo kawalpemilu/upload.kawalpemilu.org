@@ -145,9 +145,4 @@ export class RegistrasiComponent implements OnInit {
     namaCtrl.setValue('');
     this.isLoading = false;
   }
-
-  async changeRole(user: User, code: string, role: number) {
-    const res = await this.api.post(user, `change_role`, { code, role });
-    console.log(`Change role ${code} to ${role}`, res);
-  }
 }

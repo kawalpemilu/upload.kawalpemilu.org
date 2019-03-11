@@ -1,76 +1,137 @@
-<mat-form-field style="width: 225px">
-  <input
-    matInput
-    placeholder="Cari Nama User"
-    type="text"
-    autocomplete="off"
-    (input)="cari$.next($event.target.value)"
-  />
-</mat-form-field>
+<ng-container *ngIf="(userService.relawan$ | async) as curRel">
+  <mat-form-field style="width: 225px">
+    <input
+      matInput
+      placeholder="Cari Nama User"
+      type="text"
+      autocomplete="off"
+      (input)="cari$.next($event.target.value)"
+    />
+  </mat-form-field>
 
-<table
-  *ngIf="(relawans$ | async) as arr"
-  border="1"
-  cellspacing="0"
-  cellpadding="5"
->
-  <tr>
-    <th>Orang</th>
-    <th>Role</th>
-    <th>Referrer</th>
-  </tr>
-  <tr *ngFor="let r of arr; let i = index">
-    <td><app-orang [profile]="r.profile" [activity]="true"></app-orang></td>
-    <td>{{ USER_ROLE[r.profile.role] }}</td>
-    <td><app-orang [profile]="r.referrer" [activity]="true"></app-orang></td>
-  </tr>
-</table>
-
-<p>
-  <mat-divider></mat-divider>
-</p>
-
-<ng-container *ngIf="(relawan$ | async) as relawan">
-  <table>
+  <table
+    *ngIf="(relawans$ | async) as arr"
+    border="1"
+    cellspacing="0"
+    cellpadding="5"
+  >
     <tr>
-      <td><img [src]="relawan.profile.pic" height="60" /></td>
-      <td>
-        <app-orang [profile]="relawan.profile"></app-orang><br />
-        {{ relawan.profile.email }}<br />
-        {{ relawan.profile.loginTs | date: 'medium' }}<br />
-        Referrer:
-        <app-orang [profile]="relawan.referrer" [activity]="true"></app-orang>
-      </td>
+      <th>Orang</th>
+      <th>Role</th>
+      <th>Referrer</th>
+    </tr>
+    <tr *ngFor="let r of arr; let i = index">
+      <td><app-orang [profile]="r.profile" [activity]="true"></app-orang></td>
+      <td>{{ USER_ROLE[r.profile.role] }}</td>
+      <td><app-orang [profile]="r.referrer" [activity]="true"></app-orang></td>
     </tr>
   </table>
 
-  <table border="1" cellspacing="0" cellpadding="5" width="400">
-    <tr>
-      <th width="40">#</th>
-      <th width="125">Foto</th>
-      <th width="300">Detil</th>
-    </tr>
-    <tr *ngFor="let u of relawan.uploads; let i = index">
-      <th>
-        {{ relawan.numUploads - i }}
-      </th>
-      <td>
-        <app-thumbnail [url]="u.data.url"></app-thumbnail><br />
-        {{ u.data.updateTs | date: 'medium' }}
-      </td>
-      <td>
-        Kelurahan: {{ u.kelId }}<br />
-        TPS: #{{ u.tpsNo }} <br />
+  <p>
+    <mat-divider></mat-divider>
+  </p>
 
-        <!-- <a [routerLink]="['/upert', u.data.imageId]">Detail</a> -->
+  <ng-container *ngIf="(relawan$ | async) as relawan">
+    <table>
+      <tr>
+        <td><img [src]="relawan.profile.pic" height="80" /></td>
+        <td>
+          <app-orang [profile]="relawan.profile"></app-orang><br />
+          {{ relawan.profile.email }}<br />
+          {{ relawan.profile.loginTs | date: 'medium' }}<br />
+          Referrer:
+          <app-orang [profile]="relawan.referrer" [activity]="true"></app-orang
+          ><br />
 
-        <p><app-meta [meta]="u.meta"></app-meta></p>
+          <mat-radio-group
+            *ngIf="curRel.auth.uid != relawan.profile.uid"
+            [ngModel]="relawan.profile.role || 0"
+            (ngModelChange)="
+              changeRole(curRel.auth, relawan.profile.uid, $event)
+            "
+          >
+            <mat-radio-button [value]="USER_ROLE.RELAWAN"
+              ><span
+                [style.font-weight]="
+                  (relawan.profile.role || 0) == USER_ROLE.RELAWAN ? 'bold' : ''
+                "
+                >Relawan</span
+              ></mat-radio-button
+            >
+            &nbsp;
+            <mat-radio-button [value]="USER_ROLE.MODERATOR">
+              <b
+                class="moderator"
+                *ngIf="relawan.profile.role == USER_ROLE.MODERATOR; else notmod"
+                >Moderator</b
+              >
+              <ng-template #notmod>
+                Moderator
+              </ng-template>
+            </mat-radio-button>
+            &nbsp;
+            <mat-radio-button [value]="USER_ROLE.ADMIN">
+              <b
+                class="admin"
+                *ngIf="relawan.profile.role == USER_ROLE.ADMIN; else notadmin"
+                >Admin</b
+              >
+              <ng-template #notadmin>
+                Admin
+              </ng-template>
+            </mat-radio-button>
+          </mat-radio-group>
+        </td>
+      </tr>
+    </table>
 
-        Paslon1: {{ u.data.sum.paslon1 }}<br />
-        Paslon2: {{ u.data.sum.paslon2 }}<br />
-        Sah: {{ u.data.sum.sah }}<br />
-        TidakSah: {{ u.data.sum.tidakSah }}<br />
-      </td>
-    </tr>
-  </table>
+    <ng-container *ngIf="relawan.code">
+      <p></p>
+      Refers:
+      <ul style="margin: 0">
+        <ng-container *ngFor="let code of Object.keys(relawan.code)">
+          <ng-container *ngIf="relawan.code[code] as c">
+            <ng-container *ngIf="c.claimer">
+              <li>
+                <app-orang [profile]="c.claimer" [activity]="true"></app-orang>
+                ({{ c.claimedTs | date: 'medium' }})
+              </li>
+            </ng-container>
+          </ng-container>
+        </ng-container>
+      </ul>
+    </ng-container>
+
+    <p></p>
+
+    <table border="1" cellspacing="0" cellpadding="5" width="400">
+      <tr>
+        <th width="40">#</th>
+        <th width="125">Foto</th>
+        <th width="300">Detil</th>
+      </tr>
+      <tr *ngFor="let u of relawan.uploads; let i = index">
+        <th>
+          {{ relawan.numUploads - i }}
+        </th>
+        <td>
+          <app-thumbnail [url]="u.data.url"></app-thumbnail><br />
+          {{ u.data.updateTs | date: 'medium' }}
+        </td>
+        <td>
+          Kelurahan: {{ u.kelId }}<br />
+          TPS: #{{ u.tpsNo }} <br />
+
+          <!-- <a [routerLink]="['/upert', u.data.imageId]">Detail</a> -->
+
+          <p><app-meta [meta]="u.meta"></app-meta></p>
+
+          Paslon1: {{ u.data.sum.paslon1 }}<br />
+          Paslon2: {{ u.data.sum.paslon2 }}<br />
+          Sah: {{ u.data.sum.sah }}<br />
+          TidakSah: {{ u.data.sum.tidakSah }}<br />
+        </td>
+      </tr>
+    </table>
+  </ng-container>
 </ng-container>

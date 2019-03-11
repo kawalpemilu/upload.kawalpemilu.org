@@ -35,6 +35,12 @@ export interface Relawan {
     };
     auth: any;
 }
+export interface ChangeLog {
+    auid: string;
+    tuid: string;
+    role: USER_ROLE;
+    ts: number;
+}
 export declare enum SUM_KEY {
     paslon1 = "paslon1",
     paslon2 = "paslon2",
@@ -121,9 +127,11 @@ export interface ImageMetadata {
 export declare function extractImageMetadata(m: any): ImageMetadata | null;
 export declare function getServingUrl(url: string, size: number): string;
 export declare function isValidImageId(imageId: string): RegExpMatchArray;
+export declare function isValidUserId(uid: string): RegExpMatchArray;
 export declare class FsPath {
     static relawan(uid?: string): string;
     static codeReferral(code: string): string;
+    static changeLog(logId: string): string;
     static imageMetadata(imageId: string): string;
     static imageMetadataUserId(imageId: string): string;
     static imageMetadataServingUrl(imageId: string): string;

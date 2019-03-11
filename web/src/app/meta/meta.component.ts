@@ -10,7 +10,7 @@ import { ImageMetadata } from 'shared';
       ({{ meta.m[1] }})
     </ng-container>
     <a *ngIf="meta?.x" href="{{ mapLink(meta) }}" target="_blank"
-      ><mat-icon>map</mat-icon></a
+      ><mat-icon>place</mat-icon></a
     >
   `,
   styles: ['']

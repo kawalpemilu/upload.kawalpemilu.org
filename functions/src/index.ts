@@ -21,7 +21,9 @@ import {
   APP_SCOPED_PREFIX_URL,
   MAX_REFERRALS,
   MAX_NUM_UPLOADS,
-  USER_ROLE
+  USER_ROLE,
+  isValidUserId,
+  ChangeLog
 } from 'shared';
 
 const t1 = Date.now();
@@ -584,33 +586,35 @@ app.post('/api/change_role', async (req, res) => {
   const user = await validateToken(req, res);
   if (!user) return null;
 
-  const code = req.body.code;
+  const tuid = req.body.uid;
+  if (!isValidUserId(tuid) || tuid === user.uid) {
+    console.error(`Invalid tuid ${user.uid} to ${tuid}`);
+    return res.json({ error: 'Invalid uid' });
+  }
+
   const role = req.body.role;
-  if (!USER_ROLE[role]) {
-    console.error(`Invalid role ${user.uid} to ${role} for ${code}`);
+  if (!USER_ROLE[role] || typeof role !== 'number') {
+    console.error(`Invalid role ${user.uid} to ${role}`);
     return res.json({ error: 'Invalid role' });
   }
 
-  const uRef = fsdb.doc(FsPath.relawan(user.uid));
+  const ts = Date.now();
+  const actorRef = fsdb.doc(FsPath.relawan(user.uid));
+  const targetRef = fsdb.doc(FsPath.relawan(tuid));
   const ok = await fsdb.runTransaction(async t => {
-    const u = (await t.get(uRef)).data() as Relawan;
-    if (!u) return `No relawan for ${user.uid}`;
-    const c = u.code[code];
-    if (!c) return `No code for ${user.uid} ${code}`;
-    if (!c.claimer) return `Not clamied yet ${user.uid} ${code}`;
+    const actor = (await t.get(actorRef)).data() as Relawan;
+    if (!actor) return `No relawan for ${user.uid}`;
+    if (actor.profile.role < USER_ROLE.ADMIN) return `Not an admin ${user.uid}`;
 
-    const claimerRef = fsdb.doc(FsPath.relawan(c.claimer.uid));
-    const claimer = (await t.get(claimerRef)).data() as Relawan;
-    if (!claimer) return `No claimer for ${user.uid} : ${c.claimer.uid}`;
+    const target = (await t.get(targetRef)).data() as Relawan;
+    if (!target) return `No relawan for ${tuid}`;
+    if (target.profile.role === role) return `No change`;
+    target.profile.role = role;
+    t.update(targetRef, target);
 
-    const c1 = c.claimer.role || 0;
-    const c2 = claimer.profile.role || 0;
-    if (c1 !== c2) return `Mismatch role ${user.uid}: ${c1} !== ${c2}`;
-
-    c.claimer.role = role;
-    claimer.profile.role = role;
-    t.update(uRef, u);
-    t.update(claimerRef, claimer);
+    const logRef = fsdb.doc(FsPath.changeLog(autoId()));
+    const cl: ChangeLog = { auid: user.uid, tuid, role, ts };
+    t.create(logRef, cl);
     return true;
   });
 
