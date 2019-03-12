@@ -11,6 +11,17 @@ import { USER_ROLE } from 'shared';
     `
       h1.app-name {
         margin-left: 8px;
+        font-size: small;
+      }
+      @media screen and (min-width: 350px) {
+        h1.app-name {
+          font-size: medium;
+        }
+      }
+      @media screen and (min-width: 400px) {
+        h1.app-name {
+          font-size: large;
+        }
       }
     `
   ]
@@ -62,6 +73,6 @@ export class AppComponent implements OnDestroy {
 
   async logout() {
     await this.userService.logout();
-    this.router.navigate(['/f']);
+    this.router.navigate(['/login']);
   }
 }

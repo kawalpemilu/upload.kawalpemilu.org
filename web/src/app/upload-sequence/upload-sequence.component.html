@@ -75,13 +75,11 @@
             style="max-width: 400px"
             (click)="u.click()"
           />
-          <!-- <p>Pastikan lokasi TPS di foto sesuai dengan lokasi berikut:</p> -->
-
-          <!-- <p>Terakhir, masukkan angka-angka yang tertera di foto tersebut:</p> -->
 
           <p>(Opsional) masukkan jumlah suara:</p>
-          <mat-form-field style="width: 225px">
+          <mat-form-field style="width: 150px">
             <input
+              #paslon1
               matInput
               placeholder="Jumlah Suara Paslon 1"
               formControlName="paslon1Ctrl"
@@ -95,7 +93,7 @@
           </span>
           <br />
 
-          <mat-form-field style="width: 225px">
+          <mat-form-field style="width: 150px">
             <input
               matInput
               placeholder="Jumlah Suara Paslon 2"
@@ -110,7 +108,7 @@
           </span>
           <br />
 
-          <mat-form-field style="width: 225px">
+          <mat-form-field style="width: 150px">
             <input
               matInput
               placeholder="Jumlah Suara Sah"
@@ -125,7 +123,7 @@
           </span>
           <br />
 
-          <mat-form-field style="width: 225px">
+          <mat-form-field style="width: 150px">
             <input
               matInput
               placeholder="Jumlah Suara Tidak Sah"
@@ -139,34 +137,38 @@
             {{ error }}
           </span>
 
-          <p>
-            <button
-              type="submit"
-              mat-raised-button
-              color="primary"
-              (click)="selesai(user, state.kelurahanId, state.tpsNo)"
-              [disabled]="formGroup.invalid || isLoading"
-            >
-              Selesai!
-            </button>
-          </p>
+          <ng-template #submitButton>
+            <p>
+              <button
+                type="submit"
+                mat-raised-button
+                color="primary"
+                (click)="selesai(user, state.kelurahanId, state.tpsNo)"
+                [disabled]="formGroup.invalid || isLoading"
+              >
+                <mat-icon>done</mat-icon> &nbsp; Selesaikan!
+              </button>
+            </p>
+          </ng-template>
 
-          <p *ngIf="isLoading">
+          <p *ngIf="isLoading; else submitButton">
             Uploading: {{ uploadService.progress.toFixed(0) }}%
             <progress max="100" [value]="uploadService.progress"></progress>
             <!-- &nbsp;
-          <button
-            (click)="uploadService.task.cancel()"
-            [disabled]="
-              !(
-                uploadService.state === 'paused' ||
-                uploadService.state === 'running'
-              )
-            "
-          >
-            Cancel
-          </button> -->
+                <button
+                  (click)="uploadService.task.cancel()"
+                  [disabled]="
+                    !(
+                      uploadService.state === 'paused' ||
+                      uploadService.state === 'running'
+                    )
+                  "
+                >
+                  Cancel
+                </button> -->
           </p>
+          <!-- <p>Pastikan lokasi TPS di foto sesuai dengan lokasi berikut:</p> -->
+          <!-- <p>Terakhir, masukkan angka-angka yang tertera di foto tersebut:</p> -->
         </div>
       </form>
     </ng-template>

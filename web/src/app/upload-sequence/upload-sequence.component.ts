@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { UploadService } from '../upload.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -32,6 +32,8 @@ export class UploadState {
   styles: ['']
 })
 export class UploadSequenceComponent implements OnInit {
+  @ViewChild('paslon1') paslon1: ElementRef;
+
   state$: Observable<UploadState>;
   formGroup: FormGroup;
   imgURL: string | ArrayBuffer;
@@ -105,7 +107,7 @@ export class UploadSequenceComponent implements OnInit {
       let imgURL = await this.readAsDataUrl(file);
       const exifObj = this.populateMetadata(imgURL, m);
       if (file.size > 800 * 1024) {
-        imgURL = await this.compress(imgURL, 1024);
+        imgURL = await this.compress(imgURL, 2048);
         if (exifObj) {
           try {
             // https://piexifjs.readthedocs.io/en/2.0/sample.html#insert-exif-into-jpeg
@@ -131,6 +133,8 @@ export class UploadSequenceComponent implements OnInit {
     this.uploadedMetadata$ = this.uploadService
       .upload(userId, state.kelurahanId, state.tpsNo, file)
       .then(imageId => <[ImageMetadata, string]>[m, imageId]);
+
+    setTimeout(() => this.paslon1.nativeElement.focus(), 100);
   }
 
   getError(ctrlName: string) {

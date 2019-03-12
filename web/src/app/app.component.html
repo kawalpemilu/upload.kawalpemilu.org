@@ -3,6 +3,18 @@
     <mat-icon>menu</mat-icon>
   </button>
   <h1 class="app-name">KawalPemilu - Jaga Suara 2019</h1>
+
+  <span style="flex: 1 1 auto;"></span>
+  <button mat-icon-button [matMenuTriggerFor]="menu">
+    <mat-icon>more_vert</mat-icon>
+  </button>
+
+  <mat-menu #menu="matMenu">
+    <button mat-menu-item (click)="logout()">
+      <mat-icon>power_settings_new</mat-icon>
+      <span>Logout</span>
+    </button>
+  </mat-menu>
 </mat-toolbar>
 
 <mat-sidenav-container class="sidenav-container">
@@ -14,15 +26,27 @@
     fixedTopGap="56"
   >
     <mat-nav-list>
-      <mat-list-item>
-        <a
-          mat-list-item
-          [routerLink]="['/f']"
-          (click)="mobileQuery.matches && snav.toggle()"
-          ><mat-icon>add_a_photo</mat-icon> &nbsp; Upload Foto
-        </a>
-      </mat-list-item>
-      <ng-container *ngIf="(userService.relawan$ | async) as relawan">
+      <ng-template #login>
+        <mat-list-item>
+          <a
+            mat-list-item
+            [routerLink]="['/f']"
+            (click)="mobileQuery.matches && snav.toggle()"
+            ><mat-icon>person_outline</mat-icon> &nbsp; Login &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+          </a>
+        </mat-list-item>
+      </ng-template>
+      <ng-container
+        *ngIf="(userService.relawan$ | async) as relawan; else login"
+      >
+        <mat-list-item>
+          <a
+            mat-list-item
+            [routerLink]="['/f']"
+            (click)="mobileQuery.matches && snav.toggle()"
+            ><mat-icon>add_a_photo</mat-icon> &nbsp; Upload Foto
+          </a>
+        </mat-list-item>
         <mat-list-item>
           <a
             mat-list-item
@@ -45,13 +69,6 @@
             [routerLink]="['/p', relawan.auth.uid]"
             (click)="mobileQuery.matches && snav.toggle()"
             ><mat-icon>security</mat-icon> &nbsp; Admin Page</a
-          >
-        </mat-list-item>
-        <mat-list-item>
-          <a
-            mat-list-item
-            (click)="logout(); mobileQuery.matches && snav.toggle()"
-            ><mat-icon>power_settings_new</mat-icon> &nbsp; Logout</a
           >
         </mat-list-item>
       </ng-container>
