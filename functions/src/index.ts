@@ -290,14 +290,10 @@ app.post('/api/upload', async (req, res) => {
     kelId,
     tpsNo,
     delta: {
-      paslon1: 0,
-      paslon2: 0,
-      sah: 0,
-      tidakSah: 0,
       cakupan: 1,
       pending: 1,
       error: 0
-    },
+    } as { [key in SUM_KEY]: 0 | 1 },
     data,
     meta,
     done: 0,
@@ -346,6 +342,11 @@ app.post('/api/approve', async (req, res) => {
   const ts = Date.now();
   data.updateTs = ts;
 
+  const delta = {} as { [key in SUM_KEY]: 0 | 1 };
+  for (const key in SUM_KEY) {
+    delta[key] = 1;
+  }
+
   const uRef = fsdb.doc(FsPath.upserts(imageId));
   const rRef = fsdb.doc(FsPath.relawan(user.uid));
   await fsdb.runTransaction(async t => {
@@ -365,15 +366,7 @@ app.post('/api/approve', async (req, res) => {
     data.sum.pending = 0;
     data.sum.error = 0;
     u.data = data;
-    u.delta = {
-      paslon1: 1,
-      paslon2: 1,
-      sah: 1,
-      tidakSah: 1,
-      cakupan: 1,
-      pending: 1,
-      error: 1
-    };
+    u.delta = delta;
     u.done = 0;
     if (u.deleted) {
       data.sum.paslon1 = 0;
@@ -405,15 +398,7 @@ app.post('/api/problem', async (req, res) => {
     }
     const r = (await t.get(rRef)).data() as Relawan;
     u.data.sum.error = 1;
-    u.delta = {
-      paslon1: 0,
-      paslon2: 0,
-      sah: 0,
-      tidakSah: 0,
-      cakupan: 0,
-      pending: 0,
-      error: 1
-    };
+    u.delta = { error: 1 } as { [key in SUM_KEY]: 0 | 1 };
     u.reporter = {
       ...r.profile,
       ts: Date.now(),

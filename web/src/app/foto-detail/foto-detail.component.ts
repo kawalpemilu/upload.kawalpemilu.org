@@ -10,6 +10,7 @@ import { Upsert } from 'shared';
 import { Observable } from 'rxjs';
 import { HierarchyService } from '../hierarchy.service';
 import { UserService } from '../user.service';
+import { tap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-foto-detail',
@@ -57,7 +58,9 @@ export class FotoDetailComponent implements OnInit {
         (window.innerHeight || document.documentElement.clientHeight) &&
       r.right <= (window.innerWidth || document.documentElement.clientWidth);
     if (visible) {
-      this.upsert$ = this.userService.getUpsert$(this.imageId);
+      this.upsert$ = this.userService
+        .getUpsert$(this.imageId)
+        .pipe(tap(console.log));
     }
   }
 

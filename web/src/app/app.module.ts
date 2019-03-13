@@ -31,6 +31,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTabsModule } from '@angular/material/tabs';
 
 import { HttpClientModule } from '@angular/common/http';
 import { LoginComponent } from './login/login.component';
@@ -101,7 +102,8 @@ import { MetaComponent } from './meta/meta.component';
     MatToolbarModule,
     MatRadioModule,
     MatCheckboxModule,
-    MatMenuModule
+    MatMenuModule,
+    MatTabsModule
   ],
   providers: [{ provide: LOCALE_ID, useValue: 'id' }],
   bootstrap: [AppComponent]

@@ -1,9 +1,9 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { UploadService } from '../upload.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
-import { map, switchMap } from 'rxjs/operators';
+import { map, switchMap, startWith } from 'rxjs/operators';
 import { Observable, combineLatest } from 'rxjs';
 
 import { UserService } from '../user.service';
@@ -26,19 +26,51 @@ export class UploadState {
   servingUrl: string;
 }
 
+export interface NumberField {
+  label: string;
+  form: string;
+}
+
 @Component({
   selector: 'app-upload-sequence',
   templateUrl: './upload-sequence.component.html',
   styles: ['']
 })
 export class UploadSequenceComponent implements OnInit {
-  @ViewChild('paslon1') paslon1: ElementRef;
+  pilpres: NumberField[] = [
+    { label: 'Suara Paslon 1', form: 'paslon1' },
+    { label: 'Suara Paslon 2', form: 'paslon2' },
+    { label: 'Suara Sah', form: 'sah' },
+    { label: 'Suara Tidak Sah', form: 'tidakSah' }
+  ];
+
+  pileg: NumberField[] = [
+    { label: 'Partai Kebangkitan Bangsa', form: 'pkb' },
+    { label: 'Partai Gerindra', form: 'ger' },
+    { label: 'PDI Perjuangan', form: 'pdi' },
+    { label: 'Partai Golongan Karya', form: 'gol' },
+    { label: 'Partai NasDem', form: 'nas' },
+    { label: 'Partai Garuda', form: 'gar' },
+    { label: 'Partai Berkarya', form: 'ber' },
+    { label: 'Partai Keadilan Sejahtera', form: 'sej' },
+    { label: 'Partai Perindo', form: 'per' },
+    { label: 'Partai Persatuan Pembangunan', form: 'ppp' },
+    { label: 'Partai Solidaritas Indonesia', form: 'psi' },
+    { label: 'Partai Amanat Nasional', form: 'pan' },
+    { label: 'Partai Hanura', form: 'han' },
+    { label: 'Partai Demokrat', form: 'dem' },
+    { label: 'Partai Bulan Bintang', form: 'pbb' },
+    { label: 'Partai Keadilan dan Persatuan Indonesia', form: 'pkp' },
+    { label: 'Suara Sah', form: 'sah' },
+    { label: 'Suara Tidak Sah', form: 'tidakSah' }
+  ];
 
   state$: Observable<UploadState>;
   formGroup: FormGroup;
   imgURL: string | ArrayBuffer;
   uploadedMetadata$: Promise<[ImageMetadata, string]>;
   isLoading = false;
+  VALIDATORS = [Validators.pattern('^[0-9]{0,3}$')];
 
   constructor(
     private route: ActivatedRoute,
@@ -75,19 +107,27 @@ export class UploadSequenceComponent implements OnInit {
       })
     );
 
-    const validators = [Validators.pattern('^[0-9]{1,3}$')];
-    this.formGroup = this.formBuilder.group({
-      paslon1Ctrl: [0, validators],
-      paslon2Ctrl: [0, validators],
-      sahCtrl: [0, validators],
-      tidakSahCtrl: [0, validators]
-    });
+    const group = {};
+    for (const p of this.pilpres.concat(this.pileg)) {
+      group[p.form] = ['', this.VALIDATORS];
+      if (!SUM_KEY[p.form]) {
+        console.error('Invalid form ctrl name:', p.form);
+      }
+    }
+    this.formGroup = this.formBuilder.group(group);
 
-    combineLatest(
-      this.formGroup.get('paslon1Ctrl').valueChanges,
-      this.formGroup.get('paslon2Ctrl').valueChanges
-    ).subscribe(([p1, p2]) => {
-      this.formGroup.get('sahCtrl').setValue((p1 || 0) + (p2 || 0));
+    this.initialize(this.pilpres);
+    this.initialize(this.pileg);
+  }
+
+  initialize(arr: NumberField[]) {
+    const ins = [];
+    for (let i = 0; i + 2 < arr.length; i++) {
+      ins.push(this.formGroup.get(arr[i].form).valueChanges.pipe(startWith(0)));
+    }
+    combineLatest(ins).subscribe(values => {
+      const sum = values.reduce((p, c) => p + (c || 0), 0);
+      this.formGroup.get('sah').setValue(sum);
     });
   }
 
@@ -134,13 +174,20 @@ export class UploadSequenceComponent implements OnInit {
       .upload(userId, state.kelurahanId, state.tpsNo, file)
       .then(imageId => <[ImageMetadata, string]>[m, imageId]);
 
-    setTimeout(() => this.paslon1.nativeElement.focus(), 100);
+    setTimeout(() => {
+      const elementList = document.querySelectorAll('mat-tab-group');
+      const element = elementList[0] as HTMLElement;
+      element.scrollIntoView({ behavior: 'smooth' });
+      document
+        .querySelectorAll<HTMLInputElement>('.suara:first-of-type')[0]
+        .focus();
+    }, 100);
   }
 
   getError(ctrlName: string) {
     const ctrl = this.formGroup.get(ctrlName);
     if (ctrl.hasError('pattern')) {
-      return 'Angka hanya boleh antara 0 sampai 999';
+      return 'Angka terlalu besar';
     }
     return '';
   }
@@ -148,15 +195,14 @@ export class UploadSequenceComponent implements OnInit {
   async selesai(user: User, kelurahanId: number, tpsNo: number) {
     this.isLoading = true;
     const [metadata, imageId] = await this.uploadedMetadata$;
-    const sum: { [key in SUM_KEY]: number } = {
-      paslon1: this.formGroup.get('paslon1Ctrl').value,
-      paslon2: this.formGroup.get('paslon2Ctrl').value,
-      sah: this.formGroup.get('sahCtrl').value,
-      tidakSah: this.formGroup.get('tidakSahCtrl').value,
+    const sum = {
       cakupan: 1,
       pending: 1,
       error: 0
-    };
+    } as { [key in SUM_KEY]: number };
+    for (const p of this.pilpres.concat(this.pileg)) {
+      sum[p.form] = this.formGroup.get(p.form).value || 0;
+    }
 
     const request: ApiUploadRequest = {
       kelurahanId,

@@ -71,33 +71,26 @@
               </ng-template>
             </td>
             <td align="center">
-              <p *ngIf="tps.data as d; else bisaupload">
-                <ng-container *ngIf="d.url; else bisaupload">
-                  <ng-container *ngIf="d.sum.error">
-                    <span style="color: red"
-                      >Kesalahan telah dilaporkan untuk TPS ini</span
-                    >
-                    <ng-container *ngTemplateOutlet="bisaupload"></ng-container>
-                  </ng-container>
-                  <app-lapor-button
-                    *ngIf="!d.sum.error"
-                    [id]="state.id"
-                    [imageId]="d.imageId"
-                  ></app-lapor-button>
-                </ng-container>
+              <p *ngIf="tps.data as d">
+                <span *ngIf="d.url && d.sum.error" style="color: red">
+                  Kesalahan telah dilaporkan untuk TPS ini
+                </span>
+                <app-lapor-button
+                  *ngIf="d.url && !d.sum.error"
+                  [id]="state.id"
+                  [imageId]="d.imageId"
+                ></app-lapor-button>
               </p>
-              <ng-template #bisaupload>
-                <p>
-                  <button
-                    *ngIf="!uploadService.task"
-                    mat-raised-button
-                    [routerLink]="['/u', state.id, tps.tpsNo]"
-                    color="primary"
-                  >
-                    Jaga TPS / Upload Foto
-                  </button>
-                </p>
-              </ng-template>
+              <p>
+                <button
+                  *ngIf="!uploadService.task"
+                  mat-raised-button
+                  [routerLink]="['/u', state.id, tps.tpsNo]"
+                  color="primary"
+                >
+                  Jaga TPS / Upload Foto
+                </button>
+              </p>
             </td>
           </tr>
         </table>

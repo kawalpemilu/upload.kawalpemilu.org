@@ -47,13 +47,34 @@ export interface ChangeLog {
 }
 
 export enum SUM_KEY {
+  // Pilpres
   paslon1 = 'paslon1',
   paslon2 = 'paslon2',
+
+  // Common
   sah = 'sah',
   tidakSah = 'tidakSah',
   cakupan = 'cakupan',
   pending = 'pending',
-  error = 'error'
+  error = 'error',
+
+  // Pileg
+  pkb = 'pkb',
+  ger = 'ger',
+  pdi = 'pdi',
+  gol = 'gol',
+  nas = 'nas',
+  gar = 'gar',
+  ber = 'ber',
+  sej = 'sej',
+  per = 'per',
+  ppp = 'ppp',
+  psi = 'psi',
+  pan = 'pan',
+  han = 'han',
+  dem = 'dem',
+  pbb = 'pbb',
+  pkp = 'pkp'
 }
 
 export interface UpsertProfile extends PublicProfile {

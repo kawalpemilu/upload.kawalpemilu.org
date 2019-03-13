@@ -48,7 +48,23 @@ export declare enum SUM_KEY {
     tidakSah = "tidakSah",
     cakupan = "cakupan",
     pending = "pending",
-    error = "error"
+    error = "error",
+    pkb = "pkb",
+    ger = "ger",
+    pdi = "pdi",
+    gol = "gol",
+    nas = "nas",
+    gar = "gar",
+    ber = "ber",
+    sej = "sej",
+    per = "per",
+    ppp = "ppp",
+    psi = "psi",
+    pan = "pan",
+    han = "han",
+    dem = "dem",
+    pbb = "pbb",
+    pkp = "pkp"
 }
 export interface UpsertProfile extends PublicProfile {
     ts: number;

@@ -9,6 +9,9 @@ import { USER_ROLE } from 'shared';
   templateUrl: './app.component.html',
   styles: [
     `
+      mat-sidenav {
+        width: 225px;
+      }
       h1.app-name {
         margin-left: 8px;
         font-size: small;

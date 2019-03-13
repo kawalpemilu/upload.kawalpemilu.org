@@ -12,13 +12,32 @@ var USER_ROLE;
 })(USER_ROLE = exports.USER_ROLE || (exports.USER_ROLE = {}));
 var SUM_KEY;
 (function (SUM_KEY) {
+    // Pilpres
     SUM_KEY["paslon1"] = "paslon1";
     SUM_KEY["paslon2"] = "paslon2";
+    // Common
     SUM_KEY["sah"] = "sah";
     SUM_KEY["tidakSah"] = "tidakSah";
     SUM_KEY["cakupan"] = "cakupan";
     SUM_KEY["pending"] = "pending";
     SUM_KEY["error"] = "error";
+    // Pileg
+    SUM_KEY["pkb"] = "pkb";
+    SUM_KEY["ger"] = "ger";
+    SUM_KEY["pdi"] = "pdi";
+    SUM_KEY["gol"] = "gol";
+    SUM_KEY["nas"] = "nas";
+    SUM_KEY["gar"] = "gar";
+    SUM_KEY["ber"] = "ber";
+    SUM_KEY["sej"] = "sej";
+    SUM_KEY["per"] = "per";
+    SUM_KEY["ppp"] = "ppp";
+    SUM_KEY["psi"] = "psi";
+    SUM_KEY["pan"] = "pan";
+    SUM_KEY["han"] = "han";
+    SUM_KEY["dem"] = "dem";
+    SUM_KEY["pbb"] = "pbb";
+    SUM_KEY["pkp"] = "pkp";
 })(SUM_KEY = exports.SUM_KEY || (exports.SUM_KEY = {}));
 function extractImageMetadata(m) {
     var validM = null;
