@@ -222,7 +222,7 @@ function getAggregate(
   };
   for (const key in SUM_KEY) {
     if (key in ['pending', 'error']) continue;
-    const sum = data.sum[key];
+    const sum = data.sum[key] || 0;
     if (typeof sum !== 'number' || sum < 0 || sum > 1000) {
       console.error(`Upload data sum out of range ${uid}`);
       res.json({ error: 'Invalid sum range' });
