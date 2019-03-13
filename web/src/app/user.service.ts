@@ -13,6 +13,7 @@ import { Router } from '@angular/router';
   providedIn: 'root'
 })
 export class UserService {
+  user: User;
   user$: Observable<User>;
   relawan$: Observable<Relawan>;
   upsert$: { [imageId: string]: Observable<Upsert> } = {};
@@ -25,7 +26,13 @@ export class UserService {
     private router: Router
   ) {
     this.isLoading = true;
-    this.user$ = this.afAuth.user.pipe(tap(() => (this.isLoading = false)));
+    this.user$ = this.afAuth.user.pipe(
+      tap(user => {
+        this.user = user;
+        this.isLoading = false;
+      }),
+      shareReplay(1)
+    );
     this.relawan$ = this.user$.pipe(
       switchMap(user =>
         user

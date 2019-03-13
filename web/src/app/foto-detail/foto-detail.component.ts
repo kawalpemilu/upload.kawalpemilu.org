@@ -24,7 +24,7 @@ export class FotoDetailComponent implements OnInit {
 
   upsert$: Observable<Upsert>;
 
-  HEIGHT = 150;
+  HEIGHT = 200;
 
   constructor(
     private hie: HierarchyService,

@@ -18,7 +18,7 @@
   <table cellspacing="0">
     <tr [style.height.px]="40" style="background-color: lightgray">
       <th class="tps">TPS</th>
-      <th class="foto">Tes Upload Foto</th>
+      <th class="foto">Tes Upload Foto untuk menjaga TPS</th>
     </tr>
     <tr
       *ngFor="let tps of state.tpsList; let odd = odd"
@@ -82,14 +82,11 @@
                 ></app-lapor-button>
               </p>
               <p>
-                <button
-                  *ngIf="!uploadService.task"
-                  mat-raised-button
-                  [routerLink]="['/u', state.id, tps.tpsNo]"
-                  color="primary"
-                >
-                  Jaga TPS / Upload Foto
-                </button>
+                <app-upload-sequence
+                  [kelId]="state.id"
+                  [tpsNo]="tps.tpsNo"
+                  [value]="'Upload Foto untuk Jaga TPS'"
+                ></app-upload-sequence>
               </p>
             </td>
           </tr>

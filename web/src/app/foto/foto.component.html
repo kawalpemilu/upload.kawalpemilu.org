@@ -1,32 +1,20 @@
-<h2>Tes Upload Foto & Jaga TPS</h2>
+<h2>Tes Upload Foto untuk menjaga TPS</h2>
 
 <p>
   Tanggal 17 April 2019, setelah penghitungan suara selesai, Anda diharapkan
-  datang kembali ke TPS anda dan memfoto Formulir C1 Plano yang TELAH
-  ditandatangani oleh semua saksi. Biasanya, formulir ini dipajang di papan
-  besar seperti
-  <a href="/assets/contoh.jpeg" target="_blank">contoh foto ini</a>. Setelah
-  Anda mengambil foto tersebut, unggah lah foto tersebut ke situs ini.
+  untuk memfoto hasil penghitungan suara dan mengupload foto-foto tersebut ke
+  situs ini. [TODO: tambahin link ke tutorial HitungFotoUpload]
 </p>
 
 <p>
-  <b>Tips</b>: jika Anda berencana untuk mengambil foto di beberapa TPS yang
-  berbeda, maka ambillah foto-foto tersebut terlebih dahulu. Setelah semua foto
-  tersimpan di ponsel Anda, barulah Anda mengunggah fotonya satu per satu
-  setelah mendapat koneksi internet yang stabil, disarankan pada jaringan wifi
-  terdekat.
-</p>
-
-<p>
-  Sekarang adalah masa uji coba. Silakan pilih TPS yang akan Anda jaga dan
-  unggah foto di TPS tersebut untuk memastikan ponsel Anda dapat mengunggah foto
-  dengan lancar:
+  Sekarang adalah masa uji coba untuk Anda latihan mengupload foto dan menguji
+  sistem. Silakan pilih TPS yang akan Anda jaga dan upload foto di TPS tersebut
+  untuk memastikan ponsel Anda dapat mengupload foto dengan lancar:
 </p>
 
 <ul>
   <li>Semua tes foto akan dihapus pada tanggal 16 April 2019.</li>
-  <li>Gunakan browser Chrome atau Safari untuk mengunggah foto.</li>
-  <li>Jika unggahan/upload foto gagal, coba lagi dengan ponsel lain.</li>
+  <li>Gunakan browser Chrome atau Safari untuk mengupload foto.</li>
 </ul>
 
 <p>
@@ -35,24 +23,78 @@
   </a>
 </p>
 
-<ng-container *ngIf="(userService.relawan$ | async) as relawan">
-  <ng-container *ngIf="relawan.numUploads > 0">
-    <p>
-      <b>Tips</b>: klik nama kelurahan di bawah untuk mengunggah upload foto
-      lain di kelurahan yang sama.
-    </p>
+<ng-container *ngIf="(photos$ | async) as photos">
+  <ng-container *ngIf="photos.length > 0">
     <table border="1" cellpadding="5" cellspacing="0">
       <tr bgcolor="lightgray" height="30">
-        <th width="30">#</th>
-        <td width="400"><b>Tes Foto</b></td>
+        <th width="120">Lokasi TPS</th>
+        <td width="300"><b>Foto-foto yang telah Anda upload</b></td>
       </tr>
       <tr
-        *ngFor="let u of relawan.uploads; let odd = odd; let i = index"
+        *ngFor="let p of photos; let odd = odd; let i = index"
         [style.background-color]="odd ? '#FFF' : '#EEE'"
       >
-        <td align="center">{{ relawan.uploads.length - i }}</td>
+        <td align="center" width="120">
+          <a [routerLink]="['/t', p.kelId]">{{
+            (hie$(p.kelId) | async)?.name
+          }}</a>
+          <p style="border: 1px solid black; width: 80px; padding: 5px">
+            TPS #<br /><b style="font-size: x-large">{{ p.tpsNo }}</b>
+          </p>
+          <app-upload-sequence
+            [kelId]="p.kelId"
+            [tpsNo]="p.tpsNo"
+            [value]="'Tambah Foto'"
+          ></app-upload-sequence>
+        </td>
         <td>
-          <app-foto-detail [imageId]="u.data.imageId"></app-foto-detail>
+          <div class="cdk-virtual-scroll-data-source">
+            <cdk-virtual-scroll-viewport
+              orientation="horizontal"
+              itemSize="125"
+              class="viewport"
+            >
+              <div *cdkVirtualFor="let t of p.photos" class="item">
+                <ng-container *ngIf="t.status as s">
+                  <table
+                    [attr.height]="200"
+                    cellpadding="3"
+                    cellspacing="0"
+                    style="display: inline"
+                  >
+                    <tbody>
+                      <tr>
+                        <td
+                          align="center"
+                          width="110"
+                          height="120"
+                          valign="middle"
+                        >
+                          <img [src]="s.imgURL" width="100" /><br />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>{{ s.uploadTs | date: 'short' }}</td>
+                      </tr>
+                      <tr>
+                        <td width="110">
+                          Uploading &nbsp;
+                          <mat-spinner
+                            style="display: inline"
+                            [diameter]="20"
+                          ></mat-spinner>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </ng-container>
+                <app-foto-detail
+                  *ngIf="!t.status"
+                  [imageId]="t.imageId"
+                ></app-foto-detail>
+              </div>
+            </cdk-virtual-scroll-viewport>
+          </div>
         </td>
       </tr>
     </table>

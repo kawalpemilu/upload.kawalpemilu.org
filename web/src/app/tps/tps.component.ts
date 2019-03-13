@@ -5,7 +5,6 @@ import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
 import { HierarchyNode, UpsertData, USER_ROLE } from 'shared';
-import { UploadService } from '../upload.service';
 import { UserService } from '../user.service';
 
 interface Tps {
@@ -31,7 +30,6 @@ export class TpsComponent implements OnInit {
 
   constructor(
     public hie: HierarchyService,
-    public uploadService: UploadService,
     public userService: UserService,
     private route: ActivatedRoute
   ) {}

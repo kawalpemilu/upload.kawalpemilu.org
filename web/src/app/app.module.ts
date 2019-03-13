@@ -2,6 +2,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule, LOCALE_ID } from '@angular/core';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -98,6 +99,7 @@ import { MetaComponent } from './meta/meta.component';
     MatListModule,
     MatSnackBarModule,
     MatProgressSpinnerModule,
+    ScrollingModule,
 
     MatToolbarModule,
     MatRadioModule,

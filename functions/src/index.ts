@@ -250,16 +250,12 @@ app.post('/api/upload', async (req, res) => {
   const [kelId, tpsNo] = await parseLocationAndAgg(b, res, user.uid);
   if (!kelId) return null;
 
-  if (!b.data.sum) {
-    console.error(`Upload data sum is missing ${user.uid}`);
-    return res.json({ error: 'Missing data sum' });
-  }
-
-  const data = getAggregate(res, user.uid, b.data, imageId, servingUrl);
-  if (!data) return null;
-  data.sum.cakupan = 1;
-  data.sum.pending = 1;
-  data.updateTs = Date.now();
+  const data: UpsertData = {
+    sum: { cakupan: 1, pending: 1, error: 0 } as { [key in SUM_KEY]: number },
+    updateTs: Date.now(),
+    imageId,
+    url: servingUrl
+  };
 
   const uRef = fsdb.doc(FsPath.relawan(user.uid));
   const uploader = (await uRef.get()).data() as Relawan;

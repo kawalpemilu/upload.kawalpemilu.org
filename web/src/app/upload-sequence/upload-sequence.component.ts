@@ -1,396 +1,65 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { UploadService } from '../upload.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-
-import { map, switchMap, startWith } from 'rxjs/operators';
-import { Observable, combineLatest } from 'rxjs';
+import { Router } from '@angular/router';
 
 import { UserService } from '../user.service';
-import { User } from 'firebase';
-import * as piexif from 'piexifjs';
-import {
-  ImageMetadata,
-  ApiUploadRequest,
-  HierarchyNode,
-  SUM_KEY
-} from 'shared';
-import { ApiService } from '../api.service';
-import { HierarchyService } from '../hierarchy.service';
 
-export class UploadState {
-  kelurahanId: number;
-  tpsNo: number;
-  node: HierarchyNode;
-  adaKesalahan: boolean;
-  servingUrl: string;
-}
-
-export interface NumberField {
-  label: string;
-  form: string;
-}
-
+/**
+ *
+ *     Uploading: {{ uploadService.progress.toFixed(0) }}%
+    <progress max="100" [value]="uploadService.progress"></progress>
+<button
+  (click)="uploadService.task.cancel()"
+  [disabled]="
+    !(
+      uploadService.state === 'paused' ||
+      uploadService.state === 'running'
+    )
+  "
+>
+  Cancel
+</button>
+ */
 @Component({
   selector: 'app-upload-sequence',
-  templateUrl: './upload-sequence.component.html',
+  template: `
+    <input
+      #u
+      type="file"
+      (change)="upload($event)"
+      accept=".png,.jpg"
+      style="display: none"
+    />
+    <a mat-raised-button color="primary" (click)="u.click()">
+      {{ value }}
+    </a>
+  `,
   styles: ['']
 })
-export class UploadSequenceComponent implements OnInit {
-  pilpres: NumberField[] = [
-    { label: 'Suara Paslon 1', form: 'paslon1' },
-    { label: 'Suara Paslon 2', form: 'paslon2' },
-    { label: 'Suara Sah', form: 'sah' },
-    { label: 'Suara Tidak Sah', form: 'tidakSah' }
-  ];
-
-  pileg: NumberField[] = [
-    { label: 'Partai Kebangkitan Bangsa', form: 'pkb' },
-    { label: 'Partai Gerindra', form: 'ger' },
-    { label: 'PDI Perjuangan', form: 'pdi' },
-    { label: 'Partai Golongan Karya', form: 'gol' },
-    { label: 'Partai NasDem', form: 'nas' },
-    { label: 'Partai Garuda', form: 'gar' },
-    { label: 'Partai Berkarya', form: 'ber' },
-    { label: 'Partai Keadilan Sejahtera', form: 'sej' },
-    { label: 'Partai Perindo', form: 'per' },
-    { label: 'Partai Persatuan Pembangunan', form: 'ppp' },
-    { label: 'Partai Solidaritas Indonesia', form: 'psi' },
-    { label: 'Partai Amanat Nasional', form: 'pan' },
-    { label: 'Partai Hanura', form: 'han' },
-    { label: 'Partai Demokrat', form: 'dem' },
-    { label: 'Partai Bulan Bintang', form: 'pbb' },
-    { label: 'Partai Keadilan dan Persatuan Indonesia', form: 'pkp' },
-    { label: 'Suara Sah', form: 'sah' },
-    { label: 'Suara Tidak Sah', form: 'tidakSah' }
-  ];
-
-  state$: Observable<UploadState>;
-  formGroup: FormGroup;
-  imgURL: string | ArrayBuffer;
-  uploadedMetadata$: Promise<[ImageMetadata, string]>;
-  isLoading = false;
-  VALIDATORS = [Validators.pattern('^[0-9]{0,3}$')];
+export class UploadSequenceComponent {
+  @Input() kelId: number;
+  @Input() tpsNo: number;
+  @Input() value = 'Upload foto';
 
   constructor(
-    private route: ActivatedRoute,
     private router: Router,
-    public userService: UserService,
-    public uploadService: UploadService,
-    private formBuilder: FormBuilder,
-    private api: ApiService,
-    private hie: HierarchyService
+    private userService: UserService,
+    private uploadService: UploadService
   ) {}
 
-  ngOnInit() {
-    this.state$ = this.route.paramMap.pipe(
-      switchMap(p => {
-        const state = {
-          kelurahanId: parseInt(p.get('kelurahanId'), 10),
-          tpsNo: parseInt(p.get('tpsNo'), 10)
-        } as UploadState;
-        return this.hie.get$(state.kelurahanId).pipe(
-          map((node: HierarchyNode) => {
-            state.servingUrl = '';
-            state.adaKesalahan = false;
-            for (const [tpsNo] of node.children) {
-              if (tpsNo === state.tpsNo) {
-                const a = node.data[tpsNo];
-                state.servingUrl = (a && a.url) || '';
-                state.adaKesalahan = state.adaKesalahan || !!(a && a.sum.error);
-              }
-            }
-            state.node = node;
-            return state;
-          })
-        );
-      })
-    );
-
-    const group = {};
-    for (const p of this.pilpres.concat(this.pileg)) {
-      group[p.form] = ['', this.VALIDATORS];
-      if (!SUM_KEY[p.form]) {
-        console.error('Invalid form ctrl name:', p.form);
-      }
-    }
-    this.formGroup = this.formBuilder.group(group);
-
-    this.initialize(this.pilpres);
-    this.initialize(this.pileg);
-  }
-
-  initialize(arr: NumberField[]) {
-    const ins = [];
-    for (let i = 0; i + 2 < arr.length; i++) {
-      ins.push(this.formGroup.get(arr[i].form).valueChanges.pipe(startWith(0)));
-    }
-    combineLatest(ins).subscribe(values => {
-      const sum = values.reduce((p, c) => p + (c || 0), 0);
-      this.formGroup.get('sah').setValue(sum);
-    });
-  }
-
-  async upload(userId: string, state: UploadState, event) {
+  async upload(event) {
     if (event.target.files.length === 0) {
       console.log('No file to be uploaded');
       return;
     }
-    let file: File = event.target.files[0];
+    const file: File = event.target.files[0];
     if (!file.type.match(/image\/*/)) {
       console.log('Invalid mime: ', file.type);
       return;
     }
-
-    const m = { s: file.size, l: file.lastModified } as ImageMetadata;
-    try {
-      let imgURL = await this.readAsDataUrl(file);
-      const exifObj = this.populateMetadata(imgURL, m);
-      if (file.size > 800 * 1024) {
-        imgURL = await this.compress(imgURL, 2048);
-        if (exifObj) {
-          try {
-            // https://piexifjs.readthedocs.io/en/2.0/sample.html#insert-exif-into-jpeg
-            imgURL = piexif.insert(piexif.dump(exifObj), imgURL);
-          } catch (e) {
-            console.error(e);
-          }
-        }
-        file = this.dataURLtoBlob(imgURL) as File;
-        m.z = file.size;
-      }
-
-      if (m.o === 1) {
-        this.imgURL = imgURL;
-      } else {
-        this.imgURL = await this.rotateImageUrl(imgURL, m.o);
-      }
-    } catch (e) {
-      console.error('Unable to preview', e);
-      this.imgURL = 'error';
-    }
-
-    this.uploadedMetadata$ = this.uploadService
-      .upload(userId, state.kelurahanId, state.tpsNo, file)
-      .then(imageId => <[ImageMetadata, string]>[m, imageId]);
-
-    setTimeout(() => {
-      const elementList = document.querySelectorAll('mat-tab-group');
-      const element = elementList[0] as HTMLElement;
-      element.scrollIntoView({ behavior: 'smooth' });
-      document
-        .querySelectorAll<HTMLInputElement>('.suara:first-of-type')[0]
-        .focus();
-    }, 100);
-  }
-
-  getError(ctrlName: string) {
-    const ctrl = this.formGroup.get(ctrlName);
-    if (ctrl.hasError('pattern')) {
-      return 'Angka terlalu besar';
-    }
-    return '';
-  }
-
-  async selesai(user: User, kelurahanId: number, tpsNo: number) {
-    this.isLoading = true;
-    const [metadata, imageId] = await this.uploadedMetadata$;
-    const sum = {
-      cakupan: 1,
-      pending: 1,
-      error: 0
-    } as { [key in SUM_KEY]: number };
-    for (const p of this.pilpres.concat(this.pileg)) {
-      sum[p.form] = this.formGroup.get(p.form).value || 0;
-    }
-
-    const request: ApiUploadRequest = {
-      kelurahanId,
-      tpsNo,
-      data: {
-        sum,
-        updateTs: 0,
-        imageId,
-        url: null
-      },
-      metadata
-    };
-    try {
-      const res: any = await this.api.post(user, `upload`, request);
-      if (res.ok) {
-        this.router.navigate(['/f']);
-      } else {
-        console.error(res);
-      }
-    } catch (e) {
-      console.error(e.message);
-    }
-    this.isLoading = false;
-  }
-
-  private populateMetadata(imgURL, m) {
-    try {
-      const exifObj = piexif.load(imgURL as string);
-      const z = exifObj['0th'];
-      if (z) {
-        m.w = z[piexif.TagValues.ImageIFD.ImageWidth];
-        m.h = z[piexif.TagValues.ImageIFD.ImageLength];
-        m.m = [
-          z[piexif.TagValues.ImageIFD.Make] as string,
-          z[piexif.TagValues.ImageIFD.Model] as string
-        ];
-        m.o = z[piexif.TagValues.ImageIFD.Orientation];
-      }
-      const g = exifObj['GPS'];
-      if (g) {
-        m.y = this.convertDms(
-          g[piexif.TagValues.GPSIFD.GPSLatitude],
-          g[piexif.TagValues.GPSIFD.GPSLatitudeRef]
-        );
-        m.x = this.convertDms(
-          g[piexif.TagValues.GPSIFD.GPSLongitude],
-          g[piexif.TagValues.GPSIFD.GPSLongitudeRef]
-        );
-      }
-      return exifObj;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  private readAsDataUrl(file: File): Promise<string | ArrayBuffer> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-    });
-  }
-
-  private getImage(dataUrl): Promise<HTMLImageElement> {
-    const img = new Image();
-    return new Promise(resolve => {
-      img.src = dataUrl;
-      img.onload = () => resolve(img);
-    });
-  }
-
-  private async compress(dataUrl, maxDimension): Promise<string> {
-    const img = await this.getImage(dataUrl);
-    let width = img.width;
-    let height = img.height;
-    const scale = Math.min(1, maxDimension / width, maxDimension / height);
-    if (scale < 1) {
-      width *= scale;
-      height *= scale;
-    }
-    const elem = document.createElement('canvas'); // Use Angular's Renderer2 method
-    elem.width = width;
-    elem.height = height;
-    const ctx = elem.getContext('2d');
-    ctx.drawImage(img, 0, 0, width, height);
-    return ctx.canvas.toDataURL('image/jpeg');
-  }
-
-  /**
-   * https://piexifjs.readthedocs.io/en/2.0/sample.html#insert-exif-into-jpeg
-   */
-  private async rotateImageUrl(dataUrl, orientation) {
-    const image = await this.getImage(dataUrl);
-    const canvas = document.createElement('canvas');
-    canvas.width = image.width;
-    canvas.height = image.height;
-    const ctx = canvas.getContext('2d');
-    let x = 0;
-    let y = 0;
-    ctx.save();
-    switch (orientation) {
-      case 2:
-        x = -canvas.width;
-        ctx.scale(-1, 1);
-        break;
-
-      case 3:
-        x = -canvas.width;
-        y = -canvas.height;
-        ctx.scale(-1, -1);
-        break;
-
-      case 4:
-        y = -canvas.height;
-        ctx.scale(1, -1);
-        break;
-
-      case 5:
-        canvas.width = image.height;
-        canvas.height = image.width;
-        ctx.translate(canvas.width, canvas.height / canvas.width);
-        ctx.rotate(Math.PI / 2);
-        y = -canvas.width;
-        ctx.scale(1, -1);
-        break;
-
-      case 6:
-        canvas.width = image.height;
-        canvas.height = image.width;
-        ctx.translate(canvas.width, canvas.height / canvas.width);
-        ctx.rotate(Math.PI / 2);
-        break;
-
-      case 7:
-        canvas.width = image.height;
-        canvas.height = image.width;
-        ctx.translate(canvas.width, canvas.height / canvas.width);
-        ctx.rotate(Math.PI / 2);
-        x = -canvas.height;
-        ctx.scale(-1, 1);
-        break;
-
-      case 8:
-        canvas.width = image.height;
-        canvas.height = image.width;
-        ctx.translate(canvas.width, canvas.height / canvas.width);
-        ctx.rotate(Math.PI / 2);
-        x = -canvas.height;
-        y = -canvas.width;
-        ctx.scale(-1, -1);
-        break;
-    }
-    ctx.drawImage(image, x, y);
-    ctx.restore();
-    return canvas.toDataURL('image/jpeg');
-  }
-
-  /**
-   * From: https://gist.github.com/wuchengwei/b7e1820d39445f431aeaa9c786753d8e
-   */
-  private dataURLtoBlob(dataurl) {
-    const arr = dataurl.split(','),
-      mime = arr[0].match(/:(.*?);/)[1],
-      bstr = atob(arr[1]),
-      u8arr = new Uint8Array(bstr.length);
-
-    for (let n = bstr.length; n--; ) {
-      u8arr[n] = bstr.charCodeAt(n);
-    }
-    return new Blob([u8arr], { type: mime });
-  }
-
-  private convertDms(dms, direction) {
-    if (!dms || !direction || dms.length < 3) {
-      return null;
-    }
-    const degs = dms[0][0] / dms[0][1];
-    const mins = dms[1][0] / dms[1][1];
-    const secs = dms[2][0] / dms[2][1];
-    return this.convertDMSToDD(degs, mins, secs, direction);
-  }
-
-  private convertDMSToDD(degrees, minutes, seconds, direction) {
-    let dd = degrees + minutes / 60.0 + seconds / (60.0 * 60);
-    if (direction === 'S' || direction === 'W') {
-      dd = dd * -1;
-    } // Don't do anything for N or E
-    return dd;
+    return this.uploadService
+      .upload(this.userService.user, this.kelId, this.tpsNo, file)
+      .then(() => this.router.navigate(['/f']))
+      .catch(console.error);
   }
 }

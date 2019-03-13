@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { HierarchyComponent } from './hierarchy/hierarchy.component';
 import { TpsComponent } from './tps/tps.component';
-import { UploadSequenceComponent } from './upload-sequence/upload-sequence.component';
 import { RegistrasiComponent } from './registrasi/registrasi.component';
 import { DigitizeComponent } from './digitize/digitize.component';
 import { FotoComponent } from './foto/foto.component';
@@ -20,11 +19,6 @@ const routes: Routes = [
     canActivate: [AuthGuardService]
   },
   { path: 't/:id', component: TpsComponent, canActivate: [AuthGuardService] },
-  {
-    path: 'u/:kelurahanId/:tpsNo',
-    component: UploadSequenceComponent,
-    canActivate: [AuthGuardService]
-  },
   {
     path: 'c/:code',
     component: RegistrasiComponent,
