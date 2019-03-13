@@ -122,7 +122,8 @@ export class ApproverComponent implements OnInit {
   async approve(u: Upsert, del: boolean) {
     this.isLoading = true;
     this.formGroup.disable();
-    const sum: { [key in SUM_KEY]: number } = {
+    // TODO: support pileg
+    const sum = {
       paslon1: this.formGroup.get('paslon1Ctrl').value,
       paslon2: this.formGroup.get('paslon2Ctrl').value,
       sah: this.formGroup.get('sahCtrl').value,
@@ -130,7 +131,7 @@ export class ApproverComponent implements OnInit {
       cakupan: del ? 0 : 1,
       pending: 0,
       error: 0
-    };
+    } as { [key in SUM_KEY]: number };
     const request: ApiApproveRequest = {
       kelurahanId: u.kelId,
       tpsNo: u.tpsNo,
