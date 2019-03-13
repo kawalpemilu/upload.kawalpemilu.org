@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import * as request from 'request-promise';
 import * as fs from 'fs';
 
-import { ApiUploadRequest, ImageMetadata } from 'shared';
+import { ApiUploadRequest, ImageMetadata, SUM_KEY } from 'shared';
 
 import { H } from './hierarchy';
 
@@ -104,7 +104,7 @@ function makeRequest(kelurahanId, tpsNo) {
         cakupan: 1,
         pending: 0,
         error: 0
-      },
+      } as { [key in SUM_KEY]: number },
       updateTs: 0,
       imageId: `zzzzzzz${kelurahanId}t${tpsNo}`,
       url: null
