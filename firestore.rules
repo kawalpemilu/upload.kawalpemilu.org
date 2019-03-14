@@ -28,5 +28,11 @@ service cloud.firestore {
       // Moderator can see the uploaded photos.
       allow list: if request.query.limit <= 1 && getUserRole() >= 1;
     }
+
+    // TPS change log.
+    match /t/{tpsId} {
+      // Only Moderator and above can see the TPS history.
+      allow get: if getUserRole() >= 1;
+    }
   }
 }

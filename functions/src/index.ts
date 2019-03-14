@@ -43,10 +43,6 @@ const fsdb = admin.firestore();
 fsdb.settings({ timestampsInSnapshots: true });
 
 const t2 = Date.now();
-
-const app = express();
-app.use(require('cors')({ origin: true }));
-
 const delay = (ms: number) => new Promise(_ => setTimeout(_, ms));
 
 function getServingUrl(objectName: string, ithRetry = 0, maxRetry = 10) {
@@ -91,42 +87,49 @@ exports.handlePhotoUpload = functions.storage
     await fsdb.doc(FsPath.imageMetadata(imageId)).set(m);
   });
 
-const rateLimit: { [uid: string]: number } = {};
 /**
  * Validates Firebase ID Tokens passed in the authorization HTTP header.
- * Returns the decoded ID Token content.
+ * Adds the decoded ID Token content to the request object.
  */
-function validateToken(
-  req: any,
-  res: any
-): Promise<admin.auth.DecodedIdToken | null> {
-  const a = req.headers.authorization;
-  if (!a || !a.startsWith('Bearer ')) {
-    res.status(403).json({ error: 'Unauthorized' });
-    return Promise.resolve(null);
-  }
-  const trace = new Error().stack;
-  return auth
-    .verifyIdToken(a.substring(7))
-    .catch(() => {
-      res.status(403).json({ error: 'Unauthorized, invalid token' });
-      return null;
-    })
-    .then(user => {
-      if (user) {
-        const num = (rateLimit[user.uid] = (rateLimit[user.uid] || 0) + 1);
-        if (num > 30) {
-          console.warn(`User ${user.uid} is rate-limited: ${trace}`);
-          res.status(403).json({ error: 'Rate-limited' });
-          return null;
-        }
-        if (num === 1) {
-          setTimeout(() => delete rateLimit[user.uid], 60 * 1000);
-        }
-      }
-      return user;
-    });
+function validateToken() {
+  return (req, res: express.Response, next) => {
+    const a = req.headers.authorization;
+    if (!a || !a.startsWith('Bearer ')) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+    return auth
+      .verifyIdToken(a.substring(7))
+      .then(user => {
+        req.user = user;
+        next();
+      })
+      .catch(() => res.status(403).json({ error: 'Invalid token' }));
+  };
 }
+
+function maxRequestPerMinute(n: number) {
+  const qpm: { [uid: string]: number } = {};
+  return (req, res, next) => {
+    if (!req.query.abracadabra) {
+      const user = req.user as admin.auth.DecodedIdToken;
+      const num = (qpm[user.uid] = (qpm[user.uid] || 0) + 1);
+      if (num > n) {
+        console.warn(`User ${user.uid} is rate-limited: ${req.url}`);
+        res.status(403).json({ error: 'Rate-limited' });
+        return null;
+      }
+      if (num === 1) {
+        setTimeout(() => delete qpm[user.uid], 60 * 1000);
+      }
+    }
+    next();
+  };
+}
+
+const app = express();
+app.use(require('cors')({ origin: true }));
+app.use(validateToken());
+app.use(maxRequestPerMinute(30));
 
 function getChildren(cid): Promise<HierarchyNode> {
   const host = '35.188.68.201:8080';
@@ -137,10 +140,6 @@ function getChildren(cid): Promise<HierarchyNode> {
 const CACHE_TIMEOUT = 1;
 const cache_c: any = {};
 app.get('/api/c/:id', async (req, res) => {
-  if (!req.query.abracadabra) {
-    const user = await validateToken(req, res);
-    if (!user) return null;
-  }
   const cid = req.params.id;
   let c = cache_c[cid];
   res.setHeader('Cache-Control', `max-age=${CACHE_TIMEOUT}`);
@@ -211,10 +210,8 @@ async function getKelName(res, uid, kelId, tpsNo) {
   return kelName;
 }
 
-app.post('/api/upload', async (req, res) => {
-  const user = await validateToken(req, res);
-  if (!user) return null;
-
+app.post('/api/upload', async (req: any, res) => {
+  const user = req.user as admin.auth.DecodedIdToken;
   const b = req.body as ApiUploadRequest;
   if (!b.data) {
     console.error(`Upload data is missing ${user.uid}`);
@@ -295,10 +292,8 @@ function getIp(req: express.Request) {
   return typeof ip === 'string' ? ip : JSON.stringify(ip);
 }
 
-app.post('/api/approve', async (req, res) => {
-  const user = await validateToken(req, res);
-  if (!user) return null;
-
+app.post('/api/approve', async (req: any, res) => {
+  const user = req.user as admin.auth.DecodedIdToken;
   const b = req.body as ApiApproveRequest;
   if (!b.action || !b.action.sum) {
     console.warn(`No action, uid = ${user.uid}`);
@@ -372,10 +367,8 @@ app.post('/api/approve', async (req, res) => {
   return res.json({ ok: true });
 });
 
-app.post('/api/problem', async (req, res) => {
-  const user = await validateToken(req, res);
-  if (!user) return null;
-
+app.post('/api/problem', async (req: any, res) => {
+  const user = req.user as admin.auth.DecodedIdToken;
   const imageId = req.body.imageId;
   if (!isValidImageId(imageId)) {
     return res.json({ error: 'Invalid imageId' });
@@ -404,10 +397,8 @@ app.post('/api/problem', async (req, res) => {
   return res.json(ok ? { ok: true } : { error: 'Invalid imageId' });
 });
 
-app.post('/api/register/login', async (req, res) => {
-  const user = await validateToken(req, res);
-  if (!user) return null;
-
+app.post('/api/register/login', async (req: any, res) => {
+  const user = req.user as admin.auth.DecodedIdToken;
   let link = req.body.link;
   const p = APP_SCOPED_PREFIX_URL;
   if (!link || !link.startsWith(p) || !link.match(/[a-zA-Z0-9]+\//)) {
@@ -439,10 +430,8 @@ app.post('/api/register/login', async (req, res) => {
   return res.json({ ok: true });
 });
 
-app.post('/api/register/create_code', async (req, res) => {
-  const user = await validateToken(req, res);
-  if (!user) return null;
-
+app.post('/api/register/create_code', async (req: any, res) => {
+  const user = req.user as admin.auth.DecodedIdToken;
   const nama = req.body.nama;
   if (!nama || !nama.match(/^[A-Za-z ]{1,50}$/))
     return res.json({ error: 'Nama tidak valid' });
@@ -494,10 +483,8 @@ app.post('/api/register/create_code', async (req, res) => {
   }
 });
 
-app.post('/api/register/:code', async (req, res) => {
-  const user = await validateToken(req, res);
-  if (!user) return null;
-
+app.post('/api/register/:code', async (req: any, res) => {
+  const user = req.user as admin.auth.DecodedIdToken;
   const code = req.params.code;
   if (!new RegExp('^[a-zA-Z0-9]{10}$').test(code)) {
     return res.json({ error: 'Kode referral tidak valid' });
@@ -558,10 +545,8 @@ app.post('/api/register/:code', async (req, res) => {
   return res.json({ code: c });
 });
 
-app.post('/api/change_role', async (req, res) => {
-  const user = await validateToken(req, res);
-  if (!user) return null;
-
+app.post('/api/change_role', async (req: any, res) => {
+  const user = req.user as admin.auth.DecodedIdToken;
   const tuid = req.body.uid;
   if (!isValidUserId(tuid) || tuid === user.uid) {
     console.error(`Invalid tuid ${user.uid} to ${tuid}`);
