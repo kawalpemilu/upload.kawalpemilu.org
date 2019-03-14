@@ -153,7 +153,6 @@ export interface UpsertData {
   imageId: string;
   url: string; // Proof of this Data.
   updateTs: number; // Last update timestamp.
-  status?: any; // Used only in the UI for pending uploads.
 }
 
 export interface ApiUploadRequest {

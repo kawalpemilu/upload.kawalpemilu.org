@@ -112,7 +112,6 @@ export interface UpsertData {
     imageId: string;
     url: string;
     updateTs: number;
-    status?: any;
 }
 export interface ApiUploadRequest {
     kelId: number;

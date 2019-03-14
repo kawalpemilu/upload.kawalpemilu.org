@@ -114,22 +114,15 @@
         <th>
           {{ relawan.numUploads - i }}
         </th>
-        <td>
+        <td align="center">
           <app-thumbnail [url]="u.data.url"></app-thumbnail><br />
-          {{ u.data.updateTs | date: 'medium' }}
         </td>
         <td>
-          Kelurahan: {{ u.kelId }}<br />
-          TPS: #{{ u.tpsNo }} <br />
-
-          <!-- <a [routerLink]="['/upert', u.data.imageId]">Detail</a> -->
-
-          <p><app-meta [meta]="u.meta"></app-meta></p>
-
-          Paslon1: {{ u.data.sum.paslon1 }}<br />
-          Paslon2: {{ u.data.sum.paslon2 }}<br />
-          Sah: {{ u.data.sum.sah }}<br />
-          TidakSah: {{ u.data.sum.tidakSah }}<br />
+          {{ u.data.updateTs | date: 'medium' }}<br />
+          <app-hie-link [id]="u.kelId" [name]="u.kelName"></app-hie-link><br />
+          TPS: <b>#{{ u.tpsNo }}</b
+          ><br />
+          <app-meta [meta]="u.meta"></app-meta>
         </td>
       </tr>
     </table>

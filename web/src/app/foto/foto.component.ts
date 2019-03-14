@@ -7,7 +7,6 @@ import { UserService } from '../user.service';
 import { Observable, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { UpsertData } from 'shared';
-import { HierarchyService } from '../hierarchy.service';
 import { UploadService } from '../upload.service';
 
 export interface Photos {
@@ -24,7 +23,7 @@ export interface Photos {
   styles: [
     `
       .cdk-virtual-scroll-data-source .viewport {
-        height: 200px;
+        height: 150px;
         width: 100%;
       }
 
@@ -47,11 +46,7 @@ export interface Photos {
 export class FotoComponent {
   photos$: Observable<Photos[]>;
 
-  constructor(
-    private hie: HierarchyService,
-    userService: UserService,
-    uploadService: UploadService
-  ) {
+  constructor(userService: UserService, uploadService: UploadService) {
     this.photos$ = combineLatest(
       userService.relawan$,
       uploadService.status$
@@ -81,12 +76,11 @@ export class FotoComponent {
               sum: {},
               imageId: s.imageId,
               url: s.imgURL,
-              updateTs: s.uploadTs,
-              status: s
+              updateTs: s.uploadTs
             } as UpsertData);
           });
 
-        if (relawan) {
+        if (relawan && relawan.uploads) {
           // The relawan.uploads is already sorted by upload time.
           relawan.uploads.forEach(u => {
             const p = photosByTpsAndTpsNo[getKey(u.kelId, u.kelName, u.tpsNo)];

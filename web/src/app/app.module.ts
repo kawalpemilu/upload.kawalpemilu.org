@@ -50,7 +50,6 @@ import { ChatComponent } from './chat/chat.component';
 import { registerLocaleData } from '@angular/common';
 import localeId from '@angular/common/locales/id';
 import { OrangComponent } from './orang/orang.component';
-import { FotoDetailComponent } from './foto-detail/foto-detail.component';
 import { ProfileComponent } from './profile/profile.component';
 import { MetaComponent } from './meta/meta.component';
 
@@ -73,7 +72,6 @@ import { MetaComponent } from './meta/meta.component';
     LaporButtonComponent,
     ChatComponent,
     OrangComponent,
-    FotoDetailComponent,
     ProfileComponent,
     MetaComponent
   ],

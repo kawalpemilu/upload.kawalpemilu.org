@@ -39,7 +39,7 @@
             p.kelName || p.kelId
           }}</a>
           <p style="border: 1px solid black; width: 80px; padding: 5px">
-            TPS #<br /><b style="font-size: x-large">{{ p.tpsNo }}</b>
+            TPS # <b style="font-size: large">{{ p.tpsNo }}</b>
           </p>
           <app-upload-sequence
             [kelId]="p.kelId"
@@ -56,46 +56,41 @@
               class="viewport"
             >
               <div *cdkVirtualFor="let t of p.photos" class="item">
-                <ng-container *ngIf="t.status as s">
-                  <table
-                    [attr.height]="200"
-                    cellpadding="3"
-                    cellspacing="0"
-                    style="display: inline"
-                  >
-                    <tbody>
-                      <tr>
-                        <td
-                          align="center"
-                          width="110"
-                          height="120"
-                          valign="middle"
+                <table cellpadding="0" cellspacing="0">
+                  <tbody>
+                    <tr>
+                      <td align="center" width="125" height="125">
+                        <app-thumbnail
+                          *ngIf="!t.url.startsWith('data')"
+                          [url]="t.url"
+                          [srcSize]="110"
+                          [linkSize]="980"
+                        ></app-thumbnail>
+                        <img
+                          *ngIf="t.url.startsWith('data')"
+                          [src]="t.url"
+                          style="max-height:110px; max-width:110px; height:auto; width:auto;"
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center">
+                        <ng-container
+                          *ngIf="t.url.startsWith('data'); else showdate"
                         >
-                          <img
-                            [src]="s.imgURL"
-                            style="max-height:100px; max-width:100px; height:auto; width:auto;"
-                          /><br />
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>{{ s.uploadTs | date: 'short' }}</td>
-                      </tr>
-                      <tr>
-                        <td width="110">
                           Uploading &nbsp;
                           <mat-spinner
                             style="display: inline"
                             [diameter]="20"
                           ></mat-spinner>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </ng-container>
-                <app-foto-detail
-                  *ngIf="!t.status"
-                  [imageId]="t.imageId"
-                ></app-foto-detail>
+                        </ng-container>
+                        <ng-template #showdate>
+                          {{ t.updateTs | date: 'short' }}
+                        </ng-template>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </cdk-virtual-scroll-viewport>
           </div>

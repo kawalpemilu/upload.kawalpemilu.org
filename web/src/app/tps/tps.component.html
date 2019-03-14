@@ -62,7 +62,10 @@
               <ng-container
                 *ngIf="tps.data?.url as servingUrl; else adapending"
               >
-                <app-thumbnail [url]="servingUrl" [size]="125"></app-thumbnail>
+                <app-thumbnail
+                  [url]="servingUrl"
+                  [srcSize]="125"
+                ></app-thumbnail>
               </ng-container>
               <ng-template #adapending>
                 <div *ngIf="tps.data?.sum?.pending">
