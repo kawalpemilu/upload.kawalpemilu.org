@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as util from 'util';
 
 import { H } from './hierarchy';
-import { FsPath, Upsert, UpsertData, SUM_KEY } from 'shared';
+import { FsPath, Upsert, SumMap, Action } from 'shared';
 
 admin.initializeApp({
   credential: admin.credential.cert(require('./sa-key.json')),
@@ -22,88 +22,59 @@ const fsdb = admin.firestore();
 fsdb.settings({ timestampsInSnapshots: true });
 
 // In memory database containing the aggregates of all children.
-let h: { [key: string]: { [key: string]: UpsertData } } = {};
+let h: { [key: string]: { [key: string]: Action } } = {};
 
-function mergeAggregates(target: UpsertData, source: UpsertData) {
-  for (const key in SUM_KEY) {
-    target.sum[key] = (target.sum[key] || 0) + source.sum[key];
-  }
-  target.updateTs = Math.max(
-    target.updateTs || source.updateTs,
-    source.updateTs
-  );
-}
-
-function getUpsertData(parentId, childId): UpsertData {
+function getUpsertData(parentId, childId): Action {
   if (!h[parentId]) h[parentId] = {};
   const c = h[parentId];
-  if (!c[childId])
-    c[childId] = {
-      sum: {} as { [key in SUM_KEY]: number },
-      updateTs: 0,
-      imageId: null,
-      url: null
-    };
+  if (!c[childId]) c[childId] = { sum: {} as SumMap, ts: 0, imageIds: [] };
   return c[childId];
 }
 
-function getDelta(parentId, childId, u: Upsert): UpsertData {
-  const delta: UpsertData = {
-    sum: {} as { [key in SUM_KEY]: number },
-    updateTs: 0,
-    imageId: null,
-    url: null
-  };
-  const current = getUpsertData(parentId, childId);
-  for (const key in SUM_KEY) {
-    delta.sum[key] =
-      (u.delta[key] || 0) * (u.data.sum[key] - (current.sum[key] || 0));
+function getDelta(parentId, childId, a: Action): Action {
+  const delta: Action = { sum: {} as SumMap, ts: 0, imageIds: null };
+  const c = getUpsertData(parentId, childId);
+  for (const key in a.sum) {
+    delta.sum[key] = a.sum[key] - (c.sum[key] || 0);
   }
-  delta.updateTs = Math.max(
-    u.data.updateTs,
-    current.updateTs || u.data.updateTs
-  );
+  a.ts = a.ts || 0;
+  delta.ts = Math.max(a.ts, c.ts || a.ts);
   return delta;
 }
 
-function updateAggregates(u: Upsert) {
-  if (u.done) {
-    console.error(`Upsert is already done: ${JSON.stringify(u)}`);
-    return;
-  }
-
-  const kelurahanId = u.kelId;
-  const path = H[kelurahanId].parentIds.slice();
-  path.push(kelurahanId);
-  path.push(u.tpsNo);
+async function updateAggregates(kelId: number, tpsNo: number, action: Action) {
+  const path = H[kelId].parentIds.slice();
+  path.push(kelId);
+  path.push(tpsNo);
 
   if (path.length !== 6) {
     console.error(`Path length != 5: ${JSON.stringify(path)}`);
     return;
   }
 
-  const delta = getDelta(path[4], path[5], u);
+  const delta = getDelta(path[4], path[5], action);
   for (let i = 0; i + 1 < path.length; i++) {
-    mergeAggregates(getUpsertData(path[i], path[i + 1]), delta);
+    const target = getUpsertData(path[i], path[i + 1]);
+    for (const key in delta.sum) {
+      target.sum[key] = (target.sum[key] || 0) + delta.sum[key];
+    }
+    target.ts = Math.max(target.ts || delta.ts, delta.ts);
   }
 
-  if (u.delta.pending) {
-    // The pending flag is set to true, update the TPS serving url.
-    const data = getUpsertData(path[4], path[5]);
-
-    // Set the proof URL if no longer pending, else nullify it.
-    if (!u.data.sum.pending && !u.deleted) {
-      data.url = u.data.url;
-      data.imageId = u.data.imageId;
-    } else {
-      data.url = null;
-      data.imageId = null;
-    }
+  if (action.imageIds) {
+    const servingUrls = [];
+    const docRefs = action.imageIds.map(i => fsdb.doc(FsPath.upserts(i)));
+    (await fsdb.getAll(...docRefs)).forEach(snap => {
+      const u = snap.data() as Upsert;
+      if (u) servingUrls.push(u.data.url);
+    });
+    getUpsertData(path[4], path[5]).imageIds = servingUrls;
   }
 }
 
-async function getUpsertBatch(limit: number) {
-  return new Promise<{ [key: string]: Upsert }>((resolve, reject) => {
+type Upserts = { [key: string]: Upsert };
+async function getUpsertBatch(limit: number): Promise<Upserts> {
+  return new Promise<Upserts>(resolve => {
     const unsub = fsdb
       .collection(FsPath.upserts())
       .where('done', '==', 0)
@@ -112,17 +83,18 @@ async function getUpsertBatch(limit: number) {
         s => {
           if (!s.empty) {
             unsub();
-            const upserts: { [key: string]: Upsert } = {};
+            const upserts: Upserts = {};
             s.forEach(doc => (upserts[doc.id] = doc.data() as Upsert));
             resolve(upserts);
           }
         },
         e => {
+          console.error(e);
           unsub();
-          reject(e);
+          resolve({});
         }
       );
-  }).catch(console.error);
+  });
 }
 
 let lastBackupTs = Date.now();
@@ -139,47 +111,33 @@ async function doBackup() {
   lastBackupTs = ts;
 }
 
-async function restoreFromBackup() {
-  try {
-    h = JSON.parse(await readFileAsync('h.json', 'utf8'));
-  } catch (e) {
-    console.log('Unable to load h.json');
-    throw e;
-  }
-}
-
 async function processNewUpserts() {
   const upserts = await getUpsertBatch(100);
-  if (!upserts) {
-    console.warn('Empty upserts');
-    setTimeout(processNewUpserts, 1);
-    return;
-  }
-
-  await appendFileAsync('upserts.log', JSON.stringify(upserts) + '\n');
-
-  const t0 = Date.now();
-  const batch = fsdb.batch();
   const imageIds = Object.keys(upserts);
-  for (const imageId of imageIds) {
-    updateAggregates(upserts[imageId]);
-    batch.update(fsdb.doc(FsPath.upserts(imageId)), { done: 1 });
-  }
-  const t1 = Date.now();
-  if (t1 - t0 > 100) {
-    console.warn('Expensive update aggregates', t1 - t0, imageIds.length);
-  }
+  if (imageIds.length > 0) {
+    await appendFileAsync('upserts.log', JSON.stringify(upserts) + '\n');
 
-  if (t1 - lastBackupTs > 60 * 60 * 1000) {
-    await doBackup();
+    const t0 = Date.now();
+    const batch = fsdb.batch();
+    for (const imageId of imageIds) {
+      const u = upserts[imageId];
+      await updateAggregates(u.kelId, u.tpsNo, u.action);
+      batch.update(fsdb.doc(FsPath.upserts(imageId)), { done: 1 });
+    }
+    const t1 = Date.now();
+    if (t1 - t0 > 100) {
+      console.warn('Expensive update aggregates', t1 - t0, imageIds.length);
+    }
+    if (t1 - lastBackupTs > 60 * 60 * 1000) {
+      await doBackup();
+    }
+    await batch.commit();
   }
-
-  await batch.commit().catch(console.error);
   setTimeout(processNewUpserts, 1);
 }
 
-async function continuousAggregation() {
-  await restoreFromBackup();
+(async () => {
+  h = JSON.parse(await readFileAsync('h.json', 'utf8'));
   setTimeout(processNewUpserts, 1);
 
   process.on('SIGINT', async function() {
@@ -200,6 +158,4 @@ async function continuousAggregation() {
     const port = server.address().port;
     console.log(`App listening on port ${port}`);
   });
-}
-
-continuousAggregation().catch(console.error);
+})().catch(console.error);

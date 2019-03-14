@@ -43,10 +43,10 @@ export interface ChangeLog {
     ts: number;
 }
 export declare enum SUM_KEY {
-    paslon1 = "paslon1",
-    paslon2 = "paslon2",
+    pas1 = "pas1",
+    pas2 = "pas2",
     sah = "sah",
-    tidakSah = "tidakSah",
+    tSah = "tSah",
     cakupan = "cakupan",
     pending = "pending",
     error = "error",
@@ -65,12 +65,28 @@ export declare enum SUM_KEY {
     han = "han",
     dem = "dem",
     pbb = "pbb",
-    pkp = "pkp"
+    pkp = "pkp",
+    pSah = "pSah",
+    pTSah = "pTSah"
 }
+export interface FormLabel {
+    label: string;
+    form: string;
+}
+export declare const PILPRES_FORM: FormLabel[];
+export declare const PILEG_FORM: FormLabel[];
 export interface UpsertProfile extends PublicProfile {
     ts: number;
     ua: string;
     ip: string;
+}
+export declare type SumMap = {
+    [key in SUM_KEY]: number;
+};
+export interface Action {
+    sum: SumMap;
+    imageIds: string[];
+    ts: number;
 }
 export interface Upsert {
     uploader: UpsertProfile;
@@ -80,11 +96,8 @@ export interface Upsert {
     meta: ImageMetadata;
     kelId: number;
     tpsNo: number;
-    delta: {
-        [key in SUM_KEY]: 0 | 1;
-    };
     done: number;
-    deleted: boolean;
+    action: Action;
 }
 export interface CodeReferral {
     issuer: PublicProfile;
@@ -95,25 +108,22 @@ export interface CodeReferral {
     depth: number;
 }
 export interface UpsertData {
-    sum: {
-        [key in SUM_KEY]: number;
-    };
+    sum: SumMap;
     imageId: string;
     url: string;
     updateTs: number;
     status?: any;
 }
 export interface ApiUploadRequest {
-    kelurahanId: number;
+    kelId: number;
     tpsNo: number;
     data: UpsertData;
     metadata: ImageMetadata;
 }
 export interface ApiApproveRequest {
-    kelurahanId: number;
+    kelId: number;
     tpsNo: number;
-    data: UpsertData;
-    delete: boolean;
+    action: Action;
 }
 export interface HierarchyNode {
     id: number;

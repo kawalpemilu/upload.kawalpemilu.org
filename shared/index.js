@@ -13,11 +13,11 @@ var USER_ROLE;
 var SUM_KEY;
 (function (SUM_KEY) {
     // Pilpres
-    SUM_KEY["paslon1"] = "paslon1";
-    SUM_KEY["paslon2"] = "paslon2";
-    // Common
+    SUM_KEY["pas1"] = "pas1";
+    SUM_KEY["pas2"] = "pas2";
     SUM_KEY["sah"] = "sah";
-    SUM_KEY["tidakSah"] = "tidakSah";
+    SUM_KEY["tSah"] = "tSah";
+    // Common
     SUM_KEY["cakupan"] = "cakupan";
     SUM_KEY["pending"] = "pending";
     SUM_KEY["error"] = "error";
@@ -38,7 +38,35 @@ var SUM_KEY;
     SUM_KEY["dem"] = "dem";
     SUM_KEY["pbb"] = "pbb";
     SUM_KEY["pkp"] = "pkp";
+    SUM_KEY["pSah"] = "pSah";
+    SUM_KEY["pTSah"] = "pTSah";
 })(SUM_KEY = exports.SUM_KEY || (exports.SUM_KEY = {}));
+exports.PILPRES_FORM = [
+    { label: 'Suara Paslon 1', form: 'pas1' },
+    { label: 'Suara Paslon 2', form: 'pas2' },
+    { label: 'Suara Sah', form: 'sah' },
+    { label: 'Suara Tidak Sah', form: 'tSah' }
+];
+exports.PILEG_FORM = [
+    { label: 'Partai Kebangkitan Bangsa', form: 'pkb' },
+    { label: 'Partai Gerindra', form: 'ger' },
+    { label: 'PDI Perjuangan', form: 'pdi' },
+    { label: 'Partai Golongan Karya', form: 'gol' },
+    { label: 'Partai NasDem', form: 'nas' },
+    { label: 'Partai Garuda', form: 'gar' },
+    { label: 'Partai Berkarya', form: 'ber' },
+    { label: 'Partai Keadilan Sejahtera', form: 'sej' },
+    { label: 'Partai Perindo', form: 'per' },
+    { label: 'Partai Persatuan Pembangunan', form: 'ppp' },
+    { label: 'Partai Solidaritas Indonesia', form: 'psi' },
+    { label: 'Partai Amanat Nasional', form: 'pan' },
+    { label: 'Partai Hanura', form: 'han' },
+    { label: 'Partai Demokrat', form: 'dem' },
+    { label: 'Partai Bulan Bintang', form: 'pbb' },
+    { label: 'Partai Keadilan dan Persatuan Indonesia', form: 'pkp' },
+    { label: 'Suara Sah', form: 'pSah' },
+    { label: 'Suara Tidak Sah', form: 'pTSah' }
+];
 function extractImageMetadata(m) {
     var validM = null;
     if (m) {

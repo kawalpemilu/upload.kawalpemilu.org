@@ -23,7 +23,9 @@ import {
   MAX_NUM_UPLOADS,
   USER_ROLE,
   isValidUserId,
-  ChangeLog
+  ChangeLog,
+  Action,
+  SumMap
 } from 'shared';
 
 const t1 = Date.now();
@@ -183,56 +185,28 @@ async function getServingUrlFromFirestore(imageId, res, uid) {
   return false;
 }
 
-async function parseLocationAndAgg(b: any, res, uid) {
-  const kelId = b.kelurahanId;
-  const tpsNo = b.tpsNo;
+async function getKelName(res, uid, kelId, tpsNo) {
   let kelName = '';
   try {
     const c = await getChildren(kelId);
     if (!c || !c.name) {
       console.warn(`Children missing ${kelId}, uid = ${uid}`);
-      res.json({ error: 'kelurahanId does not exists' });
-      return {};
+      res.json({ error: 'kelId does not exists' });
+      return null;
     }
     kelName = c.name;
     const tpsNos = c.children;
     if (!tpsNos || tpsNos.findIndex(t => t[0] === tpsNo) === -1) {
       console.warn(`TPS missing ${kelId} ${tpsNo}, uid = ${uid}`);
       res.json({ error: 'tpsNo does not exists' });
-      return {};
+      return null;
     }
   } catch (e) {
     console.warn(`Error ${e.message}, uid = ${uid}`);
     res.json({ error: 'Server error please retry in 1 minute' });
-    return {};
+    return null;
   }
-  return { kelId, kelName, tpsNo };
-}
-
-function getAggregate(
-  res,
-  uid,
-  data: UpsertData,
-  imageId,
-  servingUrl
-): UpsertData | null {
-  const ret: UpsertData = {
-    sum: {} as { [key in SUM_KEY]: number },
-    updateTs: 0,
-    imageId,
-    url: servingUrl
-  };
-  for (const key in SUM_KEY) {
-    if (key in ['pending', 'error']) continue;
-    const sum = data.sum[key] || 0;
-    if (typeof sum !== 'number' || sum < 0 || sum > 1000) {
-      console.error(`Upload data sum out of range ${uid}`);
-      res.json({ error: 'Invalid sum range' });
-      return null;
-    }
-    ret.sum[key] = sum;
-  }
-  return ret;
+  return kelName;
 }
 
 app.post('/api/upload', async (req, res) => {
@@ -249,11 +223,13 @@ app.post('/api/upload', async (req, res) => {
   const servingUrl = await getServingUrlFromFirestore(imageId, res, user.uid);
   if (!servingUrl) return null;
 
-  const { kelId, kelName, tpsNo } = await parseLocationAndAgg(b, res, user.uid);
-  if (!kelId) return null;
+  const kelId = b.kelId;
+  const tpsNo = b.tpsNo;
+  const kelName = await getKelName(res, user.uid, kelId, tpsNo);
+  if (!kelName) return null;
 
   const data: UpsertData = {
-    sum: { cakupan: 1, pending: 1, error: 0 } as { [key in SUM_KEY]: number },
+    sum: { cakupan: 1, pending: 1, error: 0 } as SumMap,
     updateTs: Date.now(),
     imageId,
     url: servingUrl
@@ -287,15 +263,16 @@ app.post('/api/upload', async (req, res) => {
     reporter: null,
     kelId,
     tpsNo,
-    delta: {
-      cakupan: 1,
-      pending: 1,
-      error: 0
-    } as { [key in SUM_KEY]: 0 | 1 },
     data,
     meta,
     done: 0,
-    deleted: false
+    action: {
+      sum: {
+        cakupan: 1,
+        pending: 1
+      },
+      ts: data.updateTs
+    } as Action
   };
 
   try {
@@ -321,60 +298,75 @@ app.post('/api/approve', async (req, res) => {
   if (!user) return null;
 
   const b = req.body as ApiApproveRequest;
-  if (!b.data) {
-    console.warn(`No data, uid = ${user.uid}`);
-    return res.json({ error: 'No data' });
+  if (!b.action || !b.action.sum) {
+    console.warn(`No action, uid = ${user.uid}`);
+    return res.json({ error: 'No action' });
   }
 
-  const imageId = b.data.imageId;
-  if (!isValidImageId(imageId)) {
-    console.warn(`Invalid imageId ${imageId}, uid = ${user.uid}`);
-    return res.json({ error: 'Invalid imageId' });
+  const kelId = +b.kelId;
+  const tpsNo = +b.tpsNo;
+  if (!(await getKelName(res, user.uid, kelId, tpsNo))) return null;
+
+  const imageIds = [];
+  for (const imageId of b.action.imageIds) {
+    if (!isValidImageId(imageId)) {
+      console.warn(`Invalid imageId ${imageId} for user ${user.uid}`);
+      return res.json({ error: 'Invalid imageId' });
+    }
+    imageIds.push(imageId);
   }
-
-  const { kelId, tpsNo } = await parseLocationAndAgg(b, res, user.uid);
-
-  const data = getAggregate(res, user.uid, b.data, imageId, null);
-  if (!data) return null;
+  if (!imageIds.length) {
+    console.warn(`Empty imageIds for user ${user.uid}`);
+    return res.json({ error: 'No imageId' });
+  }
 
   const ts = Date.now();
-  data.updateTs = ts;
-
-  const delta = {} as { [key in SUM_KEY]: 0 | 1 };
+  const action: Action = { sum: {} as SumMap, ts, imageIds };
   for (const key in SUM_KEY) {
-    delta[key] = 1;
+    const sum = b.action.sum[key] || 0;
+    if (typeof sum !== 'number' || sum < 0 || sum > 1000) {
+      console.error(`Sum ${sum} out of range ${user.uid}`);
+      res.json({ error: 'Invalid sum range' });
+      return null;
+    }
+    if (
+      (key === SUM_KEY.pending ||
+        key === SUM_KEY.error ||
+        key === SUM_KEY.cakupan) &&
+      sum > 1
+    ) {
+      console.error(`Sum ${sum} out of range ${user.uid}`);
+      res.json({ error: 'Invalid sum range' });
+      return null;
+    }
+    action.sum[key] = sum;
   }
 
-  const uRef = fsdb.doc(FsPath.upserts(imageId));
+  const uRef = fsdb.doc(FsPath.upserts(imageIds[0]));
   const rRef = fsdb.doc(FsPath.relawan(user.uid));
-  await fsdb.runTransaction(async t => {
-    const u = (await t.get(uRef)).data() as Upsert;
+  const ok = await fsdb.runTransaction(async t => {
     const r = (await t.get(rRef)).data() as Relawan;
-    u.kelId = kelId;
-    u.tpsNo = tpsNo;
+    if (r.profile.role < USER_ROLE.MODERATOR) {
+      return 'not_authorized';
+    }
+
+    const u = (await t.get(uRef)).data() as Upsert;
     u.reviewer = {
       ...r.profile,
       ts,
       ua: req.headers['user-agent'],
       ip: getIp(req)
     };
-    u.deleted = !!b.delete;
-    data.url = u.data.url;
-    data.sum.cakupan = u.deleted ? 0 : 1;
-    data.sum.pending = 0;
-    data.sum.error = 0;
-    u.data = data;
-    u.delta = delta;
+    u.action = action;
     u.done = 0;
-    if (u.deleted) {
-      data.sum.paslon1 = 0;
-      data.sum.paslon2 = 0;
-      data.sum.sah = 0;
-      data.sum.tidakSah = 0;
-    }
     t.update(uRef, u);
+    return true;
   });
 
+  if (ok !== true) {
+    console.warn(`Error approve ${user.uid} : ${ok}`);
+    return res.json({ error: ok });
+  }
   return res.json({ ok: true });
 });
 
@@ -395,14 +387,13 @@ app.post('/api/problem', async (req, res) => {
       return false;
     }
     const r = (await t.get(rRef)).data() as Relawan;
-    u.data.sum.error = 1;
-    u.delta = { error: 1 } as { [key in SUM_KEY]: 0 | 1 };
     u.reporter = {
       ...r.profile,
       ts: Date.now(),
       ua: req.headers['user-agent'],
       ip: getIp(req)
     };
+    u.action = { sum: { error: 1 } } as Action;
     u.done = 0;
     t.update(uRef, u);
     return true;

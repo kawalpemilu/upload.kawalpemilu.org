@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import * as request from 'request-promise';
 import * as fs from 'fs';
 
-import { ApiUploadRequest, ImageMetadata, SUM_KEY } from 'shared';
+import { ApiUploadRequest, ImageMetadata, SumMap, UpsertData } from 'shared';
 
 import { H } from './hierarchy';
 
@@ -90,27 +90,20 @@ async function getUser(uid: string) {
   return await autoRenewIdToken(JSON.parse(userJson) as User);
 }
 
-function makeRequest(kelurahanId, tpsNo) {
-  const body: ApiUploadRequest = {
-    kelurahanId,
-    tpsNo,
-    data: {
-      // s: [0, 0, 0, 0, 0],
-      sum: {
-        paslon1: Math.floor(Math.random() * 999),
-        paslon2: 0,
-        sah: 0,
-        tidakSah: 1,
-        cakupan: 1,
-        pending: 0,
-        error: 0
-      } as { [key in SUM_KEY]: number },
-      updateTs: 0,
-      imageId: `zzzzzzz${kelurahanId}t${tpsNo}`,
-      url: null
-    },
-    metadata: {} as ImageMetadata
-  };
+function makeRequest(kelId, tpsNo) {
+  const sum = {
+    pas1: Math.floor(Math.random() * 999),
+    pas2: 0,
+    sah: 0,
+    tSah: 1,
+    cakupan: 1,
+    pending: 0,
+    error: 0
+  } as SumMap;
+  const imageId = `zzzzzzz${kelId}t${tpsNo}`;
+  const data = { sum, updateTs: 0, imageId, url: null } as UpsertData;
+  const metadata = {} as ImageMetadata;
+  const body: ApiUploadRequest = { kelId, tpsNo, data, metadata };
   return body;
 }
 

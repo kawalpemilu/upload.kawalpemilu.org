@@ -12,13 +12,16 @@ import {
   FsPath,
   Relawan,
   ApiApproveRequest,
-  SUM_KEY
+  SUM_KEY,
+  PILEG_FORM,
+  PILPRES_FORM
 } from 'shared';
 import { shareReplay, filter, map, tap } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
-import { Observable, combineLatest } from 'rxjs';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { Observable } from 'rxjs';
+import { FormGroup } from '@angular/forms';
 import { ApiService } from '../api.service';
+import { UploadService } from '../upload.service';
 
 @Component({
   selector: 'app-approver',
@@ -32,6 +35,8 @@ export class ApproverComponent implements OnInit {
   @Input() color = '';
   @Input() user: Relawan;
 
+  PILPRES_FORM = PILPRES_FORM;
+  PILEG_FORM = PILEG_FORM;
   HEIGHT = 400;
 
   upsert$: Observable<Upsert>;
@@ -40,23 +45,9 @@ export class ApproverComponent implements OnInit {
 
   constructor(
     private fsdb: AngularFirestore,
-    formBuilder: FormBuilder,
-    private api: ApiService
-  ) {
-    this.formGroup = formBuilder.group({
-      paslon1Ctrl: [null, [Validators.pattern('^[0-9]{1,3}$')]],
-      paslon2Ctrl: [null, [Validators.pattern('^[0-9]{1,3}$')]],
-      sahCtrl: [null, [Validators.pattern('^[0-9]{1,3}$')]],
-      tidakSahCtrl: [null, [Validators.pattern('^[0-9]{1,3}$')]]
-    });
-
-    combineLatest(
-      this.formGroup.get('paslon1Ctrl').valueChanges,
-      this.formGroup.get('paslon2Ctrl').valueChanges
-    ).subscribe(([p1, p2]) => {
-      this.formGroup.get('sahCtrl').setValue((p1 || 0) + (p2 || 0));
-    });
-  }
+    private api: ApiService,
+    private uploadService: UploadService
+  ) {}
 
   ngOnInit() {
     this.checkVisibilityChange();
@@ -106,10 +97,10 @@ export class ApproverComponent implements OnInit {
         filter(arr => arr.length > 0),
         map(arr => arr[0]),
         tap(u => {
-          this.formGroup.get('paslon1Ctrl').setValue(u.data.sum.paslon1);
-          this.formGroup.get('paslon2Ctrl').setValue(u.data.sum.paslon2);
-          this.formGroup.get('sahCtrl').setValue(u.data.sum.sah);
-          this.formGroup.get('tidakSahCtrl').setValue(u.data.sum.tidakSah);
+          this.formGroup = this.uploadService.getFormGroup('^[0-9]{1,3}$');
+          for (const p of PILEG_FORM.concat(PILPRES_FORM)) {
+            this.formGroup.get(p.form).setValue(u.data.sum[p.form]);
+          }
         }),
         shareReplay(1)
       );
@@ -122,32 +113,28 @@ export class ApproverComponent implements OnInit {
   async approve(u: Upsert, del: boolean) {
     this.isLoading = true;
     this.formGroup.disable();
-    // TODO: support pileg
     const sum = {
-      paslon1: this.formGroup.get('paslon1Ctrl').value,
-      paslon2: this.formGroup.get('paslon2Ctrl').value,
-      sah: this.formGroup.get('sahCtrl').value,
-      tidakSah: this.formGroup.get('tidakSahCtrl').value,
       cakupan: del ? 0 : 1,
       pending: 0,
       error: 0
     } as { [key in SUM_KEY]: number };
+    for (const p of PILEG_FORM.concat(PILPRES_FORM)) {
+      sum[p.form] = this.formGroup.get(p.form).value;
+    }
+
     const request: ApiApproveRequest = {
-      kelurahanId: u.kelId,
+      kelId: u.kelId,
       tpsNo: u.tpsNo,
-      data: {
+      action: {
         sum,
-        updateTs: 0,
-        imageId: u.data.imageId,
-        url: null
-      },
-      delete: del
+        ts: 0,
+        imageIds: [u.data.imageId]
+      }
     };
     try {
       const res: any = await this.api.post(this.user.auth, `approve`, request);
       if (res.ok) {
         console.log('ok');
-        u.deleted = del;
       } else {
         console.error(res);
         alert(JSON.stringify(res));
@@ -158,6 +145,12 @@ export class ApproverComponent implements OnInit {
     }
     this.formGroup.enable();
     this.isLoading = false;
+  }
+
+  getError(ctrlName: string) {
+    return this.formGroup.get(ctrlName).hasError('pattern')
+      ? 'Rentang angka 0..999'
+      : '';
   }
 
   // const mapLink =

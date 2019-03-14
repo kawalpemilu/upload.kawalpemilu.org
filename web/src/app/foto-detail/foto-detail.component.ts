@@ -71,9 +71,6 @@ export class FotoDetailComponent implements OnInit {
     if (u.data.sum.pending) {
       return 'pending';
     }
-    if (u.deleted) {
-      return 'deleted';
-    }
   }
 
   color(u: Upsert) {
@@ -82,9 +79,6 @@ export class FotoDetailComponent implements OnInit {
     }
     if (u.data.sum.pending) {
       return '#FFD';
-    }
-    if (u.deleted) {
-      return '#FAA';
     }
     return '';
   }
