@@ -75,7 +75,7 @@ export class UploadService {
     for (let i = 0; i + 2 < arr.length; i++) {
       ins.push(formGroup.get(arr[i].form).valueChanges.pipe(startWith(0)));
     }
-    combineLatest(ins).subscribe(values => {
+    combineLatest(ins).subscribe((values: number[]) => {
       const sum = values.reduce((p, c) => p + (c || 0), 0);
       formGroup.get(sah).setValue(sum);
     });
