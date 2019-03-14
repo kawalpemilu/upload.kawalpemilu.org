@@ -12,6 +12,7 @@ import { UploadService } from '../upload.service';
 
 export interface Photos {
   kelId: number;
+  kelName: string;
   tpsNo: number;
   photos: UpsertData[];
   uploadTs: number;
@@ -58,11 +59,12 @@ export class FotoComponent {
       map(([relawan, status]) => {
         const photosByTpsAndTpsNo: { [key: string]: Photos } = {};
 
-        const getKey = (kelId: number, tpsNo: number) => {
+        const getKey = (kelId: number, kelName: string, tpsNo: number) => {
           const key = kelId + '-' + tpsNo;
           if (!photosByTpsAndTpsNo[key]) {
             photosByTpsAndTpsNo[key] = {
               kelId,
+              kelName,
               tpsNo,
               photos: [],
               uploadTs: 0
@@ -74,7 +76,7 @@ export class FotoComponent {
         Object.values(status)
           .sort((a, b) => b.uploadTs - a.uploadTs)
           .forEach(s => {
-            const p = photosByTpsAndTpsNo[getKey(s.kelurahanId, s.tpsNo)];
+            const p = photosByTpsAndTpsNo[getKey(s.kelId, s.kelName, s.tpsNo)];
             p.photos.push({
               sum: {},
               imageId: s.imageId,
@@ -87,7 +89,7 @@ export class FotoComponent {
         if (relawan) {
           // The relawan.uploads is already sorted by upload time.
           relawan.uploads.forEach(u => {
-            const p = photosByTpsAndTpsNo[getKey(u.kelId, u.tpsNo)];
+            const p = photosByTpsAndTpsNo[getKey(u.kelId, u.kelName, u.tpsNo)];
             const idx = p.photos.findIndex(x => x.imageId === u.data.imageId);
             if (idx !== -1) {
               p.photos[idx] = u.data;
@@ -100,9 +102,5 @@ export class FotoComponent {
         return Object.values(photosByTpsAndTpsNo);
       })
     );
-  }
-
-  hie$(kelId) {
-    return this.hie.get$(kelId, false);
   }
 }

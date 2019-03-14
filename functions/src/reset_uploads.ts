@@ -56,6 +56,7 @@ async function resetUploads() {
 
         const s: UploadSnippet = {
           kelId: u.kelId,
+          kelName: u.kelName,
           tpsNo: u.tpsNo,
           data: u.data,
           meta: u.meta

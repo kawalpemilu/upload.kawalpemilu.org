@@ -186,25 +186,27 @@ async function getServingUrlFromFirestore(imageId, res, uid) {
 async function parseLocationAndAgg(b: any, res, uid) {
   const kelId = b.kelurahanId;
   const tpsNo = b.tpsNo;
+  let kelName = '';
   try {
     const c = await getChildren(kelId);
     if (!c || !c.name) {
       console.warn(`Children missing ${kelId}, uid = ${uid}`);
       res.json({ error: 'kelurahanId does not exists' });
-      return [false];
+      return {};
     }
+    kelName = c.name;
     const tpsNos = c.children;
     if (!tpsNos || tpsNos.findIndex(t => t[0] === tpsNo) === -1) {
       console.warn(`TPS missing ${kelId} ${tpsNo}, uid = ${uid}`);
       res.json({ error: 'tpsNo does not exists' });
-      return [false];
+      return {};
     }
   } catch (e) {
     console.warn(`Error ${e.message}, uid = ${uid}`);
     res.json({ error: 'Server error please retry in 1 minute' });
-    return [false];
+    return {};
   }
-  return [kelId, tpsNo];
+  return { kelId, kelName, tpsNo };
 }
 
 function getAggregate(
@@ -247,7 +249,7 @@ app.post('/api/upload', async (req, res) => {
   const servingUrl = await getServingUrlFromFirestore(imageId, res, user.uid);
   if (!servingUrl) return null;
 
-  const [kelId, tpsNo] = await parseLocationAndAgg(b, res, user.uid);
+  const { kelId, kelName, tpsNo } = await parseLocationAndAgg(b, res, user.uid);
   if (!kelId) return null;
 
   const data: UpsertData = {
@@ -266,7 +268,7 @@ app.post('/api/upload', async (req, res) => {
 
   const meta = extractImageMetadata(b.metadata);
   uploader.uploads = uploader.uploads || [];
-  uploader.uploads.unshift({ kelId, tpsNo, data, meta });
+  uploader.uploads.unshift({ kelId, kelName, tpsNo, data, meta });
   uploader.numUploads = (uploader.numUploads || 0) + 1;
 
   if (uploader.numUploads > MAX_NUM_UPLOADS) {
@@ -330,7 +332,7 @@ app.post('/api/approve', async (req, res) => {
     return res.json({ error: 'Invalid imageId' });
   }
 
-  const [kelId, tpsNo] = await parseLocationAndAgg(b, res, user.uid);
+  const { kelId, tpsNo } = await parseLocationAndAgg(b, res, user.uid);
 
   const data = getAggregate(res, user.uid, b.data, imageId, null);
   if (!data) return null;

@@ -38,6 +38,7 @@ import { UserService } from '../user.service';
 })
 export class UploadSequenceComponent {
   @Input() kelId: number;
+  @Input() kelName: string;
   @Input() tpsNo: number;
   @Input() value = 'Upload foto';
 
@@ -58,7 +59,7 @@ export class UploadSequenceComponent {
       return;
     }
     return this.uploadService
-      .upload(this.userService.user, this.kelId, this.tpsNo, file)
+      .upload(this.userService.user, this.kelId, this.kelName, this.tpsNo, file)
       .then(() => this.router.navigate(['/f']))
       .catch(console.error);
   }

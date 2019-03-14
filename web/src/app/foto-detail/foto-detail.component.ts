@@ -64,10 +64,6 @@ export class FotoDetailComponent implements OnInit {
     }
   }
 
-  hie$(kelId) {
-    return this.hie.get$(kelId, false);
-  }
-
   status(u: Upsert) {
     if (u.data.sum.error) {
       return 'error';

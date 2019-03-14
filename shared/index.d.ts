@@ -18,6 +18,7 @@ export interface PublicProfile {
 }
 export interface UploadSnippet {
     kelId: number;
+    kelName: string;
     tpsNo: number;
     data: UpsertData;
     meta: ImageMetadata;

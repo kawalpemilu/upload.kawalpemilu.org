@@ -15,7 +15,8 @@ export interface UploadStatus {
   imageId: string;
 
   // The location to upload the image to.
-  kelurahanId: number;
+  kelId: number;
+  kelName: string;
   tpsNo: number;
 
   // Internal states of upload task.
@@ -39,7 +40,13 @@ export class UploadService {
     console.log('UploadService initalized');
   }
 
-  async upload(user: User, kelurahanId: number, tpsNo: number, file) {
+  async upload(
+    user: User,
+    kelId: number,
+    kelName: string,
+    tpsNo: number,
+    file
+  ) {
     const metadata = { s: file.size, l: file.lastModified } as ImageMetadata;
     let imgURL: string | ArrayBuffer;
     try {
@@ -67,10 +74,11 @@ export class UploadService {
     }
 
     const imageId = autoId();
-    const filePath = `/uploads/${kelurahanId}/${tpsNo}/${user.uid}/${imageId}`;
+    const filePath = `/uploads/${kelId}/${tpsNo}/${user.uid}/${imageId}`;
     const status: UploadStatus = {
       imageId,
-      kelurahanId,
+      kelId: kelId,
+      kelName,
       tpsNo,
       task: this.afs.upload(filePath, file),
       imgURL,
@@ -80,7 +88,7 @@ export class UploadService {
     };
     status.done = status.task.then(async () => {
       const request: ApiUploadRequest = {
-        kelurahanId,
+        kelurahanId: kelId,
         tpsNo,
         data: { imageId: status.imageId } as UpsertData,
         metadata

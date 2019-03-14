@@ -28,21 +28,22 @@
     <table border="1" cellpadding="5" cellspacing="0">
       <tr bgcolor="lightgray" height="30">
         <th width="120">Lokasi TPS</th>
-        <td width="300"><b>Foto-foto yang telah Anda upload</b></td>
+        <td width="100%"><b>Foto-foto yang telah Anda upload</b></td>
       </tr>
       <tr
         *ngFor="let p of photos; let odd = odd; let i = index"
         [style.background-color]="odd ? '#FFF' : '#EEE'"
       >
         <td align="center" width="120">
-          <a [routerLink]="['/t', p.kelId]">{{
-            (hie$(p.kelId) | async)?.name
+          <a style="text-decoration: none" [routerLink]="['/t', p.kelId]">{{
+            p.kelName || p.kelId
           }}</a>
           <p style="border: 1px solid black; width: 80px; padding: 5px">
             TPS #<br /><b style="font-size: x-large">{{ p.tpsNo }}</b>
           </p>
           <app-upload-sequence
             [kelId]="p.kelId"
+            [kelName]="p.kelName"
             [tpsNo]="p.tpsNo"
             [value]="'Tambah Foto'"
           ></app-upload-sequence>
@@ -70,7 +71,10 @@
                           height="120"
                           valign="middle"
                         >
-                          <img [src]="s.imgURL" width="100" /><br />
+                          <img
+                            [src]="s.imgURL"
+                            style="max-height:100px; max-width:100px; height:auto; width:auto;"
+                          /><br />
                         </td>
                       </tr>
                       <tr>
