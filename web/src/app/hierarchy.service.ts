@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HierarchyNode } from 'shared';
 import { ApiService } from './api.service';
-import { ReplaySubject, Observable } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { filter, take, distinctUntilChanged, map } from 'rxjs/operators';
 import { UserService } from './user.service';
 import { User } from 'firebase';
@@ -10,7 +10,7 @@ import { User } from 'firebase';
   providedIn: 'root'
 })
 export class HierarchyService {
-  hierarchy$: { [id: string]: ReplaySubject<HierarchyNode> } = {};
+  hierarchy$: { [id: string]: BehaviorSubject<HierarchyNode> } = {};
   lastTs = Date.now();
 
   constructor(private api: ApiService, private userService: UserService) {
@@ -28,13 +28,31 @@ export class HierarchyService {
   }
 
   get$(id: number, refresh = true): Observable<HierarchyNode> {
-    const ts = Date.now();
+    const s = window.localStorage;
+    const key = `h/${id}`;
+    let cacheTimeoutMs = 1000;
+    let h: HierarchyNode;
+    if (s) {
+      try {
+        h = JSON.parse(s.getItem(key)) || {} as HierarchyNode;
+        if (h && typeof h.depth === 'number') {
+          const depth = Math.max(1, Math.min(4, h.depth));
+          cacheTimeoutMs = Math.pow(4, 4 - depth) * 1000;
+        }
+      } catch (e) {
+        s.clear();
+        h = {} as HierarchyNode;
+      }
+    }
+
     if (!this.hierarchy$[id]) {
-      this.hierarchy$[id] = new ReplaySubject();
+      this.hierarchy$[id] = new BehaviorSubject(h);
       this.lastTs = 0;
     }
-    if (ts - this.lastTs > 1000 && (refresh || this.lastTs === 0)) {
-      console.log('Fetch node', id);
+
+    const ts = Date.now();
+    if (ts - this.lastTs > cacheTimeoutMs && (refresh || this.lastTs === 0)) {
+      console.log('Fetch node', id, ts - this.lastTs, cacheTimeoutMs);
       this.lastTs = ts;
       this.userService.user$
         .pipe(take(1))
@@ -42,7 +60,12 @@ export class HierarchyService {
         .then(user =>
           this.api
             .get(user, `c/${id}?${this.lastTs}`)
-            .then((c: HierarchyNode) => this.hierarchy$[id].next(c))
+            .then((c: HierarchyNode) => {
+              this.hierarchy$[id].next(c);
+              if (s) {
+                s.setItem(key, JSON.stringify(c));
+              }
+            })
             .catch(console.error)
         );
     }
@@ -50,7 +73,7 @@ export class HierarchyService {
       map(x => JSON.stringify(x)),
       distinctUntilChanged(),
       map(x => JSON.parse(x)),
-      filter(s => !!s.children)
+      filter(node => !!node.children)
     );
   }
 }

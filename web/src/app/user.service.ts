@@ -45,15 +45,17 @@ export class UserService {
               )
           : of(null)
       ),
+      switchMap(async r => {
+        if (r && (!r.profile || !r.profile.link)) {
+          console.log(`User profile access is required`);
+          await this.logout();
+          this.router.navigate(['/login']);
+          return null;
+        }
+        return r;
+      }),
       shareReplay(1)
     );
-
-    this.relawan$.pipe(filter(r => !!r)).subscribe(r => {
-      if (!r.profile || !r.profile.link) {
-        console.log(`User profile access is required`);
-        this.logout();
-      }
-    });
 
     this.afAuth.auth
       .getRedirectResult()
