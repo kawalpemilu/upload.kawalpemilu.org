@@ -1,5 +1,5 @@
 import * as admin from 'firebase-admin';
-import { FsPath, Upsert, UploadSnippet } from 'shared';
+import { FsPath, Upsert, UploadRequest } from 'shared';
 
 const delay = (ms: number) => new Promise(_ => setTimeout(_, ms));
 
@@ -54,7 +54,7 @@ async function resetUploads() {
           continue;
         }
 
-        const s: UploadSnippet = {
+        const s: UploadRequest = {
           kelId: u.kelId,
           kelName: u.kelName,
           tpsNo: u.tpsNo,

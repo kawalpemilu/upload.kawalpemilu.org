@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import * as request from 'request-promise';
 import * as fs from 'fs';
 
-import { ApiUploadRequest, ImageMetadata, SumMap, UpsertData } from 'shared';
+import { UploadRequest, ImageMetadata, SumMap, UpsertData } from 'shared';
 
 import { H } from './hierarchy';
 
@@ -102,8 +102,8 @@ function makeRequest(kelId, tpsNo) {
   } as SumMap;
   const imageId = `zzzzzzz${kelId}t${tpsNo}`;
   const data = { sum, updateTs: 0, imageId, url: null } as UpsertData;
-  const metadata = {} as ImageMetadata;
-  const body: ApiUploadRequest = { kelId, tpsNo, data, metadata };
+  const meta = {} as ImageMetadata;
+  const body: UploadRequest = { kelId, kelName: '', tpsNo, data, meta };
   return body;
 }
 
@@ -121,7 +121,7 @@ function rec(id, depth, requests) {
 }
 
 function generateRequests() {
-  let requests: ApiUploadRequest[] = [];
+  let requests: UploadRequest[] = [];
 
   rec(0, 0, requests);
 

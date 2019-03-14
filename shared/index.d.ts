@@ -16,18 +16,11 @@ export interface PublicProfile {
     loginTs: number;
     role: USER_ROLE;
 }
-export interface UploadSnippet {
-    kelId: number;
-    kelName: string;
-    tpsNo: number;
-    data: UpsertData;
-    meta: ImageMetadata;
-}
 export interface Relawan {
     lowerCaseName: string;
     profile: PublicProfile;
     referrer: PublicProfile;
-    uploads: UploadSnippet[];
+    uploads: UploadRequest[];
     numUploads: number;
     imageIds: string[];
     depth: number;
@@ -89,6 +82,7 @@ export interface Action {
     ts: number;
 }
 export interface Upsert {
+    request: UploadRequest;
     uploader: UpsertProfile;
     reviewer: UpsertProfile;
     reporter: UpsertProfile;
@@ -113,11 +107,12 @@ export interface UpsertData {
     url: string;
     updateTs: number;
 }
-export interface ApiUploadRequest {
+export interface UploadRequest {
     kelId: number;
+    kelName: string;
     tpsNo: number;
     data: UpsertData;
-    metadata: ImageMetadata;
+    meta: ImageMetadata;
 }
 export interface ApiApproveRequest {
     kelId: number;

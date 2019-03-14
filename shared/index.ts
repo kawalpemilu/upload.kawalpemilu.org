@@ -20,19 +20,11 @@ export interface PublicProfile {
   role: USER_ROLE;
 }
 
-export interface UploadSnippet {
-  kelId: number;
-  kelName: string;
-  tpsNo: number;
-  data: UpsertData;
-  meta: ImageMetadata;
-}
-
 export interface Relawan {
   lowerCaseName: string; // For prefix search.
   profile: PublicProfile;
   referrer: PublicProfile;
-  uploads: UploadSnippet[];
+  uploads: UploadRequest[];
   numUploads: number;
   imageIds: string[];
   depth: number; // Referral depth
@@ -128,6 +120,7 @@ export interface Action {
 }
 
 export interface Upsert {
+  request: UploadRequest,
   uploader: UpsertProfile;
   reviewer: UpsertProfile;
   reporter: UpsertProfile;
@@ -155,11 +148,12 @@ export interface UpsertData {
   updateTs: number; // Last update timestamp.
 }
 
-export interface ApiUploadRequest {
+export interface UploadRequest {
   kelId: number;
+  kelName: string;
   tpsNo: number;
   data: UpsertData;
-  metadata: ImageMetadata;
+  meta: ImageMetadata;
 }
 
 export interface ApiApproveRequest {
