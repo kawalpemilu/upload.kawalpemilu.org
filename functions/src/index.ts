@@ -1,3 +1,5 @@
+// TODO: review ACLs
+
 const t0 = Date.now();
 
 import * as functions from 'firebase-functions';
@@ -583,6 +585,7 @@ app.post('/api/change_role', async (req, res) => {
     const target = (await t.get(targetRef)).data() as Relawan;
     if (!target) return `No relawan for ${tuid}`;
     if (target.profile.role === role) return `No change`;
+    if (target.profile.role === USER_ROLE.ADMIN) return `Admin demoted`;
     target.profile.role = role;
     t.update(targetRef, target);
 

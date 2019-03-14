@@ -23,7 +23,7 @@ export interface Photos {
   styles: [
     `
       .cdk-virtual-scroll-data-source .viewport {
-        height: 150px;
+        height: 160px;
         width: 100%;
       }
 
