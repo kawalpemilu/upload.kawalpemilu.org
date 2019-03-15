@@ -17,7 +17,6 @@ import {
   CodeReferral,
   Relawan,
   isValidImageId,
-  ApiApproveRequest,
   SUM_KEY,
   APP_SCOPED_PREFIX_URL,
   MAX_REFERRALS,
@@ -25,8 +24,9 @@ import {
   USER_ROLE,
   isValidUserId,
   ChangeLog,
-  Action,
-  SumMap
+  Aggregate,
+  SumMap,
+  RelawanPhotos
 } from 'shared';
 
 const t1 = Date.now();
@@ -164,44 +164,40 @@ function populateServingUrl() {
   return async (req, res, next) => {
     const user = req.user as admin.auth.DecodedIdToken;
     const b = req.body as UploadRequest;
-    if (!b.data) {
-      console.error(`Upload data is missing ${user.uid}`);
-      return res.json({ error: 'Missing data' });
-    }
+    const p: UploadRequest = (req.parsedBody = {
+      imageId: b.imageId,
+      kelId: +req.body.kelId,
+      tpsNo: +req.body.tpsNo,
+      meta: extractImageMetadata(req.body.metadata),
+      ts: Date.now(),
+      url: null, // Populated below.
+      kelName: '' // Will be populated in the next middleware.
+    });
 
-    const p = (req.parsedBody = {
-      data: {
-        sum: { cakupan: 1, pending: 1, error: 0 } as SumMap,
-        imageId: b.data.imageId,
-        updateTs: Date.now()
-      }
-    } as UploadRequest);
-
-    const imageId = p.data.imageId;
-    if (imageId.startsWith('zzzzzzz')) {
-      p.data.url =
+    if (p.imageId.startsWith('zzzzzzz')) {
+      p.url =
         'http://lh3.googleusercontent.com/dRp80J1IsmVNeI3HBh-' +
         'ToZA-VumvKXOzp-P_XrgsyhkjMV9Lldfq7-V9hhkolUAED75_QPn9t4NFNrJNMP8';
       return next();
     }
 
-    if (!isValidImageId(imageId)) {
-      console.warn(`Metadata invalid ${imageId}, ${user.uid}`);
+    if (!isValidImageId(p.imageId)) {
+      console.warn(`Metadata invalid ${p.imageId}, ${user.uid}`);
       return res.json({ error: 'Invalid imageId' });
     }
 
     for (let i = 1; i <= 5; i++) {
       const meta = (await fsdb
-        .doc(FsPath.imageMetadata(imageId))
+        .doc(FsPath.imageMetadata(p.imageId))
         .get()).data() as ImageMetadata;
       if (meta && meta.v) {
-        p.data.url = meta.v;
+        p.url = meta.v;
         return next();
       }
-      console.info(`Metadata pending ${imageId}, #${i}, ${user.uid}`);
+      console.info(`Metadata pending ${p.imageId}, #${i}, ${user.uid}`);
       await delay(i * 1000);
     }
-    console.warn(`Metadata missing ${imageId}, ${user.uid}`);
+    console.warn(`Metadata missing ${p.imageId}, ${user.uid}`);
     return res.json({ error: 'Metadata does not exists' });
   };
 }
@@ -211,8 +207,6 @@ function populateKelName() {
   return async (req, res, next) => {
     const user = req.user as admin.auth.DecodedIdToken;
     const p = req.parsedBody as UploadRequest;
-    p.kelId = +req.body.kelId;
-    p.tpsNo = +req.body.tpsNo;
     let mem = cache[p.kelId];
     if (!mem) {
       try {
@@ -240,19 +234,27 @@ function populateKelName() {
 function populateUploader() {
   return async (req, res, next) => {
     const user = req.user as admin.auth.DecodedIdToken;
-    const uRef = fsdb.doc(FsPath.relawan(user.uid));
-    const uploader = (req.uploader = (await uRef.get()).data() as Relawan);
-    if (!uploader) {
-      console.error(`Uploader is missing ${user.uid}`);
-      return res.json({ error: 'Uploader not found' });
+
+    const pRef = fsdb.doc(FsPath.relawanPhoto(user.uid));
+    let photo = (req.photo = (await pRef.get()).data() as RelawanPhotos);
+    if (!photo) {
+      const uRef = fsdb.doc(FsPath.relawan(user.uid));
+      const uploader = (await uRef.get()).data() as Relawan;
+      if (!uploader || !uploader.profile || uploader.profile.uid !== user.uid) {
+        console.error(`Uploader ${user.uid}: ${JSON.stringify(uploader)}`);
+        return res.json({ error: 'Uploader not found' });
+      }
+      photo = {
+        profile: uploader.profile,
+        uploads: [],
+        count: 0
+      };
     }
 
     const p = req.parsedBody as UploadRequest;
-    p.meta = extractImageMetadata(req.body.metadata);
-    uploader.uploads = uploader.uploads || [];
-    uploader.uploads.unshift(p);
-    uploader.numUploads = (uploader.numUploads || 0) + 1;
-    if (uploader.numUploads > MAX_NUM_UPLOADS) {
+    photo.uploads.unshift(p);
+    photo.count = (photo.count || 0) + 1;
+    if (photo.count > MAX_NUM_UPLOADS) {
       console.error(`Exceeded max uploads ${user.uid}`);
       return res.json({ error: 'Exceeded max number of uploads' });
     }
@@ -266,35 +268,26 @@ app.post(
   async (req: any, res) => {
     const user = req.user as admin.auth.DecodedIdToken;
     const p = req.parsedBody as UploadRequest;
-    const uploader = req.uploader as Relawan;
+    const photo = req.photo as RelawanPhotos;
+    const action = { sum: { cakupan: 1, pending: 1 }, ts: p.ts } as Aggregate;
     const upsert: Upsert = {
       request: p,
       uploader: {
-        ...uploader.profile,
-        ts: p.data.updateTs,
+        ...photo.profile,
+        ts: p.ts,
         ua: req.headers['user-agent'],
         ip: getIp(req)
       },
       reviewer: null,
       reporter: null,
-      kelId: p.kelId,
-      tpsNo: p.tpsNo,
-      data: p.data,
-      meta: p.meta,
       done: 0,
-      action: {
-        sum: {
-          cakupan: 1,
-          pending: 1
-        },
-        ts: p.data.updateTs
-      } as Action
+      action
     };
 
     try {
       const batch = fsdb.batch();
-      batch.create(fsdb.doc(FsPath.upserts(p.data.imageId)), upsert);
-      batch.update(fsdb.doc(FsPath.relawan(user.uid)), uploader);
+      batch.create(fsdb.doc(FsPath.upserts(p.imageId)), upsert);
+      batch.update(fsdb.doc(FsPath.relawanPhoto(user.uid)), photo);
       await batch.commit();
     } catch (e) {
       console.error(`Database error for ${user.uid}`);
@@ -310,54 +303,79 @@ function getIp(req: express.Request) {
   return typeof ip === 'string' ? ip : JSON.stringify(ip);
 }
 
-app.post('/api/approve', async (req: any, res) => {
+function populateAction() {
+  return async (req, res, next) => {
+    const user = req.user as admin.auth.DecodedIdToken;
+    const b = req.body as Aggregate;
+    if (!b || !b.sum) {
+      console.warn(`No action, uid = ${user.uid}`);
+      return res.json({ error: 'No action' });
+    }
+
+    const action = { sum: {} as SumMap, urls: [], ts: Date.now() } as Aggregate;
+    req.parsedBody = action;
+
+    // Incoming urls are actually in the form of imageIds.
+    const imageIds = [];
+    for (const imageId of b.urls) {
+      if (!isValidImageId(imageId)) {
+        console.warn(`Invalid imageId ${imageId} for user ${user.uid}`);
+        return res.json({ error: 'Invalid imageId' });
+      }
+      imageIds.push(imageId);
+    }
+    if (!imageIds.length || imageIds.length > 30) {
+      console.warn(`imageIds invalid length ${imageIds.length} ${user.uid}`);
+      return res.json({ error: 'Invalid number of imageIds' });
+    }
+    req.imageId = imageIds[0];
+
+    // All images must be in the same kelId and tpsNo.
+    const docRefs = imageIds.map(i => fsdb.doc(FsPath.imageMetadata(i)));
+    let kelId = -1;
+    let tpsNo = -1;
+    for (const snap of await fsdb.getAll(...docRefs)) {
+      const i = snap.data() as ImageMetadata;
+      if (kelId === -1) {
+        kelId = i.k;
+        tpsNo = i.t;
+      } else if (kelId !== i.k || tpsNo !== i.t) {
+        console.warn(`Image ids are on different locations ${user.uid}`);
+        return res.json({ error: 'Wrong imageId locations' });
+      }
+      action.urls.push(i.v);
+    }
+
+    for (const key in b.sum) {
+      if (!SUM_KEY[key]) {
+        console.error(`Sum key invalid ${user.uid}`);
+        return res.json({ error: 'Invalid sum key' });
+      }
+      const sum = b.sum[key];
+      if (typeof sum !== 'number' || sum < 0 || sum > 1000) {
+        console.error(`Sum ${sum} out of range ${user.uid}`);
+        return res.json({ error: 'Invalid sum range' });
+      }
+      if (
+        (key === SUM_KEY.pending ||
+          key === SUM_KEY.error ||
+          key === SUM_KEY.cakupan) &&
+        sum > 1
+      ) {
+        console.error(`Sum flag ${sum} out of range ${user.uid}`);
+        return res.json({ error: 'Invalid sum flag' });
+      }
+      action.sum[key] = sum;
+    }
+    next();
+  };
+}
+
+app.post('/api/approve', [populateAction()], async (req: any, res) => {
   const user = req.user as admin.auth.DecodedIdToken;
-  const b = req.body as ApiApproveRequest;
-  if (!b.action || !b.action.sum) {
-    console.warn(`No action, uid = ${user.uid}`);
-    return res.json({ error: 'No action' });
-  }
+  const action = req.parsedBody.action as Aggregate;
 
-  const kelId = +b.kelId;
-  const tpsNo = +b.tpsNo;
-  // TODO: make use of populateKelName().
-
-  const imageIds = [];
-  for (const imageId of b.action.imageIds) {
-    if (!isValidImageId(imageId)) {
-      console.warn(`Invalid imageId ${imageId} for user ${user.uid}`);
-      return res.json({ error: 'Invalid imageId' });
-    }
-    imageIds.push(imageId);
-  }
-  if (!imageIds.length) {
-    console.warn(`Empty imageIds for user ${user.uid}`);
-    return res.json({ error: 'No imageId' });
-  }
-
-  const ts = Date.now();
-  const action: Action = { sum: {} as SumMap, ts, imageIds };
-  for (const key in SUM_KEY) {
-    const sum = b.action.sum[key] || 0;
-    if (typeof sum !== 'number' || sum < 0 || sum > 1000) {
-      console.error(`Sum ${sum} out of range ${user.uid}`);
-      res.json({ error: 'Invalid sum range' });
-      return null;
-    }
-    if (
-      (key === SUM_KEY.pending ||
-        key === SUM_KEY.error ||
-        key === SUM_KEY.cakupan) &&
-      sum > 1
-    ) {
-      console.error(`Sum ${sum} out of range ${user.uid}`);
-      res.json({ error: 'Invalid sum range' });
-      return null;
-    }
-    action.sum[key] = sum;
-  }
-
-  const uRef = fsdb.doc(FsPath.upserts(imageIds[0]));
+  const uRef = fsdb.doc(FsPath.upserts(req.imageId));
   const rRef = fsdb.doc(FsPath.relawan(user.uid));
   const ok = await fsdb.runTransaction(async t => {
     const r = (await t.get(rRef)).data() as Relawan;
@@ -365,10 +383,11 @@ app.post('/api/approve', async (req: any, res) => {
       return 'not_authorized';
     }
 
+    // TODO: insert to TPS log.
     const u = (await t.get(uRef)).data() as Upsert;
     u.reviewer = {
       ...r.profile,
-      ts,
+      ts: action.ts,
       ua: req.headers['user-agent'],
       ip: getIp(req)
     };
@@ -396,7 +415,7 @@ app.post('/api/problem', async (req: any, res) => {
   const rRef = fsdb.doc(FsPath.relawan(user.uid));
   const ok = await fsdb.runTransaction(async t => {
     const u = (await t.get(uRef)).data() as Upsert;
-    if (!u || !u.data) {
+    if (!u || !u.action) {
       return false;
     }
     const r = (await t.get(rRef)).data() as Relawan;
@@ -406,7 +425,7 @@ app.post('/api/problem', async (req: any, res) => {
       ua: req.headers['user-agent'],
       ip: getIp(req)
     };
-    u.action = { sum: { error: 1 } } as Action;
+    u.action = { sum: { error: 1 } } as Aggregate;
     u.done = 0;
     t.update(uRef, u);
     return true;

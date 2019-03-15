@@ -5,7 +5,13 @@ import { auth, User } from 'firebase/app';
 import { Observable, of } from 'rxjs';
 import { tap, switchMap, shareReplay, filter } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
-import { FsPath, Relawan, LOCAL_STORAGE_LAST_URL, Upsert } from 'shared';
+import {
+  FsPath,
+  Relawan,
+  LOCAL_STORAGE_LAST_URL,
+  Upsert,
+  RelawanPhotos
+} from 'shared';
 import { ApiService } from './api.service';
 import { Router } from '@angular/router';
 
@@ -16,6 +22,7 @@ export class UserService {
   user: User;
   user$: Observable<User>;
   relawan$: Observable<Relawan>;
+  relawanPhotos$: Observable<RelawanPhotos>;
   upsert$: { [imageId: string]: Observable<Upsert> } = {};
   isLoading = true;
 
@@ -26,6 +33,7 @@ export class UserService {
     private router: Router
   ) {
     this.isLoading = true;
+
     this.user$ = this.afAuth.user.pipe(
       tap(user => {
         this.user = user;
@@ -33,6 +41,7 @@ export class UserService {
       }),
       shareReplay(1)
     );
+
     this.relawan$ = this.user$.pipe(
       switchMap(user =>
         user
@@ -55,6 +64,16 @@ export class UserService {
         return r;
       }),
       shareReplay(1)
+    );
+
+    this.relawanPhotos$ = this.user$.pipe(
+      switchMap(user =>
+        user
+          ? this.fsdb
+              .doc<RelawanPhotos>(FsPath.relawanPhoto(user.uid))
+              .valueChanges()
+          : of(null)
+      )
     );
 
     this.afAuth.auth

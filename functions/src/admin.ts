@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as util from 'util';
 
 import { H } from './hierarchy';
-import { FsPath, Upsert, SumMap, Action } from 'shared';
+import { FsPath, Upsert, SumMap, Aggregate } from 'shared';
 
 admin.initializeApp({
   credential: admin.credential.cert(require('./sa-key.json')),
@@ -22,27 +22,26 @@ const fsdb = admin.firestore();
 fsdb.settings({ timestampsInSnapshots: true });
 
 // In memory database containing the aggregates of all children.
-let h: { [key: string]: { [key: string]: Action } } = {};
+let h: { [key: string]: { [key: string]: Aggregate } } = {};
 
-function getUpsertData(parentId, childId): Action {
+function getUpsertData(parentId, childId): Aggregate {
   if (!h[parentId]) h[parentId] = {};
   const c = h[parentId];
-  if (!c[childId]) c[childId] = { sum: {} as SumMap, ts: 0, imageIds: [] };
+  if (!c[childId]) c[childId] = { sum: {} as SumMap, ts: 0, urls: [] };
   return c[childId];
 }
 
-function getDelta(parentId, childId, a: Action): Action {
-  const delta: Action = { sum: {} as SumMap, ts: 0, imageIds: null };
-  const c = getUpsertData(parentId, childId);
+function getDelta(cur: Aggregate, a: Aggregate): Aggregate {
+  const delta: Aggregate = { sum: {} as SumMap, ts: 0, urls: null };
   for (const key in a.sum) {
-    delta.sum[key] = a.sum[key] - (c.sum[key] || 0);
+    delta.sum[key] = a.sum[key] - (cur.sum[key] || 0);
   }
   a.ts = a.ts || 0;
-  delta.ts = Math.max(a.ts, c.ts || a.ts);
+  delta.ts = Math.max(a.ts, cur.ts || a.ts);
   return delta;
 }
 
-async function updateAggregates(kelId: number, tpsNo: number, action: Action) {
+async function updateAggregates(kelId: number, tpsNo: number, agg: Aggregate) {
   const path = H[kelId].parentIds.slice();
   path.push(kelId);
   path.push(tpsNo);
@@ -52,23 +51,16 @@ async function updateAggregates(kelId: number, tpsNo: number, action: Action) {
     return;
   }
 
-  const delta = getDelta(path[4], path[5], action);
+  const tpsData = getUpsertData(path[4], path[5]);
+  tpsData.urls = agg.urls;
+
+  const delta = getDelta(tpsData, agg);
   for (let i = 0; i + 1 < path.length; i++) {
     const target = getUpsertData(path[i], path[i + 1]);
     for (const key in delta.sum) {
       target.sum[key] = (target.sum[key] || 0) + delta.sum[key];
     }
     target.ts = Math.max(target.ts || delta.ts, delta.ts);
-  }
-
-  if (action.imageIds) {
-    const servingUrls = [];
-    const docRefs = action.imageIds.map(i => fsdb.doc(FsPath.upserts(i)));
-    (await fsdb.getAll(...docRefs)).forEach(snap => {
-      const u = snap.data() as Upsert;
-      if (u) servingUrls.push(u.data.url);
-    });
-    getUpsertData(path[4], path[5]).imageIds = servingUrls;
   }
 }
 
@@ -121,7 +113,7 @@ async function processNewUpserts() {
     const batch = fsdb.batch();
     for (const imageId of imageIds) {
       const u = upserts[imageId];
-      await updateAggregates(u.kelId, u.tpsNo, u.action);
+      await updateAggregates(u.request.kelId, u.request.tpsNo, u.action);
       batch.update(fsdb.doc(FsPath.upserts(imageId)), { done: 1 });
     }
     const t1 = Date.now();

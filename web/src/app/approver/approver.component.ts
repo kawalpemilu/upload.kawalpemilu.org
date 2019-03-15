@@ -11,10 +11,10 @@ import {
   Upsert,
   FsPath,
   Relawan,
-  ApiApproveRequest,
   SUM_KEY,
   PILEG_FORM,
-  PILPRES_FORM
+  PILPRES_FORM,
+  Aggregate
 } from 'shared';
 import { shareReplay, filter, map, tap } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
@@ -99,7 +99,7 @@ export class ApproverComponent implements OnInit {
         tap(u => {
           this.formGroup = this.uploadService.getFormGroup('^[0-9]{1,3}$');
           for (const p of PILEG_FORM.concat(PILPRES_FORM)) {
-            this.formGroup.get(p.form).setValue(u.data.sum[p.form]);
+            this.formGroup.get(p.form).setValue(u.action.sum[p.form]);
           }
         }),
         shareReplay(1)
@@ -122,17 +122,9 @@ export class ApproverComponent implements OnInit {
       sum[p.form] = this.formGroup.get(p.form).value;
     }
 
-    const request: ApiApproveRequest = {
-      kelId: u.kelId,
-      tpsNo: u.tpsNo,
-      action: {
-        sum,
-        ts: 0,
-        imageIds: [u.data.imageId]
-      }
-    };
+    const action: Aggregate = { sum, ts: 0, urls: [u.request.imageId] };
     try {
-      const res: any = await this.api.post(this.user.auth, `approve`, request);
+      const res: any = await this.api.post(this.user.auth, `approve`, action);
       if (res.ok) {
         console.log('ok');
       } else {

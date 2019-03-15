@@ -16,13 +16,15 @@ export interface PublicProfile {
     loginTs: number;
     role: USER_ROLE;
 }
+export interface RelawanPhotos {
+    profile: PublicProfile;
+    uploads: UploadRequest[];
+    count: number;
+}
 export interface Relawan {
     lowerCaseName: string;
     profile: PublicProfile;
     referrer: PublicProfile;
-    uploads: UploadRequest[];
-    numUploads: number;
-    imageIds: string[];
     depth: number;
     code: {
         [code: string]: CodeReferral;
@@ -76,9 +78,9 @@ export interface UpsertProfile extends PublicProfile {
 export declare type SumMap = {
     [key in SUM_KEY]: number;
 };
-export interface Action {
+export interface Aggregate {
     sum: SumMap;
-    imageIds: string[];
+    urls: string[];
     ts: number;
 }
 export interface Upsert {
@@ -86,12 +88,8 @@ export interface Upsert {
     uploader: UpsertProfile;
     reviewer: UpsertProfile;
     reporter: UpsertProfile;
-    data: UpsertData;
-    meta: ImageMetadata;
-    kelId: number;
-    tpsNo: number;
     done: number;
-    action: Action;
+    action: Aggregate;
 }
 export interface CodeReferral {
     issuer: PublicProfile;
@@ -101,23 +99,14 @@ export interface CodeReferral {
     claimedTs: number;
     depth: number;
 }
-export interface UpsertData {
-    sum: SumMap;
-    imageId: string;
-    url: string;
-    updateTs: number;
-}
 export interface UploadRequest {
+    imageId: string;
     kelId: number;
     kelName: string;
     tpsNo: number;
-    data: UpsertData;
     meta: ImageMetadata;
-}
-export interface ApiApproveRequest {
-    kelId: number;
-    tpsNo: number;
-    action: Action;
+    url: string;
+    ts: number;
 }
 export interface HierarchyNode {
     id: number;
@@ -127,7 +116,7 @@ export interface HierarchyNode {
     children: any[];
     depth: number;
     data: {
-        [key: string]: UpsertData;
+        [key: string]: Aggregate;
     };
 }
 export interface ImageMetadata {
@@ -152,11 +141,10 @@ export declare function isValidImageId(imageId: string): RegExpMatchArray;
 export declare function isValidUserId(uid: string): RegExpMatchArray;
 export declare class FsPath {
     static relawan(uid?: string): string;
+    static relawanPhoto(uid?: string): string;
     static codeReferral(code: string): string;
     static changeLog(logId: string): string;
     static imageMetadata(imageId: string): string;
-    static imageMetadataUserId(imageId: string): string;
-    static imageMetadataServingUrl(imageId: string): string;
     static upserts(imageId?: string): string;
 }
 /** Returns a random n-character identifier containing [a-zA-Z0-9]. */

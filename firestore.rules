@@ -14,6 +14,12 @@ service cloud.firestore {
       allow list: if request.query.limit <= 10 && getUserRole() >= 2;
     }
  
+    // Relawan photos.
+    match /p/{userId} {
+      // Moderator can read user photos if know the uid.
+      allow get: if request.auth.uid == userId || getUserRole() >= 1;
+    }
+ 
     // Referral codes.
     match /c/{code} {
       allow read: if request.auth.uid != null &&

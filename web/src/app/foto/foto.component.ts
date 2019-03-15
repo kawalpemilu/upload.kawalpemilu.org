@@ -6,14 +6,14 @@ import {
 import { UserService } from '../user.service';
 import { Observable, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { UpsertData } from 'shared';
 import { UploadService } from '../upload.service';
+import { UploadRequest } from 'shared';
 
 export interface Photos {
   kelId: number;
   kelName: string;
   tpsNo: number;
-  photos: UpsertData[];
+  photos: UploadRequest[];
   uploadTs: number;
 }
 
@@ -48,7 +48,7 @@ export class FotoComponent {
 
   constructor(userService: UserService, uploadService: UploadService) {
     this.photos$ = combineLatest(
-      userService.relawan$,
+      userService.relawanPhotos$,
       uploadService.status$
     ).pipe(
       map(([relawan, status]) => {
@@ -73,24 +73,23 @@ export class FotoComponent {
           .forEach(s => {
             const p = photosByTpsAndTpsNo[getKey(s.kelId, s.kelName, s.tpsNo)];
             p.photos.push({
-              sum: {},
               imageId: s.imageId,
               url: s.imgURL,
-              updateTs: s.uploadTs
-            } as UpsertData);
+              ts: s.uploadTs
+            } as UploadRequest);
           });
 
         if (relawan && relawan.uploads) {
           // The relawan.uploads is already sorted by upload time.
           relawan.uploads.forEach(u => {
             const p = photosByTpsAndTpsNo[getKey(u.kelId, u.kelName, u.tpsNo)];
-            const idx = p.photos.findIndex(x => x.imageId === u.data.imageId);
+            const idx = p.photos.findIndex(x => x.imageId === u.imageId);
             if (idx !== -1) {
-              p.photos[idx] = u.data;
+              p.photos[idx] = u;
             } else {
-              p.photos.push(u.data);
+              p.photos.push(u);
             }
-            p.uploadTs = Math.max(p.uploadTs, u.data.updateTs);
+            p.uploadTs = Math.max(p.uploadTs, u.ts);
           });
         }
         return Object.values(photosByTpsAndTpsNo);

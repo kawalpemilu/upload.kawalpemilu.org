@@ -14,9 +14,27 @@ fsdb.settings({ timestampsInSnapshots: true });
 async function resetUploads() {
   const t0 = Date.now();
 
-  const uploads = {};
+  const uRef = fsdb.collection(FsPath.upserts());
+  let lastDoc = null;
+  while (true) {
+    const ref = lastDoc ? uRef.startAfter(lastDoc) : uRef;
+    const snaps = await ref.limit(3).get();
+    if (snaps.empty) {
+      break;
+    }
+    for (const doc of snaps.docs) {
+      const u = doc.data() as Upsert;
+      console.log('u', doc.id, u.uploader.name);
+      lastDoc = doc;
+    }
+    console.log('end batch');
+  }
+
+  /*
+
+  const uploads: { [imageId: string]: Upsert } = {};
   (await fsdb.collection(FsPath.upserts()).get()).forEach(snap => {
-    uploads[snap.id] = snap.data();
+    uploads[snap.id] = snap.data() as Upsert;
   });
 
   const t1 = Date.now();
@@ -24,10 +42,11 @@ async function resetUploads() {
 
   for (const imageId of Object.keys(uploads)) {
     const u = uploads[imageId];
-    if (u.uploadTs) {
-      console.log('ada ', imageId, u.uploadTs);
-      (u as Upsert).uploader.ts = u.uploadTs;
-      u.uploadTs = admin.firestore.FieldValue.delete();
+    if (u.request.ts) {
+      console.log('ada ', imageId, u.request.ts);
+      u.uploader.ts = u.request.ts;
+      // @ts-ignore
+      u.request.ts = admin.firestore.FieldValue.delete();
       await fsdb.doc(FsPath.upserts(imageId)).update(u);
     }
   }
@@ -46,22 +65,14 @@ async function resetUploads() {
       console.error('ga ada name', uid);
     }
     if (relawan.imageIds) {
-      const snippets = [];
+      const snippets: UploadRequest[] = [];
       for (const imageId of relawan.imageIds) {
         const u = uploads[imageId];
         if (!u) {
           console.error('unknown imageid', imageId);
           continue;
         }
-
-        const s: UploadRequest = {
-          kelId: u.kelId,
-          kelName: u.kelName,
-          tpsNo: u.tpsNo,
-          data: u.data,
-          meta: u.meta
-        };
-        snippets.push(s);
+        snippets.push(u.request);
       }
       await fsdb.doc(FsPath.relawan(uid)).update({
         lowerCaseName: relawan.profile.name.toLowerCase(),
@@ -70,8 +81,8 @@ async function resetUploads() {
       });
     }
   }
-
-  console.log('done all');
+ console.log('done all');
+  */
 }
 
 resetUploads().catch(console.error);

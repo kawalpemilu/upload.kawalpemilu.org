@@ -107,6 +107,9 @@ var FsPath = /** @class */ (function () {
     FsPath.relawan = function (uid) {
         return "r" + (uid ? '/' + uid : '');
     };
+    FsPath.relawanPhoto = function (uid) {
+        return "p" + (uid ? '/' + uid : '');
+    };
     FsPath.codeReferral = function (code) {
         return "c/" + code;
     };
@@ -115,12 +118,6 @@ var FsPath = /** @class */ (function () {
     };
     FsPath.imageMetadata = function (imageId) {
         return "i/" + imageId;
-    };
-    FsPath.imageMetadataUserId = function (imageId) {
-        return FsPath.imageMetadata(imageId) + "/u";
-    };
-    FsPath.imageMetadataServingUrl = function (imageId) {
-        return FsPath.imageMetadata(imageId) + "/v";
     };
     FsPath.upserts = function (imageId) {
         return "u" + (imageId ? '/' + imageId : '');

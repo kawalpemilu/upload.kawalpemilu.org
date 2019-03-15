@@ -20,13 +20,16 @@ export interface PublicProfile {
   role: USER_ROLE;
 }
 
+export interface RelawanPhotos {
+  profile: PublicProfile;
+  uploads: UploadRequest[];
+  count: number;
+}
+
 export interface Relawan {
   lowerCaseName: string; // For prefix search.
   profile: PublicProfile;
   referrer: PublicProfile;
-  uploads: UploadRequest[];
-  numUploads: number;
-  imageIds: string[];
   depth: number; // Referral depth
   code: { [code: string]: CodeReferral }; // Code referrals
   auth: any; // firebase.User reference.
@@ -113,23 +116,19 @@ export interface UpsertProfile extends PublicProfile {
 
 export type SumMap = { [key in SUM_KEY]: number };
 
-export interface Action {
+export interface Aggregate {
   sum: SumMap;
-  imageIds: string[]; // Image ids to be published.
+  urls: string[]; // Urls to be published.
   ts: number;
 }
 
 export interface Upsert {
-  request: UploadRequest,
+  request: UploadRequest;
   uploader: UpsertProfile;
   reviewer: UpsertProfile;
   reporter: UpsertProfile;
-  data: UpsertData;
-  meta: ImageMetadata;
-  kelId: number;
-  tpsNo: number;
   done: number; // Set to 0 to reprocess this upsert.
-  action: Action; // The action to be performed to the aggregator.
+  action: Aggregate; // The action to be performed to the aggregator.
 }
 
 export interface CodeReferral {
@@ -141,25 +140,14 @@ export interface CodeReferral {
   depth: number; // The referral depth
 }
 
-export interface UpsertData {
-  sum: SumMap;
-  imageId: string;
-  url: string; // Proof of this Data.
-  updateTs: number; // Last update timestamp.
-}
-
 export interface UploadRequest {
+  imageId: string;
   kelId: number;
   kelName: string;
   tpsNo: number;
-  data: UpsertData;
   meta: ImageMetadata;
-}
-
-export interface ApiApproveRequest {
-  kelId: number;
-  tpsNo: number;
-  action: Action;
+  url: string;
+  ts: number;
 }
 
 export interface HierarchyNode {
@@ -169,7 +157,7 @@ export interface HierarchyNode {
   parentNames: string[];
   children: any[];
   depth: number;
-  data: { [key: string]: UpsertData };
+  data: { [key: string]: Aggregate };
 }
 
 export interface ImageMetadata {
@@ -230,6 +218,10 @@ export class FsPath {
     return `r${uid ? '/' + uid : ''}`;
   }
 
+  static relawanPhoto(uid?: string) {
+    return `p${uid ? '/' + uid : ''}`;
+  }
+
   static codeReferral(code: string) {
     return `c/${code}`;
   }
@@ -240,12 +232,6 @@ export class FsPath {
 
   static imageMetadata(imageId: string) {
     return `i/${imageId}`;
-  }
-  static imageMetadataUserId(imageId: string) {
-    return `${FsPath.imageMetadata(imageId)}/u`;
-  }
-  static imageMetadataServingUrl(imageId: string) {
-    return `${FsPath.imageMetadata(imageId)}/v`;
   }
 
   static upserts(imageId?: string) {

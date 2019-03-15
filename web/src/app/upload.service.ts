@@ -10,7 +10,6 @@ import {
   autoId,
   ImageMetadata,
   UploadRequest,
-  UpsertData,
   PILPRES_FORM,
   PILEG_FORM,
   SUM_KEY,
@@ -129,11 +128,13 @@ export class UploadService {
     };
     status.done = status.task.then(async () => {
       const request: UploadRequest = {
+        imageId: status.imageId,
         kelId,
         kelName: '', // Will be populated on the server.
         tpsNo,
-        data: { imageId: status.imageId } as UpsertData,
-        meta: metadata
+        meta: metadata,
+        url: null, // Will be populated on the server.
+        ts: null // Will be populated on the server.
       };
       const res: any = await this.api.post(user, `upload`, request);
       if (!res.ok) {

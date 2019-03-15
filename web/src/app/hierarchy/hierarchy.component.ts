@@ -127,7 +127,7 @@ export class HierarchyComponent implements OnInit, OnDestroy {
   ago(state: HierarchyNode, cid: number) {
     const s = state.data[cid];
     if (s) {
-      const m = (Date.now() - s.updateTs) / 1000 / 60;
+      const m = (Date.now() - s.ts) / 1000 / 60;
       if (m < 1) {
         return ' (*)';
       }
