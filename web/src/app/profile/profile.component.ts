@@ -1,5 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { APP_SCOPED_PREFIX_URL, Relawan, FsPath, USER_ROLE } from 'shared';
+import {
+  APP_SCOPED_PREFIX_URL,
+  Relawan,
+  FsPath,
+  USER_ROLE,
+  RelawanPhotos
+} from 'shared';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { Observable, of, Subject } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -8,6 +14,7 @@ import {
   catchError,
   debounceTime,
   distinctUntilChanged,
+  map
 } from 'rxjs/operators';
 import { User } from 'firebase';
 import { ApiService } from '../api.service';
@@ -24,6 +31,7 @@ export class ProfileComponent implements OnInit {
   Object = Object;
 
   relawan$: Observable<Relawan>;
+  relawanPhotos$: Observable<RelawanPhotos>;
   relawans$: Observable<Relawan[]>;
 
   constructor(
@@ -32,10 +40,25 @@ export class ProfileComponent implements OnInit {
     private route: ActivatedRoute,
     private api: ApiService
   ) {
-    this.relawan$ = this.route.paramMap.pipe(
-      switchMap(params =>
+    const uid$ = this.route.paramMap.pipe(map(params => params.get('uid')));
+    this.relawan$ = uid$.pipe(
+      switchMap(uid =>
         this.fsdb
-          .doc<Relawan>(FsPath.relawan(params.get('uid')))
+          .doc<Relawan>(FsPath.relawan(uid))
+          .valueChanges()
+          .pipe(
+            catchError(e => {
+              console.log(e.message);
+              return of(null);
+            })
+          )
+      )
+    );
+
+    this.relawanPhotos$ = uid$.pipe(
+      switchMap(uid =>
+        this.fsdb
+          .doc<RelawanPhotos>(FsPath.relawanPhoto(uid))
           .valueChanges()
           .pipe(
             catchError(e => {

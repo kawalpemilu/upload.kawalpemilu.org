@@ -7,6 +7,36 @@ export declare enum USER_ROLE {
     MODERATOR = 1,
     ADMIN = 2
 }
+export declare enum SUM_KEY {
+    pas1 = "pas1",
+    pas2 = "pas2",
+    sah = "sah",
+    tSah = "tSah",
+    cakupan = "cakupan",
+    pending = "pending",
+    error = "error",
+    pkb = "pkb",
+    ger = "ger",
+    pdi = "pdi",
+    gol = "gol",
+    nas = "nas",
+    gar = "gar",
+    ber = "ber",
+    sej = "sej",
+    per = "per",
+    ppp = "ppp",
+    psi = "psi",
+    pan = "pan",
+    han = "han",
+    dem = "dem",
+    pbb = "pbb",
+    pkp = "pkp",
+    pSah = "pSah",
+    pTSah = "pTSah"
+}
+export declare type SumMap = {
+    [key in SUM_KEY]: number;
+};
 export interface PublicProfile {
     uid: string;
     link: string;
@@ -37,51 +67,29 @@ export interface ChangeLog {
     role: USER_ROLE;
     ts: number;
 }
-export declare enum SUM_KEY {
-    pas1 = "pas1",
-    pas2 = "pas2",
-    sah = "sah",
-    tSah = "tSah",
-    cakupan = "cakupan",
-    pending = "pending",
-    error = "error",
-    pkb = "pkb",
-    ger = "ger",
-    pdi = "pdi",
-    gol = "gol",
-    nas = "nas",
-    gar = "gar",
-    ber = "ber",
-    sej = "sej",
-    per = "per",
-    ppp = "ppp",
-    psi = "psi",
-    pan = "pan",
-    han = "han",
-    dem = "dem",
-    pbb = "pbb",
-    pkp = "pkp",
-    pSah = "pSah",
-    pTSah = "pTSah"
-}
-export interface FormLabel {
-    label: string;
-    form: string;
-}
-export declare const PILPRES_FORM: FormLabel[];
-export declare const PILEG_FORM: FormLabel[];
 export interface UpsertProfile extends PublicProfile {
     ts: number;
     ua: string;
     ip: string;
 }
-export declare type SumMap = {
-    [key in SUM_KEY]: number;
-};
 export interface Aggregate {
     sum: SumMap;
     urls: string[];
     ts: number;
+}
+export interface TpsImage {
+    uploader: UpsertProfile;
+    reviewer: UpsertProfile;
+    status: 'new' | 'ignore' | 'delete' | 'publish';
+    sum: SumMap;
+    url: string;
+    meta: ImageMetadata;
+}
+export interface TpsData {
+    images: {
+        [imageId: string]: TpsImage;
+    };
+    imgCount: number;
 }
 export interface Upsert {
     request: UploadRequest;
@@ -107,6 +115,10 @@ export interface UploadRequest {
     meta: ImageMetadata;
     url: string;
     ts: number;
+}
+export interface ApproveRequest {
+    imageId: string;
+    sum: SumMap;
 }
 export interface HierarchyNode {
     id: number;
@@ -135,6 +147,12 @@ export interface ImageMetadata {
     y: number;
     x: number;
 }
+export interface FormLabel {
+    label: string;
+    form: string;
+}
+export declare const PILPRES_FORM: FormLabel[];
+export declare const PILEG_FORM: FormLabel[];
 export declare function extractImageMetadata(m: any): ImageMetadata | null;
 export declare function getServingUrl(url: string, size: number): string;
 export declare function isValidImageId(imageId: string): RegExpMatchArray;
@@ -142,6 +160,7 @@ export declare function isValidUserId(uid: string): RegExpMatchArray;
 export declare class FsPath {
     static relawan(uid?: string): string;
     static relawanPhoto(uid?: string): string;
+    static tps(kelId: number, tpsNo: number): string;
     static codeReferral(code: string): string;
     static changeLog(logId: string): string;
     static imageMetadata(imageId: string): string;

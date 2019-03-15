@@ -110,6 +110,9 @@ var FsPath = /** @class */ (function () {
     FsPath.relawanPhoto = function (uid) {
         return "p" + (uid ? '/' + uid : '');
     };
+    FsPath.tps = function (kelId, tpsNo) {
+        return "t/" + kelId + "-" + tpsNo;
+    };
     FsPath.codeReferral = function (code) {
         return "c/" + code;
     };

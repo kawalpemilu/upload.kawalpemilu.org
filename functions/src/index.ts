@@ -26,7 +26,10 @@ import {
   ChangeLog,
   Aggregate,
   SumMap,
-  RelawanPhotos
+  RelawanPhotos,
+  UpsertProfile,
+  TpsData,
+  ApproveRequest
 } from 'shared';
 
 const t1 = Date.now();
@@ -231,67 +234,60 @@ function populateKelName() {
   };
 }
 
-function populateUploader() {
-  return async (req, res, next) => {
-    const user = req.user as admin.auth.DecodedIdToken;
-
-    const pRef = fsdb.doc(FsPath.relawanPhoto(user.uid));
-    let photo = (req.photo = (await pRef.get()).data() as RelawanPhotos);
-    if (!photo) {
-      const uRef = fsdb.doc(FsPath.relawan(user.uid));
-      const uploader = (await uRef.get()).data() as Relawan;
-      if (!uploader || !uploader.profile || uploader.profile.uid !== user.uid) {
-        console.error(`Uploader ${user.uid}: ${JSON.stringify(uploader)}`);
-        return res.json({ error: 'Uploader not found' });
-      }
-      photo = {
-        profile: uploader.profile,
-        uploads: [],
-        count: 0
-      };
-    }
-
-    const p = req.parsedBody as UploadRequest;
-    photo.uploads.unshift(p);
-    photo.count = (photo.count || 0) + 1;
-    if (photo.count > MAX_NUM_UPLOADS) {
-      console.error(`Exceeded max uploads ${user.uid}`);
-      return res.json({ error: 'Exceeded max number of uploads' });
-    }
-    next();
-  };
-}
-
 app.post(
   '/api/upload',
-  [populateServingUrl(), populateKelName(), populateUploader()],
+  [populateServingUrl(), populateKelName()],
   async (req: any, res) => {
     const user = req.user as admin.auth.DecodedIdToken;
     const p = req.parsedBody as UploadRequest;
-    const photo = req.photo as RelawanPhotos;
-    const action = { sum: { cakupan: 1, pending: 1 }, ts: p.ts } as Aggregate;
-    const upsert: Upsert = {
-      request: p,
-      uploader: {
-        ...photo.profile,
-        ts: p.ts,
-        ua: req.headers['user-agent'],
-        ip: getIp(req)
-      },
-      reviewer: null,
-      reporter: null,
-      done: 0,
-      action
-    };
 
-    try {
-      const batch = fsdb.batch();
-      batch.create(fsdb.doc(FsPath.upserts(p.imageId)), upsert);
-      batch.update(fsdb.doc(FsPath.relawanPhoto(user.uid)), photo);
-      await batch.commit();
-    } catch (e) {
-      console.error(`Database error for ${user.uid}`);
-      return res.json({ error: 'Database error' });
+    const rRef = fsdb.doc(FsPath.relawan(user.uid));
+    const pRef = fsdb.doc(FsPath.relawanPhoto(user.uid));
+    const tRef = fsdb.doc(FsPath.tps(p.kelId, p.tpsNo));
+    const ok = await fsdb.runTransaction(async t => {
+      let photo = (await t.get(pRef)).data() as RelawanPhotos;
+      if (!photo) {
+        const u = (await t.get(rRef)).data() as Relawan;
+        if (!u || !u.profile || u.profile.uid !== user.uid) {
+          return 'Uploader not found';
+        }
+        photo = { profile: u.profile, uploads: [], count: 0 };
+      }
+
+      let tps = (await t.get(tRef)).data() as TpsData;
+      tps = tps || { images: {}, imgCount: 0 };
+
+      photo.uploads.unshift(p);
+      photo.count++;
+      if (photo.count > MAX_NUM_UPLOADS) {
+        return 'Exceeded max number of uploads';
+      }
+
+      const ua = req.headers['user-agent'];
+      const ip = getIp(req);
+      const uploader = { ...photo.profile, ts: p.ts, ua, ip } as UpsertProfile;
+      const action = { sum: { cakupan: 1, pending: 1 }, ts: p.ts } as Aggregate;
+      const upsert = { request: p, uploader, done: 0, action } as Upsert;
+
+      tps.images[p.imageId] = {
+        uploader,
+        reviewer: null,
+        status: 'new',
+        sum: {} as SumMap,
+        url: p.url,
+        meta: p.meta
+      };
+      tps.imgCount++;
+
+      t.create(fsdb.doc(FsPath.upserts(p.imageId)), upsert);
+      t.set(pRef, photo);
+      t.set(tRef, tps);
+      return true;
+    });
+
+    if (ok !== true) {
+      console.error(`Upload failed ${user.uid}: ${ok}`);
+      return res.json({ error: ok });
     }
 
     return res.json({ ok: true });
@@ -303,49 +299,21 @@ function getIp(req: express.Request) {
   return typeof ip === 'string' ? ip : JSON.stringify(ip);
 }
 
-function populateAction() {
+function populateApprove() {
   return async (req, res, next) => {
     const user = req.user as admin.auth.DecodedIdToken;
-    const b = req.body as Aggregate;
+    const b = req.body as ApproveRequest;
+
+    const a = { sum: {} as SumMap, imageId: b.imageId } as ApproveRequest;
+    if (!isValidImageId(a.imageId)) {
+      console.warn(`Invalid imageId ${a.imageId} for user ${user.uid}`);
+      return res.json({ error: 'Invalid imageId' });
+    }
+
     if (!b || !b.sum) {
-      console.warn(`No action, uid = ${user.uid}`);
-      return res.json({ error: 'No action' });
+      console.warn(`No sum ${user.uid}`);
+      return res.json({ error: 'No sum' });
     }
-
-    const action = { sum: {} as SumMap, urls: [], ts: Date.now() } as Aggregate;
-    req.parsedBody = action;
-
-    // Incoming urls are actually in the form of imageIds.
-    const imageIds = [];
-    for (const imageId of b.urls) {
-      if (!isValidImageId(imageId)) {
-        console.warn(`Invalid imageId ${imageId} for user ${user.uid}`);
-        return res.json({ error: 'Invalid imageId' });
-      }
-      imageIds.push(imageId);
-    }
-    if (!imageIds.length || imageIds.length > 30) {
-      console.warn(`imageIds invalid length ${imageIds.length} ${user.uid}`);
-      return res.json({ error: 'Invalid number of imageIds' });
-    }
-    req.imageId = imageIds[0];
-
-    // All images must be in the same kelId and tpsNo.
-    const docRefs = imageIds.map(i => fsdb.doc(FsPath.imageMetadata(i)));
-    let kelId = -1;
-    let tpsNo = -1;
-    for (const snap of await fsdb.getAll(...docRefs)) {
-      const i = snap.data() as ImageMetadata;
-      if (kelId === -1) {
-        kelId = i.k;
-        tpsNo = i.t;
-      } else if (kelId !== i.k || tpsNo !== i.t) {
-        console.warn(`Image ids are on different locations ${user.uid}`);
-        return res.json({ error: 'Wrong imageId locations' });
-      }
-      action.urls.push(i.v);
-    }
-
     for (const key in b.sum) {
       if (!SUM_KEY[key]) {
         console.error(`Sum key invalid ${user.uid}`);
@@ -356,43 +324,47 @@ function populateAction() {
         console.error(`Sum ${sum} out of range ${user.uid}`);
         return res.json({ error: 'Invalid sum range' });
       }
-      if (
-        (key === SUM_KEY.pending ||
-          key === SUM_KEY.error ||
-          key === SUM_KEY.cakupan) &&
-        sum > 1
-      ) {
-        console.error(`Sum flag ${sum} out of range ${user.uid}`);
-        return res.json({ error: 'Invalid sum flag' });
-      }
-      action.sum[key] = sum;
+      a.sum[key] = sum;
     }
+    delete a.sum.cakupan;
+    a.sum.pending = 0;
+    a.sum.error = 0;
+    req.parsedBody = a;
     next();
   };
 }
 
-app.post('/api/approve', [populateAction()], async (req: any, res) => {
+app.post('/api/approve', [populateApprove()], async (req: any, res) => {
   const user = req.user as admin.auth.DecodedIdToken;
-  const action = req.parsedBody.action as Aggregate;
+  const a = req.parsedBody as ApproveRequest;
 
-  const uRef = fsdb.doc(FsPath.upserts(req.imageId));
+  const ts = Date.now();
+  const uRef = fsdb.doc(FsPath.upserts(a.imageId));
   const rRef = fsdb.doc(FsPath.relawan(user.uid));
   const ok = await fsdb.runTransaction(async t => {
     const r = (await t.get(rRef)).data() as Relawan;
-    if (r.profile.role < USER_ROLE.MODERATOR) {
-      return 'not_authorized';
+    if (!r || r.profile.role < USER_ROLE.MODERATOR) {
+      return 'Not Authorized';
     }
 
-    // TODO: insert to TPS log.
     const u = (await t.get(uRef)).data() as Upsert;
+    if (!u) {
+      return 'No Upsert';
+    }
     u.reviewer = {
       ...r.profile,
-      ts: action.ts,
+      ts,
       ua: req.headers['user-agent'],
       ip: getIp(req)
     };
-    u.action = action;
+    u.action = {
+      sum: a.sum,
+      urls: [u.request.url],
+      ts
+    };
     u.done = 0;
+
+    // TODO: update tRef, pRef
     t.update(uRef, u);
     return true;
   });

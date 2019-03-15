@@ -7,7 +7,7 @@ import { retry, take } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class ApiService {
-  static API_PREFIX = 'https://kawal-c1.firebaseapp.com/api';
+  static API_PREFIX = 'https://upload.kawalpemilu.org/api';
 
   constructor(private http: HttpClient) {}
 

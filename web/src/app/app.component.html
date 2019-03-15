@@ -32,13 +32,22 @@
             mat-list-item
             [routerLink]="['/f']"
             (click)="mobileQuery.matches && snav.toggle()"
-            ><mat-icon>person_outline</mat-icon> &nbsp; Login &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+            ><mat-icon>person_outline</mat-icon> &nbsp; Login &nbsp; &nbsp;
+            &nbsp; &nbsp; &nbsp; &nbsp;
           </a>
         </mat-list-item>
       </ng-template>
       <ng-container
         *ngIf="(userService.relawan$ | async) as relawan; else login"
       >
+        <mat-list-item *ngIf="relawan.depth > 0">
+          <a
+            mat-list-item
+            [routerLink]="['/c', 0]"
+            (click)="mobileQuery.matches && snav.toggle()"
+            ><mat-icon>group_add</mat-icon> &nbsp; Rekrutmen</a
+          >
+        </mat-list-item>
         <mat-list-item>
           <a
             mat-list-item
@@ -53,14 +62,6 @@
             [routerLink]="['/h', 0]"
             (click)="mobileQuery.matches && snav.toggle()"
             ><mat-icon>table_chart</mat-icon> &nbsp; Cakupan TPS</a
-          >
-        </mat-list-item>
-        <mat-list-item *ngIf="relawan.depth > 0">
-          <a
-            mat-list-item
-            [routerLink]="['/c', 0]"
-            (click)="mobileQuery.matches && snav.toggle()"
-            ><mat-icon>group_add</mat-icon> &nbsp; Rekrutmen</a
           >
         </mat-list-item>
         <mat-list-item *ngIf="relawan.profile.role >= USER_ROLE.ADMIN">

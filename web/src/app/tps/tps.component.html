@@ -1,100 +1,89 @@
 <ng-container *ngIf="(state$ | async) as state; else loading">
   <app-path [node]="state"></app-path>
 
-  <button
-    mat-raised-button
-    color="warn"
-    [routerLink]="['/d', state.id]"
-    *ngIf="
-      state.numPending > 0 &&
-      (userService.relawan$ | async).profile.role >= USER_ROLE.MODERATOR
-    "
+  <table
+    cellspacing="0"
+    cellpadding="0"
+    width="100%"
+    height="200"
+    *ngFor="let tps of state.tpsList; let odd = odd"
+    [style.background-color]="odd ? '#FFF' : '#EEE'"
   >
-    Digitize {{ state.numPending }} uploads
-  </button>
+    <tr>
+      <td align="center" width="125">
+        <div
+          style="border: 1px solid black; width: 90px; padding: 5px; margin-top: 15px;"
+        >
+          TPS # <b style="font-size: large">{{ tps.tpsNo }}</b>
+        </div>
 
-  <p></p>
+        <p>
+          <app-upload-sequence
+            [kelId]="state.id"
+            [kelName]="state.name"
+            [tpsNo]="tps.tpsNo"
+            [value]="'Upload Foto'"
+          ></app-upload-sequence>
+        </p>
 
-  <table cellspacing="0">
-    <tr [style.height.px]="40" style="background-color: lightgray">
-      <th class="tps">TPS</th>
-      <th class="foto">Tes Upload Foto untuk menjaga TPS</th>
-    </tr>
-    <tr
-      *ngFor="let tps of state.tpsList; let odd = odd"
-      [style.background-color]="odd ? '#FFF' : '#EEE'"
-    >
-      <th class="tps">
-        <p>TPS #{{ tps.tpsNo }}</p>
         <table
-          *ngIf="tps.data as d"
           border="1"
-          style="margin: 0 auto"
+          *ngIf="tps.agg as d"
           cellspacing="0"
-          [style.backgroundColor]="
+          align="center"
+          [style.background-color]="
             d.sum.error ? '#FDD' : d.sum.pending ? '#FFD' : ''
           "
         >
           <tr>
+            <th colspan="2">Pilpres</th>
+          </tr>
+          <tr>
             <td class="label">#01:</td>
-            <td class="angka">{{ d.sum.paslon1 }}</td>
+            <td class="angka">{{ d.sum.pas1 }}</td>
           </tr>
           <tr>
-            <td>#02:</td>
-            <td class="angka">{{ d.sum.paslon2 }}</td>
+            <td class="label">#02:</td>
+            <td class="angka">{{ d.sum.pas2 }}</td>
           </tr>
           <tr>
-            <td>Sah:</td>
+            <td class="label">Sah:</td>
             <td class="angka">{{ d.sum.sah }}</td>
           </tr>
           <tr>
-            <td>~Sah:</td>
-            <td class="angka">{{ d.sum.tidakSah }}</td>
+            <td class="label">~Sah:</td>
+            <td class="angka">{{ d.sum.tSah }}</td>
           </tr>
         </table>
 
-        <p></p>
-      </th>
-      <td class="foto">
-        <table cellpadding="0" cellspacing="0" width="100%">
-          <tr>
-            <td width="125">
-              <ng-container
-                *ngIf="tps.data?.url as servingUrl; else adapending"
-              >
-                <app-thumbnail
-                  [url]="servingUrl"
-                  [srcSize]="125"
-                ></app-thumbnail>
-              </ng-container>
-              <ng-template #adapending>
-                <div *ngIf="tps.data?.sum?.pending">
-                  Ada foto yang masuk dan belum diproses.
-                </div>
-              </ng-template>
-            </td>
-            <td align="center">
-              <p *ngIf="tps.data as d">
-                <span *ngIf="d.url && d.sum.error" style="color: red">
-                  Kesalahan telah dilaporkan untuk TPS ini
-                </span>
-                <app-lapor-button
-                  *ngIf="d.url && !d.sum.error"
-                  [id]="state.id"
-                  [imageId]="d.imageId"
-                ></app-lapor-button>
-              </p>
-              <p>
-                <app-upload-sequence
-                  [kelId]="state.id"
-                  [kelName]="state.name"
-                  [tpsNo]="tps.tpsNo"
-                  [value]="'Upload Foto untuk Jaga TPS'"
-                ></app-upload-sequence>
-              </p>
-            </td>
-          </tr>
-        </table>
+        <p>
+          <ng-container *ngIf="tps.data as d">
+            <span *ngIf="d.url && d.sum.error" style="color: red">
+              Kesalahan telah dilaporkan untuk TPS ini
+            </span>
+            <app-lapor-button
+              *ngIf="d.url && !d.sum.error"
+              [id]="state.id"
+              [imageId]="d.imageId"
+            ></app-lapor-button>
+          </ng-container>
+        </p>
+      </td>
+      <td style="padding: 10px">
+        <ng-container *ngIf="tps.agg?.urls">
+          <app-thumbnail
+            *ngFor="let url of tps.agg.urls"
+            [url]="url"
+            [srcSize]="125"
+          ></app-thumbnail>
+        </ng-container>
+        <p *ngIf="tps.agg?.sum?.pending" style="color: orange">
+          Ada foto yang masuk dan belum diproses.
+        </p>
+        <app-approver
+          [kelurahanId]="state.id"
+          [tpsNo]="tps.tpsNo"
+        ></app-approver>
       </td>
     </tr>
   </table>

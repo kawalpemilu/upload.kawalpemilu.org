@@ -156,7 +156,7 @@ async function upload(body) {
       const user = await getUser(uid);
       const res = await request({
         method: 'POST',
-        uri: 'https://kawal-c1.firebaseapp.com/api/upload',
+        uri: 'https://upload.kawalpemilu.org/api/upload',
         body,
         headers: {
           Authorization: `Bearer ${user.idToken}`

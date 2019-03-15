@@ -35,7 +35,7 @@
     </p>
     <p>
       Mulai sekarang sampai tanggal <b>15 April 2019</b>, semua Relawan diminta
-      untuk uji coba meng-upload foto apa saja di area sekitar TPS yang akan
+      untuk uji coba <a [routerLink]="['/f']">upload foto</a> di TPS yang akan
       dikawal. Dari situ kita akan tahu bahwa TPS tersebut sudah akan terkawal
       di hari-H. Anda dapat melihat penyebaran Relawan saat ini di
       <a [routerLink]="['/h', 0]">Cakupan TPS</a>.
@@ -98,7 +98,7 @@
               <input
                 type="text"
                 style="width: 300px"
-                value="https://kawal-c1.firebaseapp.com/c/{{ code }}"
+                value="https://upload.kawalpemilu.org/c/{{ code }}"
                 #ui
               />
               &nbsp;

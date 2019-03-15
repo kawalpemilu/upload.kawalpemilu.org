@@ -41,7 +41,6 @@ import {
   CopySnackBarComponent
 } from './registrasi/registrasi.component';
 import { ThumbnailComponent } from './thumbnail/thumbnail.component';
-import { DigitizeComponent } from './digitize/digitize.component';
 import { ApproverComponent } from './approver/approver.component';
 import { FotoComponent } from './foto/foto.component';
 import { HieLinkComponent } from './hie-link/hie-link.component';
@@ -65,7 +64,6 @@ import { MetaComponent } from './meta/meta.component';
     RegistrasiComponent,
     CopySnackBarComponent,
     ThumbnailComponent,
-    DigitizeComponent,
     ApproverComponent,
     FotoComponent,
     HieLinkComponent,

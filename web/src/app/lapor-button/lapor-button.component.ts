@@ -13,7 +13,7 @@ import { HierarchyService } from '../hierarchy.service';
       (click)="laporKesalahan(user)"
       [disabled]="isLoading"
     >
-      Laporkan Kesalahan
+      Lapor <mat-icon>error_outline</mat-icon>
     </button>
   `,
   styles: ['']

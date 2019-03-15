@@ -1,107 +1,56 @@
-import {
-  Component,
-  OnInit,
-  Input,
-  HostListener,
-  ViewChild,
-  ElementRef
-} from '@angular/core';
+import { Component, Input } from '@angular/core';
 import {
   getServingUrl,
-  Upsert,
   FsPath,
-  Relawan,
-  SUM_KEY,
   PILEG_FORM,
   PILPRES_FORM,
-  Aggregate
+  TpsData,
+  USER_ROLE,
+  SumMap,
+  ApproveRequest
 } from 'shared';
-import { shareReplay, filter, map, tap } from 'rxjs/operators';
+import { shareReplay, take } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { FormGroup } from '@angular/forms';
 import { ApiService } from '../api.service';
 import { UploadService } from '../upload.service';
+import { UserService } from '../user.service';
+import { User } from 'firebase';
 
 @Component({
   selector: 'app-approver',
   templateUrl: './approver.component.html',
   styles: [``]
 })
-export class ApproverComponent implements OnInit {
-  @ViewChild('tbl') el: ElementRef;
+export class ApproverComponent {
   @Input() kelurahanId: number;
   @Input() tpsNo: number;
-  @Input() color = '';
-  @Input() user: Relawan;
 
+  USER_ROLE = USER_ROLE;
   PILPRES_FORM = PILPRES_FORM;
   PILEG_FORM = PILEG_FORM;
-  HEIGHT = 400;
+  Object = Object;
 
-  upsert$: Observable<Upsert>;
+  tps$: Observable<TpsData>;
   formGroup: FormGroup;
   isLoading = false;
 
   constructor(
+    public userService: UserService,
     private fsdb: AngularFirestore,
     private api: ApiService,
-    private uploadService: UploadService
-  ) {}
-
-  ngOnInit() {
-    this.checkVisibilityChange();
+    uploadService: UploadService
+  ) {
+    this.formGroup = uploadService.getFormGroup('^[0-9]{1,3}$');
   }
 
-  @HostListener('window:resize', ['$event'])
-  onWindowResize() {
-    this.checkVisibilityChange();
-  }
-
-  @HostListener('window:scroll', ['$event'])
-  scrollHandler() {
-    this.checkVisibilityChange();
-  }
-
-  checkVisibilityChange() {
-    if (this.upsert$ || !this.el) {
-      return;
-    }
-    const el = this.el.nativeElement;
-    const r = el.getBoundingClientRect();
-    const visible =
-      r.top >= 0 &&
-      r.left >= 0 &&
-      r.bottom - this.HEIGHT <=
-        (window.innerHeight || document.documentElement.clientHeight) &&
-      r.right <= (window.innerWidth || document.documentElement.clientWidth);
-    if (visible) {
-      this.setUpsert();
-    } else {
-      console.log('notset');
-    }
-  }
-
-  setUpsert() {
-    this.upsert$ = this.fsdb
-      .collection<Upsert>(FsPath.upserts(), ref =>
-        ref
-          .where('kelId', '==', this.kelurahanId)
-          .where('tpsNo', '==', this.tpsNo)
-          .where('deleted', '==', false)
-          .orderBy('uploader.ts')
-          .limit(1)
-      )
+  setTps() {
+    this.tps$ = this.fsdb
+      .doc<TpsData>(FsPath.tps(this.kelurahanId, this.tpsNo))
       .valueChanges()
       .pipe(
-        filter(arr => arr.length > 0),
-        map(arr => arr[0]),
-        tap(u => {
-          this.formGroup = this.uploadService.getFormGroup('^[0-9]{1,3}$');
-          for (const p of PILEG_FORM.concat(PILPRES_FORM)) {
-            this.formGroup.get(p.form).setValue(u.action.sum[p.form]);
-          }
-        }),
+        take(1),
         shareReplay(1)
       );
   }
@@ -110,21 +59,20 @@ export class ApproverComponent implements OnInit {
     return getServingUrl(url, size);
   }
 
-  async approve(u: Upsert, del: boolean) {
+  async approve(user: User, imageId: string) {
     this.isLoading = true;
     this.formGroup.disable();
-    const sum = {
-      cakupan: del ? 0 : 1,
-      pending: 0,
-      error: 0
-    } as { [key in SUM_KEY]: number };
+    const sum = {} as SumMap;
     for (const p of PILEG_FORM.concat(PILPRES_FORM)) {
-      sum[p.form] = this.formGroup.get(p.form).value;
+      const value = this.formGroup.get(p.form).value;
+      if (typeof value === 'number') {
+        sum[p.form] = value;
+      }
     }
 
-    const action: Aggregate = { sum, ts: 0, urls: [u.request.imageId] };
     try {
-      const res: any = await this.api.post(this.user.auth, `approve`, action);
+      const body: ApproveRequest = { sum, imageId };
+      const res: any = await this.api.post(user, `approve`, body);
       if (res.ok) {
         console.log('ok');
       } else {

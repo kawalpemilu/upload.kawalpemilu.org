@@ -58,7 +58,7 @@ export class UploadService {
     const VALIDATORS = [Validators.pattern(pattern)];
     const group = {};
     for (const p of PILPRES_FORM.concat(PILEG_FORM)) {
-      group[p.form] = ['', VALIDATORS];
+      group[p.form] = [null, VALIDATORS];
       if (!SUM_KEY[p.form]) {
         console.error('Invalid form ctrl name:', p.form);
       }

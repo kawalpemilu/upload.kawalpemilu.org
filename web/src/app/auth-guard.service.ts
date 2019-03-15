@@ -21,6 +21,14 @@ export class AuthGuardService implements CanActivate {
         if (relawan) {
           if (relawan.profile.link) {
             if ((relawan.profile.role || 0) >= (route.data.role || 0)) {
+              if (route.data.depth) {
+                if (relawan.depth) {
+                  return true;
+                }
+                console.log('No refferal ', relawan.depth, route.data.depth);
+                this.router.navigate(['/f']);
+                return false;
+              }
               return true;
             }
             console.log('No access ', relawan.profile.role, route.data.role);

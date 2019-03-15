@@ -1,102 +1,113 @@
-<table #tbl style="margin-bottom: 15px" [style.min-height]="HEIGHT">
-  <tbody *ngIf="(upsert$ | async) as u">
-    <tr>
-      <td align="right" style="padding: 5px">
-        <img [src]="gsu(u.data.url, 1240)" width="400" alt="thumbnail" />
-        <br />
-        Foto by:
-        <app-orang [profile]="u.uploader" [activity]="true"></app-orang>
-        <app-meta [meta]="u.meta"></app-meta>
-      </td>
-      <td valign="top" width="100%">
-        <ng-template #done>
-          <pre>
-<ng-container *ngFor="let p of PILPRES_FORM">{{ p.label }}:  {{ u.data.sum[p.form]}}
-</ng-container>
-<ng-container *ngFor="let p of PILEG_FORM">{{ p.label }}:  {{ u.data.sum[p.form]}}
-</ng-container>
-</pre>
-          <p>
-            Dicek oleh:
-            <app-orang [profile]="u.reviewer" [activity]="true"></app-orang>
-          </p>
-        </ng-template>
+<ng-container *ngIf="(userService.relawan$ | async) as r">
+  <ng-container *ngIf="r.profile.role >= USER_ROLE.MODERATOR">
+    <ng-template #digitize>
+      <button
+        mat-raised-button
+        color="warn"
+        (click)="setTps()"
+        [disabled]="(tps$ | async)?.images"
+      >
+        Digitize
+      </button>
+    </ng-template>
 
-        <ng-container *ngIf="u.data.sum.error || !u.reviewer; else done">
-          <p *ngIf="u.data.sum.error" style="background-color: #FDD">
-            Kesalahan dilaporkan oleh:<br />
-            <app-orang [profile]="u.reporter" [activity]="true"></app-orang>
-          </p>
+    <table *ngIf="(tps$ | async) as tps; else digitize">
+      <tr>
+        <td style="padding: 5px">
+          <ng-container *ngFor="let imageId of Object.keys(tps.images)">
+            <ng-container *ngIf="tps.images[imageId] as t">
+              <app-thumbnail
+                [url]="t.url"
+                [linkSize]="1280"
+                [srcSize]="400"
+              ></app-thumbnail>
+              <br />
+              Foto by:
+              <app-orang [profile]="t.uploader" [activity]="true"></app-orang>
+              <app-meta [meta]="t.meta"></app-meta>
 
-          <form [formGroup]="formGroup">
-            <p>
-              Masukkan jumlah suara (pada masa uji-coba ini, silahkan masukkan
-              angka random):
-            </p>
-            <ng-container *ngFor="let p of PILPRES_FORM">
-              <mat-form-field style="width: 50px">
-                <input
-                  matInput
-                  autocomplete="off"
-                  class="suara"
-                  placeholder="{{ p.form }}"
-                  formControlName="{{ p.form }}"
-                  type="number"
-                />
-              </mat-form-field>
-              &nbsp;
-              <!-- <span *ngIf="getError(p.form) as error" class="alert">
-                {{ error }}
-              </span> -->
+              <form [formGroup]="formGroup">
+                <p>
+                  Masukkan jumlah suara (pada masa uji-coba ini, silahkan
+                  masukkan angka random):
+                </p>
+                <ng-container *ngFor="let p of PILPRES_FORM">
+                  <mat-form-field style="width: 50px">
+                    <input
+                      matInput
+                      autocomplete="off"
+                      class="suara"
+                      placeholder="{{ p.form }}"
+                      formControlName="{{ p.form }}"
+                      type="number"
+                    />
+                  </mat-form-field>
+                  &nbsp;
+                  <!-- <span *ngIf="getError(p.form) as error" class="alert">
+                      {{ error }}
+                    </span> -->
+                </ng-container>
+                <br />
+
+                <ng-container *ngFor="let p of PILEG_FORM; let i = index">
+                  <mat-form-field style="width: 50px">
+                    <input
+                      matInput
+                      autocomplete="off"
+                      placeholder="{{ p.form }}"
+                      formControlName="{{ p.form }}"
+                      type="number"
+                    />
+                  </mat-form-field>
+                  &nbsp;
+                  <!-- <span *ngIf="getError(p.form) as error" class="alert">
+                              {{ error }}
+                            </span> -->
+                  <br *ngIf="(i + 1) % 4 == 0" />
+                </ng-container>
+
+                <br />
+
+                <button
+                  type="submit"
+                  [disabled]="formGroup.invalid || isLoading"
+                  mat-raised-button
+                  color="primary"
+                  (click)="approve(r.auth, imageId)"
+                >
+                  Approve
+                </button>
+
+                <!-- <p *ngIf="u.deleted; else decide">
+                  Foto telah ditolak.
+                </p>
+                <ng-template #decide>
+
+                  &nbsp;
+                  <button
+                    mat-raised-button
+                    color="warn"
+                    (click)="approve(u, true)"
+                    [disabled]="isLoading"
+                  >
+                    Reject
+                  </button>
+                </ng-template> -->
+              </form>
+              <!-- <ng-container *ngIf="u.data.sum.error || !u.reviewer; else done">
+                <p *ngIf="u.data.sum.error" style="background-color: #FDD">
+                  Kesalahan dilaporkan oleh:<br />
+                  <app-orang
+                    [profile]="u.reporter"
+                    [activity]="true"
+                  ></app-orang>
+                </p>
+              </ng-container> -->
             </ng-container>
-            <br />
-
-            <ng-container *ngFor="let p of PILEG_FORM; let i = index">
-              <mat-form-field style="width: 50px">
-                <input
-                  matInput
-                  autocomplete="off"
-                  placeholder="{{ p.form }}"
-                  formControlName="{{ p.form }}"
-                  type="number"
-                />
-              </mat-form-field>
-              &nbsp;
-              <!-- <span *ngIf="getError(p.form) as error" class="alert">
-                        {{ error }}
-                      </span> -->
-              <br *ngIf="(i+1) % 4 == 0" />
-            </ng-container>
-
-            <br />
-
-            <p *ngIf="u.deleted; else decide">
-              Foto telah ditolak.
-            </p>
-            <ng-template #decide>
-              <button
-                type="submit"
-                [disabled]="formGroup.invalid || isLoading"
-                mat-raised-button
-                color="primary"
-                (click)="approve(u, false)"
-              >
-                Approve
-              </button>
-
-              &nbsp;
-              <button
-                mat-raised-button
-                color="warn"
-                (click)="approve(u, true)"
-                [disabled]="isLoading"
-              >
-                Reject
-              </button>
-            </ng-template>
-          </form>
-        </ng-container>
-      </td>
-    </tr>
-  </tbody>
-</table>
+          </ng-container>
+          <pre>{{ tps | json }}</pre>
+        </td>
+      </tr>
+    </table>
+  </ng-container>
+</ng-container>

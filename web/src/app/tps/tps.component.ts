@@ -42,7 +42,6 @@ export class TpsComponent implements OnInit {
       distinctUntilChanged(),
       switchMap(id => this.hie.get$(id)),
       map((state: State) => {
-        state.numPending = 0;
         state.tpsList = [];
         state.children.forEach(arr => {
           const t: Tps = {
@@ -51,8 +50,6 @@ export class TpsComponent implements OnInit {
             perempuan: arr[2],
             agg: state.data[arr[0]]
           };
-          state.numPending +=
-            (t.agg && (t.agg.sum.pending || t.agg.sum.error)) || 0;
           state.tpsList.push(t);
         });
         return state;

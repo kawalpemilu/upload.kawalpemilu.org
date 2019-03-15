@@ -105,26 +105,29 @@
     <p></p>
 
     <table border="1" cellspacing="0" cellpadding="5" width="400">
-      <tr>
-        <th width="40">#</th>
-        <th width="125">Foto</th>
-        <th width="300">Detil</th>
-      </tr>
-      <tr *ngFor="let u of relawan.uploads; let i = index">
-        <th>
-          {{ relawan.numUploads - i }}
-        </th>
-        <td align="center">
-          <app-thumbnail [url]="u.data.url"></app-thumbnail><br />
-        </td>
-        <td>
-          {{ u.data.updateTs | date: 'medium' }}<br />
-          <app-hie-link [id]="u.kelId" [name]="u.kelName"></app-hie-link><br />
-          TPS: <b>#{{ u.tpsNo }}</b
-          ><br />
-          <app-meta [meta]="u.meta"></app-meta>
-        </td>
-      </tr>
+      <tbody *ngIf="(relawanPhotos$ | async) as relawanPhotos">
+        <tr>
+          <th width="40">#</th>
+          <th width="125">Foto</th>
+          <th width="300">Detil</th>
+        </tr>
+        <tr *ngFor="let u of relawanPhotos.uploads; let i = index">
+          <th>
+            {{ relawanPhotos.count - i }}
+          </th>
+          <td align="center">
+            <app-thumbnail [url]="u.url"></app-thumbnail><br />
+          </td>
+          <td>
+            {{ u.ts | date: 'medium' }}<br />
+            <app-hie-link [id]="u.kelId" [name]="u.kelName"></app-hie-link
+            ><br />
+            TPS: <b>#{{ u.tpsNo }}</b
+            ><br />
+            <app-meta [meta]="u.meta"></app-meta>
+          </td>
+        </tr>
+      </tbody>
     </table>
   </ng-container>
 </ng-container>

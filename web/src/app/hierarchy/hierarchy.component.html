@@ -26,8 +26,8 @@
         TOTAL ({{ state.children.length }}) &nbsp;
       </th>
       <th class="paslon1">
-        {{ sum(state, 'tidakSah') | number }} / {{ sumTps(state) | number }} =
-        {{ sum(state, 'tidakSah') / sumTps(state) | number: '1.0-1' }}%
+        {{ sum(state, 'cakupan') | number }} / {{ sumTps(state) | number }} =
+        {{ sum(state, 'cakupan') / sumTps(state) | number: '1.0-1' }}%
       </th>
     </tr>
   </tfoot>
