@@ -1,20 +1,35 @@
-<h2>Tes Upload Foto untuk menjaga TPS</h2>
+<h2>Mari Tes Upload Foto</h2>
 
 <p>
-  Tanggal 17 April 2019, setelah penghitungan suara selesai, Anda diharapkan
-  untuk memfoto hasil penghitungan suara dan mengupload foto-foto tersebut ke
-  situs ini. [TODO: tambahin link ke tutorial HitungFotoUpload]
+  Sekarang adalah masa uji coba. Supaya kamu nggak gagap teknologi (gaptek) di
+  hari-H, mari coba sistemnya sekarang. Dengan menguji coba, kamu jadi tahu
+  lokasi TPS yang akan kamu kawal dan kami pun jadi tahu bahwa TPS tersebut
+  sudah akan terkawal di hari-H.
 </p>
 
 <p>
-  Sekarang adalah masa uji coba untuk Anda latihan mengupload foto dan menguji
-  sistem. Silakan pilih TPS yang akan Anda jaga dan upload foto di TPS tersebut
-  untuk memastikan ponsel Anda dapat mengupload foto dengan lancar:
+  Yuk kita coba. Caranya:
 </p>
 
 <ul>
-  <li>Semua tes foto akan dihapus pada tanggal 16 April 2019.</li>
-  <li>Gunakan browser Chrome atau Safari untuk mengupload foto.</li>
+  <li>Temukan lokasi TPS di kelurahan tempat kamu berdomisili</li>
+
+  <li>
+    Ambil beberapa foto dengan ponsel kamu. Tapi ambilnya foto netral ya, jangan
+    hal-hal yang terkait dengan kampanye. Foto-foto yang nggak netral atau nggak
+    pantas untuk ditunjukkan ke publik tidak akan di-approve.
+  </li>
+
+  <li>
+    Setelah koneksi internet stabil, baru deh masuk ke situs ini dengan browser
+    Chrome atau Safari untuk upload semua foto satu per satu.
+  </li>
+
+  <li>
+    Lewat uji coba ini, jika nanti pada hari-H kamu ingin upload banyak foto
+    dari TPS yang berbeda, misalnya, kamu sudah terbiasa dengan cara kerja situs
+    ini.
+  </li>
 </ul>
 
 <p>
@@ -23,8 +38,26 @@
   </a>
 </p>
 
+<p>
+  Semua foto tes akan dihapus pada tanggal 16 April 2019.
+</p>
+
+<p>
+  Pada tanggal <b>17 April 2019</b>, setelah penghitungan suara selesai, kamu
+  diharapkan kembali ke TPS dan memfoto Formulir C1 Plano. Biasanya, formulir
+  ini dipajang di papan besar seperti
+  <a href="http://upload.kawalpemilu.org/assets/contoh.jpeg" target="_blank"
+    >contoh foto ini</a
+  >. Setelah kamu memfoto Formulir C1 Plano, upload deh foto tersebut ke situs
+  ini.
+</p>
+
 <ng-container *ngIf="(photos$ | async) as photos">
   <ng-container *ngIf="photos.length > 0">
+    <p class="tips">
+      <b>Tips:</b> klik nama kelurahan di bawah untuk meng-upload foto lain di
+      kelurahan yang sama.
+    </p>
     <table border="1" cellpadding="5" cellspacing="0">
       <tr bgcolor="lightgray" height="30">
         <th width="120">Lokasi TPS</th>

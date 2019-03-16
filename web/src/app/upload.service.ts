@@ -7,11 +7,9 @@ import {
   AngularFireUploadTask
 } from '@angular/fire/storage';
 import { autoId, ImageMetadata, UploadRequest } from 'shared';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ApiService } from './api.service';
 import { User } from 'firebase';
-import { BehaviorSubject, combineLatest } from 'rxjs';
-import { startWith } from 'rxjs/operators';
+import { BehaviorSubject} from 'rxjs';
 
 export interface UploadStatus {
   imageId: string;
@@ -27,7 +25,7 @@ export interface UploadStatus {
   imgURL: string | ArrayBuffer;
   metadata: ImageMetadata;
 
-  done: Promise<void>;
+  done: boolean;
   uploadTs: number;
 }
 
@@ -85,10 +83,10 @@ export class UploadService {
       task: this.afs.upload(filePath, file),
       imgURL,
       metadata,
-      done: null,
+      done: false,
       uploadTs: Date.now()
     };
-    status.done = status.task.then(async () => {
+    status.task.then(async () => {
       const request: UploadRequest = {
         imageId: status.imageId,
         kelId,
@@ -102,6 +100,7 @@ export class UploadService {
       if (!res.ok) {
         throw new Error(res.error);
       }
+      status.done = true;
     });
     this.status_[imageId] = status;
     this.status$.next(this.status_);

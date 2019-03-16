@@ -22,10 +22,7 @@ const routes: Routes = [
   {
     path: 'c/:code',
     component: RegistrasiComponent,
-    canActivate: [AuthGuardService],
-    data: {
-      depth: 1
-    }
+    canActivate: [AuthGuardService]
   },
   { path: 'foto', component: FotoComponent, canActivate: [AuthGuardService] },
   {

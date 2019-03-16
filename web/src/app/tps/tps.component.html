@@ -82,6 +82,10 @@
           <br />
           <br />
           <button
+            *ngIf="
+              (userService.relawan$ | async)?.profile?.role >=
+              USER_ROLE.MODERATOR
+            "
             mat-raised-button
             color="warn"
             [routerLink]="['/a', state.id, tps.tpsNo, 0]"

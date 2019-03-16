@@ -43,7 +43,6 @@ admin.initializeApp({
 const auth = admin.auth();
 const rtdb = admin.database();
 const fsdb = admin.firestore();
-fsdb.settings({ timestampsInSnapshots: true });
 
 const t2 = Date.now();
 const delay = (ms: number) => new Promise(_ => setTimeout(_, ms));
@@ -133,7 +132,10 @@ function maxRequestPerMinute(n: number) {
 }
 
 const app = express();
+const bodyParser = require('body-parser');
 app.use(require('cors')({ origin: true }));
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 app.use(validateToken());
 app.use(maxRequestPerMinute(30));
 
@@ -146,7 +148,11 @@ function getChildren(cid): Promise<HierarchyNode> {
 const CACHE_TIMEOUT = 1;
 const cache_c: any = {};
 app.get('/api/c/:id', async (req, res) => {
-  const cid = req.params.id;
+  const cid = +req.params.id;
+  if (isNaN(cid)) {
+    return res.json({});
+  }
+
   let c = cache_c[cid];
   res.setHeader('Cache-Control', `max-age=${CACHE_TIMEOUT}`);
   if (c) return res.json(c);
@@ -198,7 +204,9 @@ function populateServingUrl() {
         p.url = meta.v;
         return next();
       }
-      console.info(`Metadata pending ${p.imageId}, #${i}, ${user.uid}`);
+      if (i > 2) {
+        console.info(`Metadata pending ${p.imageId}, #${i}, ${user.uid}`);
+      }
       await delay(i * 1000);
     }
     console.warn(`Metadata missing ${p.imageId}, ${user.uid}`);

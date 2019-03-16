@@ -1,5 +1,5 @@
 <ng-container *ngIf="(userService.relawan$ | async) as relawan">
-  <h2>Ajak Teman Jadi Relawan</h2>
+  <h2>Rekrut Teman Jadi Relawan</h2>
 
   <p>
     Halo,
@@ -7,7 +7,7 @@
   </p>
 
   <ng-template #register>
-    <ng-container *ngIf="(code$ | async) as code">
+    <ng-container *ngIf="(code$ | async) as code; else butuhKode">
       <p>
         <app-orang [profile]="code.issuer"></app-orang>
         mengundang Anda untuk menjadi Relawan.
@@ -23,29 +23,41 @@
       </button>
     </ng-container>
 
+    <ng-template #butuhKode
+      >Anda membutuhkan kode referral untuk mengajak teman menjadi
+      Relawan.</ng-template
+    >
+
     <p style="font-weight: bold; color: red" *ngIf="error">{{ error }}</p>
   </ng-template>
 
   <ng-container *ngIf="relawan.depth > 0; else register">
     <p>
       Relawan KawalPemilu 2019 punya tanggung jawab besar untuk mengawal suara
-      rakyat. Idealnya, kita butuh lebih dari 800.000 Relawan yang terpencar di
-      seluruh kelurahan di Indonesia untuk mengawal TPS masing-masing. Ya, ada
-      800.000+ TPS yang perlu dijaga! Banyak, kan?
+      rakyat. Data yang tertulis di formulir <b>C1 plano</b> adalah data Pemilu
+      paling otentik, karenanya partisipasi publik untuk meng-upload foto C1
+      plano adalah cara paling jitu untuk mengawal suara.
     </p>
     <p>
-      Mulai sekarang sampai tanggal <b>15 April 2019</b>, semua Relawan diminta
-      untuk uji coba <a [routerLink]="['/foto']">upload foto</a> di TPS yang akan
-      dikawal. Dari situ kita akan tahu bahwa TPS tersebut sudah akan terkawal
-      di hari-H. Anda dapat melihat penyebaran Relawan saat ini di
-      <a [routerLink]="['/h', 0]">Cakupan TPS</a>.
+      Idealnya, kita butuh lebih dari 800.000 Relawan yang terpencar di seluruh
+      kelurahan di Indonesia untuk mengawal TPS masing-masing. Ya, ada 800.000
+      TPS yang perlu dijaga! Banyak, kan?
+    </p>
+    <p>
+      Karenanya, ayo rekrut teman-teman kamu jadi Relawan di kelurahan yang
+      <b>belum dikawal</b> (lihat di
+      <a [routerLink]="['/h', 0]">Cakupan TPS</a>) untuk ikut jadi Relawan yang
+      meng-upload foto C1 plano! Jika kamu punya teman Facebook yang bertempat
+      tinggal di kelurahan tersebut, ayo undang mereka dengan memberikan kode
+      referral di bawah:
     </p>
 
     <p>
-      Bantuan Anda untuk merekrut teman-teman Anda menjadi Relawan di kelurahan
-      yang BELUM dikawal sangat diharapkan. Jika Anda memiliki teman Facebook
-      yang bertempat tinggal di kelurahan tersebut, undanglah mereka dengan kode
-      referral di bawah ini:
+      Catatan penting: Mulai sekarang sampai tanggal <b>15 April 2019</b>, semua
+      Relawan diminta untuk uji coba meng-<a [routerLink]="['/foto']"
+        >upload foto</a
+      >
+      di area sekitar TPS yang akan dikawal.
     </p>
 
     <form [formGroup]="formGroup">

@@ -14,6 +14,7 @@
   },
   "main": "lib/index.js",
   "dependencies": {
+    "body-parser": "^1.18.3",
     "cors": "^2.8.5",
     "csv-parse": "^4.3.4",
     "express": "^4.16.4",
