@@ -15,17 +15,17 @@
   "main": "lib/index.js",
   "dependencies": {
     "cors": "^2.8.5",
-    "csv-parse": "^4.3.3",
+    "csv-parse": "^4.3.4",
     "express": "^4.16.4",
-    "firebase-admin": "~6.0.0",
-    "firebase-functions": "^2.1.0",
+    "firebase-admin": "~7.0.0",
+    "firebase-functions": "^2.2.0",
     "request": "^2.88.0",
-    "request-promise": "^4.2.2",
+    "request-promise": "^4.2.4",
     "shared": "file:shared-1.0.0.tgz"
   },
   "devDependencies": {
-    "tslint": "~5.8.0",
-    "typescript": "~2.8.3"
+    "tslint": "~5.14.0",
+    "typescript": "^3.1.6"
   },
   "private": true
 }

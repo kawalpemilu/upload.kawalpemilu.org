@@ -77,7 +77,7 @@
                   [disabled]="formGroup.invalid || isLoading"
                   mat-raised-button
                   color="primary"
-                  (click)="approve(relawan.auth)"
+                  (click)="approve(relawan.auth, IMAGE_STATUS.approved)"
                 >
                   Submit
                 </button>
@@ -130,10 +130,17 @@
           <mat-icon>arrow_back</mat-icon>
         </button>
         &nbsp;
-        <button mat-raised-button color="warn" (click)="approve()">
-          Delete
-          <mat-icon>delete</mat-icon>
-        </button>
+
+        <ng-container *ngIf="(userService.relawan$ | async) as relawan">
+          <button
+            mat-raised-button
+            color="warn"
+            (click)="approve(relawan.auth, IMAGE_STATUS.deleted)"
+          >
+            Delete
+            <mat-icon>delete</mat-icon>
+          </button>
+        </ng-container>
       </p>
       <!-- <pre>{{ tps | json }}</pre> -->
     </td>

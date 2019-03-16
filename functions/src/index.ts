@@ -29,7 +29,8 @@ import {
   RelawanPhotos,
   UpsertProfile,
   TpsData,
-  ApproveRequest
+  ApproveRequest,
+  IMAGE_STATUS
 } from 'shared';
 
 const t1 = Date.now();
@@ -273,7 +274,7 @@ app.post(
         uploader,
         reviewer: null,
         reporter: null,
-        status: 'new',
+        status: IMAGE_STATUS.new,
         sum: {} as SumMap,
         url: p.url,
         meta: p.meta
@@ -305,16 +306,24 @@ function populateApprove() {
     const user = req.user as admin.auth.DecodedIdToken;
     const b = req.body as ApproveRequest;
 
-    const a = { sum: {} as SumMap, imageId: b.imageId } as ApproveRequest;
-    if (!isValidImageId(a.imageId)) {
-      console.warn(`Invalid imageId ${a.imageId} for user ${user.uid}`);
+    const a = {} as ApproveRequest;
+    if (!isValidImageId(b.imageId)) {
+      console.warn(`Invalid imageId ${b.imageId} for user ${user.uid}`);
       return res.json({ error: 'Invalid imageId' });
     }
+    a.imageId = b.imageId;
+
+    if (!IMAGE_STATUS[b.status]) {
+      console.warn(`Invalid image status ${b.status} for ${user.uid}`);
+      return res.json({ error: 'Invalid status' });
+    }
+    a.status = b.status;
 
     if (!b || !b.sum) {
       console.warn(`No sum ${user.uid}`);
       return res.json({ error: 'No sum' });
     }
+    a.sum = {} as SumMap;
     for (const key in b.sum) {
       if (!SUM_KEY[key]) {
         console.error(`Sum key invalid ${user.uid}`);
@@ -327,9 +336,6 @@ function populateApprove() {
       }
       a.sum[key] = sum;
     }
-    delete a.sum.cakupan;
-    a.sum.pending = 0;
-    a.sum.error = 0;
     req.parsedBody = a;
     next();
   };
@@ -338,35 +344,66 @@ function populateApprove() {
 app.post('/api/approve', [populateApprove()], async (req: any, res) => {
   const user = req.user as admin.auth.DecodedIdToken;
   const a = req.parsedBody as ApproveRequest;
+  const ua = req.headers['user-agent'];
+  const ip = getIp(req);
 
   const ts = Date.now();
   const uRef = fsdb.doc(FsPath.upserts(a.imageId));
   const rRef = fsdb.doc(FsPath.relawan(user.uid));
   const ok = await fsdb.runTransaction(async t => {
     const r = (await t.get(rRef)).data() as Relawan;
-    if (!r || r.profile.role < USER_ROLE.MODERATOR) {
-      return 'Not Authorized';
-    }
+    if (!r || r.profile.role < USER_ROLE.MODERATOR) 'Not Authorized';
 
     const u = (await t.get(uRef)).data() as Upsert;
-    if (!u) {
-      return 'No Upsert';
-    }
-    u.reviewer = {
-      ...r.profile,
-      ts,
-      ua: req.headers['user-agent'],
-      ip: getIp(req)
-    };
-    u.action = {
-      sum: a.sum,
-      urls: [u.request.url],
-      ts
-    };
+    if (!u) return 'No Upsert';
+
+    const tRef = fsdb.doc(FsPath.tps(u.request.kelId, u.request.tpsNo));
+    const tps = (await t.get(tRef)).data() as TpsData;
+    if (!tps) return 'No TPS';
+
+    const img = tps.images[a.imageId];
+    if (!img) return 'No Image';
+
+    img.status = a.status;
+    img.sum = a.sum;
+
+    u.reviewer = img.reviewer = { ...r.profile, ts, ua, ip };
+    u.action = { sum: {} as SumMap, urls: [], ts: 0 };
     u.done = 0;
 
-    // TODO: update tRef, pRef
+    u.action.sum.cakupan = 0;
+    u.action.sum.pending = 0;
+    u.action.sum.error = 0;
+    u.action.sum.janggal = 0;
+    Object.keys(tps.images)
+      .map(i => tps.images[i])
+      .forEach(i => {
+        if (i.status === IMAGE_STATUS.new) {
+          u.action.sum.cakupan = 1;
+          u.action.sum.pending = 1;
+        } else if (i.status === IMAGE_STATUS.error) {
+          u.action.sum.cakupan = 1;
+          u.action.sum.error = 1;
+        } else if (i.status === IMAGE_STATUS.ignored) {
+          u.action.sum.cakupan = 1;
+        } else if (i.status === IMAGE_STATUS.approved) {
+          u.action.sum.cakupan = 1;
+          u.action.urls.push(i.url);
+          u.action.ts = Math.max(u.action.ts, i.reviewer.ts);
+          for (const key of Object.keys(i.sum)) {
+            if (typeof u.action.sum[key] === 'number') {
+              if (u.action.sum[key] !== i.sum[key]) {
+                u.action.sum.janggal = 1;
+              }
+            } else {
+              u.action.sum[key] = i.sum[key];
+            }
+          }
+        }
+      });
+
     t.update(uRef, u);
+    t.update(tRef, tps);
     return true;
   });
 

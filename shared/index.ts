@@ -22,6 +22,7 @@ export enum SUM_KEY {
   cakupan = 'cakupan',
   pending = 'pending',
   error = 'error',
+  janggal = 'janggal',
 
   // Pileg
   pkb = 'pkb',
@@ -50,6 +51,14 @@ export enum FORM_TYPE {
   pp = 'pp', // Pilpres, Plano
   ds = 'ds', // DPR, Sertifikat
   dp = 'dp' // DPR, Plano
+}
+
+export enum IMAGE_STATUS {
+  new = 'new',
+  ignored = 'ignored',
+  deleted = 'deleted',
+  approved = 'approved',
+  error = 'error'
 }
 
 export type SumMap = { [key in SUM_KEY]: number };
@@ -102,7 +111,7 @@ export interface TpsImage {
   uploader: UpsertProfile;
   reviewer: UpsertProfile;
   reporter: UpsertProfile;
-  status: 'new' | 'ignore' | 'delete' | 'publish' | 'error';
+  status: IMAGE_STATUS;
   sum: SumMap;
   url: string;
   meta: ImageMetadata;
@@ -144,6 +153,7 @@ export interface UploadRequest {
 export interface ApproveRequest {
   imageId: string;
   sum: SumMap;
+  status: IMAGE_STATUS;
 }
 
 export interface HierarchyNode {

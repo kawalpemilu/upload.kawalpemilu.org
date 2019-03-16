@@ -22,6 +22,7 @@ var SUM_KEY;
     SUM_KEY["cakupan"] = "cakupan";
     SUM_KEY["pending"] = "pending";
     SUM_KEY["error"] = "error";
+    SUM_KEY["janggal"] = "janggal";
     // Pileg
     SUM_KEY["pkb"] = "pkb";
     SUM_KEY["ger"] = "ger";
@@ -50,6 +51,14 @@ var FORM_TYPE;
     FORM_TYPE["ds"] = "ds";
     FORM_TYPE["dp"] = "dp"; // DPR, Plano
 })(FORM_TYPE = exports.FORM_TYPE || (exports.FORM_TYPE = {}));
+var IMAGE_STATUS;
+(function (IMAGE_STATUS) {
+    IMAGE_STATUS["new"] = "new";
+    IMAGE_STATUS["ignored"] = "ignored";
+    IMAGE_STATUS["deleted"] = "deleted";
+    IMAGE_STATUS["approved"] = "approved";
+    IMAGE_STATUS["error"] = "error";
+})(IMAGE_STATUS = exports.IMAGE_STATUS || (exports.IMAGE_STATUS = {}));
 function extractImageMetadata(m) {
     var validM = null;
     if (m) {

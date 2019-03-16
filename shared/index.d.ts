@@ -16,6 +16,7 @@ export declare enum SUM_KEY {
     cakupan = "cakupan",
     pending = "pending",
     error = "error",
+    janggal = "janggal",
     pkb = "pkb",
     ger = "ger",
     pdi = "pdi",
@@ -41,6 +42,13 @@ export declare enum FORM_TYPE {
     pp = "pp",
     ds = "ds",
     dp = "dp"
+}
+export declare enum IMAGE_STATUS {
+    new = "new",
+    ignored = "ignored",
+    deleted = "deleted",
+    approved = "approved",
+    error = "error"
 }
 export declare type SumMap = {
     [key in SUM_KEY]: number;
@@ -89,7 +97,7 @@ export interface TpsImage {
     uploader: UpsertProfile;
     reviewer: UpsertProfile;
     reporter: UpsertProfile;
-    status: 'new' | 'ignore' | 'delete' | 'publish' | 'error';
+    status: IMAGE_STATUS;
     sum: SumMap;
     url: string;
     meta: ImageMetadata;
@@ -128,6 +136,7 @@ export interface UploadRequest {
 export interface ApproveRequest {
     imageId: string;
     sum: SumMap;
+    status: IMAGE_STATUS;
 }
 export interface HierarchyNode {
     id: number;

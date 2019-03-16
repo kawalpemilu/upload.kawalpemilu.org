@@ -6,7 +6,8 @@ import {
   ApproveRequest,
   SUM_KEY,
   TpsImage,
-  FORM_TYPE
+  FORM_TYPE,
+  IMAGE_STATUS
 } from 'shared';
 import { switchMap, map, catchError, startWith } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
@@ -119,9 +120,13 @@ export class ApproverComponent implements OnDestroy {
   };
 
   Object = Object;
+  IMAGE_STATUS = IMAGE_STATUS;
   VALIDATORS = [Validators.pattern('^[0-9]{1,3}$')];
 
+  kelId: number;
+  tpsNo: number;
   imageId: string;
+
   tps$: Observable<TpsImage>;
   formGroup: FormGroup;
   formType: FORM_TYPE;
@@ -138,16 +143,16 @@ export class ApproverComponent implements OnDestroy {
     private fsdb: AngularFirestore,
     private api: ApiService,
     private formBuilder: FormBuilder,
-    route: ActivatedRoute,
-    router: Router
+    private router: Router,
+    route: ActivatedRoute
   ) {
     this.tps$ = route.paramMap.pipe(
       switchMap(params => {
-        const kelId = +params.get('kelId');
-        const tpsNo = +params.get('tpsNo');
+        this.kelId = +params.get('kelId');
+        this.tpsNo = +params.get('tpsNo');
         this.imageId = params.get('imageId');
         return this.fsdb
-          .doc<TpsData>(FsPath.tps(kelId, tpsNo))
+          .doc<TpsData>(FsPath.tps(this.kelId, this.tpsNo))
           .valueChanges()
           .pipe(
             map(tps => {
@@ -166,15 +171,16 @@ export class ApproverComponent implements OnDestroy {
                   this.imageId = id;
                 }
               }
-              if (!this.imageId) {
-                router.navigate(['/t', kelId, tpsNo]);
-                return null;
+              if (this.imageId) {
+                router.navigate(['/a', this.kelId, this.tpsNo, this.imageId]);
+              } else {
+                router.navigate(['/t', this.kelId]);
               }
-              return tps.images[this.imageId];
+              return null;
             }),
             catchError(async e => {
               console.error(e);
-              router.navigate(['/t', kelId, tpsNo]);
+              router.navigate(['/t', this.kelId]);
               return null;
             })
           );
@@ -231,7 +237,7 @@ export class ApproverComponent implements OnDestroy {
     }
   }
 
-  async approve(user: User) {
+  async approve(user: User, status: IMAGE_STATUS) {
     this.isLoading = true;
     this.formGroup.disable();
 
@@ -241,7 +247,7 @@ export class ApproverComponent implements OnDestroy {
     }
 
     try {
-      const body: ApproveRequest = { sum, imageId: this.imageId };
+      const body: ApproveRequest = { sum, imageId: this.imageId, status };
       const res: any = await this.api.post(user, `approve`, body);
       if (res.ok) {
         console.log('ok');
@@ -256,6 +262,12 @@ export class ApproverComponent implements OnDestroy {
     this.formGroup.enable();
     this.isLoading = false;
     this.approveStatus = true;
+
+    setTimeout(() => {
+      this.formType = null;
+      this.halaman = null;
+      this.router.navigate(['/a', this.kelId, this.tpsNo, 0]);
+    }, 1000);
   }
 
   getFormFields() {

@@ -52,7 +52,9 @@ async function updateAggregates(kelId: number, tpsNo: number, agg: Aggregate) {
   }
 
   const tpsData = getUpsertData(path[4], path[5]);
-  tpsData.urls = agg.urls;
+  if (agg.urls) {
+    tpsData.urls = agg.urls;
+  }
 
   const delta = getDelta(tpsData, agg);
   for (let i = 0; i + 1 < path.length; i++) {
