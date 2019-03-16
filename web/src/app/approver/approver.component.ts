@@ -9,15 +9,16 @@ import {
   FORM_TYPE,
   IMAGE_STATUS
 } from 'shared';
-import { switchMap, map, catchError, startWith } from 'rxjs/operators';
+import { switchMap, startWith, take } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
-import { Observable, combineLatest, Subscription } from 'rxjs';
+import { combineLatest, Subscription, Subject, Observable } from 'rxjs';
 import { FormGroup, Validators, FormBuilder } from '@angular/forms';
 import { ApiService } from '../api.service';
 import { UserService } from '../user.service';
 import { User } from 'firebase';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
+import { HierarchyService } from '../hierarchy.service';
 
 @Component({
   selector: 'app-approver',
@@ -30,24 +31,20 @@ import { Location } from '@angular/common';
       }
 
       .radio-group > mat-radio-button {
-        margin: 5px;
-      }
-
-      .selected-value {
-        margin: 15px 0;
+        margin: 7px;
       }
     `
   ]
 })
 export class ApproverComponent implements OnDestroy {
   LABEL = {
-    [SUM_KEY.jum]: 'Jumlah Pemilih (I.A.4)',
+    [SUM_KEY.jum]: '(I.B.4) # Pengguna Hak Pilih',
     [SUM_KEY.pas1]: 'Suara # 01',
     [SUM_KEY.pas2]: 'Suara # 02',
     [SUM_KEY.sah]: 'Suara Sah',
     [SUM_KEY.tSah]: 'Suara Tidak Sah',
 
-    [SUM_KEY.pJum]: 'Jumlah Pemilih (I.A.4)',
+    [SUM_KEY.pJum]: '(I.B.4) # Pengguna Hak Pilih ',
     [SUM_KEY.pkb]: 'Partai Kebangkitan Bangsa',
     [SUM_KEY.ger]: 'Partai Gerindra',
     [SUM_KEY.pdi]: 'PDI Perjuangan',
@@ -123,19 +120,24 @@ export class ApproverComponent implements OnDestroy {
   IMAGE_STATUS = IMAGE_STATUS;
   VALIDATORS = [Validators.pattern('^[0-9]{1,3}$')];
 
+  // Stays constant after first set.
   kelId: number;
   tpsNo: number;
-  imageId: string;
+  kelName: string;
+  tpsData: TpsData;
 
-  tps$: Observable<TpsImage>;
+  // New TpsImage is emitted when the previous one completes.
+  tps$ = new Subject<TpsImage>();
+
+  // Reset these after digitizing an image.
+  imageId: string;
   formGroup: FormGroup;
   formType: FORM_TYPE;
   halaman: string;
+  approveStatus: boolean;
+  autoSumSub: Subscription;
 
   isLoading = false;
-  approveStatus;
-
-  autoSumSub: Subscription;
 
   constructor(
     public userService: UserService,
@@ -144,48 +146,65 @@ export class ApproverComponent implements OnDestroy {
     private api: ApiService,
     private formBuilder: FormBuilder,
     private router: Router,
-    route: ActivatedRoute
+    route: ActivatedRoute,
+    hie: HierarchyService
   ) {
-    this.tps$ = route.paramMap.pipe(
-      switchMap(params => {
-        this.kelId = +params.get('kelId');
-        this.tpsNo = +params.get('tpsNo');
-        this.imageId = params.get('imageId');
-        return this.fsdb
-          .doc<TpsData>(FsPath.tps(this.kelId, this.tpsNo))
-          .valueChanges()
-          .pipe(
-            map(tps => {
-              if (tps.images[this.imageId]) {
-                return tps.images[this.imageId];
-              }
-              this.imageId = null;
-              this.approveStatus = null;
-              for (const id of Object.keys(tps.images)) {
-                const img = tps.images[id];
-                if (
-                  img.status === 'new' &&
-                  (!this.imageId ||
-                    tps.images[this.imageId].uploader.ts > img.uploader.ts)
-                ) {
-                  this.imageId = id;
-                }
-              }
-              if (this.imageId) {
-                router.navigate(['/a', this.kelId, this.tpsNo, this.imageId]);
-              } else {
-                router.navigate(['/t', this.kelId]);
-              }
-              return null;
-            }),
-            catchError(async e => {
-              console.error(e);
-              router.navigate(['/t', this.kelId]);
-              return null;
-            })
-          );
-      })
-    );
+    route.paramMap
+      .pipe(
+        switchMap(params => {
+          this.kelId = +params.get('kelId');
+          this.tpsNo = +params.get('tpsNo');
+          this.imageId = params.get('imageId');
+          hie
+            .get$(this.kelId)
+            .pipe(take(1))
+            .toPromise()
+            .then(node => (this.kelName = node.name));
+          return this.fsdb
+            .doc<TpsData>(FsPath.tps(this.kelId, this.tpsNo))
+            .valueChanges()
+            .pipe(take(1));
+        })
+      )
+      .subscribe(tpsData => {
+        this.tpsData = tpsData;
+        const img = this.tpsData.images[this.imageId];
+        if (img) {
+          this.tps$.next(img);
+        } else {
+          this.digitizeNextImage();
+        }
+      });
+  }
+
+  digitizeNextImage() {
+    this.reset();
+    let earliest: TpsImage = null;
+    for (const id of Object.keys(this.tpsData.images)) {
+      const img = this.tpsData.images[id];
+      if (
+        img.status === IMAGE_STATUS.new &&
+        (!this.imageId || earliest.uploader.ts > img.uploader.ts)
+      ) {
+        this.imageId = id;
+        earliest = img;
+      }
+    }
+
+    if (this.imageId) {
+      this.tps$.next(earliest);
+    } else {
+      this.router.navigate(['/t', this.kelId]);
+    }
+  }
+
+  reset() {
+    this.imageId = null;
+    this.formGroup = null;
+    this.formType = null;
+    this.halaman = null;
+    this.approveStatus = null;
+    this.tryUnsubscribe();
   }
 
   ngOnDestroy() {
@@ -200,12 +219,10 @@ export class ApproverComponent implements OnDestroy {
 
   setHalaman(hal: string) {
     this.halaman = hal;
-
     const group = {};
     for (const key of this.LEMBAR[this.formType][hal]) {
       group[key] = [null, this.VALIDATORS];
     }
-    console.log('grp', group);
     this.formGroup = this.formBuilder.group(group);
     this.trySubscribe();
 
@@ -251,6 +268,7 @@ export class ApproverComponent implements OnDestroy {
       const res: any = await this.api.post(user, `approve`, body);
       if (res.ok) {
         console.log('ok');
+        this.tpsData.images[this.imageId].status = status;
       } else {
         console.error(res);
         alert(JSON.stringify(res));
@@ -263,11 +281,7 @@ export class ApproverComponent implements OnDestroy {
     this.isLoading = false;
     this.approveStatus = true;
 
-    setTimeout(() => {
-      this.formType = null;
-      this.halaman = null;
-      this.router.navigate(['/a', this.kelId, this.tpsNo, 0]);
-    }, 1000);
+    setTimeout(this.digitizeNextImage.bind(this), 1000);
   }
 
   getFormFields() {

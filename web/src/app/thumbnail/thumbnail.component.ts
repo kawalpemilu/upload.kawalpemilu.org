@@ -5,7 +5,11 @@ import { getServingUrl } from 'shared';
   selector: 'app-thumbnail',
   template: `
     <a [href]="link" target="_blank">
-      <img [src]="src" [style.width]="width" alt="thumbnail"
+      <img
+        [src]="src"
+        [style.maxWidth]="maxWidth"
+        [style.maxHeight]="maxHeight"
+        alt="thumbnail"
     /></a>
   `,
   styles: ['']
@@ -14,7 +18,8 @@ export class ThumbnailComponent implements OnInit {
   @Input() url = '';
   @Input() srcSize = 100;
   @Input() linkSize = 980;
-  @Input() width = '';
+  @Input() maxWidth = '';
+  @Input() maxHeight = '';
 
   src = '';
   link = '';
@@ -22,9 +27,6 @@ export class ThumbnailComponent implements OnInit {
   constructor() {}
 
   ngOnInit() {
-    if (!this.width) {
-      this.width = this.srcSize + 'px';
-    }
     this.src = getServingUrl(this.url, this.srcSize);
     this.link = getServingUrl(this.url, this.linkSize);
   }

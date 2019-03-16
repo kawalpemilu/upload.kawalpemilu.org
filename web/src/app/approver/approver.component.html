@@ -1,7 +1,5 @@
 <table
-  *ngIf="(tps$ | async) as tps; else kosong"
-  border="1"
-  width="100%"
+  *ngIf="(tps$ | async) as tps; else loading"
   cellpadding="0"
   cellspacing="0"
 >
@@ -11,14 +9,14 @@
         [url]="tps.url"
         [linkSize]="3000"
         [srcSize]="1024"
-        [width]="'100%'"
+        [maxWidth]="'100%'"
       ></app-thumbnail>
       <br />
       Foto by:
       <app-orang [profile]="tps.uploader" [activity]="true"></app-orang>
       <app-meta [meta]="tps.meta"></app-meta>
     </td>
-    <td width="225" style="padding: 5px" valign="top">
+    <td width="190" style="padding: 5px" valign="top">
       <ng-container *ngIf="tps.status === 'error'">
         <p style="background-color: #FDD">
           Kesalahan dilaporkan oleh:<br />
@@ -26,8 +24,11 @@
         </p>
       </ng-container>
 
-      KELURAHAN NAME<br />
-      TPS # XXX<br />
+      <app-hie-link [id]="kelId" [name]="kelName"></app-hie-link>
+
+      <br />
+      TPS # <b>{{ tpsNo }}</b
+      ><br />
 
       <ng-container *ngIf="formType; else pilihTipe">
         <p>
@@ -47,7 +48,7 @@
 
           <form [formGroup]="formGroup">
             <ng-container *ngFor="let field of LEMBAR[formType][halaman]">
-              <mat-form-field style="width: 200px">
+              <mat-form-field style="width: 180px">
                 <input
                   matInput
                   autocomplete="off"
@@ -90,13 +91,14 @@
       <ng-template #pilihLembar>
         <h3>Pilih Lembar</h3>
 
-        <p style="line-height: 50px">
-          <ng-container *ngFor="let hal of getHalaman()">
-            <button mat-raised-button color="primary" (click)="setHalaman(hal)">
-              {{ hal }}</button
-            >&nbsp;
-          </ng-container>
-        </p>
+        <mat-radio-group
+          class="radio-group"
+          (change)="setHalaman($event.value)"
+        >
+          <mat-radio-button *ngFor="let hal of getHalaman()" [value]="hal">
+            Lembar {{ hal }}
+          </mat-radio-button>
+        </mat-radio-group>
       </ng-template>
 
       <ng-template #pilihTipe>
@@ -107,16 +109,16 @@
           (change)="setFormType($event.value)"
         >
           <mat-radio-button [value]="FORM_TYPE.pp">
-            Pilpres - Plano
+            Pilpres-Plano
           </mat-radio-button>
           <mat-radio-button [value]="FORM_TYPE.ps">
-            Pilpres - Sertifikat
+            Pilpres-Sertifikat
           </mat-radio-button>
           <mat-radio-button [value]="FORM_TYPE.dp">
-            DPR - Plano
+            DPR-Plano
           </mat-radio-button>
           <mat-radio-button [value]="FORM_TYPE.ds">
-            DPR - Sertifikat
+            DPR-Sertifikat
           </mat-radio-button>
         </mat-radio-group>
       </ng-template>
@@ -125,7 +127,7 @@
       <p>
         <mat-divider></mat-divider>
       </p>
-      <p>
+      <p align="center">
         <button mat-raised-button color="primary" (click)="location.back()">
           <mat-icon>arrow_back</mat-icon>
         </button>
@@ -137,7 +139,6 @@
             color="warn"
             (click)="approve(relawan.auth, IMAGE_STATUS.deleted)"
           >
-            Delete
             <mat-icon>delete</mat-icon>
           </button>
         </ng-container>
@@ -147,4 +148,8 @@
   </tr>
 </table>
 
-<ng-template #kosong> <p>Tidak ada foto disini</p></ng-template>
+<ng-template #loading>
+  <p>
+    <mat-spinner></mat-spinner>
+  </p>
+</ng-template>
