@@ -11,7 +11,7 @@ import {
 } from 'shared';
 import { switchMap, startWith, take } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
-import { combineLatest, Subscription, Subject, Observable } from 'rxjs';
+import { combineLatest, Subscription, Subject } from 'rxjs';
 import { FormGroup, Validators, FormBuilder } from '@angular/forms';
 import { ApiService } from '../api.service';
 import { UserService } from '../user.service';
@@ -256,11 +256,12 @@ export class ApproverComponent implements OnDestroy {
 
   async approve(user: User, status: IMAGE_STATUS) {
     this.isLoading = true;
-    this.formGroup.disable();
-
     const sum = {} as SumMap;
-    for (const key of this.LEMBAR[this.formType][this.halaman]) {
-      sum[key] = this.formGroup.get(key).value;
+    if (this.formGroup) {
+      this.formGroup.disable();
+      for (const key of this.LEMBAR[this.formType][this.halaman]) {
+        sum[key] = this.formGroup.get(key).value;
+      }
     }
 
     try {
@@ -269,6 +270,7 @@ export class ApproverComponent implements OnDestroy {
       if (res.ok) {
         console.log('ok');
         this.tpsData.images[this.imageId].status = status;
+        setTimeout(this.digitizeNextImage.bind(this), 1000);
       } else {
         console.error(res);
         alert(JSON.stringify(res));
@@ -277,11 +279,12 @@ export class ApproverComponent implements OnDestroy {
       console.error(e.message);
       alert(JSON.stringify(e.message));
     }
-    this.formGroup.enable();
+
+    if (this.formGroup) {
+      this.formGroup.enable();
+    }
     this.isLoading = false;
     this.approveStatus = true;
-
-    setTimeout(this.digitizeNextImage.bind(this), 1000);
   }
 
   getFormFields() {

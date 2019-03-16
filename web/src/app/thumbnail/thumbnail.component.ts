@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges } from '@angular/core';
 import { getServingUrl } from 'shared';
 
 @Component({
@@ -14,7 +14,7 @@ import { getServingUrl } from 'shared';
   `,
   styles: ['']
 })
-export class ThumbnailComponent implements OnInit {
+export class ThumbnailComponent implements OnInit, OnChanges {
   @Input() url = '';
   @Input() srcSize = 100;
   @Input() linkSize = 980;
@@ -27,6 +27,10 @@ export class ThumbnailComponent implements OnInit {
   constructor() {}
 
   ngOnInit() {
+    this.ngOnChanges();
+  }
+
+  ngOnChanges() {
     this.src = getServingUrl(this.url, this.srcSize);
     this.link = getServingUrl(this.url, this.linkSize);
   }
