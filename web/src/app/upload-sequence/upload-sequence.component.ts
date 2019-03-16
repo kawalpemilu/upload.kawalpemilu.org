@@ -60,7 +60,7 @@ export class UploadSequenceComponent {
     }
     return this.uploadService
       .upload(this.userService.user, this.kelId, this.kelName, this.tpsNo, file)
-      .then(() => this.router.navigate(['/f']))
+      .then(() => this.router.navigate(['/foto']))
       .catch(console.error);
   }
 }

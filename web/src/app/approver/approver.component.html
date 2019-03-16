@@ -1,113 +1,143 @@
-<ng-container *ngIf="(userService.relawan$ | async) as r">
-  <ng-container *ngIf="r.profile.role >= USER_ROLE.MODERATOR">
-    <ng-template #digitize>
-      <button
-        mat-raised-button
-        color="warn"
-        (click)="setTps()"
-        [disabled]="(tps$ | async)?.images"
-      >
-        Digitize
-      </button>
-    </ng-template>
+<table
+  *ngIf="(tps$ | async) as tps; else kosong"
+  border="1"
+  width="100%"
+  cellpadding="0"
+  cellspacing="0"
+>
+  <tr>
+    <td align="right" valign="top">
+      <app-thumbnail
+        [url]="tps.url"
+        [linkSize]="3000"
+        [srcSize]="1024"
+        [width]="'100%'"
+      ></app-thumbnail>
+      <br />
+      Foto by:
+      <app-orang [profile]="tps.uploader" [activity]="true"></app-orang>
+      <app-meta [meta]="tps.meta"></app-meta>
+    </td>
+    <td width="225" style="padding: 5px" valign="top">
+      <ng-container *ngIf="tps.status === 'error'">
+        <p style="background-color: #FDD">
+          Kesalahan dilaporkan oleh:<br />
+          <app-orang [profile]="tps.reporter" [activity]="true"></app-orang>
+        </p>
+      </ng-container>
 
-    <table *ngIf="(tps$ | async) as tps; else digitize">
-      <tr>
-        <td style="padding: 5px">
-          <ng-container *ngFor="let imageId of Object.keys(tps.images)">
-            <ng-container *ngIf="tps.images[imageId] as t">
-              <app-thumbnail
-                [url]="t.url"
-                [linkSize]="1280"
-                [srcSize]="400"
-              ></app-thumbnail>
+      KELURAHAN NAME<br />
+      TPS # XXX<br />
+
+      <ng-container *ngIf="formType; else pilihTipe">
+        <p>
+          <b>{{ FORM_LABEL[formType] }}</b> &nbsp;
+          <button color="warn" (click)="formType = null">
+            <mat-icon>clear</mat-icon>
+          </button>
+        </p>
+
+        <ng-container *ngIf="halaman; else pilihLembar">
+          <p>
+            Lembar: <b>{{ halaman }}</b> &nbsp;
+            <button color="warn" (click)="halaman = null">
+              <mat-icon>clear</mat-icon>
+            </button>
+          </p>
+
+          <form [formGroup]="formGroup">
+            <ng-container *ngFor="let field of LEMBAR[formType][halaman]">
+              <mat-form-field style="width: 200px">
+                <input
+                  matInput
+                  autocomplete="off"
+                  placeholder="{{ LABEL[field] }}"
+                  formControlName="{{ field }}"
+                  type="number"
+                  required
+                />
+              </mat-form-field>
+              <!-- <span *ngIf="getError(p.form) as error" class="alert">
+                {{ error }}
+              </span> -->
               <br />
-              Foto by:
-              <app-orang [profile]="t.uploader" [activity]="true"></app-orang>
-              <app-meta [meta]="t.meta"></app-meta>
+            </ng-container>
 
-              <form [formGroup]="formGroup">
-                <p>
-                  Masukkan jumlah suara (pada masa uji-coba ini, silahkan
-                  masukkan angka random):
-                </p>
-                <ng-container *ngFor="let p of PILPRES_FORM">
-                  <mat-form-field style="width: 50px">
-                    <input
-                      matInput
-                      autocomplete="off"
-                      class="suara"
-                      placeholder="{{ p.form }}"
-                      formControlName="{{ p.form }}"
-                      type="number"
-                    />
-                  </mat-form-field>
-                  &nbsp;
-                  <!-- <span *ngIf="getError(p.form) as error" class="alert">
-                      {{ error }}
-                    </span> -->
-                </ng-container>
-                <br />
-
-                <ng-container *ngFor="let p of PILEG_FORM; let i = index">
-                  <mat-form-field style="width: 50px">
-                    <input
-                      matInput
-                      autocomplete="off"
-                      placeholder="{{ p.form }}"
-                      formControlName="{{ p.form }}"
-                      type="number"
-                    />
-                  </mat-form-field>
-                  &nbsp;
-                  <!-- <span *ngIf="getError(p.form) as error" class="alert">
-                              {{ error }}
-                            </span> -->
-                  <br *ngIf="(i + 1) % 4 == 0" />
-                </ng-container>
-
-                <br />
-
+            <p *ngIf="(userService.relawan$ | async) as relawan">
+              <span *ngIf="approveStatus; else bisaApprove">
+                Approved by:<br />
+                <app-orang
+                  [profile]="relawan.profile"
+                  [activity]="true"
+                ></app-orang>
+              </span>
+              <ng-template #bisaApprove>
                 <button
                   type="submit"
                   [disabled]="formGroup.invalid || isLoading"
                   mat-raised-button
                   color="primary"
-                  (click)="approve(r.auth, imageId)"
+                  (click)="approve(relawan.auth)"
                 >
-                  Approve
+                  Submit
                 </button>
+              </ng-template>
+            </p>
+          </form>
+        </ng-container>
+      </ng-container>
 
-                <!-- <p *ngIf="u.deleted; else decide">
-                  Foto telah ditolak.
-                </p>
-                <ng-template #decide>
+      <ng-template #pilihLembar>
+        <h3>Pilih Lembar</h3>
 
-                  &nbsp;
-                  <button
-                    mat-raised-button
-                    color="warn"
-                    (click)="approve(u, true)"
-                    [disabled]="isLoading"
-                  >
-                    Reject
-                  </button>
-                </ng-template> -->
-              </form>
-              <!-- <ng-container *ngIf="u.data.sum.error || !u.reviewer; else done">
-                <p *ngIf="u.data.sum.error" style="background-color: #FDD">
-                  Kesalahan dilaporkan oleh:<br />
-                  <app-orang
-                    [profile]="u.reporter"
-                    [activity]="true"
-                  ></app-orang>
-                </p>
-              </ng-container> -->
-            </ng-container>
+        <p style="line-height: 50px">
+          <ng-container *ngFor="let hal of getHalaman()">
+            <button mat-raised-button color="primary" (click)="setHalaman(hal)">
+              {{ hal }}</button
+            >&nbsp;
           </ng-container>
-          <pre>{{ tps | json }}</pre>
-        </td>
-      </tr>
-    </table>
-  </ng-container>
-</ng-container>
+        </p>
+      </ng-template>
+
+      <ng-template #pilihTipe>
+        <h3>Pilih Tipe Form</h3>
+
+        <mat-radio-group
+          class="radio-group"
+          (change)="setFormType($event.value)"
+        >
+          <mat-radio-button [value]="FORM_TYPE.pp">
+            Pilpres - Plano
+          </mat-radio-button>
+          <mat-radio-button [value]="FORM_TYPE.ps">
+            Pilpres - Sertifikat
+          </mat-radio-button>
+          <mat-radio-button [value]="FORM_TYPE.dp">
+            DPR - Plano
+          </mat-radio-button>
+          <mat-radio-button [value]="FORM_TYPE.ds">
+            DPR - Sertifikat
+          </mat-radio-button>
+        </mat-radio-group>
+      </ng-template>
+
+      <br /><br />
+      <p>
+        <mat-divider></mat-divider>
+      </p>
+      <p>
+        <button mat-raised-button color="primary" (click)="location.back()">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        &nbsp;
+        <button mat-raised-button color="warn" (click)="approve()">
+          Delete
+          <mat-icon>delete</mat-icon>
+        </button>
+      </p>
+      <!-- <pre>{{ tps | json }}</pre> -->
+    </td>
+  </tr>
+</table>
+
+<ng-template #kosong> <p>Tidak ada foto disini</p></ng-template>

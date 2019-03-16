@@ -12,6 +12,7 @@ export enum USER_ROLE {
 
 export enum SUM_KEY {
   // Pilpres
+  jum = 'jum',
   pas1 = 'pas1',
   pas2 = 'pas2',
   sah = 'sah',
@@ -39,8 +40,16 @@ export enum SUM_KEY {
   dem = 'dem',
   pbb = 'pbb',
   pkp = 'pkp',
+  pJum = 'pJum',
   pSah = 'pSah',
   pTSah = 'pTSah'
+}
+
+export enum FORM_TYPE {
+  ps = 'ps', // Pilpres, Sertifikat
+  pp = 'pp', // Pilpres, Plano
+  ds = 'ds', // DPR, Sertifikat
+  dp = 'dp' // DPR, Plano
 }
 
 export type SumMap = { [key in SUM_KEY]: number };
@@ -92,7 +101,8 @@ export interface Aggregate {
 export interface TpsImage {
   uploader: UpsertProfile;
   reviewer: UpsertProfile;
-  status: 'new' | 'ignore' | 'delete' | 'publish';
+  reporter: UpsertProfile;
+  status: 'new' | 'ignore' | 'delete' | 'publish' | 'error';
   sum: SumMap;
   url: string;
   meta: ImageMetadata;
@@ -162,39 +172,6 @@ export interface ImageMetadata {
   y: number; // Latitude.
   x: number; // Longitude.
 }
-
-export interface FormLabel {
-  label: string;
-  form: string;
-}
-
-export const PILPRES_FORM: FormLabel[] = [
-  { label: 'Suara Paslon 1', form: 'pas1' },
-  { label: 'Suara Paslon 2', form: 'pas2' },
-  { label: 'Suara Sah', form: 'sah' },
-  { label: 'Suara Tidak Sah', form: 'tSah' }
-];
-
-export const PILEG_FORM: FormLabel[] = [
-  { label: 'Partai Kebangkitan Bangsa', form: 'pkb' },
-  { label: 'Partai Gerindra', form: 'ger' },
-  { label: 'PDI Perjuangan', form: 'pdi' },
-  { label: 'Partai Golongan Karya', form: 'gol' },
-  { label: 'Partai NasDem', form: 'nas' },
-  { label: 'Partai Garuda', form: 'gar' },
-  { label: 'Partai Berkarya', form: 'ber' },
-  { label: 'Partai Keadilan Sejahtera', form: 'sej' },
-  { label: 'Partai Perindo', form: 'per' },
-  { label: 'Partai Persatuan Pembangunan', form: 'ppp' },
-  { label: 'Partai Solidaritas Indonesia', form: 'psi' },
-  { label: 'Partai Amanat Nasional', form: 'pan' },
-  { label: 'Partai Hanura', form: 'han' },
-  { label: 'Partai Demokrat', form: 'dem' },
-  { label: 'Partai Bulan Bintang', form: 'pbb' },
-  { label: 'Partai Keadilan dan Persatuan Indonesia', form: 'pkp' },
-  { label: 'Suara Sah', form: 'pSah' },
-  { label: 'Suara Tidak Sah', form: 'pTSah' }
-];
 
 export function extractImageMetadata(m: any): ImageMetadata | null {
   let validM: ImageMetadata = null;

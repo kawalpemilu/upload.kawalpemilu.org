@@ -8,6 +8,7 @@ import { AuthGuardService } from './auth-guard.service';
 import { LoginComponent } from './login/login.component';
 import { USER_ROLE } from 'shared';
 import { ProfileComponent } from './profile/profile.component';
+import { ApproverComponent } from './approver/approver.component';
 
 const routes: Routes = [
   { path: '', redirectTo: '/c/0', pathMatch: 'full' },
@@ -26,10 +27,18 @@ const routes: Routes = [
       depth: 1
     }
   },
-  { path: 'f', component: FotoComponent, canActivate: [AuthGuardService] },
+  { path: 'foto', component: FotoComponent, canActivate: [AuthGuardService] },
   {
     path: 'p/:uid',
     component: ProfileComponent,
+    canActivate: [AuthGuardService],
+    data: {
+      role: USER_ROLE.MODERATOR
+    }
+  },
+  {
+    path: 'a/:kelId/:tpsNo/:imageId',
+    component: ApproverComponent,
     canActivate: [AuthGuardService],
     data: {
       role: USER_ROLE.MODERATOR

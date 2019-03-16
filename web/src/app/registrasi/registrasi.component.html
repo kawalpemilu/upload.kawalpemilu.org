@@ -1,5 +1,5 @@
 <ng-container *ngIf="(userService.relawan$ | async) as relawan">
-  <h2>Rekrutmen Relawan</h2>
+  <h2>Ajak Teman Jadi Relawan</h2>
 
   <p>
     Halo,
@@ -28,14 +28,14 @@
 
   <ng-container *ngIf="relawan.depth > 0; else register">
     <p>
-      Relawan KawalPemilu 2019 memiliki tanggung jawab besar untuk mengawal
-      suara rakyat. Idealnya, kita butuh sekitar 800.000 Relawan yang terpencar
-      di seluruh kelurahan di Indonesia untuk mengawal TPS masing-masing. Ya,
-      ada 800.000 TPS yang perlu dijaga! Banyak, kan?
+      Relawan KawalPemilu 2019 punya tanggung jawab besar untuk mengawal suara
+      rakyat. Idealnya, kita butuh lebih dari 800.000 Relawan yang terpencar di
+      seluruh kelurahan di Indonesia untuk mengawal TPS masing-masing. Ya, ada
+      800.000+ TPS yang perlu dijaga! Banyak, kan?
     </p>
     <p>
       Mulai sekarang sampai tanggal <b>15 April 2019</b>, semua Relawan diminta
-      untuk uji coba <a [routerLink]="['/f']">upload foto</a> di TPS yang akan
+      untuk uji coba <a [routerLink]="['/foto']">upload foto</a> di TPS yang akan
       dikawal. Dari situ kita akan tahu bahwa TPS tersebut sudah akan terkawal
       di hari-H. Anda dapat melihat penyebaran Relawan saat ini di
       <a [routerLink]="['/h', 0]">Cakupan TPS</a>.

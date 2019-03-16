@@ -6,15 +6,7 @@ import {
   AngularFireStorage,
   AngularFireUploadTask
 } from '@angular/fire/storage';
-import {
-  autoId,
-  ImageMetadata,
-  UploadRequest,
-  PILPRES_FORM,
-  PILEG_FORM,
-  SUM_KEY,
-  FormLabel
-} from 'shared';
+import { autoId, ImageMetadata, UploadRequest } from 'shared';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ApiService } from './api.service';
 import { User } from 'firebase';
@@ -46,38 +38,8 @@ export class UploadService {
   status$ = new BehaviorSubject<{ [key: string]: UploadStatus }>({});
   status_: { [key: string]: UploadStatus } = {};
 
-  constructor(
-    private afs: AngularFireStorage,
-    private api: ApiService,
-    private formBuilder: FormBuilder
-  ) {
+  constructor(private afs: AngularFireStorage, private api: ApiService) {
     console.log('UploadService initalized');
-  }
-
-  getFormGroup(pattern) {
-    const VALIDATORS = [Validators.pattern(pattern)];
-    const group = {};
-    for (const p of PILPRES_FORM.concat(PILEG_FORM)) {
-      group[p.form] = [null, VALIDATORS];
-      if (!SUM_KEY[p.form]) {
-        console.error('Invalid form ctrl name:', p.form);
-      }
-    }
-    const formGroup = this.formBuilder.group(group);
-    this.initialize(formGroup, PILPRES_FORM, SUM_KEY.sah);
-    this.initialize(formGroup, PILEG_FORM, SUM_KEY.pSah);
-    return formGroup;
-  }
-
-  initialize(formGroup, arr: FormLabel[], sah: string) {
-    const ins = [];
-    for (let i = 0; i + 2 < arr.length; i++) {
-      ins.push(formGroup.get(arr[i].form).valueChanges.pipe(startWith(0)));
-    }
-    combineLatest(ins).subscribe((values: number[]) => {
-      const sum = values.reduce((p, c) => p + (c || 0), 0);
-      formGroup.get(sah).setValue(sum);
-    });
   }
 
   async upload(

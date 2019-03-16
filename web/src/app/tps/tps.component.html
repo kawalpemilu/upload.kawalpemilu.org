@@ -79,11 +79,16 @@
         </ng-container>
         <p *ngIf="tps.agg?.sum?.pending" style="color: orange">
           Ada foto yang masuk dan belum diproses.
+          <br />
+          <br />
+          <button
+            mat-raised-button
+            color="warn"
+            [routerLink]="['/a', state.id, tps.tpsNo, 0]"
+          >
+            Digitize
+          </button>
         </p>
-        <app-approver
-          [kelurahanId]="state.id"
-          [tpsNo]="tps.tpsNo"
-        ></app-approver>
       </td>
     </tr>
   </table>

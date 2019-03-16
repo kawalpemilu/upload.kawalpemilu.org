@@ -272,6 +272,7 @@ app.post(
       tps.images[p.imageId] = {
         uploader,
         reviewer: null,
+        reporter: null,
         status: 'new',
         sum: {} as SumMap,
         url: p.url,

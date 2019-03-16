@@ -8,6 +8,7 @@ export declare enum USER_ROLE {
     ADMIN = 2
 }
 export declare enum SUM_KEY {
+    jum = "jum",
     pas1 = "pas1",
     pas2 = "pas2",
     sah = "sah",
@@ -31,8 +32,15 @@ export declare enum SUM_KEY {
     dem = "dem",
     pbb = "pbb",
     pkp = "pkp",
+    pJum = "pJum",
     pSah = "pSah",
     pTSah = "pTSah"
+}
+export declare enum FORM_TYPE {
+    ps = "ps",
+    pp = "pp",
+    ds = "ds",
+    dp = "dp"
 }
 export declare type SumMap = {
     [key in SUM_KEY]: number;
@@ -80,7 +88,8 @@ export interface Aggregate {
 export interface TpsImage {
     uploader: UpsertProfile;
     reviewer: UpsertProfile;
-    status: 'new' | 'ignore' | 'delete' | 'publish';
+    reporter: UpsertProfile;
+    status: 'new' | 'ignore' | 'delete' | 'publish' | 'error';
     sum: SumMap;
     url: string;
     meta: ImageMetadata;
@@ -147,12 +156,6 @@ export interface ImageMetadata {
     y: number;
     x: number;
 }
-export interface FormLabel {
-    label: string;
-    form: string;
-}
-export declare const PILPRES_FORM: FormLabel[];
-export declare const PILEG_FORM: FormLabel[];
 export declare function extractImageMetadata(m: any): ImageMetadata | null;
 export declare function getServingUrl(url: string, size: number): string;
 export declare function isValidImageId(imageId: string): RegExpMatchArray;
