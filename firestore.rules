@@ -5,6 +5,11 @@ service cloud.firestore {
                 .data.profile.role;
     }
 
+    // Static herarchy for searching.
+    match /h/{userId} {
+      allow list: if request.auth.uid != null && request.query.limit <= 10;
+    }
+ 
     // Relawan database.
     match /r/{userId} {
       // Moderator can read user profile if know the uid.
