@@ -7,7 +7,9 @@ import {
   SUM_KEY,
   TpsImage,
   FORM_TYPE,
-  IMAGE_STATUS
+  enumEntries,
+  IS_PLANO,
+  C1Form
 } from 'shared';
 import { switchMap, startWith, take } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
@@ -15,10 +17,24 @@ import { combineLatest, Subscription, Subject } from 'rxjs';
 import { FormGroup, Validators, FormBuilder } from '@angular/forms';
 import { ApiService } from '../api.service';
 import { UserService } from '../user.service';
-import { User } from 'firebase';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { HierarchyService } from '../hierarchy.service';
+import { User } from 'firebase';
+
+enum LEMBAR_KEY {
+  PILPRES = 1,
+  PARTAI4,
+  PARTAI16_PLANO,
+  PARTAI5,
+  PARTAI20_PLANO,
+  CALON3,
+  CALON5_PLANO
+}
+
+interface LembarSpec {
+  [halaman: string]: SUM_KEY[];
+}
 
 @Component({
   selector: 'app-approver',
@@ -65,24 +81,13 @@ export class ApproverComponent implements OnDestroy {
     [SUM_KEY.pTSah]: 'Suara Tidak Sah'
   };
 
-  FORM_TYPE = FORM_TYPE;
-  FORM_LABEL = {
-    [FORM_TYPE.ps]: `Pilpres - Sertifikat`,
-    [FORM_TYPE.pp]: `Pilpres - Plano`,
-    [FORM_TYPE.ds]: `DPR - Sertifikat`,
-    [FORM_TYPE.dp]: `DPR - Plano`
-  };
+  LEMBAR_SPEC: { [key in LEMBAR_KEY]: LembarSpec } = {
+    [LEMBAR_KEY.PILPRES]: {
+      '1': [SUM_KEY.jum],
+      '2': [SUM_KEY.pas1, SUM_KEY.pas2, SUM_KEY.sah, SUM_KEY.tSah]
+    },
 
-  LEMBAR: { [key in FORM_TYPE]: { [hal: string]: SUM_KEY[] } } = {
-    [FORM_TYPE.ps]: {
-      '1': [SUM_KEY.jum],
-      '2': [SUM_KEY.pas1, SUM_KEY.pas2, SUM_KEY.sah, SUM_KEY.tSah]
-    },
-    [FORM_TYPE.pp]: {
-      '1': [SUM_KEY.jum],
-      '2': [SUM_KEY.pas1, SUM_KEY.pas2, SUM_KEY.sah, SUM_KEY.tSah]
-    },
-    [FORM_TYPE.ds]: {
+    [LEMBAR_KEY.PARTAI4]: {
       '1': [SUM_KEY.pJum],
       '2.1': [SUM_KEY.pkb, SUM_KEY.ger, SUM_KEY.pdi, SUM_KEY.gol],
       '2.2': [SUM_KEY.nas, SUM_KEY.gar, SUM_KEY.ber, SUM_KEY.sej],
@@ -90,8 +95,10 @@ export class ApproverComponent implements OnDestroy {
       '2.4': [SUM_KEY.han, SUM_KEY.dem, SUM_KEY.pbb, SUM_KEY.pkp],
       '3': [SUM_KEY.pSah, SUM_KEY.pTSah]
     },
-    [FORM_TYPE.dp]: {
+
+    [LEMBAR_KEY.PARTAI16_PLANO]: {
       '1': [SUM_KEY.pJum],
+
       '2.1': [SUM_KEY.pkb],
       '2.2': [SUM_KEY.ger],
       '2.3': [SUM_KEY.pdi],
@@ -113,11 +120,115 @@ export class ApproverComponent implements OnDestroy {
       '2.16': [SUM_KEY.pkp],
 
       '3': [SUM_KEY.pSah, SUM_KEY.pTSah]
+    },
+
+    [LEMBAR_KEY.PARTAI5]: {
+      '1': null,
+      '2.1': null,
+      '2.2': null,
+      '2.3': null,
+      '2.4': null,
+      '2.5': null,
+      '3': null
+    },
+
+    [LEMBAR_KEY.PARTAI20_PLANO]: {
+      '1': null,
+
+      '2.1': null,
+      '2.2': null,
+      '2.3': null,
+      '2.4': null,
+
+      '2.5': null,
+      '2.6': null,
+      '2.7': null,
+      '2.8': null,
+
+      '2.9': null,
+      '2.10': null,
+      '2.11': null,
+      '2.12': null,
+
+      '2.13': null,
+      '2.14': null,
+      '2.15': null,
+      '2.16': null,
+
+      '2.17': null,
+      '2.18': null,
+      '2.19': null,
+      '2.20': null,
+
+      '3': null
+    },
+
+    [LEMBAR_KEY.CALON3]: {
+      '1': null,
+      '2.1': null,
+      '2.2': null,
+      '2.3': null,
+      '3': null
+    },
+
+    [LEMBAR_KEY.CALON5_PLANO]: {
+      '1': null,
+      '2.1': null,
+      '2.2': null,
+      '2.3': null,
+      '2.4': null,
+      '2.5': null,
+      '3': null
     }
   };
 
+  LEMBAR: { [key in FORM_TYPE]: { [key2 in IS_PLANO]: LembarSpec } } = {
+    [FORM_TYPE.PPWP]: {
+      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PILPRES],
+      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PILPRES]
+    },
+    [FORM_TYPE.DPRPB]: {
+      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO],
+      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4]
+    },
+    [FORM_TYPE.DPRP]: {
+      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO],
+      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4]
+    },
+    [FORM_TYPE.DPRK]: {
+      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI20_PLANO],
+      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI5]
+    },
+    [FORM_TYPE.DPRD_PROV]: {
+      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO],
+      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4]
+    },
+    [FORM_TYPE.DPRD_KAB_KOTA]: {
+      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO],
+      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4]
+    },
+    [FORM_TYPE.DPRA]: {
+      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI20_PLANO],
+      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI5]
+    },
+    [FORM_TYPE.DPR]: {
+      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO],
+      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4]
+    },
+    [FORM_TYPE.DPD]: {
+      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.CALON5_PLANO],
+      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.CALON3]
+    },
+    [FORM_TYPE.OTHERS]: null,
+    [FORM_TYPE.DELETED]: null
+  };
+
+  FORM_TYPE = FORM_TYPE;
+  FORM_TYPE_ENTRIES = enumEntries(FORM_TYPE);
+
+  IS_PLANO = IS_PLANO;
+
   Object = Object;
-  IMAGE_STATUS = IMAGE_STATUS;
   VALIDATORS = [Validators.pattern('^[0-9]{1,3}$')];
 
   // Stays constant after first set.
@@ -133,8 +244,9 @@ export class ApproverComponent implements OnDestroy {
   imageId: string;
   formGroup: FormGroup;
   formType: FORM_TYPE;
+  isPlano: IS_PLANO;
   halaman: string;
-  approveStatus: boolean;
+  approveStatus: 'pending' | 'ready' | 'approved';
   autoSumSub: Subscription;
 
   isLoading = false;
@@ -178,64 +290,37 @@ export class ApproverComponent implements OnDestroy {
   }
 
   digitizeNextImage() {
-    this.reset();
-    let earliest: TpsImage = null;
+    this.imageId = null;
+    this.formType = null;
+    this.isPlano = null;
+    this.halaman = null;
+    this.formGroup = null;
+    this.approveStatus = 'pending';
+    this.tryUnsubscribe();
+    let next: TpsImage = null;
     for (const id of Object.keys(this.tpsData.images)) {
       const img = this.tpsData.images[id];
-      if (
-        img.status === IMAGE_STATUS.new &&
-        (!this.imageId || earliest.uploader.ts > img.uploader.ts)
-      ) {
+      if (!img.c1 && (!this.imageId || next.uploader.ts > img.uploader.ts)) {
         this.imageId = id;
-        earliest = img;
+        next = img;
       }
     }
 
     if (this.imageId) {
-      this.tps$.next(earliest);
+      this.tps$.next(next);
     } else {
       this.router.navigate(['/t', this.kelId]);
     }
-  }
-
-  reset() {
-    this.imageId = null;
-    this.formGroup = null;
-    this.formType = null;
-    this.halaman = null;
-    this.approveStatus = null;
-    this.tryUnsubscribe();
   }
 
   ngOnDestroy() {
     this.tryUnsubscribe();
   }
 
-  setFormType(type: FORM_TYPE) {
-    console.log('setting', type);
-    this.formType = type;
-    this.halaman = null;
-  }
-
-  setHalaman(hal: string) {
-    this.halaman = hal;
-    const group = {};
-    for (const key of this.LEMBAR[this.formType][hal]) {
-      group[key] = [null, this.VALIDATORS];
-    }
-    this.formGroup = this.formBuilder.group(group);
-    this.trySubscribe();
-
-    setTimeout(() => {
-      const inp: HTMLInputElement = document.querySelector('form input');
-      inp.focus();
-    }, 100);
-  }
-
   trySubscribe() {
     this.tryUnsubscribe();
-    const p1 = this.formGroup.get(SUM_KEY.pas1);
-    const p2 = this.formGroup.get(SUM_KEY.pas2);
+    const p1 = this.formGroup.get(SUM_KEY[SUM_KEY.pas1]);
+    const p2 = this.formGroup.get(SUM_KEY[SUM_KEY.pas2]);
     if (!p1 || !p2) {
       return;
     }
@@ -243,7 +328,7 @@ export class ApproverComponent implements OnDestroy {
       p1.valueChanges.pipe(startWith(0)),
       p2.valueChanges.pipe(startWith(0))
     ]).subscribe((v: number[]) => {
-      this.formGroup.get(SUM_KEY.sah).setValue(v[0] + v[1]);
+      this.formGroup.get(SUM_KEY[SUM_KEY.sah]).setValue(v[0] + v[1]);
     });
   }
 
@@ -254,7 +339,7 @@ export class ApproverComponent implements OnDestroy {
     }
   }
 
-  async approve(user: User, status: IMAGE_STATUS) {
+  async approve() {
     this.isLoading = true;
     const sum = {} as SumMap;
     if (this.formGroup) {
@@ -265,11 +350,13 @@ export class ApproverComponent implements OnDestroy {
     }
 
     try {
-      const body: ApproveRequest = { sum, imageId: this.imageId, status };
+      const user = this.userService.user;
+      const c1: C1Form = { type: this.formType, plano: this.isPlano };
+      const body: ApproveRequest = { sum, imageId: this.imageId, c1 };
       const res: any = await this.api.post(user, `approve`, body);
       if (res.ok) {
         console.log('ok');
-        this.tpsData.images[this.imageId].status = status;
+        this.tpsData.images[this.imageId].c1 = c1;
         setTimeout(this.digitizeNextImage.bind(this), 1000);
       } else {
         console.error(res);
@@ -284,16 +371,57 @@ export class ApproverComponent implements OnDestroy {
       this.formGroup.enable();
     }
     this.isLoading = false;
-    this.approveStatus = true;
+    this.approveStatus = 'approved';
   }
 
-  getFormFields() {
-    const lembar = this.LEMBAR[this.formType];
-    return lembar[this.halaman];
+  setFormType(type: FORM_TYPE) {
+    this.formType = +type;
+    this.approveStatus =
+      this.formType === FORM_TYPE.OTHERS || this.formType === FORM_TYPE.DELETED
+        ? 'ready'
+        : 'pending';
+    this.isPlano = null;
+    this.halaman = null;
+    this.formGroup = null;
+    this.tryUnsubscribe();
+  }
+
+  setIsPlano(plano: IS_PLANO) {
+    this.approveStatus = 'pending';
+    this.isPlano = plano;
+    this.halaman = null;
+    this.formGroup = null;
+    this.tryUnsubscribe();
+  }
+
+  setHalaman(hal: string) {
+    this.halaman = hal;
+    if (!this.getLembar()) {
+      this.approveStatus = 'ready';
+      return;
+    }
+
+    const group = {};
+    for (const key of this.getLembar()) {
+      group[key] = [null, this.VALIDATORS];
+    }
+    this.formGroup = this.formBuilder.group(group);
+    this.trySubscribe();
+
+    setTimeout(() => {
+      const inp: HTMLInputElement = document.querySelector('form input');
+      if (inp) {
+        inp.focus();
+      }
+    }, 100);
+  }
+
+  getLembar() {
+    return this.LEMBAR[this.formType][this.isPlano][this.halaman];
   }
 
   getHalaman() {
-    const lembar = this.LEMBAR[this.formType];
+    const lembar = this.LEMBAR[this.formType][this.isPlano];
     return Object.keys(lembar).sort((a, b) => this.toInt(a) - this.toInt(b));
   }
 

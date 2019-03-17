@@ -46,19 +46,26 @@ var SUM_KEY;
 })(SUM_KEY = exports.SUM_KEY || (exports.SUM_KEY = {}));
 var FORM_TYPE;
 (function (FORM_TYPE) {
-    FORM_TYPE["ps"] = "ps";
-    FORM_TYPE["pp"] = "pp";
-    FORM_TYPE["ds"] = "ds";
-    FORM_TYPE["dp"] = "dp"; // DPR, Plano
+    // Full blown until digitized.
+    FORM_TYPE[FORM_TYPE["PPWP"] = 1] = "PPWP";
+    FORM_TYPE[FORM_TYPE["DPR"] = 2] = "DPR";
+    // Only up to halaman, not digitized.
+    FORM_TYPE[FORM_TYPE["DPD"] = 3] = "DPD";
+    FORM_TYPE[FORM_TYPE["DPRP"] = 4] = "DPRP";
+    FORM_TYPE[FORM_TYPE["DPRPB"] = 5] = "DPRPB";
+    FORM_TYPE[FORM_TYPE["DPRA"] = 6] = "DPRA";
+    FORM_TYPE[FORM_TYPE["DPRD_PROV"] = 7] = "DPRD_PROV";
+    FORM_TYPE[FORM_TYPE["DPRD_KAB_KOTA"] = 8] = "DPRD_KAB_KOTA";
+    FORM_TYPE[FORM_TYPE["DPRK"] = 9] = "DPRK";
+    // Up to choosing this type.
+    FORM_TYPE[FORM_TYPE["OTHERS"] = 10] = "OTHERS";
+    FORM_TYPE[FORM_TYPE["DELETED"] = 11] = "DELETED";
 })(FORM_TYPE = exports.FORM_TYPE || (exports.FORM_TYPE = {}));
-var IMAGE_STATUS;
-(function (IMAGE_STATUS) {
-    IMAGE_STATUS["new"] = "new";
-    IMAGE_STATUS["ignored"] = "ignored";
-    IMAGE_STATUS["deleted"] = "deleted";
-    IMAGE_STATUS["approved"] = "approved";
-    IMAGE_STATUS["error"] = "error";
-})(IMAGE_STATUS = exports.IMAGE_STATUS || (exports.IMAGE_STATUS = {}));
+var IS_PLANO;
+(function (IS_PLANO) {
+    IS_PLANO[IS_PLANO["YES"] = 1] = "YES";
+    IS_PLANO[IS_PLANO["NO"] = 2] = "NO";
+})(IS_PLANO = exports.IS_PLANO || (exports.IS_PLANO = {}));
 function extractImageMetadata(m) {
     var validM = null;
     if (m) {
@@ -198,3 +205,13 @@ function lsSetItem(key, value) {
     }
 }
 exports.lsSetItem = lsSetItem;
+function enumEntries(e) {
+    var o = Object.keys(e);
+    var h = o.length / 2;
+    var entries = [];
+    for (var i = 0; i < o.length / 2; i++) {
+        entries.push([o[i], o[h + i]]);
+    }
+    return entries;
+}
+exports.enumEntries = enumEntries;

@@ -51,20 +51,12 @@
         <td class="wilayah">
           <app-hie-link [id]="c[0]" [name]="c[1]"></app-hie-link>
           <ng-container *ngIf="state.data[c[0]] as d">
-            <ng-container *ngIf="d.sum.pending || d.sum.error">
-              (<span *ngIf="d.sum.pending" style="color: orange">{{
-                d.sum.pending
-              }}</span
-              ><ng-container *ngIf="d.sum.error"
-                ><ng-container *ngIf="d.sum.pending && d.sum.error"
-                  >/</ng-container
-                ><span *ngIf="d.sum.error" style="color: red">{{
-                  d.sum.error
-                }}</span></ng-container
-              >)
+            <ng-container *ngIf="d.sum.pending">
+              <span [style.color]="getColor(state, c[0])"
+                >({{ d.sum.pending }})
+              </span>
             </ng-container>
           </ng-container>
-          {{ ago(state, c[0]) }}
         </td>
         <td class="paslon1">
           {{ coverage(state, c[0]) | number }} / {{ c[2] | number }} =

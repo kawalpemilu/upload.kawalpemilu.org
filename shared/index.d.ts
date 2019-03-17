@@ -38,17 +38,17 @@ export declare enum SUM_KEY {
     pTSah = "pTSah"
 }
 export declare enum FORM_TYPE {
-    ps = "ps",
-    pp = "pp",
-    ds = "ds",
-    dp = "dp"
-}
-export declare enum IMAGE_STATUS {
-    new = "new",
-    ignored = "ignored",
-    deleted = "deleted",
-    approved = "approved",
-    error = "error"
+    PPWP = 1,
+    DPR = 2,
+    DPD = 3,
+    DPRP = 4,
+    DPRPB = 5,
+    DPRA = 6,
+    DPRD_PROV = 7,
+    DPRD_KAB_KOTA = 8,
+    DPRK = 9,
+    OTHERS = 10,
+    DELETED = 11
 }
 export declare type SumMap = {
     [key in SUM_KEY]: number;
@@ -88,16 +88,29 @@ export interface UpsertProfile extends PublicProfile {
     ua: string;
     ip: string;
 }
+export declare enum IS_PLANO {
+    YES = 1,
+    NO = 2
+}
+export interface C1Form {
+    type: FORM_TYPE;
+    plano: IS_PLANO;
+}
 export interface Aggregate {
     sum: SumMap;
-    urls: string[];
     ts: number;
+    c1: C1Form;
+}
+export interface TpsAggregate extends Aggregate {
+    photos: {
+        [url: string]: Aggregate;
+    };
 }
 export interface TpsImage {
     uploader: UpsertProfile;
     reviewer: UpsertProfile;
     reporter: UpsertProfile;
-    status: IMAGE_STATUS;
+    c1: C1Form;
     sum: SumMap;
     url: string;
     meta: ImageMetadata;
@@ -114,7 +127,7 @@ export interface Upsert {
     reviewer: UpsertProfile;
     reporter: UpsertProfile;
     done: number;
-    action: Aggregate;
+    action: TpsAggregate;
 }
 export interface CodeReferral {
     issuer: PublicProfile;
@@ -136,7 +149,7 @@ export interface UploadRequest {
 export interface ApproveRequest {
     imageId: string;
     sum: SumMap;
-    status: IMAGE_STATUS;
+    c1: C1Form;
 }
 export interface ChildData {
     id: number;
@@ -197,3 +210,4 @@ export declare function toChild(node: HierarchyNode): {
 export declare function toChildren(node: HierarchyNode): (string | number)[][];
 export declare function lsGetItem(key: any): any;
 export declare function lsSetItem(key: any, value: any): void;
+export declare function enumEntries(e: any): any[][2];

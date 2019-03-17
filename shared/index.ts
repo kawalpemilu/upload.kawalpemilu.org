@@ -47,18 +47,22 @@ export enum SUM_KEY {
 }
 
 export enum FORM_TYPE {
-  ps = 'ps', // Pilpres, Sertifikat
-  pp = 'pp', // Pilpres, Plano
-  ds = 'ds', // DPR, Sertifikat
-  dp = 'dp' // DPR, Plano
-}
+  // Full blown until digitized.
+  PPWP = 1,
+  DPR,
 
-export enum IMAGE_STATUS {
-  new = 'new',
-  ignored = 'ignored',
-  deleted = 'deleted',
-  approved = 'approved',
-  error = 'error'
+  // Only up to halaman, not digitized.
+  DPD,
+  DPRP,
+  DPRPB,
+  DPRA,
+  DPRD_PROV,
+  DPRD_KAB_KOTA,
+  DPRK,
+
+  // Up to choosing this type.
+  OTHERS,
+  DELETED
 }
 
 export type SumMap = { [key in SUM_KEY]: number };
@@ -101,17 +105,31 @@ export interface UpsertProfile extends PublicProfile {
   ip: string; // The ip address the request is coming from.
 }
 
+export enum IS_PLANO {
+  YES = 1,
+  NO
+}
+
+export interface C1Form {
+  type: FORM_TYPE;
+  plano: IS_PLANO;
+}
+
 export interface Aggregate {
   sum: SumMap;
-  urls: string[]; // Urls to be published.
   ts: number;
+  c1: C1Form;
+}
+
+export interface TpsAggregate extends Aggregate {
+  photos: { [url: string]: Aggregate };
 }
 
 export interface TpsImage {
   uploader: UpsertProfile;
   reviewer: UpsertProfile;
   reporter: UpsertProfile;
-  status: IMAGE_STATUS;
+  c1: C1Form; // Null if unknown.
   sum: SumMap;
   url: string;
   meta: ImageMetadata;
@@ -128,7 +146,7 @@ export interface Upsert {
   reviewer: UpsertProfile;
   reporter: UpsertProfile;
   done: number; // Set to 0 to reprocess this upsert.
-  action: Aggregate; // The action to be performed to the aggregator.
+  action: TpsAggregate; // The action to be performed to the aggregator.
 }
 
 export interface CodeReferral {
@@ -153,7 +171,7 @@ export interface UploadRequest {
 export interface ApproveRequest {
   imageId: string;
   sum: SumMap;
-  status: IMAGE_STATUS;
+  c1: C1Form;
 }
 
 export interface ChildData {
@@ -326,4 +344,14 @@ export function lsSetItem(key, value) {
   } else {
     console.log('No localStorage');
   }
+}
+
+export function enumEntries(e: any): any[][2] {
+  const o = Object.keys(e);
+  const h = o.length / 2;
+  const entries = [];
+  for (let i = 0; i < o.length / 2; i++) {
+    entries.push([o[i], o[h + i]]);
+  }
+  return entries;
 }

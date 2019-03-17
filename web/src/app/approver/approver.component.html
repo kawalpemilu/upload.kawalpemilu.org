@@ -32,60 +32,49 @@
       ><br />
 
       <ng-container *ngIf="formType; else pilihTipe">
-        <p>
-          <b>{{ FORM_LABEL[formType] }}</b> &nbsp;
-          <button color="warn" (click)="formType = null">
-            <mat-icon>clear</mat-icon>
-          </button>
-        </p>
+        C1: <b>{{ FORM_TYPE[formType] }}</b>
+        <button mat-icon-button color="primary" (click)="formType = null">
+          <mat-icon>cancel</mat-icon>
+        </button>
+        <br />
 
-        <ng-container *ngIf="halaman; else pilihLembar">
-          <p>
-            Lembar: <b>{{ halaman }}</b> &nbsp;
-            <button color="warn" (click)="halaman = null">
-              <mat-icon>clear</mat-icon>
+        <ng-container *ngIf="LEMBAR[formType]">
+          <ng-container *ngIf="isPlano; else pilihIsPlano">
+            Plano: <b>{{ IS_PLANO[isPlano] }}</b>
+            <button mat-icon-button color="primary" (click)="isPlano = null">
+              <mat-icon>cancel</mat-icon>
             </button>
-          </p>
+            <br />
 
-          <form [formGroup]="formGroup">
-            <ng-container *ngFor="let field of LEMBAR[formType][halaman]">
-              <mat-form-field style="width: 180px">
-                <input
-                  matInput
-                  autocomplete="off"
-                  placeholder="{{ LABEL[field] }}"
-                  formControlName="{{ field }}"
-                  type="number"
-                  required
-                />
-              </mat-form-field>
-              <!-- <span *ngIf="getError(p.form) as error" class="alert">
+            <ng-container *ngIf="halaman; else pilihLembar">
+              Lembar: <b>{{ halaman }}</b>
+              <button mat-icon-button color="primary" (click)="halaman = null">
+                <mat-icon>cancel</mat-icon>
+              </button>
+              <br />
+
+              <ng-container *ngIf="getLembar()">
+                <form [formGroup]="formGroup">
+                  <ng-container *ngFor="let field of getLembar()">
+                    <mat-form-field style="width: 180px">
+                      <input
+                        matInput
+                        autocomplete="off"
+                        placeholder="{{ LABEL[field] }}"
+                        formControlName="{{ field }}"
+                        type="number"
+                        required
+                      />
+                    </mat-form-field>
+                    <!-- <span *ngIf="getError(p.form) as error" class="alert">
                 {{ error }}
               </span> -->
-              <br />
+                    <br />
+                  </ng-container>
+                </form>
+              </ng-container>
             </ng-container>
-
-            <p *ngIf="(userService.relawan$ | async) as relawan">
-              <span *ngIf="approveStatus; else bisaApprove">
-                Approved by:<br />
-                <app-orang
-                  [profile]="relawan.profile"
-                  [activity]="true"
-                ></app-orang>
-              </span>
-              <ng-template #bisaApprove>
-                <button
-                  type="submit"
-                  [disabled]="formGroup.invalid || isLoading"
-                  mat-raised-button
-                  color="primary"
-                  (click)="approve(relawan.auth, IMAGE_STATUS.approved)"
-                >
-                  Submit
-                </button>
-              </ng-template>
-            </p>
-          </form>
+          </ng-container>
         </ng-container>
       </ng-container>
 
@@ -102,6 +91,22 @@
         </mat-radio-group>
       </ng-template>
 
+      <ng-template #pilihIsPlano>
+        <h3>Kertas tipe Plano</h3>
+
+        <mat-radio-group
+          class="radio-group"
+          (change)="setIsPlano($event.value)"
+        >
+          <mat-radio-button [value]="IS_PLANO.YES">
+            YES
+          </mat-radio-button>
+          <mat-radio-button [value]="IS_PLANO.NO">
+            NO
+          </mat-radio-button>
+        </mat-radio-group>
+      </ng-template>
+
       <ng-template #pilihTipe>
         <h3>Pilih Tipe Form</h3>
 
@@ -109,42 +114,38 @@
           class="radio-group"
           (change)="setFormType($event.value)"
         >
-          <mat-radio-button [value]="FORM_TYPE.pp">
-            Pilpres-Plano
-          </mat-radio-button>
-          <mat-radio-button [value]="FORM_TYPE.ps">
-            Pilpres-Sertifikat
-          </mat-radio-button>
-          <mat-radio-button [value]="FORM_TYPE.dp">
-            DPR-Plano
-          </mat-radio-button>
-          <mat-radio-button [value]="FORM_TYPE.ds">
-            DPR-Sertifikat
+          <mat-radio-button *ngFor="let e of FORM_TYPE_ENTRIES" [value]="e[0]">
+            {{ e[1] }}
           </mat-radio-button>
         </mat-radio-group>
       </ng-template>
 
-      <br /><br />
-      <p>
-        <mat-divider></mat-divider>
-      </p>
-      <p align="center">
-        <button mat-raised-button color="primary" (click)="location.back()">
-          <mat-icon>arrow_back</mat-icon>
-        </button>
-        &nbsp;
+      <p *ngIf="(userService.relawan$ | async) as relawan">
+        <span *ngIf="approveStatus == 'approved'">
+          Approved by:<br />
+          <app-orang [profile]="relawan.profile" [activity]="true"></app-orang>
+        </span>
 
-        <ng-container *ngIf="(userService.relawan$ | async) as relawan">
+        <ng-container *ngIf="approveStatus == 'ready' || formGroup">
           <button
+            type="submit"
+            [disabled]="formGroup?.invalid || isLoading"
             mat-raised-button
-            color="warn"
-            (click)="approve(relawan.auth, IMAGE_STATUS.deleted)"
+            color="primary"
+            (click)="approve()"
           >
-            <mat-icon>delete</mat-icon>
+            Approve Foto!
           </button>
         </ng-container>
+        <br /><br />
       </p>
-      <!-- <pre>{{ tps | json }}</pre> -->
+
+      <p>
+        <button mat-raised-button color="primary" (click)="location.back()">
+          <mat-icon>arrow_back</mat-icon>
+          Gak Jadi Deh
+        </button>
+      </p>
     </td>
   </tr>
 </table>

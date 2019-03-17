@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as util from 'util';
 
 import { H } from './hierarchy';
-import { FsPath, Upsert, SumMap, Aggregate } from 'shared';
+import { FsPath, Upsert, SumMap, Aggregate, TpsAggregate } from 'shared';
 
 admin.initializeApp({
   credential: admin.credential.cert(require('./sa-key.json')),
@@ -27,12 +27,12 @@ let h: { [key: string]: { [key: string]: Aggregate } } = {};
 function getUpsertData(parentId, childId): Aggregate {
   if (!h[parentId]) h[parentId] = {};
   const c = h[parentId];
-  if (!c[childId]) c[childId] = { sum: {} as SumMap, ts: 0, urls: [] };
+  if (!c[childId]) c[childId] = { sum: {} as SumMap, ts: 0, c1: null };
   return c[childId];
 }
 
 function getDelta(cur: Aggregate, a: Aggregate): Aggregate {
-  const delta: Aggregate = { sum: {} as SumMap, ts: 0, urls: null };
+  const delta: Aggregate = { sum: {} as SumMap, ts: 0, c1: null };
   for (const key in a.sum) {
     delta.sum[key] = a.sum[key] - (cur.sum[key] || 0);
   }
@@ -41,7 +41,11 @@ function getDelta(cur: Aggregate, a: Aggregate): Aggregate {
   return delta;
 }
 
-async function updateAggregates(kelId: number, tpsNo: number, agg: Aggregate) {
+async function updateAggregates(
+  kelId: number,
+  tpsNo: number,
+  agg: TpsAggregate
+) {
   const path = H[kelId].parentIds.slice();
   path.push(kelId);
   path.push(tpsNo);
@@ -51,9 +55,14 @@ async function updateAggregates(kelId: number, tpsNo: number, agg: Aggregate) {
     return;
   }
 
-  const tpsData = getUpsertData(path[4], path[5]);
-  if (agg.urls) {
-    tpsData.urls = agg.urls;
+  const tpsData = getUpsertData(path[4], path[5]) as TpsAggregate;
+  tpsData.photos = tpsData.photos || {};
+  for (const url of Object.keys(agg.photos)) {
+    if (agg.photos[url]) {
+      tpsData.photos[url] = agg.photos[url];
+    } else {
+      delete tpsData.photos[url];
+    }
   }
 
   const delta = getDelta(tpsData, agg);

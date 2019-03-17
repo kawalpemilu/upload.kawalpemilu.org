@@ -29,6 +29,18 @@ export class HierarchyComponent implements OnInit, OnDestroy {
   @ViewChild('header') myHeaderEl: ElementRef;
   @ViewChild('footer') myFooterEl: ElementRef;
 
+    // https://simple.wikipedia.org/wiki/Stellar_classification
+    SETELLAR_COLOR = [
+      '#9db4ff', // 5m blue
+      '#aabfff', // 15m deep blue white
+      '#cad8ff', // 45m blue white
+      '#ffddb4', // 2h pale yellow orange
+      '#ffbd6f', // 6h light orange red
+      '#f84235', // 20h scarlet
+      '#ba3059', // 2d magenta
+      '#605170' // dark purple
+    ];
+
   ROW_HEIGHT = 40;
   paddingTemp;
   state$: Observable<HierarchyNode>;
@@ -124,23 +136,17 @@ export class HierarchyComponent implements OnInit, OnDestroy {
     return (s && s.sum.cakupan) || 0;
   }
 
-  ago(state: HierarchyNode, cid: number) {
+  getColor(state, cid) {
     const s = state.data[cid];
+    const c = this.SETELLAR_COLOR;
     if (s) {
-      const m = (Date.now() - s.ts) / 1000 / 60;
-      if (m < 1) {
-        return ' (*)';
-      }
-      if (m < 5) {
-        return ' (x)';
-      }
-      if (m < 20) {
-        return ' (-)';
-      }
-      if (m < 60) {
-        return ' (.)';
+      const ago = (Date.now() - s.ts) / 1000 / 60;
+      for (let i = 0, t = 5; i < c.length; i++, t *= 3) {
+        if (ago <= t) {
+          return c[i];
+        }
       }
     }
-    return '';
+    return c[c.length - 1];
   }
 }

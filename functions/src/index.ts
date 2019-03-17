@@ -30,8 +30,10 @@ import {
   UpsertProfile,
   TpsData,
   ApproveRequest,
-  IMAGE_STATUS,
-  toChildren
+  toChildren,
+  FORM_TYPE,
+  IS_PLANO,
+  TpsAggregate
 } from 'shared';
 
 const t1 = Date.now();
@@ -307,7 +309,7 @@ app.post(
         uploader,
         reviewer: null,
         reporter: null,
-        status: IMAGE_STATUS.new,
+        c1: null,
         sum: {} as SumMap,
         url: p.url,
         meta: p.meta
@@ -340,17 +342,17 @@ function populateApprove() {
     const b = req.body as ApproveRequest;
 
     const a = {} as ApproveRequest;
-    if (!isValidImageId(b.imageId)) {
+    if (!b || !isValidImageId(b.imageId)) {
       console.warn(`Invalid imageId ${b.imageId} for user ${user.uid}`);
       return res.json({ error: 'Invalid imageId' });
     }
     a.imageId = b.imageId;
 
-    if (!IMAGE_STATUS[b.status]) {
-      console.warn(`Invalid image status ${b.status} for ${user.uid}`);
-      return res.json({ error: 'Invalid status' });
+    if (!b.c1 || !FORM_TYPE[b.c1.type] || !IS_PLANO[b.c1.plano]) {
+      console.warn(`Invalid form ${b.c1} for ${user.uid}`);
+      return res.json({ error: 'Invalid form' });
     }
-    a.status = b.status;
+    a.c1 = { type: b.c1.type, plano: b.c1.plano };
 
     if (!b || !b.sum) {
       console.warn(`No sum ${user.uid}`);
@@ -397,11 +399,11 @@ app.post('/api/approve', [populateApprove()], async (req: any, res) => {
     const img = tps.images[a.imageId];
     if (!img) return 'No Image';
 
-    img.status = a.status;
+    img.c1 = a.c1;
     img.sum = a.sum;
 
     u.reviewer = img.reviewer = { ...r.profile, ts, ua, ip };
-    u.action = { sum: {} as SumMap, urls: [], ts: 0 };
+    u.action = { sum: {} as SumMap, photos: {}, ts: 0, c1: a.c1 };
     u.done = 0;
 
     u.action.sum.cakupan = 0;
@@ -411,17 +413,19 @@ app.post('/api/approve', [populateApprove()], async (req: any, res) => {
     Object.keys(tps.images)
       .map(i => tps.images[i])
       .forEach(i => {
-        if (i.status === IMAGE_STATUS.new) {
+        if (!i.c1) {
           u.action.sum.cakupan = 1;
           u.action.sum.pending = 1;
-        } else if (i.status === IMAGE_STATUS.error) {
+        } else if (i.c1.type === FORM_TYPE.DELETED) {
+          u.action.photos[i.url] = null;
           u.action.sum.cakupan = 1;
           u.action.sum.error = 1;
-        } else if (i.status === IMAGE_STATUS.ignored) {
+        } else if (i.c1.type === FORM_TYPE.OTHERS) {
+          u.action.photos[i.url] = null;
           u.action.sum.cakupan = 1;
-        } else if (i.status === IMAGE_STATUS.approved) {
+        } else {
           u.action.sum.cakupan = 1;
-          u.action.urls.push(i.url);
+          u.action.photos[i.url] = u.action;
           u.action.ts = Math.max(u.action.ts, i.reviewer.ts);
           for (const key of Object.keys(i.sum)) {
             if (typeof u.action.sum[key] === 'number') {
@@ -468,7 +472,8 @@ app.post('/api/problem', async (req: any, res) => {
       ua: req.headers['user-agent'],
       ip: getIp(req)
     };
-    u.action = { sum: { error: 1 } } as Aggregate;
+    // TODO: ability to individually report error to each image.
+    u.action = { sum: { error: 1 } } as TpsAggregate;
     u.done = 0;
     t.update(uRef, u);
     return true;
