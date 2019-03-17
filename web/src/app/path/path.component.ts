@@ -13,15 +13,10 @@ import {
 } from 'rxjs/operators';
 import { Router } from '@angular/router';
 
-interface LocationOption {
-  id: number;
-  name: string;
-}
-
 @Component({
   selector: 'app-path',
   template: `
-    <table cellpadding="0" cellspacing="0">
+    <table cellpadding="0" cellspacing="0" width="100%">
       <tr>
         <td style="line-height: 175%" [style.height.px]="TOOLBAR_HEIGHT">
           <ng-container *ngIf="!isSearching">
@@ -40,34 +35,40 @@ interface LocationOption {
 
           <ng-container *ngIf="isSearching">
             <form class="form">
-              <mat-form-field class="full-width">
-                <input
-                  class="searchwilayah"
-                  type="text"
-                  placeholder="Cari nama wilayah"
-                  aria-label="Number"
-                  matInput
-                  [formControl]="myControl"
-                  [matAutocomplete]="auto"
-                />
-                <mat-autocomplete
-                  #auto="matAutocomplete"
-                  autoActiveFirstOption
-                  (optionSelected)="navigate($event.option.value)"
-                >
-                  <mat-option
-                    *ngFor="let option of (filteredOptions$ | async)"
-                    [value]="option"
-                  >
-                    {{ option.name }} ({{ option.id }})
-                  </mat-option>
-                </mat-autocomplete>
-              </mat-form-field>
-
-              &nbsp;
-              <button mat-icon-button (click)="toggle()">
-                <mat-icon>cancel</mat-icon>
-              </button>
+              <table cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td>
+                    <mat-form-field style="width: 100%">
+                      <input
+                        class="searchwilayah"
+                        type="text"
+                        placeholder="Cari nama Kelurahan anda"
+                        aria-label="Number"
+                        matInput
+                        [formControl]="myControl"
+                        [matAutocomplete]="auto"
+                      />
+                      <mat-autocomplete
+                        #auto="matAutocomplete"
+                        autoActiveFirstOption
+                        (optionSelected)="navigate($event.option.value)"
+                      >
+                        <mat-option
+                          *ngFor="let option of (filteredOptions$ | async)"
+                          [value]="option"
+                        >
+                          {{ option.parentNames[2] }} &gt; {{ option.name }}
+                        </mat-option>
+                      </mat-autocomplete>
+                    </mat-form-field>
+                  </td>
+                  <td width="30">
+                    <button mat-icon-button (click)="toggle()">
+                      <mat-icon>cancel</mat-icon>
+                    </button>
+                  </td>
+                </tr>
+              </table>
             </form>
           </ng-container>
         </td>
@@ -85,9 +86,6 @@ interface LocationOption {
         max-width: 500px;
         width: 100%;
       }
-      .full-width {
-        width: 250px;
-      }
     `
   ]
 })
@@ -96,7 +94,7 @@ export class PathComponent implements OnInit {
 
   isSearching = false;
   myControl = new FormControl();
-  filteredOptions$: Observable<LocationOption[]>;
+  filteredOptions$: Observable<HierarchyNode[]>;
 
   constructor(
     public hie: HierarchyService,
@@ -115,8 +113,9 @@ export class PathComponent implements OnInit {
       distinctUntilChanged(),
       switchMap(prefix =>
         this.fsdb
-          .collection<LocationOption>('h', ref =>
+          .collection<HierarchyNode>('h', ref =>
             ref
+              .where('depth', '==', 4)
               .where('name', '>=', ('' + prefix).toUpperCase())
               .where('name', '<=', ('' + prefix).toUpperCase() + '{')
               .limit(10)

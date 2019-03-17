@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HierarchyNode, lsGetItem, lsSetItem } from 'shared';
 import { ApiService } from './api.service';
 import { Observable, BehaviorSubject } from 'rxjs';
-import { filter, take, distinctUntilChanged, map, tap } from 'rxjs/operators';
+import { filter, take, distinctUntilChanged, map } from 'rxjs/operators';
 import { UserService } from './user.service';
 import { User } from 'firebase';
 
@@ -53,10 +53,10 @@ export class HierarchyService {
         ) {
           console.log('Fetch node', id, ts - this.lastTs, cacheTimeoutMs);
           this.lastTs = ts;
-          this.userService.user$
+          this.userService.relawan$
             .pipe(take(1))
             .toPromise()
-            .then(user => this.update(user, id).catch(console.error));
+            .then(r => this.update(r.auth, id).catch(console.error));
         }
       });
 

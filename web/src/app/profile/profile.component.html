@@ -34,56 +34,56 @@
   <ng-container *ngIf="(relawan$ | async) as relawan">
     <table>
       <tr>
-        <td><img [src]="relawan.profile.pic" height="80" /></td>
+        <td><img [src]="relawan.profile.pic" height="70" /></td>
         <td>
           <app-orang [profile]="relawan.profile"></app-orang><br />
           {{ relawan.profile.email }}<br />
           {{ relawan.profile.loginTs | date: 'medium' }}<br />
           Referrer:
-          <app-orang [profile]="relawan.referrer" [activity]="true"></app-orang
-          ><br />
-
-          <mat-radio-group
-            *ngIf="curRel.auth.uid != relawan.profile.uid"
-            [ngModel]="relawan.profile.role || 0"
-            (ngModelChange)="
-              changeRole(curRel.auth, relawan.profile.uid, $event)
-            "
-          >
-            <mat-radio-button [value]="USER_ROLE.RELAWAN"
-              ><span
-                [style.font-weight]="
-                  (relawan.profile.role || 0) == USER_ROLE.RELAWAN ? 'bold' : ''
-                "
-                >Relawan</span
-              ></mat-radio-button
-            >
-            &nbsp;
-            <mat-radio-button [value]="USER_ROLE.MODERATOR">
-              <b
-                class="moderator"
-                *ngIf="relawan.profile.role == USER_ROLE.MODERATOR; else notmod"
-                >Moderator</b
-              >
-              <ng-template #notmod>
-                Moderator
-              </ng-template>
-            </mat-radio-button>
-            &nbsp;
-            <mat-radio-button [value]="USER_ROLE.ADMIN">
-              <b
-                class="admin"
-                *ngIf="relawan.profile.role == USER_ROLE.ADMIN; else notadmin"
-                >Admin</b
-              >
-              <ng-template #notadmin>
-                Admin
-              </ng-template>
-            </mat-radio-button>
-          </mat-radio-group>
+          <app-orang [profile]="relawan.referrer" [activity]="true"></app-orang>
         </td>
       </tr>
     </table>
+
+    <p>
+      Kalo angkat jadi admin, gak bisa downgrade lagi!<br>
+      <mat-radio-group
+        *ngIf="curRel.auth.uid != relawan.profile.uid"
+        [ngModel]="relawan.profile.role || 0"
+        (ngModelChange)="changeRole(curRel.auth, relawan.profile.uid, $event)"
+      >
+        <mat-radio-button [value]="USER_ROLE.RELAWAN"
+          ><span
+            [style.font-weight]="
+              (relawan.profile.role || 0) == USER_ROLE.RELAWAN ? 'bold' : ''
+            "
+            >Relawan</span
+          ></mat-radio-button
+        >
+        &nbsp;
+        <mat-radio-button [value]="USER_ROLE.MODERATOR">
+          <b
+            class="moderator"
+            *ngIf="relawan.profile.role == USER_ROLE.MODERATOR; else notmod"
+            >Moderator</b
+          >
+          <ng-template #notmod>
+            Moderator
+          </ng-template>
+        </mat-radio-button>
+        &nbsp;
+        <mat-radio-button [value]="USER_ROLE.ADMIN">
+          <b
+            class="admin"
+            *ngIf="relawan.profile.role == USER_ROLE.ADMIN; else notadmin"
+            >Admin</b
+          >
+          <ng-template #notadmin>
+            Admin
+          </ng-template>
+        </mat-radio-button>
+      </mat-radio-group>
+    </p>
 
     <ng-container *ngIf="relawan.code">
       <p></p>

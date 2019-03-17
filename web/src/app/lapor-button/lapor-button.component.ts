@@ -7,10 +7,10 @@ import { HierarchyService } from '../hierarchy.service';
   selector: 'app-lapor-button',
   template: `
     <button
-      *ngIf="(userService.user$ | async) as user"
+      *ngIf="(userService.relawan$ | async) as relawan"
       mat-raised-button
       color="warn"
-      (click)="laporKesalahan(user)"
+      (click)="laporKesalahan(relawan.auth)"
       [disabled]="isLoading"
     >
       Lapor <mat-icon>error_outline</mat-icon>

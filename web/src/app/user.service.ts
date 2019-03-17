@@ -21,7 +21,6 @@ import { Router } from '@angular/router';
 })
 export class UserService {
   user: User;
-  user$: Observable<User>;
   relawan$: Observable<Relawan>;
   relawanPhotos$: Observable<RelawanPhotos>;
   upsert$: { [imageId: string]: Observable<Upsert> } = {};
@@ -35,15 +34,9 @@ export class UserService {
   ) {
     this.isLoading = true;
 
-    this.user$ = this.afAuth.user.pipe(
-      tap(user => {
-        this.user = user;
-        this.isLoading = false;
-      }),
-      shareReplay(1)
-    );
+    const user$ = this.afAuth.user.pipe(shareReplay(1));
 
-    this.relawan$ = this.user$.pipe(
+    this.relawan$ = user$.pipe(
       switchMap(user =>
         user
           ? this.fsdb
@@ -51,7 +44,7 @@ export class UserService {
               .valueChanges()
               .pipe(
                 filter(r => !!r),
-                tap(r => (r.auth = user))
+                tap(r => (r.auth = this.user = user))
               )
           : of(null)
       ),
@@ -62,12 +55,13 @@ export class UserService {
           this.router.navigate(['/login']);
           return null;
         }
+        this.isLoading = false;
         return r;
       }),
       shareReplay(1)
     );
 
-    this.relawanPhotos$ = this.user$.pipe(
+    this.relawanPhotos$ = user$.pipe(
       switchMap(user =>
         user
           ? this.fsdb

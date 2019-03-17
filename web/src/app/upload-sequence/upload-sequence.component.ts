@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { UploadService } from '../upload.service';
 import { Router } from '@angular/router';
 
@@ -27,7 +27,7 @@ import { UserService } from '../user.service';
       #u
       type="file"
       (change)="upload($event)"
-      accept=".png,.jpg"
+      [accept]="accept"
       style="display: none"
     />
     <a mat-raised-button color="primary" (click)="u.click()">
@@ -36,17 +36,27 @@ import { UserService } from '../user.service';
   `,
   styles: ['']
 })
-export class UploadSequenceComponent {
+export class UploadSequenceComponent implements OnInit {
   @Input() kelId: number;
   @Input() kelName: string;
   @Input() tpsNo: number;
   @Input() value = 'Upload foto';
+
+  accept = '.png,.jpg';
 
   constructor(
     private router: Router,
     private userService: UserService,
     private uploadService: UploadService
   ) {}
+
+  ngOnInit() {
+    // @ts-ignore
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    if (ua.indexOf('FBAN') > -1 || ua.indexOf('FBAV') > -1) {
+      this.accept = '';
+    }
+  }
 
   async upload(event) {
     if (event.target.files.length === 0) {
