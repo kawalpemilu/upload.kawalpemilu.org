@@ -30,7 +30,8 @@ import {
   UpsertProfile,
   TpsData,
   ApproveRequest,
-  IMAGE_STATUS
+  IMAGE_STATUS,
+  toChildren
 } from 'shared';
 
 const t1 = Date.now();
@@ -136,17 +137,25 @@ const bodyParser = require('body-parser');
 app.use(require('cors')({ origin: true }));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use((err, req, res, next) => {
+  if (err !== null) {
+    res.json({ error: 'invalid json' });
+  } else {
+    next();
+  }
+});
 app.use(validateToken());
 app.use(maxRequestPerMinute(30));
 
 function getChildren(cid): Promise<HierarchyNode> {
   const host = '35.188.68.201:8080';
-  const options = { timeout: 3000, json: true };
+  const options = { timeout: 2000, json: true };
   return request(`http://${host}/api/c/${cid}`, options);
 }
 
 const CACHE_TIMEOUT = 1;
 const cache_c: any = {};
+let fallbackUntilTs = 0;
 app.get('/api/c/:id', async (req, res) => {
   const cid = +req.params.id;
   if (isNaN(cid)) {
@@ -157,11 +166,27 @@ app.get('/api/c/:id', async (req, res) => {
   res.setHeader('Cache-Control', `max-age=${CACHE_TIMEOUT}`);
   if (c) return res.json(c);
 
-  try {
-    c = await getChildren(cid);
-  } catch (e) {
-    console.error(`API call failed on ${cid}: ${e.message}`);
-    c = {};
+  const ts = Date.now();
+  if (fallbackUntilTs < ts) {
+    try {
+      c = await getChildren(cid);
+    } catch (e) {
+      console.error(`API call failed on ${cid}: ${e.message}`);
+    }
+  }
+
+  if (!c) {
+    // Fallback to static hierarchy.
+    fallbackUntilTs = ts + 60 * 1000;
+    const snap = await fsdb.doc(FsPath.hie(cid)).get();
+    c = snap.data() as HierarchyNode;
+    if (c) {
+      c.children = toChildren(c);
+      c.data = c.data || {};
+      delete c.child;
+    } else {
+      c = {};
+    }
   }
 
   cache_c[cid] = c;

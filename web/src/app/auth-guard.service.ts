@@ -7,7 +7,7 @@ import {
 } from '@angular/router';
 import { UserService } from './user.service';
 import { switchMap } from 'rxjs/operators';
-import { LOCAL_STORAGE_LAST_URL } from 'shared';
+import { LOCAL_STORAGE_LAST_URL, lsSetItem } from 'shared';
 
 @Injectable({
   providedIn: 'root'
@@ -38,7 +38,7 @@ export class AuthGuardService implements CanActivate {
           await this.userService.logout();
         }
         console.log('Save last url: ', state.url);
-        localStorage.setItem(LOCAL_STORAGE_LAST_URL, state.url);
+        lsSetItem(LOCAL_STORAGE_LAST_URL, state.url);
         this.router.navigate(['/login']);
         return false;
       })

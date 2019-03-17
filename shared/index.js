@@ -96,6 +96,9 @@ exports.isValidUserId = isValidUserId;
 var FsPath = /** @class */ (function () {
     function FsPath() {
     }
+    FsPath.hie = function (id) {
+        return "h" + (typeof id === 'number' ? '/' + id : '');
+    };
     FsPath.relawan = function (uid) {
         return "r" + (uid ? '/' + uid : '');
     };
@@ -131,3 +134,67 @@ function autoId(n) {
     return autoId;
 }
 exports.autoId = autoId;
+function toChild(node) {
+    var child = {};
+    if (node.depth === 4) {
+        for (var _i = 0, _a = node.children; _i < _a.length; _i++) {
+            var c = _a[_i];
+            if (c.length !== 3)
+                throw new Error('c');
+            var tpsNo = c[0], nL = c[1], nP = c[2];
+            child[tpsNo] = { id: tpsNo, nL: nL, nP: nP };
+        }
+    }
+    else {
+        for (var _b = 0, _c = node.children; _b < _c.length; _b++) {
+            var c = _c[_b];
+            if (c.length !== 5)
+                throw new Error('c');
+            var cid = c[0], cname = c[1], nTps = c[2], nL = c[3], nP = c[4];
+            child[cid] = { id: cid, name: cname.toUpperCase(), nTps: nTps, nL: nL, nP: nP };
+        }
+    }
+    return child;
+}
+exports.toChild = toChild;
+function toChildren(node) {
+    return Object.keys(node.child).map(function (cid) {
+        var c = node.child[cid];
+        return node.depth === 4
+            ? [c.id, c.nL, c.nP]
+            : [c.id, c.name, c.nTps, c.nL, c.nP];
+    });
+}
+exports.toChildren = toChildren;
+function lsGetItem(key) {
+    if (window.localStorage) {
+        try {
+            var value = JSON.parse(window.localStorage.getItem(key));
+            // console.log('lsGetItem', key, value);
+            return value;
+        }
+        catch (e) {
+            console.log("Unable to get from localStorage");
+            return null;
+        }
+    }
+    else {
+        console.log('No localStorage');
+    }
+}
+exports.lsGetItem = lsGetItem;
+function lsSetItem(key, value) {
+    if (window.localStorage) {
+        try {
+            window.localStorage.setItem(key, JSON.stringify(value));
+            // console.log('lsSetItem', key);
+        }
+        catch (e) {
+            console.log("Unable to set to localStorage");
+        }
+    }
+    else {
+        console.log('No localStorage');
+    }
+}
+exports.lsSetItem = lsSetItem;

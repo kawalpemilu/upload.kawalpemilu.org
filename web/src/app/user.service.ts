@@ -10,7 +10,8 @@ import {
   Relawan,
   LOCAL_STORAGE_LAST_URL,
   Upsert,
-  RelawanPhotos
+  RelawanPhotos,
+  lsGetItem
 } from 'shared';
 import { ApiService } from './api.service';
 import { Router } from '@angular/router';
@@ -73,7 +74,8 @@ export class UserService {
               .doc<RelawanPhotos>(FsPath.relawanPhoto(user.uid))
               .valueChanges()
           : of(null)
-      )
+      ),
+      shareReplay(1)
     );
 
     this.afAuth.auth
@@ -86,7 +88,7 @@ export class UserService {
           result.additionalUserInfo.profile;
 
         if (profile) {
-          const url = localStorage.getItem(LOCAL_STORAGE_LAST_URL);
+          const url = lsGetItem(LOCAL_STORAGE_LAST_URL);
           console.log('Navigate to last url: ', url);
           this.router.navigateByUrl(url);
 

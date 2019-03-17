@@ -156,11 +156,20 @@ export interface ApproveRequest {
   status: IMAGE_STATUS;
 }
 
+export interface ChildData {
+  id: number; // TpsNo if the parent is a kelurahan.
+  name: string;
+  nTps: number;
+  nL: number;
+  nP: number;
+}
+
 export interface HierarchyNode {
   id: number;
   name: string;
   parentIds: number[];
   parentNames: string[];
+  child?: { [id: string]: ChildData };
   children: any[];
   depth: number;
   data: { [key: string]: Aggregate };
@@ -220,6 +229,10 @@ export function isValidUserId(uid: string) {
 }
 
 export class FsPath {
+  static hie(id?: number) {
+    return `h${typeof id === 'number' ? '/' + id : ''}`;
+  }
+
   static relawan(uid?: string) {
     return `r${uid ? '/' + uid : ''}`;
   }
@@ -258,4 +271,59 @@ export function autoId(n = 20): string {
     autoId += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return autoId;
+}
+
+export function toChild(node: HierarchyNode) {
+  const child: { [id: string]: ChildData } = {};
+  if (node.depth === 4) {
+    for (const c of node.children) {
+      if (c.length !== 3) throw new Error('c');
+      const [tpsNo, nL, nP] = c;
+      child[tpsNo] = { id: tpsNo, nL, nP } as ChildData;
+    }
+  } else {
+    for (const c of node.children) {
+      if (c.length !== 5) throw new Error('c');
+      const [cid, cname, nTps, nL, nP] = c;
+      child[cid] = { id: cid, name: cname.toUpperCase(), nTps, nL, nP };
+    }
+  }
+  return child;
+}
+
+export function toChildren(node: HierarchyNode) {
+  return Object.keys(node.child).map(cid => {
+    const c = node.child[cid];
+    return node.depth === 4
+      ? [c.id, c.nL, c.nP]
+      : [c.id, c.name, c.nTps, c.nL, c.nP];
+  });
+}
+
+export function lsGetItem(key) {
+  if (window.localStorage) {
+    try {
+      const value = JSON.parse(window.localStorage.getItem(key));
+      // console.log('lsGetItem', key, value);
+      return value;
+    } catch (e) {
+      console.log(`Unable to get from localStorage`);
+      return null;
+    }
+  } else {
+    console.log('No localStorage');
+  }
+}
+
+export function lsSetItem(key, value) {
+  if (window.localStorage) {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+      // console.log('lsSetItem', key);
+    } catch (e) {
+      console.log(`Unable to set to localStorage`);
+    }
+  } else {
+    console.log('No localStorage');
+  }
 }

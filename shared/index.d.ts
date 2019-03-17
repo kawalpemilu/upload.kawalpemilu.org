@@ -138,11 +138,21 @@ export interface ApproveRequest {
     sum: SumMap;
     status: IMAGE_STATUS;
 }
+export interface ChildData {
+    id: number;
+    name: string;
+    nTps: number;
+    nL: number;
+    nP: number;
+}
 export interface HierarchyNode {
     id: number;
     name: string;
     parentIds: number[];
     parentNames: string[];
+    child?: {
+        [id: string]: ChildData;
+    };
     children: any[];
     depth: number;
     data: {
@@ -170,6 +180,7 @@ export declare function getServingUrl(url: string, size: number): string;
 export declare function isValidImageId(imageId: string): RegExpMatchArray;
 export declare function isValidUserId(uid: string): RegExpMatchArray;
 export declare class FsPath {
+    static hie(id?: number): string;
     static relawan(uid?: string): string;
     static relawanPhoto(uid?: string): string;
     static tps(kelId: number, tpsNo: number): string;
@@ -180,3 +191,9 @@ export declare class FsPath {
 }
 /** Returns a random n-character identifier containing [a-zA-Z0-9]. */
 export declare function autoId(n?: number): string;
+export declare function toChild(node: HierarchyNode): {
+    [id: string]: ChildData;
+};
+export declare function toChildren(node: HierarchyNode): (string | number)[][];
+export declare function lsGetItem(key: any): any;
+export declare function lsSetItem(key: any, value: any): void;

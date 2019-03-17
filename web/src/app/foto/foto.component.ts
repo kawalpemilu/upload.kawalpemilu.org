@@ -1,8 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ViewEncapsulation,
-  OnInit
+  ViewEncapsulation
 } from '@angular/core';
 import { UserService } from '../user.service';
 import { Observable, combineLatest } from 'rxjs';
@@ -44,7 +43,7 @@ export interface Photos {
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FotoComponent implements OnInit {
+export class FotoComponent {
   photos$: Observable<Photos[]>;
 
   constructor(userService: UserService, private uploadService: UploadService) {
@@ -96,20 +95,5 @@ export class FotoComponent implements OnInit {
         return Object.values(photosByTpsAndTpsNo);
       })
     );
-  }
-
-  ngOnInit() {
-    for (const imageId of Object.keys(this.uploadService.status_)) {
-      const img = this.uploadService.status_[imageId];
-      if (!img.done) {
-        setTimeout(() => {
-          const els = document.getElementsByClassName('tips');
-          if (els.length > 0) {
-            els[0].scrollIntoView({ behavior: 'smooth' });
-          }
-        }, 500);
-        break;
-      }
-    }
   }
 }
