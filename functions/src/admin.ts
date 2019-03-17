@@ -19,7 +19,6 @@ const readFileAsync = util.promisify(fs.readFile);
 const appendFileAsync = util.promisify(fs.appendFile);
 
 const fsdb = admin.firestore();
-fsdb.settings({ timestampsInSnapshots: true });
 
 // In memory database containing the aggregates of all children.
 let h: { [key: string]: { [key: string]: Aggregate } } = {};
@@ -57,7 +56,7 @@ async function updateAggregates(
 
   const tpsData = getUpsertData(path[4], path[5]) as TpsAggregate;
   tpsData.photos = tpsData.photos || {};
-  for (const url of Object.keys(agg.photos)) {
+  for (const url of Object.keys(agg.photos || {})) {
     if (agg.photos[url]) {
       tpsData.photos[url] = agg.photos[url];
     } else {
