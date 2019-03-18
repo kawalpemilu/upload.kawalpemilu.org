@@ -4,14 +4,14 @@ import { ActivatedRoute } from '@angular/router';
 import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
-import { HierarchyNode, Aggregate, USER_ROLE } from 'shared';
+import { HierarchyNode, USER_ROLE, TpsAggregate } from 'shared';
 import { UserService } from '../user.service';
 
 interface Tps {
   tpsNo: number;
   laki: number;
   perempuan: number;
-  agg: Aggregate;
+  agg: TpsAggregate;
 }
 
 interface State extends HierarchyNode {
@@ -27,6 +27,7 @@ interface State extends HierarchyNode {
 export class TpsComponent implements OnInit {
   state$: Observable<State>;
   USER_ROLE = USER_ROLE;
+  Object = Object;
 
   constructor(
     public hie: HierarchyService,
@@ -48,7 +49,7 @@ export class TpsComponent implements OnInit {
             tpsNo: arr[0],
             laki: arr[1],
             perempuan: arr[2],
-            agg: state.data[arr[0]]
+            agg: state.data[arr[0]] as TpsAggregate
           };
           state.tpsList.push(t);
         });

@@ -425,7 +425,7 @@ app.post('/api/approve', [populateApprove()], async (req: any, res) => {
           u.action.sum.cakupan = 1;
         } else {
           u.action.sum.cakupan = 1;
-          u.action.photos[i.url] = u.action;
+          u.action.photos[i.url] = JSON.parse(JSON.stringify(u.action));
           u.action.ts = Math.max(u.action.ts, i.reviewer.ts);
           for (const key of Object.keys(i.sum)) {
             if (typeof u.action.sum[key] === 'number') {

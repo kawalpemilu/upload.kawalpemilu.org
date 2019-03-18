@@ -70,9 +70,9 @@
         </p>
       </td>
       <td style="padding: 10px">
-        <ng-container *ngIf="tps.agg?.urls">
+        <ng-container *ngIf="tps.agg?.photos">
           <app-thumbnail
-            *ngFor="let url of tps.agg.urls"
+            *ngFor="let url of Object.keys(tps.agg.photos)"
             [url]="url"
             [srcSize]="125"
           ></app-thumbnail>
