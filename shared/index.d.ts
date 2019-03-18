@@ -31,11 +31,47 @@ export declare enum SUM_KEY {
     pan = "pan",
     han = "han",
     dem = "dem",
+    pa = "pa",
+    ps = "ps",
+    pda = "pda",
+    pna = "pna",
     pbb = "pbb",
     pkp = "pkp",
     pJum = "pJum",
     pSah = "pSah",
     pTSah = "pTSah"
+}
+export declare enum PPWP_NAMES {
+    jum = "PHP",
+    pas1 = "S01",
+    pas2 = "S02",
+    sah = "Sah",
+    tSah = "~Sah"
+}
+export declare enum DPR_NAMES {
+    pkb = "1.PKB",
+    ger = "2.Grnd",
+    pdi = "3.PDIP",
+    gol = "4.Glkr",
+    nas = "5.Nsdm",
+    gar = "6.Grda",
+    ber = "7.Berk",
+    sej = "8.PKS",
+    per = "9.Prnd",
+    ppp = "10.PPP",
+    psi = "11.PSI",
+    pan = "12.PAN",
+    han = "13.Hanu",
+    dem = "14.Dem",
+    pa = "15.PA",
+    ps = "16.PS",
+    pda = "17.PDA",
+    pna = "18.PNA",
+    pbb = "19.PBB",
+    pkp = "20.PKPI",
+    pJum = "P.PHP",
+    pSah = "P.Sah",
+    pTSah = "P.~Sah"
 }
 export declare enum FORM_TYPE {
     PPWP = 1,

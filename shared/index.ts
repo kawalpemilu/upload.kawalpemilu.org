@@ -39,12 +39,50 @@ export enum SUM_KEY {
   pan = 'pan',
   han = 'han',
   dem = 'dem',
+  pa = 'pa', // Partai lokal Aceh
+  ps = 'ps', // Partai lokal Aceh
+  pda = 'pda', // Partai lokal Aceh
+  pna = 'pna', // Partai lokal Aceh
   pbb = 'pbb',
   pkp = 'pkp',
   pJum = 'pJum',
   pSah = 'pSah',
   pTSah = 'pTSah'
 }
+
+export enum PPWP_NAMES {
+  jum = 'PHP',
+  pas1 = 'S01',
+  pas2 = 'S02',
+  sah = 'Sah',
+  tSah = '~Sah',
+}
+
+export enum DPR_NAMES {
+  pkb = '1.PKB',
+  ger = '2.Grnd',
+  pdi = '3.PDIP',
+  gol = '4.Glkr',
+  nas = '5.Nsdm',
+  gar = '6.Grda',
+  ber = '7.Berk',
+  sej = '8.PKS',
+  per = '9.Prnd',
+  ppp = '10.PPP',
+  psi = '11.PSI',
+  pan = '12.PAN',
+  han = '13.Hanu',
+  dem = '14.Dem',
+  pa = '15.PA', // Partai lokal Aceh
+  ps = '16.PS', // Partai lokal Aceh
+  pda = '17.PDA', // Partai lokal Aceh
+  pna = '18.PNA', // Partai lokal Aceh
+  pbb = '19.PBB',
+  pkp = '20.PKPI',
+  pJum = 'P.PHP',
+  pSah = 'P.Sah',
+  pTSah = 'P.~Sah'
+};
 
 export enum FORM_TYPE {
   // Full blown until digitized.

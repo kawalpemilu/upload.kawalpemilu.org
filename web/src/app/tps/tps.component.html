@@ -26,35 +26,43 @@
           ></app-upload-sequence>
         </p>
 
-        <table
-          border="1"
-          *ngIf="tps.agg as d"
-          cellspacing="0"
-          align="center"
-          [style.background-color]="
-            d.sum.error ? '#FDD' : d.sum.pending ? '#FFD' : ''
-          "
-        >
-          <tr>
-            <th colspan="2">Pilpres</th>
-          </tr>
-          <tr>
-            <td class="label">#01:</td>
-            <td class="angka">{{ d.sum.pas1 }}</td>
-          </tr>
-          <tr>
-            <td class="label">#02:</td>
-            <td class="angka">{{ d.sum.pas2 }}</td>
-          </tr>
-          <tr>
-            <td class="label">Sah:</td>
-            <td class="angka">{{ d.sum.sah }}</td>
-          </tr>
-          <tr>
-            <td class="label">~Sah:</td>
-            <td class="angka">{{ d.sum.tSah }}</td>
-          </tr>
-        </table>
+        <div style="height: 135px; overflow-y: scroll">
+          <table
+            border="1"
+            width="115"
+            *ngIf="tps.agg as d"
+            cellspacing="0"
+            align="center"
+            [style.background-color]="
+              d.sum.error ? '#FDD' : d.sum.pending ? '#FFD' : ''
+            "
+          >
+            <thead *ngIf="hasPpwp(d.sum)">
+              <tr>
+                <th colspan="2">PPWP</th>
+              </tr>
+
+              <ng-container *ngFor="let k of Object.keys(PPWP_NAMES)">
+                <tr *ngIf="d.sum[k] !== undefined">
+                  <td class="label">{{ PPWP_NAMES[k] }}:</td>
+                  <td class="angka">{{ d.sum[k] }}</td>
+                </tr>
+              </ng-container>
+            </thead>
+
+            <tbody *ngIf="hasDpr(d.sum)">
+              <tr>
+                <th colspan="2">DPR</th>
+              </tr>
+              <ng-container *ngFor="let k of Object.keys(DPR_NAMES)">
+                <tr *ngIf="d.sum[k] !== undefined">
+                  <td class="label">{{ DPR_NAMES[k] }}:</td>
+                  <td class="angka">{{ d.sum[k] }}</td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
 
         <p>
           <ng-container *ngIf="tps.data as d">
@@ -71,11 +79,56 @@
       </td>
       <td style="padding: 10px">
         <ng-container *ngIf="tps.agg?.photos">
-          <app-thumbnail
-            *ngFor="let url of Object.keys(tps.agg.photos)"
-            [url]="url"
-            [srcSize]="125"
-          ></app-thumbnail>
+          <div class="cdk-virtual-scroll-data-source">
+            <cdk-virtual-scroll-viewport
+              orientation="horizontal"
+              itemSize="125"
+              style="height: 230px"
+              class="viewport"
+            >
+              <div
+                *cdkVirtualFor="let url of Object.keys(tps.agg.photos)"
+                class="item"
+              >
+                <table cellpadding="0" cellspacing="0">
+                  <tbody>
+                    <tr>
+                      <td align="center" width="125" height="125" colspan="2">
+                        <app-thumbnail
+                          [url]="url"
+                          [srcSize]="110"
+                          [maxHeight]="'110px'"
+                          [maxWidth]="'110px'"
+                          [linkSize]="980"
+                        ></app-thumbnail>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" colspan="2">
+                        <ng-container *ngIf="tps.agg.photos[url] as t">
+                          {{ t.ts | date: 'short' }}
+                        </ng-container>
+                      </td>
+                    </tr>
+                    <ng-container *ngIf="tps.agg.photos[url].sum as s">
+                      <ng-container *ngFor="let key of ALL_NAMES">
+                        <tr *ngIf="s[key] !== undefined">
+                          <td align="right">{{ PPWP_NAMES[key] || DPR_NAMES[key] }}:</td>
+                          <td
+                            align="right"
+                            width="40"
+                            style="padding-right: 5px"
+                          >
+                            {{ s[key] }}
+                          </td>
+                        </tr>
+                      </ng-container>
+                    </ng-container>
+                  </tbody>
+                </table>
+              </div>
+            </cdk-virtual-scroll-viewport>
+          </div>
         </ng-container>
         <p *ngIf="tps.agg?.sum?.pending" style="color: orange">
           Ada foto yang masuk dan belum diproses.

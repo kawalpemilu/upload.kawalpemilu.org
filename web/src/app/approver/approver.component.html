@@ -71,6 +71,16 @@
               </span> -->
                     <br />
                   </ng-container>
+                  <button
+                    *ngIf="approveStatus == 'pending'"
+                    type="submit"
+                    [disabled]="formGroup?.invalid || isLoading"
+                    mat-raised-button
+                    color="primary"
+                    (click)="approve()"
+                  >
+                    Bungkusss!
+                  </button>
                 </form>
               </ng-container>
             </ng-container>
@@ -126,15 +136,14 @@
           <app-orang [profile]="relawan.profile" [activity]="true"></app-orang>
         </span>
 
-        <ng-container *ngIf="approveStatus == 'ready' || formGroup">
+        <ng-container *ngIf="approveStatus == 'ready'">
           <button
-            type="submit"
-            [disabled]="formGroup?.invalid || isLoading"
+            [disabled]="isLoading"
             mat-raised-button
             color="primary"
             (click)="approve()"
           >
-            Approve Foto!
+            Bungkusss!
           </button>
         </ng-container>
         <br /><br />

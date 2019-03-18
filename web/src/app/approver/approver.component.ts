@@ -344,7 +344,7 @@ export class ApproverComponent implements OnDestroy {
     const sum = {} as SumMap;
     if (this.formGroup) {
       this.formGroup.disable();
-      for (const key of this.LEMBAR[this.formType][this.halaman]) {
+      for (const key of this.LEMBAR[this.formType][this.isPlano][this.halaman]) {
         sum[key] = this.formGroup.get(key).value;
       }
     }

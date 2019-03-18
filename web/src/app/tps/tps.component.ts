@@ -1,10 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { HierarchyService } from '../hierarchy.service';
 import { ActivatedRoute } from '@angular/router';
 import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
-import { HierarchyNode, USER_ROLE, TpsAggregate } from 'shared';
+import {
+  HierarchyNode,
+  USER_ROLE,
+  TpsAggregate,
+  DPR_NAMES,
+  PPWP_NAMES
+} from 'shared';
 import { UserService } from '../user.service';
 
 interface Tps {
@@ -22,11 +28,15 @@ interface State extends HierarchyNode {
 @Component({
   selector: 'app-tps',
   templateUrl: './tps.component.html',
-  styleUrls: ['./tps.component.css']
+  styleUrls: ['./tps.component.css'],
+  encapsulation: ViewEncapsulation.None
 })
 export class TpsComponent implements OnInit {
   state$: Observable<State>;
   USER_ROLE = USER_ROLE;
+  PPWP_NAMES = PPWP_NAMES;
+  DPR_NAMES = DPR_NAMES;
+  ALL_NAMES = Object.keys(PPWP_NAMES).concat(Object.keys(DPR_NAMES));
   Object = Object;
 
   constructor(
@@ -58,5 +68,13 @@ export class TpsComponent implements OnInit {
     );
 
     console.log('TpsComponent inited');
+  }
+
+  hasPpwp(sum: any) {
+    return Object.keys(PPWP_NAMES).find(k => sum[k] !== undefined);
+  }
+
+  hasDpr(sum: any) {
+    return Object.keys(DPR_NAMES).find(k => sum[k] !== undefined);
   }
 }
