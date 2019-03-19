@@ -47,9 +47,10 @@
       Karenanya, ayo rekrut teman-teman kamu di kelurahan yang
       <b>BELUM dikawal</b>
       untuk ikut jadi Relawan yang meng-upload foto C1 plano! Jika kamu punya
-      teman Facebook yang bertempat tinggal di kelurahan tersebut (
-      <a [routerLink]="['/h', 0]">lihat Cakupan TPS</a>), ayo undang mereka
-      dengan memberikan kode referral di bawah ini:
+      teman Facebook yang bertempat tinggal di kelurahan tersebut (<a
+        [routerLink]="['/h', 0]"
+        >lihat Cakupan TPS</a
+      >), ayo undang mereka dengan memberikan kode referral di bawah ini:
     </p>
 
     <p>
@@ -125,7 +126,10 @@
     <ng-container *ngIf="getReferralCodes(relawan, true) as codes">
       <ng-container *ngIf="codes.length > 0">
         <p>
-          Berikut ini adalah teman-teman yang sudah menerima undangan anda:
+          Total downstream referral anda adalah
+          <b style="color: blue">{{ relawan.profile.dr || 0 }}</b
+          >. Berikut ini adalah teman-teman yang sudah menerima undangan anda
+          beserta total downstream referral mereka:
         </p>
 
         <table border="1" cellpadding="5" cellspacing="0">
@@ -143,6 +147,7 @@
               <td>{{ c.name }}</td>
               <td>
                 <app-orang [profile]="c.claimer"></app-orang>
+                ({{ c.claimer.dr || 0 }})
               </td>
             </ng-container>
           </tr>
