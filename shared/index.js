@@ -116,7 +116,7 @@ var FsPath = /** @class */ (function () {
         return "t/" + kelId + "-" + tpsNo;
     };
     FsPath.codeReferral = function (code) {
-        return "c/" + code;
+        return "c" + (code ? '/' + code : '');
     };
     FsPath.changeLog = function (logId) {
         return "l/" + logId;
