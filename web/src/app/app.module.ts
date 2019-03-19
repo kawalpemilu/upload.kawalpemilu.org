@@ -52,6 +52,7 @@ import localeId from '@angular/common/locales/id';
 import { OrangComponent } from './orang/orang.component';
 import { ProfileComponent } from './profile/profile.component';
 import { MetaComponent } from './meta/meta.component';
+import { HomeComponent } from './home/home.component';
 
 @NgModule({
   entryComponents: [RegistrasiComponent, CopySnackBarComponent],
@@ -72,7 +73,8 @@ import { MetaComponent } from './meta/meta.component';
     ChatComponent,
     OrangComponent,
     ProfileComponent,
-    MetaComponent
+    MetaComponent,
+    HomeComponent
   ],
   imports: [
     BrowserModule,

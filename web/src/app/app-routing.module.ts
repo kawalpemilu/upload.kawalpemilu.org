@@ -9,9 +9,15 @@ import { LoginComponent } from './login/login.component';
 import { USER_ROLE } from 'shared';
 import { ProfileComponent } from './profile/profile.component';
 import { ApproverComponent } from './approver/approver.component';
+import { HomeComponent } from './home/home.component';
 
 const routes: Routes = [
-  { path: '', redirectTo: '/c/0', pathMatch: 'full' },
+  {
+    path: '',
+    pathMatch: 'full',
+    component: HomeComponent,
+    canActivate: [AuthGuardService]
+  },
   { path: 'login', component: LoginComponent },
   {
     path: 'h/:id',
@@ -41,7 +47,7 @@ const routes: Routes = [
       role: USER_ROLE.MODERATOR
     }
   },
-  { path: '**', redirectTo: '/c/0' }
+  { path: '**', redirectTo: '' }
 ];
 
 @NgModule({

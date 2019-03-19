@@ -203,9 +203,9 @@ function populateServingUrl() {
     const b = req.body as UploadRequest;
     const p: UploadRequest = (req.parsedBody = {
       imageId: b.imageId,
-      kelId: +req.body.kelId,
-      tpsNo: +req.body.tpsNo,
-      meta: extractImageMetadata(req.body.metadata),
+      kelId: +b.kelId,
+      tpsNo: +b.tpsNo,
+      meta: extractImageMetadata(b.meta),
       ts: Date.now(),
       url: null, // Populated below.
       kelName: '' // Will be populated in the next middleware.
@@ -348,9 +348,15 @@ function populateApprove() {
     }
     a.imageId = b.imageId;
 
-    if (!b.c1 || !FORM_TYPE[b.c1.type] || !IS_PLANO[b.c1.plano]) {
-      console.warn(`Invalid form ${b.c1} for ${user.uid}`);
+    if (!b.c1 || !FORM_TYPE[b.c1.type]) {
+      console.warn(`Invalid form ${JSON.stringify(b.c1)} for ${user.uid}`);
       return res.json({ error: 'Invalid form' });
+    }
+    if (b.c1.type !== FORM_TYPE.DELETED && b.c1.type !== FORM_TYPE.OTHERS) {
+      if (!IS_PLANO[b.c1.plano]) {
+        console.warn(`Invalid plano ${JSON.stringify(b.c1)} for ${user.uid}`);
+        return res.json({ error: 'Invalid form' });
+      }
     }
     a.c1 = { type: b.c1.type, plano: b.c1.plano };
 

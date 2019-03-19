@@ -2,7 +2,13 @@
   <button mat-icon-button (click)="snav.toggle()">
     <mat-icon>menu</mat-icon>
   </button>
-  <h1 class="app-name">KawalPemilu - Jaga Suara 2019</h1>
+  <h1
+    class="app-name"
+    style="outline: none; cursor: pointer;"
+    [routerLink]="['/']"
+  >
+    KawalPemilu - Jaga Suara 2019
+  </h1>
 
   <span style="flex: 1 1 auto;"></span>
   <button mat-icon-button [matMenuTriggerFor]="menu">
@@ -88,7 +94,7 @@
   >
     <router-outlet *ngIf="!userService.isLoading; else loading"></router-outlet>
     <ng-template #loading>
-      <mat-spinner></mat-spinner>
+      <p><mat-spinner></mat-spinner></p>
     </ng-template>
   </mat-sidenav-content>
 </mat-sidenav-container>

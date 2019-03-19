@@ -26,13 +26,13 @@ export class AuthGuardService implements CanActivate {
                   return true;
                 }
                 console.log('No refferal ', relawan.depth, route.data.depth);
-                this.router.navigate(['/foto']);
+                this.router.navigate(['/']);
                 return false;
               }
               return true;
             }
             console.log('No access ', relawan.profile.role, route.data.role);
-            this.router.navigate(['/foto']);
+            this.router.navigate(['/']);
             return false;
           }
           await this.userService.logout();

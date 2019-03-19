@@ -9,7 +9,7 @@
     <table border="1" cellpadding="5" cellspacing="0">
       <tr bgcolor="lightgray" height="30">
         <th width="120">Lokasi TPS</th>
-        <td width="100%"><b>Foto-foto yang telah Anda upload</b></td>
+        <td width="100%"><b>Foto-foto yang telah kamu upload</b></td>
       </tr>
       <tr
         *ngFor="let p of photos; let odd = odd; let i = index"
@@ -96,7 +96,15 @@
 </p>
 
 <ul>
-  <li>Temukan lokasi TPS di kelurahan tempat kamu berdomisili</li>
+  <li>
+    Temukan lokasi dan nomor TPS di kelurahan tempat kamu berdomisili. Silahkan
+    cek di
+    <a href="https://lindungihakpilihmu.kpu.go.id/" target="_blank"
+      >website KPU</a
+    >
+    untuk mengetahui <b>nomor TPS</b> kamu dan apakah kamu sudah terdaftar di
+    TPS tersebut?
+  </li>
 
   <li>
     Ambil beberapa foto dengan ponsel kamu. Ambillah foto netral, yang tidak
@@ -105,8 +113,8 @@
   </li>
 
   <li>
-    Setelah koneksi internet stabil, masuk ke situs ini dengan browser Chrome
-    atau Safari untuk upload foto satu per satu.
+    Setelah mendapatkan koneksi internet stabil, masuk ke situs ini dengan
+    browser Chrome atau Safari untuk upload foto satu per satu.
   </li>
 
   <li>
@@ -118,7 +126,7 @@
 
 <p>
   <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
-    Cari TPS Anda dan Tes Upload Foto
+    Cari TPS kamu dan Tes Upload Foto
   </a>
 </p>
 
