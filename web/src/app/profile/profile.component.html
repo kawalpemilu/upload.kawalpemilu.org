@@ -1,60 +1,72 @@
 <ng-container *ngIf="(userService.relawan$ | async) as curRel">
-  <mat-form-field style="width: 225px">
-    <input
-      matInput
-      placeholder="Cari Nama User"
-      type="text"
-      autocomplete="off"
-      (input)="cari$.next($event.target.value)"
-    />
-  </mat-form-field>
+  <ng-container *ngIf="curRel.profile.role >= USER_ROLE.ADMIN">
+    <mat-form-field style="width: 225px">
+      <input
+        matInput
+        placeholder="Cari Nama User"
+        type="text"
+        autocomplete="off"
+        (input)="cari$.next($event.target.value)"
+      />
+    </mat-form-field>
 
-  <table
-    *ngIf="(relawans$ | async) as arr"
-    border="1"
-    cellspacing="0"
-    cellpadding="5"
-  >
-    <tr>
-      <th>Orang</th>
-      <th>Role</th>
-      <th>Referrer</th>
-    </tr>
-    <tr *ngFor="let r of arr; let i = index">
-      <td>
-        <app-orang [profile]="r.profile" [activity]="true"></app-orang> ({{
-          r.profile.dr4 || 0
-        }})
-      </td>
-      <td>{{ USER_ROLE[r.profile.role] }}</td>
-      <td><app-orang [profile]="r.referrer" [activity]="true"></app-orang></td>
-    </tr>
-  </table>
+    <table
+      *ngIf="(relawans$ | async) as arr"
+      border="1"
+      cellspacing="0"
+      cellpadding="5"
+    >
+      <tr>
+        <th>Orang</th>
+        <th>Role</th>
+        <th>Referrer</th>
+      </tr>
+      <tr *ngFor="let r of arr; let i = index">
+        <td>
+          <app-orang [profile]="r.profile" [activity]="true"></app-orang> ({{
+            r.profile.dr4 || 0
+          }})
+        </td>
+        <td>{{ USER_ROLE[r.profile.role] }}</td>
+        <td>
+          <app-orang [profile]="r.referrer" [activity]="true"></app-orang>
+        </td>
+      </tr>
+    </table>
 
-  <p>
-    <mat-divider></mat-divider>
-  </p>
+    <p>
+      <mat-divider></mat-divider>
+    </p>
+  </ng-container>
 
   <ng-container *ngIf="(relawan$ | async) as relawan">
-    <table>
+    <table style="margin-top: 10px">
       <tr>
         <td><img [src]="relawan.profile.pic" height="70" /></td>
         <td>
           <app-orang [profile]="relawan.profile"></app-orang> ({{
             relawan.profile.dr4 || 0
-          }})<br />
-          {{ relawan.profile.email }}<br />
-          {{ relawan.profile.loginTs | date: 'medium' }}<br />
+          }})<br>
+          Role: {{ USER_ROLE[relawan.profile.role || 0] }}<br />
+          <!-- <ng-container *ngIf="curRel.profile.role >= USER_ROLE.ADMIN">
+            {{ relawan.profile.email }}<br />
+          </ng-container> -->
+          Joined: {{ relawan.profile.loginTs | date: 'medium' }}<br />
           Referrer:
           <app-orang [profile]="relawan.referrer" [activity]="true"></app-orang>
         </td>
       </tr>
     </table>
 
-    <p>
+    <p
+      *ngIf="
+        curRel.profile.role >= USER_ROLE.ADMIN &&
+        curRel.auth.uid != relawan.profile.uid &&
+        relawan.profile.role < USER_ROLE.ADMIN
+      "
+    >
       Kalo angkat jadi admin, gak bisa downgrade lagi!<br />
       <mat-radio-group
-        *ngIf="curRel.auth.uid != relawan.profile.uid"
         [ngModel]="relawan.profile.role || 0"
         (ngModelChange)="changeRole(curRel.auth, relawan.profile.uid, $event)"
       >
@@ -91,60 +103,79 @@
       </mat-radio-group>
     </p>
 
-    <ng-container *ngIf="relawan.code">
-      <p></p>
-      Refers:
-      <table>
-        <tr [style.background-color]="'lightgray'">
-          <th>#</th>
-          <th width="150">Name</th>
-          <th>#DR</th>
-          <th>Join Date</th>
-        </tr>
-        <ng-container
-          *ngFor="let code of getCodes(relawan); let odd = odd; let i = index"
-        >
-          <tr
-            *ngIf="relawan.code[code] as c"
-            [style.background-color]="odd ? '#FFF' : '#EEE'"
-          >
-            <td>{{ i + 1 }}</td>
-            <td>
-              <app-orang [profile]="c.claimer" [activity]="true"></app-orang>
-            </td>
-            <td align="center">{{ c.claimer.dr4 || 0 }}</td>
-            <td>{{ c.claimedTs | date: 'medium' }}</td>
-          </tr>
+    <mat-tab-group>
+      <mat-tab
+        *ngIf="curRel.profile.role >= USER_ROLE.ADMIN"
+        label="Downstream Referrals ({{ (relawan.profile.dr4 || 1) - 1 }})"
+      >
+        <ng-container *ngIf="relawan.code">
+          <p></p>
+          <table width="100%" style="max-width: 400px">
+            <tr [style.background-color]="'lightgray'">
+              <th width="40">#</th>
+              <th>Name</th>
+              <th width="50">#DR</th>
+              <th width="75">Join Date</th>
+            </tr>
+            <ng-container
+              *ngFor="
+                let code of getCodes(relawan);
+                let odd = odd;
+                let i = index
+              "
+            >
+              <tr
+                *ngIf="relawan.code[code] as c"
+                [style.background-color]="odd ? '#FFF' : '#EEE'"
+              >
+                <td align="center">{{ i + 1 }}</td>
+                <td>
+                  <app-orang
+                    [profile]="c.claimer"
+                    [activity]="true"
+                  ></app-orang>
+                </td>
+                <td align="center">{{ c.claimer.dr4 || 0 }}</td>
+                <td>{{ c.claimedTs | date: 'shortDate' }}</td>
+              </tr>
+            </ng-container>
+          </table>
         </ng-container>
-      </table>
-    </ng-container>
+      </mat-tab>
+
+      <mat-tab
+        *ngIf="(relawanPhotos$ | async) as relawanPhotos"
+        label="Photos ({{ relawanPhotos.count }})"
+      >
+        <p></p>
+        <table border="1" cellspacing="0" cellpadding="5" width="400">
+          <tbody>
+            <tr>
+              <th width="40">#</th>
+              <th width="125">Foto</th>
+              <th width="300">Detil</th>
+            </tr>
+            <tr *ngFor="let u of relawanPhotos.uploads; let i = index">
+              <th>
+                {{ relawanPhotos.count - i }}
+              </th>
+              <td align="center">
+                <app-thumbnail [url]="u.url"></app-thumbnail><br />
+              </td>
+              <td>
+                {{ u.ts | date: 'medium' }}<br />
+                <app-hie-link [id]="u.kelId" [name]="u.kelName"></app-hie-link
+                ><br />
+                TPS: <b>#{{ u.tpsNo }}</b
+                ><br />
+                <app-meta [meta]="u.meta"></app-meta>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </mat-tab>
+    </mat-tab-group>
 
     <p></p>
-
-    <table border="1" cellspacing="0" cellpadding="5" width="400">
-      <tbody *ngIf="(relawanPhotos$ | async) as relawanPhotos">
-        <tr>
-          <th width="40">#</th>
-          <th width="125">Foto</th>
-          <th width="300">Detil</th>
-        </tr>
-        <tr *ngFor="let u of relawanPhotos.uploads; let i = index">
-          <th>
-            {{ relawanPhotos.count - i }}
-          </th>
-          <td align="center">
-            <app-thumbnail [url]="u.url"></app-thumbnail><br />
-          </td>
-          <td>
-            {{ u.ts | date: 'medium' }}<br />
-            <app-hie-link [id]="u.kelId" [name]="u.kelName"></app-hie-link
-            ><br />
-            TPS: <b>#{{ u.tpsNo }}</b
-            ><br />
-            <app-meta [meta]="u.meta"></app-meta>
-          </td>
-        </tr>
-      </tbody>
-    </table>
   </ng-container>
 </ng-container>
