@@ -137,17 +137,24 @@ function maxRequestPerMinute(n: number) {
 const app = express();
 const bodyParser = require('body-parser');
 app.use(require('cors')({ origin: true }));
+app.use(validateToken());
+app.use(maxRequestPerMinute(30));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use((err, req, res, next) => {
   if (err !== null) {
-    res.json({ error: 'invalid json' });
+    const user = req.user as admin.auth.DecodedIdToken;
+    if (err.status === 400 && err.name === 'SyntaxError' && err.body) {
+      const b = err.body.slice(0, 100).toString();
+      console.error(`Error ${user.uid} ${req.method + ' ' + req.url} : ${b}`);
+    } else {
+      console.error(`Error ${user.uid} ${req.method + ' ' + req.url}`);
+    }
+    res.json({ error: 'invalid request' });
   } else {
     next();
   }
 });
-app.use(validateToken());
-app.use(maxRequestPerMinute(30));
 
 function getChildren(cid): Promise<HierarchyNode> {
   const host = '35.188.68.201:8080';
@@ -426,7 +433,6 @@ app.post('/api/approve', [populateApprove()], async (req: any, res) => {
         } else if (i.c1.type === FORM_TYPE.DELETED) {
           u.action.photos[i.url] = null;
           u.action.sum.cakupan = 1;
-          u.action.sum.error = 1;
         } else if (i.c1.type === FORM_TYPE.OTHERS) {
           u.action.photos[i.url] = null;
           u.action.sum.cakupan = 1;

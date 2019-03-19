@@ -20,16 +20,17 @@ import { UserService } from '../user.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { HierarchyService } from '../hierarchy.service';
-import { User } from 'firebase';
 
 enum LEMBAR_KEY {
   PILPRES = 1,
   PARTAI4,
   PARTAI16_PLANO,
-  PARTAI5,
-  PARTAI20_PLANO,
-  CALON3,
-  CALON5_PLANO
+  PARTAI4_NO_DIGITIZE,
+  PARTAI16_PLANO_NO_DIGITIZE,
+  PARTAI5_NO_DIGITIZE,
+  PARTAI20_PLANO_NO_DIGITIZE,
+  CALON3_NO_DIGITIZE,
+  CALON5_PLANO_NO_DIGITIZE
 }
 
 interface LembarSpec {
@@ -122,7 +123,43 @@ export class ApproverComponent implements OnDestroy {
       '3': [SUM_KEY.pSah, SUM_KEY.pTSah]
     },
 
-    [LEMBAR_KEY.PARTAI5]: {
+    [LEMBAR_KEY.PARTAI4_NO_DIGITIZE]: {
+      '1': null,
+      '2.1': null,
+      '2.2': null,
+      '2.3': null,
+      '2.4': null,
+      '3': null,
+    },
+
+    [LEMBAR_KEY.PARTAI16_PLANO_NO_DIGITIZE]: {
+      '1': null,
+
+      '2.1': null,
+      '2.2': null,
+      '2.3': null,
+      '2.4': null,
+
+      '2.5': null,
+      '2.6': null,
+      '2.7': null,
+      '2.8': null,
+
+      '2.9': null,
+      '2.10': null,
+      '2.11': null,
+      '2.12': null,
+
+      '2.13': null,
+      '2.14': null,
+      '2.15': null,
+      '2.16': null,
+
+      '3': null,
+    },
+
+
+    [LEMBAR_KEY.PARTAI5_NO_DIGITIZE]: {
       '1': null,
       '2.1': null,
       '2.2': null,
@@ -132,7 +169,7 @@ export class ApproverComponent implements OnDestroy {
       '3': null
     },
 
-    [LEMBAR_KEY.PARTAI20_PLANO]: {
+    [LEMBAR_KEY.PARTAI20_PLANO_NO_DIGITIZE]: {
       '1': null,
 
       '2.1': null,
@@ -163,7 +200,7 @@ export class ApproverComponent implements OnDestroy {
       '3': null
     },
 
-    [LEMBAR_KEY.CALON3]: {
+    [LEMBAR_KEY.CALON3_NO_DIGITIZE]: {
       '1': null,
       '2.1': null,
       '2.2': null,
@@ -171,7 +208,7 @@ export class ApproverComponent implements OnDestroy {
       '3': null
     },
 
-    [LEMBAR_KEY.CALON5_PLANO]: {
+    [LEMBAR_KEY.CALON5_PLANO_NO_DIGITIZE]: {
       '1': null,
       '2.1': null,
       '2.2': null,
@@ -187,37 +224,38 @@ export class ApproverComponent implements OnDestroy {
       [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PILPRES],
       [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PILPRES]
     },
-    [FORM_TYPE.DPRPB]: {
-      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO],
-      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4]
-    },
-    [FORM_TYPE.DPRP]: {
-      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO],
-      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4]
-    },
-    [FORM_TYPE.DPRK]: {
-      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI20_PLANO],
-      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI5]
-    },
-    [FORM_TYPE.DPRD_PROV]: {
-      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO],
-      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4]
-    },
-    [FORM_TYPE.DPRD_KAB_KOTA]: {
-      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO],
-      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4]
-    },
-    [FORM_TYPE.DPRA]: {
-      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI20_PLANO],
-      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI5]
-    },
     [FORM_TYPE.DPR]: {
       [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO],
       [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4]
     },
+    // These forms below are not digitized, only classified.
+    [FORM_TYPE.DPRPB]: {
+      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO_NO_DIGITIZE],
+      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4_NO_DIGITIZE]
+    },
+    [FORM_TYPE.DPRP]: {
+      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO_NO_DIGITIZE],
+      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4_NO_DIGITIZE]
+    },
+    [FORM_TYPE.DPRK]: {
+      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI20_PLANO_NO_DIGITIZE],
+      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI5_NO_DIGITIZE]
+    },
+    [FORM_TYPE.DPRD_PROV]: {
+      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO_NO_DIGITIZE],
+      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4_NO_DIGITIZE]
+    },
+    [FORM_TYPE.DPRD_KAB_KOTA]: {
+      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO_NO_DIGITIZE],
+      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4_NO_DIGITIZE]
+    },
+    [FORM_TYPE.DPRA]: {
+      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI20_PLANO_NO_DIGITIZE],
+      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI5_NO_DIGITIZE]
+    },
     [FORM_TYPE.DPD]: {
-      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.CALON5_PLANO],
-      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.CALON3]
+      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.CALON5_PLANO_NO_DIGITIZE],
+      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.CALON3_NO_DIGITIZE]
     },
     [FORM_TYPE.OTHERS]: null,
     [FORM_TYPE.DELETED]: null

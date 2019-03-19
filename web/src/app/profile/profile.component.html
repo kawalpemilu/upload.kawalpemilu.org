@@ -21,7 +21,11 @@
       <th>Referrer</th>
     </tr>
     <tr *ngFor="let r of arr; let i = index">
-      <td><app-orang [profile]="r.profile" [activity]="true"></app-orang></td>
+      <td>
+        <app-orang [profile]="r.profile" [activity]="true"></app-orang> ({{
+          r.profile.impact || 0
+        }})
+      </td>
       <td>{{ USER_ROLE[r.profile.role] }}</td>
       <td><app-orang [profile]="r.referrer" [activity]="true"></app-orang></td>
     </tr>
@@ -36,7 +40,9 @@
       <tr>
         <td><img [src]="relawan.profile.pic" height="70" /></td>
         <td>
-          <app-orang [profile]="relawan.profile"></app-orang><br />
+          <app-orang [profile]="relawan.profile"></app-orang> ({{
+            relawan.profile.impact || 0
+          }})<br />
           {{ relawan.profile.email }}<br />
           {{ relawan.profile.loginTs | date: 'medium' }}<br />
           Referrer:
@@ -46,7 +52,7 @@
     </table>
 
     <p>
-      Kalo angkat jadi admin, gak bisa downgrade lagi!<br>
+      Kalo angkat jadi admin, gak bisa downgrade lagi!<br />
       <mat-radio-group
         *ngIf="curRel.auth.uid != relawan.profile.uid"
         [ngModel]="relawan.profile.role || 0"
@@ -88,18 +94,29 @@
     <ng-container *ngIf="relawan.code">
       <p></p>
       Refers:
-      <ul style="margin: 0">
-        <ng-container *ngFor="let code of Object.keys(relawan.code)">
-          <ng-container *ngIf="relawan.code[code] as c">
-            <ng-container *ngIf="c.claimer">
-              <li>
-                <app-orang [profile]="c.claimer" [activity]="true"></app-orang>
-                ({{ c.claimedTs | date: 'medium' }})
-              </li>
-            </ng-container>
-          </ng-container>
+      <table>
+        <tr [style.background-color]="'lightgray'">
+          <th>#</th>
+          <th width="150">Name</th>
+          <th>#DR</th>
+          <th>Join Date</th>
+        </tr>
+        <ng-container
+          *ngFor="let code of getCodes(relawan); let odd = odd; let i = index"
+        >
+          <tr
+            *ngIf="relawan.code[code] as c"
+            [style.background-color]="odd ? '#FFF' : '#EEE'"
+          >
+            <td>{{ i + 1 }}</td>
+            <td>
+              <app-orang [profile]="c.claimer" [activity]="true"></app-orang>
+            </td>
+            <td align="center">{{ c.claimer.impact || 0 }}</td>
+            <td>{{ c.claimedTs | date: 'medium' }}</td>
+          </tr>
         </ng-container>
-      </ul>
+      </table>
     </ng-container>
 
     <p></p>

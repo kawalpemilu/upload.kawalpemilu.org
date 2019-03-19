@@ -97,6 +97,7 @@ export interface PublicProfile {
     pic: string;
     loginTs: number;
     role: USER_ROLE;
+    impact: number;
 }
 export interface RelawanPhotos {
     profile: PublicProfile;
@@ -111,7 +112,6 @@ export interface Relawan {
     code: {
         [code: string]: CodeReferral;
     };
-    impact: number;
     auth: any;
 }
 export interface ChangeLog {

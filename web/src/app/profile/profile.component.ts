@@ -95,4 +95,11 @@ export class ProfileComponent implements OnInit {
     const res = await this.api.post(user, `change_role`, { uid, role });
     console.log(`Change role to ${role}`, res);
   }
+
+  getCodes(relawan: Relawan) {
+    const c = relawan.code;
+    return Object.keys(c)
+      .filter(a => !!c[a].claimer)
+      .sort((a, b) => (c[b].claimer.impact || 0) - (c[a].claimer.impact || 0));
+  }
 }
