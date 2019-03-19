@@ -158,7 +158,7 @@ function getChildren(cid): Promise<HierarchyNode> {
 const CACHE_TIMEOUT = 1;
 const cache_c: any = {};
 let fallbackUntilTs = 0;
-app.get('/api/c/:id', async (req, res) => {
+app.get('/api/c/:id', async (req: any, res) => {
   const cid = +req.params.id;
   if (isNaN(cid)) {
     return res.json({});
@@ -169,11 +169,12 @@ app.get('/api/c/:id', async (req, res) => {
   if (c) return res.json(c);
 
   const ts = Date.now();
+  const user = req.user as admin.auth.DecodedIdToken;
   if (fallbackUntilTs < ts) {
     try {
       c = await getChildren(cid);
     } catch (e) {
-      console.error(`API call failed on ${cid}: ${e.message}`);
+      console.error(`API call failed on ${cid}: ${e.message} ${user.uid}`);
     }
   }
 
@@ -537,7 +538,7 @@ app.post('/api/register/create_code', async (req: any, res) => {
     for (let i = 0; ; i++) {
       code = autoId(10);
       if (!(await t.get(fsdb.doc(FsPath.codeReferral(code)))).data()) break;
-      console.warn(`Exists auto id ${code}`);
+      console.warn(`Exists auto id ${code}, ${user.uid}`);
       if (i > 10) return 'no_id';
     }
 
@@ -547,7 +548,8 @@ app.post('/api/register/create_code', async (req: any, res) => {
       depth: r.depth + 1,
       name: nama,
       claimer: null,
-      claimedTs: null
+      claimedTs: null,
+      agg: 0
     };
     t.set(fsdb.doc(FsPath.codeReferral(code)), newCode);
 
@@ -672,7 +674,7 @@ app.post('/api/change_role', async (req: any, res) => {
   });
 
   if (ok !== true) {
-    console.error(ok);
+    console.error(`User ${user.uid} doing ${ok}`);
     return res.json({ error: 'Unable to change role' });
   }
 

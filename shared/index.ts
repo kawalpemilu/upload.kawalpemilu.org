@@ -127,6 +127,7 @@ export interface Relawan {
   referrer: PublicProfile;
   depth: number; // Referral depth
   code: { [code: string]: CodeReferral }; // Code referrals
+  impact: number; // Number of downstream referrals.
   auth: any; // firebase.User reference.
 }
 
@@ -194,6 +195,7 @@ export interface CodeReferral {
   claimer: PublicProfile;
   claimedTs: number; // The claimed timestamp
   depth: number; // The referral depth
+  agg: number; // Whether it has been aggregated to the Relawan profile.
 }
 
 export interface UploadRequest {
@@ -301,8 +303,8 @@ export class FsPath {
     return `t/${kelId}-${tpsNo}`;
   }
 
-  static codeReferral(code: string) {
-    return `c/${code}`;
+  static codeReferral(code?: string) {
+    return `c${code ? '/' + code : ''}`;
   }
 
   static changeLog(logId: string) {

@@ -111,6 +111,7 @@ export interface Relawan {
     code: {
         [code: string]: CodeReferral;
     };
+    impact: number;
     auth: any;
 }
 export interface ChangeLog {
@@ -172,6 +173,7 @@ export interface CodeReferral {
     claimer: PublicProfile;
     claimedTs: number;
     depth: number;
+    agg: number;
 }
 export interface UploadRequest {
     imageId: string;
@@ -233,7 +235,7 @@ export declare class FsPath {
     static relawan(uid?: string): string;
     static relawanPhoto(uid?: string): string;
     static tps(kelId: number, tpsNo: number): string;
-    static codeReferral(code: string): string;
+    static codeReferral(code?: string): string;
     static changeLog(logId: string): string;
     static imageMetadata(imageId: string): string;
     static upserts(imageId?: string): string;
