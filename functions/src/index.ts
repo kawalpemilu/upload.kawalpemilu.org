@@ -44,7 +44,6 @@ admin.initializeApp({
 });
 
 const auth = admin.auth();
-const rtdb = admin.database();
 const fsdb = admin.firestore();
 
 const t2 = Date.now();
@@ -640,7 +639,6 @@ app.post('/api/register/:code', async (req: any, res) => {
   if (!c || !c.claimer || c.claimer.uid !== user.uid) {
     return res.json({ error: `Maaf, kode ${code} tidak dapat digunakan` });
   }
-  await rtdb.ref(`r/${user.uid}`).set([c.issuer.uid, ts]);
   return res.json({ code: c });
 });
 

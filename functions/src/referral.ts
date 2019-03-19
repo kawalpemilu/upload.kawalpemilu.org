@@ -11,7 +11,7 @@ const delay = (ms: number) => new Promise(_ => setTimeout(_, ms));
 const fsdb = admin.firestore();
 const root = '5F1DwscbfSUFVoEmZACJKXZFHgk2'; // Ainun's uid.
 const FROM_AGG = 0;
-const TO_AGG = 4;
+const TO_AGG = 7;
 
 const cached_parent = {};
 async function getParent(uid) {
@@ -82,47 +82,70 @@ function toChildren(parent: { [uid: string]: string }) {
   return children;
 }
 
-function rec(
-  uid,
+function computeDR(
+  rel: Relawan,
   children: { [uid: string]: string[] },
-  delta: { [uid: string]: number }
+  relByUid: { [uid: string]: Relawan }
 ) {
-  let dr = 0;
-  for (const cuid of children[uid] || []) {
-    dr += rec(cuid, children, delta) + 1;
+  if (!rel) throw new Error(`no uid root`);
+
+  let cnt = 1;
+  rel.profile.dr4 = 1;
+  for (const cuid of children[rel.profile.uid] || []) {
+    const crel = relByUid[cuid];
+    cnt += computeDR(crel, children, relByUid);
   }
-  return (delta[uid] = dr);
+  for (const code of Object.keys(rel.code || {})) {
+    const c = rel.code[code].claimer;
+    if (c) {
+      if (relByUid.hasOwnProperty(c.uid)) {
+        c.dr4 = relByUid[c.uid].profile.dr4;
+      }
+      if (typeof c.dr4 === 'number') rel.profile.dr4 += c.dr4;
+    }
+  }
+  return cnt;
+}
+
+function getUids(uid: string, children: { [uid: string]: string[] }) {
+  let uids: string[] = [uid];
+  for (const cuid of children[uid] || []) {
+    uids = uids.concat(getUids(cuid, children));
+  }
+  return uids;
 }
 
 async function updateDownstreamReferrals(
   codeReferrals: string[],
-  delta: { [uid: string]: number }
+  parent: { [uid: string]: string }
 ) {
+  const numPersons = Object.keys(parent).length + 1;
+  const children = toChildren(parent);
+  const uids = getUids(root, children);
+  if (numPersons !== uids.length)
+    throw new Error(`${numPersons} != ${uids.length}`);
+
   return fsdb.runTransaction(async t => {
     const docRefs: FirebaseFirestore.DocumentReference[] = [];
-    for (const uid of Object.keys(delta)) {
+    for (const uid of uids) {
       docRefs.push(fsdb.doc(FsPath.relawan(uid)));
     }
+    console.log('Transaction', codeReferrals.length, uids.length);
     const P = docRefs.map(ref => t.get(ref));
     const relawans = (await Promise.all(P)).map(s => s.data() as Relawan);
-    const dr = {};
-    for (const rel of relawans) {
-      if (delta[rel.profile.uid] === undefined) {
-        throw new Error('kabuumm');
-      }
-      rel.profile.dr = (rel.profile.dr || 0) + delta[rel.profile.uid];
-      dr[rel.profile.uid] = rel.profile.dr;
-    }
-
+    const relByUid: { [uid: string]: Relawan } = {};
     for (let i = 0; i < relawans.length; i++) {
       const rel = relawans[i];
-      for (const code of Object.keys(rel.code || {})) {
-        const c = rel.code[code].claimer;
-        if (c && dr.hasOwnProperty(c.uid)) {
-          c.dr = dr[c.uid];
-        }
-      }
-      t.update(docRefs[i], rel);
+      if (rel.profile.uid !== uids[i])
+        throw new Error(`${rel.profile.uid} !== ${uids[i]}`);
+      relByUid[uids[i]] = JSON.parse(JSON.stringify(rel));
+    }
+
+    const m = computeDR(relByUid[root], children, relByUid);
+    if (m !== numPersons) throw new Error(`compute ${numPersons} !== ${m}`);
+
+    for (let i = 0; i < uids.length; i++) {
+      t.update(docRefs[i], relByUid[uids[i]]);
     }
 
     for (const code of codeReferrals) {
@@ -131,28 +154,20 @@ async function updateDownstreamReferrals(
   });
 }
 
-async function processCodeReferralAgg() {
+async function processCodeReferralAgg(batchSize: number) {
   const t0 = Date.now();
   const parent: { [uid: string]: string } = {};
-  const codeReferrals = await populateParent(parent, 100);
-  const pending = Object.keys(codeReferrals).length;
-  if (pending > 0) {
-    const children = toChildren(parent);
-    const n = Object.keys(parent).length;
-    const delta: { [uid: string]: number } = {};
-    rec(root, children, delta);
-    const m = Object.keys(delta).length;
-    if (n + 1 !== m) throw new Error(`${n + 1} != ${m}`);
-    await updateDownstreamReferrals(codeReferrals, delta);
+  const codeReferrals = await populateParent(parent, batchSize);
+  if (Object.keys(codeReferrals).length > 0) {
+    await updateDownstreamReferrals(codeReferrals, parent);
   }
   const t1 = Date.now();
   console.log('process batch', t1 - t0, new Date());
-  return pending;
 }
 
 (async () => {
   while (true) {
-    await processCodeReferralAgg();
+    await processCodeReferralAgg(100);
     await delay(1000 * 60 * 5);
   }
 })().catch(console.error);

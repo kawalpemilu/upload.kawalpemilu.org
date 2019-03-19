@@ -23,7 +23,7 @@
     <tr *ngFor="let r of arr; let i = index">
       <td>
         <app-orang [profile]="r.profile" [activity]="true"></app-orang> ({{
-          r.profile.dr || 0
+          r.profile.dr4 || 0
         }})
       </td>
       <td>{{ USER_ROLE[r.profile.role] }}</td>
@@ -41,7 +41,7 @@
         <td><img [src]="relawan.profile.pic" height="70" /></td>
         <td>
           <app-orang [profile]="relawan.profile"></app-orang> ({{
-            relawan.profile.dr || 0
+            relawan.profile.dr4 || 0
           }})<br />
           {{ relawan.profile.email }}<br />
           {{ relawan.profile.loginTs | date: 'medium' }}<br />
@@ -112,7 +112,7 @@
             <td>
               <app-orang [profile]="c.claimer" [activity]="true"></app-orang>
             </td>
-            <td align="center">{{ c.claimer.dr || 0 }}</td>
+            <td align="center">{{ c.claimer.dr4 || 0 }}</td>
             <td>{{ c.claimedTs | date: 'medium' }}</td>
           </tr>
         </ng-container>

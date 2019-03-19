@@ -113,7 +113,7 @@ export interface PublicProfile {
   pic: string; // Link to user's profile picture
   loginTs: number; // The timestamp of last login
   role: USER_ROLE;
-  dr: number; // Number of downstream referrals.
+  dr4: number; // Number of downstream referrals.
 }
 
 export interface RelawanPhotos {
