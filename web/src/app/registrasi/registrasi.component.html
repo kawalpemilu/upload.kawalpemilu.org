@@ -127,7 +127,7 @@
       <ng-container *ngIf="codes.length > 0">
         <p>
           Total downstream referral anda adalah
-          <b style="color: blue">{{ relawan.profile.dr || 0 }}</b
+          <b style="color: blue">{{ relawan.profile.dr4 || 0 }}</b
           >. Berikut ini adalah teman-teman yang sudah menerima undangan anda
           beserta total downstream referral mereka:
         </p>
@@ -147,7 +147,7 @@
               <td>{{ c.name }}</td>
               <td>
                 <app-orang [profile]="c.claimer"></app-orang>
-                ({{ c.claimer.dr || 0 }})
+                ({{ c.claimer.dr4 || 0 }})
               </td>
             </ng-container>
           </tr>
