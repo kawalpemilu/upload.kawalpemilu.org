@@ -32,7 +32,7 @@ async function getParent(uid) {
   return (cached_parent[uid] = parent);
 }
 
-async function populateParent(parent: { [uid: string]: string }, n = 100) {
+async function populateParent(parent: { [uid: string]: string }, n) {
   const codeReferrals: string[] = [];
   const snaps = await fsdb
     .collection(FsPath.codeReferral())
@@ -134,7 +134,7 @@ async function updateDownstreamReferrals(
 async function processCodeReferralAgg() {
   const t0 = Date.now();
   const parent: { [uid: string]: string } = {};
-  const codeReferrals = await populateParent(parent, 10);
+  const codeReferrals = await populateParent(parent, 100);
   const pending = Object.keys(codeReferrals).length;
   if (pending > 0) {
     const children = toChildren(parent);
@@ -153,6 +153,6 @@ async function processCodeReferralAgg() {
 (async () => {
   while (true) {
     await processCodeReferralAgg();
-    await delay(1000 * 60 * 60);
+    await delay(1000 * 60 * 5);
   }
 })().catch(console.error);
