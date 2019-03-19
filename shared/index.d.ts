@@ -97,7 +97,7 @@ export interface PublicProfile {
     pic: string;
     loginTs: number;
     role: USER_ROLE;
-    impact: number;
+    dr: number;
 }
 export interface RelawanPhotos {
     profile: PublicProfile;

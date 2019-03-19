@@ -11,7 +11,7 @@ const delay = (ms: number) => new Promise(_ => setTimeout(_, ms));
 const fsdb = admin.firestore();
 const root = '5F1DwscbfSUFVoEmZACJKXZFHgk2'; // Ainun's uid.
 const FROM_AGG = 0;
-const TO_AGG = 3;
+const TO_AGG = 4;
 
 const cached_parent = {};
 async function getParent(uid) {
@@ -87,14 +87,14 @@ function rec(
   children: { [uid: string]: string[] },
   delta: { [uid: string]: number }
 ) {
-  let impact = 1;
+  let dr = 0;
   for (const cuid of children[uid] || []) {
-    impact += rec(cuid, children, delta);
+    dr += rec(cuid, children, delta) + 1;
   }
-  return (delta[uid] = impact);
+  return (delta[uid] = dr);
 }
 
-async function updateImpact(
+async function updateDownstreamReferrals(
   codeReferrals: string[],
   delta: { [uid: string]: number }
 ) {
@@ -103,25 +103,23 @@ async function updateImpact(
     for (const uid of Object.keys(delta)) {
       docRefs.push(fsdb.doc(FsPath.relawan(uid)));
     }
-    const relPromises = docRefs.map(ref => t.get(ref));
-    const snapshots = await Promise.all(relPromises);
-    const impact = {};
-    for (const snap of snapshots) {
-      const rel = snap.data() as Relawan;
-      rel.profile.impact = (rel.profile.impact || 0) + delta[rel.profile.uid];
-      impact[rel.profile.uid] = rel.profile.impact;
-      if (!(rel.profile.impact > 0)) {
+    const P = docRefs.map(ref => t.get(ref));
+    const relawans = (await Promise.all(P)).map(s => s.data() as Relawan);
+    const dr = {};
+    for (const rel of relawans) {
+      if (delta[rel.profile.uid] === undefined) {
         throw new Error('kabuumm');
       }
+      rel.profile.dr = (rel.profile.dr || 0) + delta[rel.profile.uid];
+      dr[rel.profile.uid] = rel.profile.dr;
     }
 
-    for (let i = 0; i < snapshots.length; i++) {
-      const rel = snapshots[i].data() as Relawan;
-      rel.profile.impact = impact[rel.profile.uid];
+    for (let i = 0; i < relawans.length; i++) {
+      const rel = relawans[i];
       for (const code of Object.keys(rel.code || {})) {
         const c = rel.code[code].claimer;
-        if (c && impact.hasOwnProperty(c.uid)) {
-          c.impact = impact[c.uid];
+        if (c && dr.hasOwnProperty(c.uid)) {
+          c.dr = dr[c.uid];
         }
       }
       t.update(docRefs[i], rel);
@@ -145,7 +143,7 @@ async function processCodeReferralAgg() {
     rec(root, children, delta);
     const m = Object.keys(delta).length;
     if (n + 1 !== m) throw new Error(`${n + 1} != ${m}`);
-    await updateImpact(codeReferrals, delta);
+    await updateDownstreamReferrals(codeReferrals, delta);
   }
   const t1 = Date.now();
   console.log('process batch', t1 - t0, new Date());
