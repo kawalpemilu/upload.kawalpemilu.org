@@ -17,9 +17,10 @@
 
   <ng-template #publik>
     <p>
+      <b>{{ code.name }}</b
+      >, kamu diundang oleh
       <b>{{ code.issuer.name }}</b>
-      mengundang kamu menjadi relawan KawalPemilu untuk menjaga suara TPS di
-      kelurahan kamu. Detailnya akan dijelaskan setelah kamu terima undangannya.
+      untuk menjadi relawan KawalPemilu.
     </p>
 
     <p>Untuk menerima undangan, kamu harus login terlebih dahulu:</p>
@@ -36,6 +37,38 @@
       Login with Facebook
     </button>
   </ng-template>
+
+  <p>
+    Ada dua cara yang bisa kamu lakukan sebagai relawan untuk membantu mengawal
+    suara:
+  </p>
+
+  <ol>
+    <li>
+      Pada tanggal <b>17 April 2019</b> nanti setelah penghitungan suara
+      selesai, datanglah kembali ke TPS (tempat kamu nyoblos) dan foto lah
+      Formulir C1 Plano yang terpajang disana. Biasanya, formulir ini dipajang
+      di papan besar seperti
+      <a href="https://upload.kawalpemilu.org/assets/contoh.jpeg"
+        >contoh foto ini</a
+      >. Setelah kamu memfoto Formulir C1 Plano, upload deh foto tersebut ke
+      situs ini. <br /><br />
+      Sekarang sampai tanggal <b>15 April</b> adalah masa uji coba tes upload
+      foto. Kamu bisa login dan coba latihan upload foto ke situs ini di lokasi
+      TPS yang akan kamu jaga nanti, untuk menandai bahwa TPS tersebut sudah ada
+      relawannya. <br /><br />
+    </li>
+
+    <li>
+      Jika kamu tidak bisa melakukan hal pertama diatas, kamu bisa membantu
+      menyebarkan undangan relawan (melalu kode referral) ke teman-teman
+      Facebook kamu yang tertarik untuk menjadi relawan, terutama yang tinggal
+      di dekat TPS yang belum ada yang jaga (bisa dilihat di cakupan TPS setelah
+      kamu login).
+    </li>
+  </ol>
+
+  Mohon bantuannya. Terima kasih!
 </ng-container>
 
 <ng-template #gaAdaKode>
@@ -77,9 +110,10 @@
 
       <p>
         <b style="color: red">Catatan penting</b>: Mulai sekarang sampai tanggal
-        <b>15 April 2019</b>, semua Relawan diminta untuk mencoba
+        <b>15 April 2019</b>, semua relawan diminta untuk mencoba
         <a [routerLink]="['/foto']" style="font-weight: bold">upload foto</a>
-        di area sekitar TPS yang akan dikawal.
+        di area sekitar TPS yang akan dikawal untuk latihan sekaligus menandai
+        TPS tersebut (dengan adanya foto yang kamu upload di TPS tersebut).
       </p>
 
       <form [formGroup]="formGroup">
