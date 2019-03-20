@@ -27,8 +27,7 @@ service cloud.firestore {
  
     // Referral codes.
     match /c/{code} {
-      allow read: if request.auth.uid != null &&
-                     resource.data.claimer == null;
+      allow read: if resource.data.claimer == null;
     }
 
     // Photo Uploads.

@@ -42,7 +42,7 @@ import { Router } from '@angular/router';
                       <input
                         class="searchwilayah"
                         type="text"
-                        placeholder="Cari nama Kelurahan anda"
+                        placeholder="Cari nama Kelurahan kamu"
                         aria-label="Number"
                         matInput
                         [formControl]="myControl"

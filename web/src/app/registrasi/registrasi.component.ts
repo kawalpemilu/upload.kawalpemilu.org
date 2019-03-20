@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from '../user.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { switchMap, catchError } from 'rxjs/operators';
+import { switchMap, catchError, map } from 'rxjs/operators';
 import { ApiService } from '../api.service';
 import { Observable, of } from 'rxjs';
 import { User } from 'firebase';
@@ -61,9 +61,31 @@ export class RegistrasiComponent implements OnInit {
               .doc<CodeReferral>(FsPath.codeReferral(this.theCode))
               .valueChanges()
               .pipe(
+                map(c => {
+                  if (c) {
+                    if (c.claimer) {
+                      return null;
+                    }
+                  }
+                  return c;
+                }),
                 catchError(e => {
                   this.error = e.message;
                   return of(null);
+                }),
+                switchMap(c => {
+                  if (c) {
+                    return this.userService.relawan$.pipe(
+                      map(relawan => {
+                        if (relawan && relawan.depth > 0) {
+                          console.log('Kamu tidak memerlukan kode lagi');
+                          return null;
+                        }
+                        return c;
+                      })
+                    );
+                  }
+                  return of(c);
                 })
               );
       })

@@ -27,8 +27,7 @@ const routes: Routes = [
   { path: 't/:id', component: TpsComponent, canActivate: [AuthGuardService] },
   {
     path: 'c/:code',
-    component: RegistrasiComponent,
-    canActivate: [AuthGuardService]
+    component: RegistrasiComponent
   },
   { path: 'foto', component: FotoComponent, canActivate: [AuthGuardService] },
   {

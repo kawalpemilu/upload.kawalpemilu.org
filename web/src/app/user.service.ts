@@ -83,9 +83,10 @@ export class UserService {
 
         if (profile) {
           const url = lsGetItem(LOCAL_STORAGE_LAST_URL);
-          console.log('Navigate to last url: ', url);
-          this.router.navigateByUrl(url);
-
+          if (url) {
+            console.log('Navigate to last url: ', url);
+            this.router.navigateByUrl(url);
+          }
           const body = { link: profile.link };
           return this.api.post(result.user, `register/login`, body);
         }

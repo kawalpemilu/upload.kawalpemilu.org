@@ -599,13 +599,11 @@ app.post('/api/register/create_code', async (req: any, res) => {
 
   switch (c) {
     case 'no_user':
-      return res.json({ error: 'Data anda tidak ditemukan' });
+      return res.json({ error: 'Datamu tidak ditemukan' });
     case 'no_trust':
-      return res.json({ error: 'Maaf, anda belum berstatus relawan' });
+      return res.json({ error: 'Maaf, kamu belum berstatus relawan' });
     case 'no_quota':
-      return res.json({
-        error: 'Maaf, anda telah melebihi jumlah pembuatan kode referrals'
-      });
+      return res.json({ error: 'Maaf, pembuatan kode terlalu banyak' });
     case 'no_id':
       return res.json({ error: 'Auto id failed' });
     case 'no_commit':
