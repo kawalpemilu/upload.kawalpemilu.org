@@ -287,47 +287,60 @@ app.post(
     const rRef = fsdb.doc(FsPath.relawan(user.uid));
     const pRef = fsdb.doc(FsPath.relawanPhoto(user.uid));
     const tRef = fsdb.doc(FsPath.tps(p.kelId, p.tpsNo));
-    const ok = await fsdb.runTransaction(async t => {
-      let photo = (await t.get(pRef)).data() as RelawanPhotos;
-      if (!photo) {
-        const u = (await t.get(rRef)).data() as Relawan;
-        if (!u || !u.profile || u.profile.uid !== user.uid) {
-          return 'Uploader not found';
+    const ok = await fsdb
+      .runTransaction(async t => {
+        let photo = (await t.get(pRef)).data() as RelawanPhotos;
+        if (!photo) {
+          const u = (await t.get(rRef)).data() as Relawan;
+          if (!u || !u.profile || u.profile.uid !== user.uid) {
+            return 'Uploader not found';
+          }
+          photo = { profile: u.profile, uploads: [], count: 0 };
         }
-        photo = { profile: u.profile, uploads: [], count: 0 };
-      }
 
-      let tps = (await t.get(tRef)).data() as TpsData;
-      tps = tps || { images: {}, imgCount: 0 };
+        let tps = (await t.get(tRef)).data() as TpsData;
+        tps = tps || { images: {}, imgCount: 0 };
 
-      photo.uploads.unshift(p);
-      photo.count++;
-      if (photo.count > MAX_NUM_UPLOADS) {
-        return 'Exceeded max number of uploads';
-      }
+        photo.uploads.unshift(p);
+        photo.count++;
+        if (photo.count > MAX_NUM_UPLOADS) {
+          return 'Exceeded max number of uploads';
+        }
 
-      const ua = req.headers['user-agent'];
-      const ip = getIp(req);
-      const uploader = { ...photo.profile, ts: p.ts, ua, ip } as UpsertProfile;
-      const action = { sum: { cakupan: 1, pending: 1 }, ts: p.ts } as Aggregate;
-      const upsert = { request: p, uploader, done: 0, action } as Upsert;
+        const ua = req.headers['user-agent'];
+        const ip = getIp(req);
+        const uploader = {
+          ...photo.profile,
+          ts: p.ts,
+          ua,
+          ip
+        } as UpsertProfile;
+        const action = {
+          sum: { cakupan: 1, pending: 1 },
+          ts: p.ts
+        } as Aggregate;
+        const upsert = { request: p, uploader, done: 0, action } as Upsert;
 
-      tps.images[p.imageId] = {
-        uploader,
-        reviewer: null,
-        reporter: null,
-        c1: null,
-        sum: {} as SumMap,
-        url: p.url,
-        meta: p.meta
-      };
-      tps.imgCount++;
+        tps.images[p.imageId] = {
+          uploader,
+          reviewer: null,
+          reporter: null,
+          c1: null,
+          sum: {} as SumMap,
+          url: p.url,
+          meta: p.meta
+        };
+        tps.imgCount++;
 
-      t.create(fsdb.doc(FsPath.upserts(p.imageId)), upsert);
-      t.set(pRef, photo);
-      t.set(tRef, tps);
-      return true;
-    });
+        t.create(fsdb.doc(FsPath.upserts(p.imageId)), upsert);
+        t.set(pRef, photo);
+        t.set(tRef, tps);
+        return true;
+      })
+      .catch(e => {
+        console.error(`DB error ${user.uid}`, e);
+        return `Database error`;
+      });
 
     if (ok !== true) {
       console.error(`Upload failed ${user.uid}: ${ok}`);
@@ -398,63 +411,72 @@ app.post('/api/approve', [populateApprove()], async (req: any, res) => {
   const ts = Date.now();
   const uRef = fsdb.doc(FsPath.upserts(a.imageId));
   const rRef = fsdb.doc(FsPath.relawan(user.uid));
-  const ok = await fsdb.runTransaction(async t => {
-    const r = (await t.get(rRef)).data() as Relawan;
-    if (!r || r.profile.role < USER_ROLE.MODERATOR) 'Not Authorized';
+  const ok = await fsdb
+    .runTransaction(async t => {
+      const r = (await t.get(rRef)).data() as Relawan;
+      if (!r || r.profile.role < USER_ROLE.MODERATOR) 'Not Authorized';
 
-    const u = (await t.get(uRef)).data() as Upsert;
-    if (!u) return 'No Upsert';
+      const u = (await t.get(uRef)).data() as Upsert;
+      if (!u) return 'No Upsert';
 
-    const tRef = fsdb.doc(FsPath.tps(u.request.kelId, u.request.tpsNo));
-    const tps = (await t.get(tRef)).data() as TpsData;
-    if (!tps) return 'No TPS';
+      const tRef = fsdb.doc(FsPath.tps(u.request.kelId, u.request.tpsNo));
+      const tps = (await t.get(tRef)).data() as TpsData;
+      if (!tps) return 'No TPS';
 
-    const img = tps.images[a.imageId];
-    if (!img) return 'No Image';
+      const img = tps.images[a.imageId];
+      if (!img) return 'No Image';
 
-    img.c1 = a.c1;
-    img.sum = a.sum;
+      img.c1 = a.c1;
+      img.sum = a.sum;
 
-    u.reviewer = img.reviewer = { ...r.profile, ts, ua, ip };
-    u.action = { sum: {} as SumMap, photos: {}, ts: 0, c1: a.c1 };
-    u.done = 0;
+      u.reviewer = img.reviewer = { ...r.profile, ts, ua, ip };
+      u.action = { sum: {} as SumMap, photos: {}, ts: 0, c1: a.c1 };
+      u.done = 0;
 
-    u.action.sum.cakupan = 0;
-    u.action.sum.pending = 0;
-    u.action.sum.error = 0;
-    u.action.sum.janggal = 0;
-    Object.keys(tps.images)
-      .map(i => tps.images[i])
-      .forEach(i => {
-        if (!i.c1) {
-          u.action.sum.cakupan = 1;
-          u.action.sum.pending = 1;
-        } else if (i.c1.type === FORM_TYPE.DELETED) {
-          u.action.photos[i.url] = null;
-          u.action.sum.cakupan = 1;
-        } else if (i.c1.type === FORM_TYPE.OTHERS) {
-          u.action.photos[i.url] = null;
-          u.action.sum.cakupan = 1;
-        } else {
-          u.action.sum.cakupan = 1;
-          u.action.photos[i.url] = { c1: i.c1, sum: i.sum, ts: i.reviewer.ts };
-          u.action.ts = Math.max(u.action.ts, i.reviewer.ts);
-          for (const key of Object.keys(i.sum)) {
-            if (typeof u.action.sum[key] === 'number') {
-              if (u.action.sum[key] !== i.sum[key]) {
-                u.action.sum.janggal = 1;
+      u.action.sum.cakupan = 0;
+      u.action.sum.pending = 0;
+      u.action.sum.error = 0;
+      u.action.sum.janggal = 0;
+      Object.keys(tps.images)
+        .map(i => tps.images[i])
+        .forEach(i => {
+          if (!i.c1) {
+            u.action.sum.cakupan = 1;
+            u.action.sum.pending = 1;
+          } else if (i.c1.type === FORM_TYPE.DELETED) {
+            u.action.photos[i.url] = null;
+            u.action.sum.cakupan = 1;
+          } else if (i.c1.type === FORM_TYPE.OTHERS) {
+            u.action.photos[i.url] = null;
+            u.action.sum.cakupan = 1;
+          } else {
+            u.action.sum.cakupan = 1;
+            u.action.photos[i.url] = {
+              c1: i.c1,
+              sum: i.sum,
+              ts: i.reviewer.ts
+            };
+            u.action.ts = Math.max(u.action.ts, i.reviewer.ts);
+            for (const key of Object.keys(i.sum)) {
+              if (typeof u.action.sum[key] === 'number') {
+                if (u.action.sum[key] !== i.sum[key]) {
+                  u.action.sum.janggal = 1;
+                }
+              } else {
+                u.action.sum[key] = i.sum[key];
               }
-            } else {
-              u.action.sum[key] = i.sum[key];
             }
           }
-        }
-      });
+        });
 
-    t.update(uRef, u);
-    t.update(tRef, tps);
-    return true;
-  });
+      t.update(uRef, u);
+      t.update(tRef, tps);
+      return true;
+    })
+    .catch(e => {
+      console.error(`DB error approve ${user.uid}`, e);
+      return `Database error`;
+    });
 
   if (ok !== true) {
     console.warn(`Error approve ${user.uid} : ${ok}`);
@@ -472,26 +494,31 @@ app.post('/api/problem', async (req: any, res) => {
 
   const uRef = fsdb.doc(FsPath.upserts(imageId));
   const rRef = fsdb.doc(FsPath.relawan(user.uid));
-  const ok = await fsdb.runTransaction(async t => {
-    const u = (await t.get(uRef)).data() as Upsert;
-    if (!u || !u.action) {
-      return false;
-    }
-    const r = (await t.get(rRef)).data() as Relawan;
-    u.reporter = {
-      ...r.profile,
-      ts: Date.now(),
-      ua: req.headers['user-agent'],
-      ip: getIp(req)
-    };
-    // TODO: ability to individually report error to each image.
-    u.action = { sum: { error: 1 } } as TpsAggregate;
-    u.done = 0;
-    t.update(uRef, u);
-    return true;
-  });
+  const ok = await fsdb
+    .runTransaction(async t => {
+      const u = (await t.get(uRef)).data() as Upsert;
+      if (!u || !u.action) {
+        return 'Invalid imageId';
+      }
+      const r = (await t.get(rRef)).data() as Relawan;
+      u.reporter = {
+        ...r.profile,
+        ts: Date.now(),
+        ua: req.headers['user-agent'],
+        ip: getIp(req)
+      };
+      // TODO: ability to individually report error to each image.
+      u.action = { sum: { error: 1 } } as TpsAggregate;
+      u.done = 0;
+      t.update(uRef, u);
+      return true;
+    })
+    .catch(e => {
+      console.error(`DB lapor ${user.uid}`, e);
+      return `Database error`;
+    });
 
-  return res.json(ok ? { ok: true } : { error: 'Invalid imageId' });
+  return res.json(ok === true ? { ok: true } : { error: ok });
 });
 
 app.post('/api/register/login', async (req: any, res) => {
@@ -534,36 +561,41 @@ app.post('/api/register/create_code', async (req: any, res) => {
     return res.json({ error: 'Nama tidak valid' });
 
   const rRef = fsdb.doc(FsPath.relawan(user.uid));
-  const c = await fsdb.runTransaction(async t => {
-    const r = (await t.get(rRef)).data() as Relawan;
-    if (!r) return 'no_user';
-    if (r.depth === undefined) return 'no_trust';
+  const c = await fsdb
+    .runTransaction(async t => {
+      const r = (await t.get(rRef)).data() as Relawan;
+      if (!r) return 'no_user';
+      if (r.depth === undefined) return 'no_trust';
 
-    let code;
-    for (let i = 0; ; i++) {
-      code = autoId(10);
-      if (!(await t.get(fsdb.doc(FsPath.codeReferral(code)))).data()) break;
-      console.warn(`Exists auto id ${code}, ${user.uid}`);
-      if (i > 10) return 'no_id';
-    }
+      let code;
+      for (let i = 0; ; i++) {
+        code = autoId(10);
+        if (!(await t.get(fsdb.doc(FsPath.codeReferral(code)))).data()) break;
+        console.warn(`Exists auto id ${code}, ${user.uid}`);
+        if (i > 10) return 'no_id';
+      }
 
-    const newCode: CodeReferral = {
-      issuer: r.profile,
-      issuedTs: Date.now(),
-      depth: r.depth + 1,
-      name: nama,
-      claimer: null,
-      claimedTs: null,
-      agg: 0
-    };
-    t.set(fsdb.doc(FsPath.codeReferral(code)), newCode);
+      const newCode: CodeReferral = {
+        issuer: r.profile,
+        issuedTs: Date.now(),
+        depth: r.depth + 1,
+        name: nama,
+        claimer: null,
+        claimedTs: null,
+        agg: 0
+      };
+      t.set(fsdb.doc(FsPath.codeReferral(code)), newCode);
 
-    if (!r.code) r.code = {};
-    r.code[code] = { name: nama, issuedTs: newCode.issuedTs } as CodeReferral;
-    if (Object.keys(r.code).length > MAX_REFERRALS) return 'no_quota';
-    t.update(rRef, r);
-    return code;
-  });
+      if (!r.code) r.code = {};
+      r.code[code] = { name: nama, issuedTs: newCode.issuedTs } as CodeReferral;
+      if (Object.keys(r.code).length > MAX_REFERRALS) return 'no_quota';
+      t.update(rRef, r);
+      return code;
+    })
+    .catch(e => {
+      console.error(`DB create code ${user.uid}`, e);
+      return `no_commit`;
+    });
 
   switch (c) {
     case 'no_user':
@@ -576,6 +608,8 @@ app.post('/api/register/create_code', async (req: any, res) => {
       });
     case 'no_id':
       return res.json({ error: 'Auto id failed' });
+    case 'no_commit':
+      return res.json({ error: 'Database error' });
     default:
       return res.json({ code: c });
   }
@@ -591,50 +625,59 @@ app.post('/api/register/:code', async (req: any, res) => {
   const ts = Date.now();
   const codeRef = fsdb.doc(FsPath.codeReferral(code));
   const claimerRef = fsdb.doc(FsPath.relawan(user.uid));
-  const c = await fsdb.runTransaction(async t => {
-    // Abort if the code does not exist or already claimed.
-    const cd = (await t.get(codeRef)).data() as CodeReferral;
-    if (!cd || cd.claimer) return cd;
+  const c = await fsdb
+    .runTransaction(async t => {
+      // Abort if the code does not exist or already claimed.
+      const cd = (await t.get(codeRef)).data() as CodeReferral;
+      if (!cd || cd.claimer) return cd;
 
-    // Abort if the claimer does not have relawan entry.
-    const claimer = (await t.get(claimerRef)).data() as Relawan;
-    if (!claimer) {
-      console.error(`Claimer ${user.uid} is not in Firestore, ${code}`);
+      // Abort if the claimer does not have relawan entry.
+      const claimer = (await t.get(claimerRef)).data() as Relawan;
+      if (!claimer) {
+        console.error(`Claimer ${user.uid} is not in Firestore, ${code}`);
+        return null;
+      }
+
+      // Abort if the user is already trusted.
+      if (
+        claimer.depth &&
+        claimer.depth <= cd.depth &&
+        !req.query.abracadabra
+      ) {
+        console.log(`Attempt to downgrade ${user.uid}, ${code}`);
+        return null;
+      }
+
+      // Abort if the issuer does not have relawan entry.
+      const issuerRef = fsdb.doc(FsPath.relawan(cd.issuer.uid));
+      const issuer = (await t.get(issuerRef)).data() as Relawan;
+      if (!issuer) {
+        console.error(`Issuer ${user.uid} is not in Firestore, ${code}`);
+        return null;
+      }
+
+      // Abort if the issuer never generate the code.
+      const i = issuer.code[code];
+      if (!i) {
+        console.error(`Issuer ${user.uid} never generate ${code}`);
+        return null;
+      }
+
+      i.claimer = cd.claimer = claimer.profile;
+      i.claimedTs = cd.claimedTs = ts;
+
+      claimer.depth = cd.depth;
+      claimer.referrer = cd.issuer;
+
+      t.update(codeRef, cd);
+      t.update(issuerRef, issuer);
+      t.update(claimerRef, claimer);
+      return cd;
+    })
+    .catch(e => {
+      console.error(`DB register ${user.uid}`, e);
       return null;
-    }
-
-    // Abort if the user is already trusted.
-    if (claimer.depth && claimer.depth <= cd.depth && !req.query.abracadabra) {
-      console.log(`Attempt to downgrade ${user.uid}, ${code}`);
-      return null;
-    }
-
-    // Abort if the issuer does not have relawan entry.
-    const issuerRef = fsdb.doc(FsPath.relawan(cd.issuer.uid));
-    const issuer = (await t.get(issuerRef)).data() as Relawan;
-    if (!issuer) {
-      console.error(`Issuer ${user.uid} is not in Firestore, ${code}`);
-      return null;
-    }
-
-    // Abort if the issuer never generate the code.
-    const i = issuer.code[code];
-    if (!i) {
-      console.error(`Issuer ${user.uid} never generate ${code}`);
-      return null;
-    }
-
-    i.claimer = cd.claimer = claimer.profile;
-    i.claimedTs = cd.claimedTs = ts;
-
-    claimer.depth = cd.depth;
-    claimer.referrer = cd.issuer;
-
-    t.update(codeRef, cd);
-    t.update(issuerRef, issuer);
-    t.update(claimerRef, claimer);
-    return cd;
-  });
+    });
 
   if (!c || !c.claimer || c.claimer.uid !== user.uid) {
     return res.json({ error: `Maaf, kode ${code} tidak dapat digunakan` });
@@ -659,23 +702,29 @@ app.post('/api/change_role', async (req: any, res) => {
   const ts = Date.now();
   const actorRef = fsdb.doc(FsPath.relawan(user.uid));
   const targetRef = fsdb.doc(FsPath.relawan(tuid));
-  const ok = await fsdb.runTransaction(async t => {
-    const actor = (await t.get(actorRef)).data() as Relawan;
-    if (!actor) return `No relawan for ${user.uid}`;
-    if (actor.profile.role < USER_ROLE.ADMIN) return `Not an admin ${user.uid}`;
+  const ok = await fsdb
+    .runTransaction(async t => {
+      const actor = (await t.get(actorRef)).data() as Relawan;
+      if (!actor) return `No relawan for ${user.uid}`;
+      if (actor.profile.role < USER_ROLE.ADMIN)
+        return `Not an admin ${user.uid}`;
 
-    const target = (await t.get(targetRef)).data() as Relawan;
-    if (!target) return `No relawan for ${tuid}`;
-    if (target.profile.role === role) return `No change`;
-    if (target.profile.role === USER_ROLE.ADMIN) return `Admin demoted`;
-    target.profile.role = role;
-    t.update(targetRef, target);
+      const target = (await t.get(targetRef)).data() as Relawan;
+      if (!target) return `No relawan for ${tuid}`;
+      if (target.profile.role === role) return `No change`;
+      if (target.profile.role === USER_ROLE.ADMIN) return `Admin demoted`;
+      target.profile.role = role;
+      t.update(targetRef, target);
 
-    const logRef = fsdb.doc(FsPath.changeLog(autoId()));
-    const cl: ChangeLog = { auid: user.uid, tuid, role, ts };
-    t.create(logRef, cl);
-    return true;
-  });
+      const logRef = fsdb.doc(FsPath.changeLog(autoId()));
+      const cl: ChangeLog = { auid: user.uid, tuid, role, ts };
+      t.create(logRef, cl);
+      return true;
+    })
+    .catch(e => {
+      console.error(`DB change role ${user.uid}`, e);
+      return `Database error`;
+    });
 
   if (ok !== true) {
     console.error(`User ${user.uid} doing ${ok}`);

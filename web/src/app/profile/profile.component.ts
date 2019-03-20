@@ -100,6 +100,11 @@ export class ProfileComponent implements OnInit {
     const c = relawan.code;
     return Object.keys(c)
       .filter(a => !!c[a].claimer)
-      .sort((a, b) => (c[b].claimer.dr4 || 0) - (c[a].claimer.dr4 || 0));
+      .sort((a, b) => {
+        const x = c[a];
+        const y = c[b];
+        const dr4 = (y.claimer.dr4 || 0) - (x.claimer.dr4 || 0);
+        return dr4 ? dr4 : x.claimedTs - y.claimedTs;
+      });
   }
 }
