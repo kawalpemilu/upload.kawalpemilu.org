@@ -6,7 +6,14 @@ import { ApiService } from '../api.service';
 import { Observable, of } from 'rxjs';
 import { User } from 'firebase';
 import { FormGroup, Validators, FormBuilder } from '@angular/forms';
-import { Relawan, FsPath, CodeReferral, USER_ROLE } from 'shared';
+import {
+  Relawan,
+  FsPath,
+  CodeReferral,
+  USER_ROLE,
+  LOCAL_STORAGE_LAST_URL,
+  lsSetItem
+} from 'shared';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { MatSnackBar } from '@angular/material';
 
@@ -75,6 +82,9 @@ export class RegistrasiComponent implements OnInit {
                 }),
                 switchMap(c => {
                   if (c) {
+                    const url = `/c/${this.theCode}`;
+                    console.log('Save last url: ', url);
+                    lsSetItem(LOCAL_STORAGE_LAST_URL, url);
                     return this.userService.relawan$.pipe(
                       map(relawan => {
                         if (relawan && relawan.depth > 0) {
@@ -123,7 +133,10 @@ export class RegistrasiComponent implements OnInit {
       .sort((a, b) => {
         const ca = relawan.code[a];
         const cb = relawan.code[b];
-        return cb.issuedTs - ca.issuedTs;
+        const dr4 = ca.claimer
+          ? (cb.claimer.dr4 || 0) - (ca.claimer.dr4 || 0)
+          : 0;
+        return dr4 ? dr4 : cb.issuedTs - ca.issuedTs;
       });
   }
 

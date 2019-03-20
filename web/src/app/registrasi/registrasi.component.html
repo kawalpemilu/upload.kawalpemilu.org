@@ -187,16 +187,19 @@
         <ng-container *ngIf="codes.length > 0">
           <p>
             Total downstream referral kamu adalah
-            <b style="color: blue">{{ relawan.profile.dr4 || 0 }}</b
-            >. Berikut ini adalah teman-teman yang sudah menerima undangan kamu
-            beserta total downstream referral mereka:
+            <b
+              style="color: blue; font-size: x-large; padding: 5px 15px; border: 1 solid black; background-color: orange"
+              >{{ relawan.profile.dr4 || 0 }}</b
+            >
+            <br /><br />Berikut ini adalah teman-teman yang sudah menerima
+            undangan kamu beserta total downstream referral mereka:
           </p>
 
           <table border="1" cellpadding="5" cellspacing="0">
             <tr bgcolor="lightgray">
               <th width="30">#</th>
-              <th>Nama</th>
-              <th>Profile teman kamu</th>
+              <th>Nama teman kamu</th>
+              <th>Join date</th>
             </tr>
             <tr
               *ngFor="let code of codes; let odd = odd; let i = index"
@@ -204,11 +207,11 @@
             >
               <ng-container *ngIf="relawan.code[code] as c">
                 <td align="center">{{ codes.length - i }}</td>
-                <td>{{ c.name }}</td>
                 <td>
                   <app-orang [profile]="c.claimer"></app-orang>
                   ({{ c.claimer.dr4 || 0 }})
                 </td>
+                <td>{{ c.claimedTs | date: 'shortDate' }}</td>
               </ng-container>
             </tr>
           </table>

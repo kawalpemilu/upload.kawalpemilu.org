@@ -62,7 +62,7 @@
       *ngIf="
         curRel.profile.role >= USER_ROLE.ADMIN &&
         curRel.auth.uid != relawan.profile.uid &&
-        relawan.profile.role < USER_ROLE.ADMIN
+        (relawan.profile.role || 0) < USER_ROLE.ADMIN
       "
     >
       Kalo angkat jadi admin, gak bisa downgrade lagi!<br />

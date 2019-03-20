@@ -113,7 +113,9 @@
                     <ng-container *ngIf="tps.agg.photos[url].sum as s">
                       <ng-container *ngFor="let key of ALL_NAMES">
                         <tr *ngIf="s[key] !== undefined">
-                          <td align="right">{{ PPWP_NAMES[key] || DPR_NAMES[key] }}:</td>
+                          <td align="right">
+                            {{ PPWP_NAMES[key] || DPR_NAMES[key] }}:
+                          </td>
                           <td
                             align="right"
                             width="40"
@@ -152,5 +154,5 @@
 </ng-container>
 
 <ng-template #loading>
-  <mat-spinner></mat-spinner>
+  <p><mat-spinner></mat-spinner></p>
 </ng-template>
