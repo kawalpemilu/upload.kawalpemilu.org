@@ -526,7 +526,9 @@ app.post('/api/register/login', async (req: any, res) => {
   let link = req.body.link;
   const p = APP_SCOPED_PREFIX_URL;
   if (!link || !link.startsWith(p)) {
-    console.error(`Invalid login ${user.uid} link: ${link}`);
+    if (!req.body.code) {
+      console.error(`Invalid login ${user.uid} link: ${link}`);
+    }
     link = '';
   } else {
     link = link.substring(p.length);
@@ -540,18 +542,33 @@ app.post('/api/register/login', async (req: any, res) => {
     console.error(`UID differs ${user.uid} !== ${user.user_id}`);
   }
 
+  let code = '';
   const rRef = fsdb.doc(FsPath.relawan(user.uid));
   const ok = await fsdb
     .runTransaction(async t => {
       const r = (await t.get(rRef)).data() as Relawan;
       if (r) {
-        if (!r.profile.link) {
+        if (!r.theCode && r.depth > 0) {
+          r.theCode = code = await generateCode(t);
+          const newCode: CodeReferral = {
+            issuer: r.profile,
+            issuedTs: Date.now(),
+            depth: r.depth + 1,
+            name: 'Netizen',
+            claimer: null,
+            claimedTs: null,
+            agg: 0,
+            bulk: true
+          };
+          t.create(fsdb.doc(FsPath.codeReferral(code)), newCode);
+        }
+        if (!r.profile.link && link) {
           // @ts-ignore
           r.profile.noLink = 'y';
+          r.profile.link = link;
         }
         // @ts-ignore
         r.lastTs = Date.now();
-        r.profile.link = link;
         t.update(rRef, r);
       } else {
         t.create(rRef, {
@@ -573,8 +590,37 @@ app.post('/api/register/login', async (req: any, res) => {
       return `Database error`;
     });
 
-  return res.json(ok === true ? { ok: true } : { error: ok });
+  return res.json(ok === true ? { ok: true, code } : { error: ok });
 });
+
+async function generateCode(t) {
+  let code;
+  for (let i = 0; ; i++) {
+    code = autoId(10);
+    if (!(await t.get(fsdb.doc(FsPath.codeReferral(code)))).data()) break;
+    console.error(`Exists auto id ${code}`);
+    if (i > 10) return 'no_id';
+  }
+  return code;
+}
+
+async function addGeneratedCode(r: Relawan, nama, t, code) {
+  const newCode: CodeReferral = {
+    issuer: r.profile,
+    issuedTs: Date.now(),
+    depth: r.depth + 1,
+    name: nama,
+    claimer: null,
+    claimedTs: null,
+    agg: 0,
+    bulk: null,
+  };
+  t.set(fsdb.doc(FsPath.codeReferral(code)), newCode);
+
+  if (!r.code) r.code = {};
+  r.code[code] = { name: nama, issuedTs: newCode.issuedTs } as CodeReferral;
+  t.update(fsdb.doc(FsPath.relawan(r.profile.uid)), r);
+}
 
 app.post('/api/register/create_code', async (req: any, res) => {
   const user = req.user as admin.auth.DecodedIdToken;
@@ -588,30 +634,9 @@ app.post('/api/register/create_code', async (req: any, res) => {
       const r = (await t.get(rRef)).data() as Relawan;
       if (!r) return 'no_user';
       if (r.depth === undefined) return 'no_trust';
-
-      let code;
-      for (let i = 0; ; i++) {
-        code = autoId(10);
-        if (!(await t.get(fsdb.doc(FsPath.codeReferral(code)))).data()) break;
-        console.warn(`Exists auto id ${code}, ${user.uid}`);
-        if (i > 10) return 'no_id';
-      }
-
-      const newCode: CodeReferral = {
-        issuer: r.profile,
-        issuedTs: Date.now(),
-        depth: r.depth + 1,
-        name: nama,
-        claimer: null,
-        claimedTs: null,
-        agg: 0
-      };
-      t.set(fsdb.doc(FsPath.codeReferral(code)), newCode);
-
-      if (!r.code) r.code = {};
-      r.code[code] = { name: nama, issuedTs: newCode.issuedTs } as CodeReferral;
+      const code = await generateCode(t);
+      await addGeneratedCode(r, nama, t, code);
       if (Object.keys(r.code).length > MAX_REFERRALS) return 'no_quota';
-      t.update(rRef, r);
       return code;
     })
     .catch(e => {
@@ -671,15 +696,23 @@ app.post('/api/register/:code', async (req: any, res) => {
       // Abort if the issuer does not have relawan entry.
       const issuerRef = fsdb.doc(FsPath.relawan(cd.issuer.uid));
       const issuer = (await t.get(issuerRef)).data() as Relawan;
-      if (!issuer) {
-        console.error(`Issuer ${user.uid} is not in Firestore, ${code}`);
+      if (!issuer || !issuer.depth) {
+        console.error(`Issuer ${user.uid} is problematic, ${code}`);
         return null;
       }
 
+      let newCode = code;
+      if (cd.bulk) {
+        // CD is just a token, need to create an actual code.
+        newCode = await generateCode(t);
+        await addGeneratedCode(issuer, '', t, newCode);
+        if (Object.keys(issuer.code).length > MAX_REFERRALS) return null;
+      }
+      
       // Abort if the issuer never generate the code.
-      const i = issuer.code[code];
+      const i = issuer.code[newCode];
       if (!i) {
-        console.error(`Issuer ${user.uid} never generate ${code}`);
+        console.error(`Issuer ${user.uid} never generate ${newCode}`);
         return null;
       }
 

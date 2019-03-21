@@ -5,6 +5,8 @@
       mengundang kamu menjadi relawan KawalPemilu - Jaga Suara 2019.
     </p>
 
+    <p *ngIf="error" style="color: red">{{ error }}</p>
+
     <button
       [disabled]="isLoading"
       mat-raised-button
@@ -39,6 +41,23 @@
   </ng-template>
 
   <p>
+    Sangat penting untuk kita bergotong-royong mengawal Pemilu 2019 dengan
+    mengajak <b>809 ribu relawan</b> untuk upload foto dari TPS masing-masing.
+  </p>
+
+  <p>
+    Peran anda penting sekali, bantu dengan:
+  </p>
+  <ul>
+    <li>
+      Rekrut teman-teman anda masuk menggunakan referral dari anda satu per satu
+    </li>
+    <li>
+      Kalau anda bisa, di hari-H upload foto hasil dari TPS anda
+    </li>
+  </ul>
+
+  <!-- <p>
     Ada dua cara yang bisa kamu lakukan sebagai relawan untuk membantu mengawal
     suara:
   </p>
@@ -65,10 +84,14 @@
       Facebook kamu yang tertarik untuk menjadi relawan, terutama yang tinggal
       di dekat TPS yang belum ada yang jaga (bisa dilihat di cakupan TPS setelah
       kamu login).
+      <br /><br />
+      KawalPemilu membutuhkan 800.000+ relawan untuk mencakup seluruh TPS yang
+      ada di Indonesia.
     </li>
   </ol>
 
   Mohon bantuannya. Terima kasih!
+  -->
 </ng-container>
 
 <ng-template #gaAdaKode>
@@ -108,6 +131,28 @@
         >), ayo undang mereka dengan memberikan kode referral di bawah ini:
       </p>
 
+      <ng-container *ngIf="useSuperCode">
+        <ng-container *ngIf="(theCode$ | async) as ccc; else getting">
+          <mat-form-field style="width: 375px">
+            <input
+              type="text"
+              matInput
+              style="width: 350px"
+              value="https://upload.kawalpemilu.org/c/{{ ccc }}"
+              #ui
+            />
+          </mat-form-field>
+          &nbsp;
+          <button mat-raised-button color="primary" (click)="copyCode(ui)">
+            <mat-icon>file_copy</mat-icon> Copy
+          </button>
+        </ng-container>
+
+        <ng-template #getting>
+          <p><mat-spinner></mat-spinner></p>
+        </ng-template>
+      </ng-container>
+
       <p>
         <b style="color: red">Catatan penting</b>: Mulai sekarang sampai tanggal
         <b>15 April 2019</b>, semua relawan diminta untuk mencoba
@@ -116,75 +161,78 @@
         TPS tersebut (dengan adanya foto yang kamu upload di TPS tersebut).
       </p>
 
-      <form [formGroup]="formGroup">
-        <mat-form-field style="width: 275px">
-          <input
-            matInput
-            autocomplete="off"
-            placeholder="Nama teman kamu (dicantumkan di undangan)"
-            formControlName="namaCtrl"
-            type="text"
-            required
-          />
-        </mat-form-field>
-        &nbsp;
-        <span *ngIf="getError('namaCtrl') as error" class="alert">
-          {{ error }}
-        </span>
+      <ng-container *ngIf="!useSuperCode">
+        <form [formGroup]="formGroup">
+          <mat-form-field style="width: 275px">
+            <input
+              matInput
+              autocomplete="off"
+              placeholder="Nama teman kamu (dicantumkan di undangan)"
+              formControlName="namaCtrl"
+              type="text"
+              required
+            />
+          </mat-form-field>
+          &nbsp;
+          <span *ngIf="getError('namaCtrl') as error" class="alert">
+            {{ error }}
+          </span>
 
-        <button
-          type="submit"
-          [disabled]="formGroup.invalid || isLoading"
-          mat-raised-button
-          color="primary"
-          (click)="createReferralCode(relawan.auth)"
-        >
-          Buat Kode Referral
-        </button>
-      </form>
+          <button
+            type="submit"
+            [disabled]="formGroup.invalid || isLoading"
+            mat-raised-button
+            color="primary"
+            (click)="createReferralCode(relawan.auth)"
+          >
+            Buat Kode Referral
+          </button>
+        </form>
 
-      <ng-container *ngIf="getReferralCodes(relawan, false) as codes">
-        <ng-container *ngIf="codes.length > 0">
-          <p>
-            Kirimkan URL kode referral dibawah ini ke teman kamu (satu kode
-            referral hanya bisa dipakai oleh satu orang):
-          </p>
+        <ng-container *ngIf="getReferralCodes(relawan, false) as codes">
+          <ng-container *ngIf="codes.length > 0">
+            <p>
+              Kirimkan URL kode referral dibawah ini ke teman kamu (satu kode
+              referral hanya bisa dipakai oleh satu orang):
+            </p>
 
-          <table border="1" cellspacing="0">
-            <tr bgcolor="lightgray">
-              <th width="30">#</th>
-              <td><b>Nama</b></td>
-              <td><b>URL kode referral untuk dibagikan</b></td>
-            </tr>
-            <tr
-              *ngFor="let code of codes; let odd = odd; let i = index"
-              [style.background-color]="odd ? '#FFF' : '#EEE'"
-            >
-              <td align="center">{{ i + 1 }}</td>
-              <td>{{ relawan.code[code].name }}</td>
-              <td style="padding: 7px">
-                <input
-                  type="text"
-                  style="width: 300px"
-                  value="https://upload.kawalpemilu.org/c/{{ code }}"
-                  #ui
-                />
-                &nbsp;
-                <button
-                  mat-raised-button
-                  color="primary"
-                  (click)="copyCode(ui)"
-                >
-                  <mat-icon>file_copy</mat-icon> Copy
-                </button>
-              </td>
-            </tr>
-          </table>
+            <table border="1" cellspacing="0">
+              <tr bgcolor="lightgray">
+                <th width="30">#</th>
+                <td><b>Nama</b></td>
+                <td><b>URL kode referral untuk dibagikan</b></td>
+              </tr>
+              <tr
+                *ngFor="let code of codes; let odd = odd; let i = index"
+                [style.background-color]="odd ? '#FFF' : '#EEE'"
+              >
+                <td align="center">{{ i + 1 }}</td>
+                <td>{{ relawan.code[code].name }}</td>
+                <td style="padding: 7px">
+                  <input
+                    type="text"
+                    style="width: 300px"
+                    value="https://upload.kawalpemilu.org/c/{{ code }}"
+                    #ui
+                  />
+                  &nbsp;
+                  <button
+                    mat-raised-button
+                    color="primary"
+                    (click)="copyCode(ui)"
+                  >
+                    <mat-icon>file_copy</mat-icon> Copy
+                  </button>
+                </td>
+              </tr>
+            </table>
+          </ng-container>
         </ng-container>
       </ng-container>
 
       <ng-container *ngIf="getReferralCodes(relawan, true) as codes">
         <ng-container *ngIf="codes.length > 0">
+          <p><mat-divider></mat-divider></p>
           <p>
             Total downstream referral kamu adalah
             <b

@@ -129,6 +129,7 @@ export interface Relawan {
   depth: number; // Referral depth
   code: { [code: string]: CodeReferral }; // Code referrals
   auth: any; // firebase.User reference.
+  theCode: string; // The code to refer others.
 }
 
 export interface ChangeLog {
@@ -196,6 +197,7 @@ export interface CodeReferral {
   claimedTs: number; // The claimed timestamp
   depth: number; // The referral depth
   agg: number; // Whether it has been aggregated to the Relawan profile.
+  bulk: boolean; // Is this referral generated for bulk referral?
 }
 
 export interface UploadRequest {

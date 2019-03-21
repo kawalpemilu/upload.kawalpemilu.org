@@ -12,7 +12,8 @@ import {
   CodeReferral,
   USER_ROLE,
   LOCAL_STORAGE_LAST_URL,
-  lsSetItem
+  lsSetItem,
+  APP_SCOPED_PREFIX_URL
 } from 'shared';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { MatSnackBar } from '@angular/material';
@@ -42,11 +43,13 @@ export class CopySnackBarComponent {}
 })
 export class RegistrasiComponent implements OnInit {
   theCode: string;
+  theCode$: Observable<string>;
   code$: Observable<CodeReferral>;
   formGroup: FormGroup;
   error: string;
   USER_ROLE = USER_ROLE;
   isLoading = false;
+  useSuperCode = false;  // Turn this on next week?
 
   constructor(
     public userService: UserService,
@@ -68,14 +71,7 @@ export class RegistrasiComponent implements OnInit {
               .doc<CodeReferral>(FsPath.codeReferral(this.theCode))
               .valueChanges()
               .pipe(
-                map(c => {
-                  if (c) {
-                    if (c.claimer) {
-                      return null;
-                    }
-                  }
-                  return c;
-                }),
+                map(c => (c && c.claimer ? null : c)),
                 catchError(e => {
                   this.error = e.message;
                   return of(null);
@@ -98,6 +94,23 @@ export class RegistrasiComponent implements OnInit {
                   return of(c);
                 })
               );
+      })
+    );
+    this.theCode$ = this.userService.relawan$.pipe(
+      switchMap(async r => {
+        if (!r) {
+          return '';
+        }
+        if (r.theCode) {
+          return r.theCode;
+        }
+        const body = { code: 1, link: APP_SCOPED_PREFIX_URL + r.profile.link };
+        const res: any = await this.api.post(r.auth, `register/login`, body);
+        console.log('res', res);
+        if (res.ok) {
+          return res.code;
+        }
+        return '';
       })
     );
     this.formGroup = this.formBuilder.group({

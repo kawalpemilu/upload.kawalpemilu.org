@@ -113,6 +113,7 @@ export interface Relawan {
         [code: string]: CodeReferral;
     };
     auth: any;
+    theCode: string;
 }
 export interface ChangeLog {
     auid: string;
@@ -174,6 +175,7 @@ export interface CodeReferral {
     claimedTs: number;
     depth: number;
     agg: number;
+    bulk: boolean;
 }
 export interface UploadRequest {
     imageId: string;

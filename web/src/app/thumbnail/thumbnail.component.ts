@@ -17,7 +17,7 @@ import { getServingUrl } from 'shared';
 export class ThumbnailComponent implements OnInit, OnChanges {
   @Input() url = '';
   @Input() srcSize = 100;
-  @Input() linkSize = 980;
+  @Input() linkSize = 1280;
   @Input() maxWidth = '';
   @Input() maxHeight = '';
 
