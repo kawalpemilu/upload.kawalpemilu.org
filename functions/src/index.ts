@@ -525,33 +525,55 @@ app.post('/api/register/login', async (req: any, res) => {
   const user = req.user as admin.auth.DecodedIdToken;
   let link = req.body.link;
   const p = APP_SCOPED_PREFIX_URL;
-  if (!link || !link.startsWith(p) || !link.match(/[a-zA-Z0-9]+\//)) {
+  if (!link || !link.startsWith(p)) {
     console.error(`Invalid login ${user.uid} link: ${link}`);
     link = '';
   } else {
     link = link.substring(p.length);
+    if (!link.match(/^[a-zA-Z0-9]+\/$/)) {
+      console.error(`Invalid login ${user.uid} shorten link: ${link}`);
+      link = '';
+    }
   }
 
   if (user.uid !== user.user_id) {
     console.error(`UID differs ${user.uid} !== ${user.user_id}`);
   }
 
-  await fsdb.doc(FsPath.relawan(user.uid)).set(
-    {
-      lowerCaseName: user.name.toLowerCase(),
-      profile: {
-        uid: user.user_id,
-        link,
-        email: user.email || '',
-        name: user.name,
-        pic: user.picture,
-        loginTs: Date.now()
+  const rRef = fsdb.doc(FsPath.relawan(user.uid));
+  const ok = await fsdb
+    .runTransaction(async t => {
+      const r = (await t.get(rRef)).data() as Relawan;
+      if (r) {
+        if (!r.profile.link) {
+          // @ts-ignore
+          r.profile.noLink = 'y';
+        }
+        // @ts-ignore
+        r.lastTs = Date.now();
+        r.profile.link = link;
+        t.update(rRef, r);
+      } else {
+        t.create(rRef, {
+          lowerCaseName: user.name.toLowerCase(),
+          profile: {
+            uid: user.user_id,
+            link,
+            email: user.email || '',
+            name: user.name,
+            pic: user.picture,
+            loginTs: Date.now()
+          }
+        });
       }
-    },
-    { merge: true }
-  );
+      return true;
+    })
+    .catch(e => {
+      console.error(`DB login ${user.uid}`, e);
+      return `Database error`;
+    });
 
-  return res.json({ ok: true });
+  return res.json(ok === true ? { ok: true } : { error: ok });
 });
 
 app.post('/api/register/create_code', async (req: any, res) => {
