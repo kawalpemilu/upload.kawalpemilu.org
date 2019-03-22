@@ -39,7 +39,7 @@ export class AuthGuardService implements CanActivate {
         }
         console.log('Save last url: ', state.url);
         lsSetItem(LOCAL_STORAGE_LAST_URL, state.url);
-        this.router.navigate(['/login']);
+        this.router.navigate(['/']);
         return false;
       })
     );

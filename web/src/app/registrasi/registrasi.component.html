@@ -1,8 +1,13 @@
-<ng-container *ngIf="(code$ | async) as code; else gaAdaKode">
-  <ng-container *ngIf="(userService.relawan$ | async) as relawan; else publik">
+<ng-container *ngIf="(state$ | async) as state">
+  <ng-container *ngIf="state.code && state.relawan">
     <p>
-      <app-orang [profile]="code.issuer"></app-orang>
+      <app-orang [profile]="state.code.issuer"></app-orang>
       mengundang kamu menjadi relawan KawalPemilu - Jaga Suara 2019.
+    </p>
+
+    <p>
+      <b style="color: red">Catatan</b>: <b>JANGAN terima undangan ini</b> jika
+      kamu tidak mengenal atau mempercayai si pengundang di atas.
     </p>
 
     <p *ngIf="error" style="color: red">{{ error }}</p>
@@ -11,105 +16,54 @@
       [disabled]="isLoading"
       mat-raised-button
       color="primary"
-      (click)="registerCode(relawan.auth, code)"
+      (click)="registerCode(state.relawan.auth, state.code)"
     >
-      Terima Undangan
+      Terima undangan dari {{ state.code.issuer.name }}
     </button>
+
+    <app-kontak></app-kontak>
   </ng-container>
 
-  <ng-template #publik>
+  <ng-container *ngIf="state.code && !state.relawan">
     <p>
-      <b>{{ code.name }}</b
+      <b>{{ state.code.name }}</b
       >, kamu diundang oleh
-      <b>{{ code.issuer.name }}</b>
+      <b>{{ state.code.issuer.name }}</b>
       untuk menjadi relawan KawalPemilu.
+    </p>
+
+    <p>
+      <b style="color: red">Catatan</b>: <b>JANGAN terima undangan ini</b> jika
+      kamu tidak mengenal atau mempercayai si pengundang di atas.
     </p>
 
     <p>Untuk menerima undangan, kamu harus login terlebih dahulu:</p>
 
-    <button
-      style="width: 250px; text-align: left"
-      mat-raised-button
-      (click)="userService.login('facebook')"
-    >
-      <img
-        style="padding:8px"
-        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHsSURBVGhD7ZjNLgNhGEZ7ZS1i5a/TEvdDLCywE0sXoTMSEZZW4t8FWEqIlg0Lo41nIprzxfv1pWMxJzm7d56e9GfTWkVFRcX/ptFMk3orPa63Oi+NVpqPw8Frfb7m3oIyRqORpOv0AmN2TTlxTCSdJoyVYr2ZzSvLzuAjpLFSTNIjZdkZ53feYE9ZdmCkVJVlh0bKVFl2aMTr1FKWb+xc5efXD3m395q/v+ffoGcKlWWHRjxOLmb5yem9Uhl6rlBZdmjE42b/nf8Jeq5QWXZoxOPFzYMyw9BzhcqyQyMeu89vyvxidessn17ex/thlWWHRjwO/2AHTLYzvCWVZYdGPBJ0F1JZdmjEI0F3IZVlh0ZijeGp+4obhcqyQyOxxnB5+4gbhcqyQyOxxrB3cIcbhcqyQyOxxrC9e4sbhcqyQyMeCboLqSw7NOKRoLuQyrJDIx4JugupLDs04pGgu5DKskMjHgm6C6ksOzTikaC7kMqyQyMeCboLqSw7NOKRoLuQyrJDIx4JugupLDs04pGgu5DKskMjHgm6C6ksOzTikaC7kMqy89t/LRJ0F3CEvxaT9AiGynGkP3eb2TyOleBEqzOrrDj6D68Nj5XginJGo//xzenr1Bsa/kt7/d/gYb2dzSijoqKi4l9Sq30A+M9r/MIZv3oAAAAASUVORK5CYII="
-      />
-      Login with Facebook
-    </button>
-  </ng-template>
+    <ng-container *ngTemplateOutlet="loginButton"></ng-container>
+    <app-kontak></app-kontak>
+  </ng-container>
 
-  <p>
-    Sangat penting untuk kita bergotong-royong mengawal Pemilu 2019 dengan
-    mengajak <b>809 ribu relawan</b> untuk upload foto dari TPS masing-masing.
-  </p>
+  <ng-container *ngIf="!state.code && !state.relawan">
+    <p>Untuk mengakses sistem ini, silahkan login dahulu:</p>
+    <ng-container *ngTemplateOutlet="loginButton"></ng-container>
+    <app-kontak></app-kontak>
+  </ng-container>
 
-  <p>
-    Peran anda penting sekali, bantu dengan:
-  </p>
-  <ul>
-    <li>
-      Rekrut teman-teman anda masuk menggunakan referral dari anda satu per satu
-    </li>
-    <li>
-      Kalau anda bisa, di hari-H upload foto hasil dari TPS anda
-    </li>
-  </ul>
-
-  <!-- <p>
-    Ada dua cara yang bisa kamu lakukan sebagai relawan untuk membantu mengawal
-    suara:
-  </p>
-
-  <ol>
-    <li>
-      Pada tanggal <b>17 April 2019</b> nanti setelah penghitungan suara
-      selesai, datanglah kembali ke TPS (tempat kamu nyoblos) dan foto lah
-      Formulir C1 Plano yang terpajang disana. Biasanya, formulir ini dipajang
-      di papan besar seperti
-      <a href="https://upload.kawalpemilu.org/assets/contoh.jpeg"
-        >contoh foto ini</a
-      >. Setelah kamu memfoto Formulir C1 Plano, upload deh foto tersebut ke
-      situs ini. <br /><br />
-      Sekarang sampai tanggal <b>15 April</b> adalah masa uji coba tes upload
-      foto. Kamu bisa login dan coba latihan upload foto ke situs ini di lokasi
-      TPS yang akan kamu jaga nanti, untuk menandai bahwa TPS tersebut sudah ada
-      relawannya. <br /><br />
-    </li>
-
-    <li>
-      Jika kamu tidak bisa melakukan hal pertama diatas, kamu bisa membantu
-      menyebarkan undangan relawan (melalu kode referral) ke teman-teman
-      Facebook kamu yang tertarik untuk menjadi relawan, terutama yang tinggal
-      di dekat TPS yang belum ada yang jaga (bisa dilihat di cakupan TPS setelah
-      kamu login).
-      <br /><br />
-      KawalPemilu membutuhkan 800.000+ relawan untuk mencakup seluruh TPS yang
-      ada di Indonesia.
-    </li>
-  </ol>
-
-  Mohon bantuannya. Terima kasih!
-  -->
-</ng-container>
-
-<ng-template #gaAdaKode>
-  <ng-container
-    *ngIf="(userService.relawan$ | async) as relawan; else butuhKode"
-  >
+  <ng-container *ngIf="!state.code && state.relawan">
     <h2>Rekrut Teman Jadi Relawan</h2>
 
     <p>
       Halo,
-      <app-orang [profile]="relawan.profile"></app-orang>
+      <app-orang [profile]="state.relawan.profile"></app-orang>
     </p>
 
     <ng-template #register>
       Maaf, kamu memerlukan kode referral untuk mengakses halaman ini.
+
+      <app-kontak></app-kontak>
     </ng-template>
 
-    <ng-container *ngIf="relawan.depth > 0; else register">
+    <ng-container *ngIf="state.relawan.depth > 0; else register">
       <p>
         Relawan KawalPemilu 2019 punya tanggung jawab besar untuk mengawal suara
         rakyat. Data di formulir <b>C1 plano</b> adalah data Pemilu paling
@@ -183,13 +137,13 @@
             [disabled]="formGroup.invalid || isLoading"
             mat-raised-button
             color="primary"
-            (click)="createReferralCode(relawan.auth)"
+            (click)="createReferralCode(state.relawan.auth)"
           >
             Buat Kode Referral
           </button>
         </form>
 
-        <ng-container *ngIf="getReferralCodes(relawan, false) as codes">
+        <ng-container *ngIf="getReferralCodes(state.relawan, false) as codes">
           <ng-container *ngIf="codes.length > 0">
             <p>
               Kirimkan URL kode referral dibawah ini ke teman kamu (satu kode
@@ -207,7 +161,7 @@
                 [style.background-color]="odd ? '#FFF' : '#EEE'"
               >
                 <td align="center">{{ i + 1 }}</td>
-                <td>{{ relawan.code[code].name }}</td>
+                <td>{{ state.relawan.code[code].name }}</td>
                 <td style="padding: 7px">
                   <input
                     type="text"
@@ -230,14 +184,14 @@
         </ng-container>
       </ng-container>
 
-      <ng-container *ngIf="getReferralCodes(relawan, true) as codes">
+      <ng-container *ngIf="getReferralCodes(state.relawan, true) as codes">
         <ng-container *ngIf="codes.length > 0">
           <p><mat-divider></mat-divider></p>
           <p>
             Total downstream referral kamu adalah
             <b
               style="color: blue; font-size: x-large; padding: 5px 15px; border: 1 solid black; background-color: orange"
-              >{{ relawan.profile.dr4 || 0 }}</b
+              >{{ state.relawan.profile.dr4 || 0 }}</b
             >
             <br /><br />Berikut ini adalah teman-teman yang sudah menerima
             undangan kamu beserta total downstream referral mereka:
@@ -253,7 +207,7 @@
               *ngFor="let code of codes; let odd = odd; let i = index"
               [style.background-color]="odd ? '#FFF' : '#EEE'"
             >
-              <ng-container *ngIf="relawan.code[code] as c">
+              <ng-container *ngIf="state.relawan.code[code] as c">
                 <td align="center">{{ codes.length - i }}</td>
                 <td>
                   <app-orang [profile]="c.claimer"></app-orang>
@@ -267,10 +221,20 @@
       </ng-container>
     </ng-container>
   </ng-container>
-</ng-template>
 
-<ng-template #butuhKode>
-  <app-login></app-login>
-</ng-template>
+  <ng-template #loginButton>
+    <button
+      style="width: 250px; text-align: left"
+      mat-raised-button
+      (click)="userService.login('facebook')"
+    >
+      <img
+        style="padding:8px"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHsSURBVGhD7ZjNLgNhGEZ7ZS1i5a/TEvdDLCywE0sXoTMSEZZW4t8FWEqIlg0Lo41nIprzxfv1pWMxJzm7d56e9GfTWkVFRcX/ptFMk3orPa63Oi+NVpqPw8Frfb7m3oIyRqORpOv0AmN2TTlxTCSdJoyVYr2ZzSvLzuAjpLFSTNIjZdkZ53feYE9ZdmCkVJVlh0bKVFl2aMTr1FKWb+xc5efXD3m395q/v+ffoGcKlWWHRjxOLmb5yem9Uhl6rlBZdmjE42b/nf8Jeq5QWXZoxOPFzYMyw9BzhcqyQyMeu89vyvxidessn17ex/thlWWHRjwO/2AHTLYzvCWVZYdGPBJ0F1JZdmjEI0F3IZVlh0ZijeGp+4obhcqyQyOxxnB5+4gbhcqyQyOxxrB3cIcbhcqyQyOxxrC9e4sbhcqyQyMeCboLqSw7NOKRoLuQyrJDIx4JugupLDs04pGgu5DKskMjHgm6C6ksOzTikaC7kMqyQyMeCboLqSw7NOKRoLuQyrJDIx4JugupLDs04pGgu5DKskMjHgm6C6ksOzTikaC7kMqy89t/LRJ0F3CEvxaT9AiGynGkP3eb2TyOleBEqzOrrDj6D68Nj5XginJGo//xzenr1Bsa/kt7/d/gYb2dzSijoqKi4l9Sq30A+M9r/MIZv3oAAAAASUVORK5CYII="
+      />
+      Login with Facebook
+    </button>
+  </ng-template>
 
-<br /><br />
+  <br /><br />
+</ng-container>

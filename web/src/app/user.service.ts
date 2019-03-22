@@ -52,7 +52,7 @@ export class UserService {
         if (r && (!r.profile || !r.profile.link)) {
           console.log(`User profile access is required`);
           await this.logout();
-          this.router.navigate(['/login']);
+          this.router.navigate(['/']);
           return null;
         }
         this.isLoading = false;

@@ -3,7 +3,7 @@ import { UserService } from '../user.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { switchMap, catchError, map } from 'rxjs/operators';
 import { ApiService } from '../api.service';
-import { Observable, of } from 'rxjs';
+import { Observable, of, combineLatest } from 'rxjs';
 import { User } from 'firebase';
 import { FormGroup, Validators, FormBuilder } from '@angular/forms';
 import {
@@ -17,6 +17,11 @@ import {
 } from 'shared';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { MatSnackBar } from '@angular/material';
+
+interface RegistrationState {
+  relawan: Relawan;
+  code: CodeReferral;
+}
 
 @Component({
   selector: 'app-copy-snack-bar-component',
@@ -42,14 +47,14 @@ export class CopySnackBarComponent {}
   ]
 })
 export class RegistrasiComponent implements OnInit {
+  state$: Observable<RegistrationState>;
   theCode: string;
   theCode$: Observable<string>;
-  code$: Observable<CodeReferral>;
   formGroup: FormGroup;
   error: string;
   USER_ROLE = USER_ROLE;
   isLoading = false;
-  useSuperCode = false;  // Turn this on next week?
+  useSuperCode = false; // Turn this on next week?
 
   constructor(
     public userService: UserService,
@@ -62,7 +67,7 @@ export class RegistrasiComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.code$ = this.route.paramMap.pipe(
+    const code$ = this.route.paramMap.pipe(
       switchMap(params => {
         this.theCode = params.get('code');
         return !this.theCode || this.theCode.length !== 10
@@ -96,6 +101,11 @@ export class RegistrasiComponent implements OnInit {
               );
       })
     );
+
+    this.state$ = combineLatest(code$, this.userService.relawan$).pipe(
+      map(([code, relawan]) => ({ code, relawan }))
+    );
+
     this.theCode$ = this.userService.relawan$.pipe(
       switchMap(async r => {
         if (!r) {

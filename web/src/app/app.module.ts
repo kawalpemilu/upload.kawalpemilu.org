@@ -36,7 +36,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 
 import { HttpClientModule } from '@angular/common/http';
-import { LoginComponent } from './login/login.component';
 import {
   RegistrasiComponent,
   CopySnackBarComponent
@@ -53,6 +52,7 @@ import { OrangComponent } from './orang/orang.component';
 import { ProfileComponent } from './profile/profile.component';
 import { MetaComponent } from './meta/meta.component';
 import { HomeComponent } from './home/home.component';
+import { KontakComponent } from './kontak/kontak.component';
 
 @NgModule({
   entryComponents: [RegistrasiComponent, CopySnackBarComponent],
@@ -62,7 +62,6 @@ import { HomeComponent } from './home/home.component';
     TpsComponent,
     PathComponent,
     UploadSequenceComponent,
-    LoginComponent,
     RegistrasiComponent,
     CopySnackBarComponent,
     ThumbnailComponent,
@@ -74,7 +73,8 @@ import { HomeComponent } from './home/home.component';
     OrangComponent,
     ProfileComponent,
     MetaComponent,
-    HomeComponent
+    HomeComponent,
+    KontakComponent
   ],
   imports: [
     BrowserModule,
