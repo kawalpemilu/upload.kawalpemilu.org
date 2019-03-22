@@ -30,53 +30,7 @@
           ></app-upload-sequence>
         </td>
         <td>
-          <div class="cdk-virtual-scroll-data-source">
-            <cdk-virtual-scroll-viewport
-              orientation="horizontal"
-              itemSize="125"
-              class="viewport"
-            >
-              <div *cdkVirtualFor="let t of p.photos" class="item">
-                <table cellpadding="0" cellspacing="0">
-                  <tbody>
-                    <tr>
-                      <td align="center" width="125" height="125">
-                        <app-thumbnail
-                          *ngIf="!t.url.startsWith('data')"
-                          [url]="t.url"
-                          [srcSize]="110"
-                          [maxHeight]="'110px'"
-                          [maxWidth]="'110px'"
-                          [linkSize]="1280"
-                        ></app-thumbnail>
-                        <img
-                          *ngIf="t.url.startsWith('data')"
-                          [src]="t.url"
-                          style="max-height:110px; max-width:110px; height:auto; width:auto;"
-                        />
-                      </td>
-                    </tr>
-                    <tr>
-                      <td align="center">
-                        <ng-container
-                          *ngIf="t.url.startsWith('data'); else showdate"
-                        >
-                          Uploading &nbsp;
-                          <mat-spinner
-                            style="display: inline"
-                            [diameter]="20"
-                          ></mat-spinner>
-                        </ng-container>
-                        <ng-template #showdate>
-                          {{ t.ts | date: 'short' }}
-                        </ng-template>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </cdk-virtual-scroll-viewport>
-          </div>
+          <app-carousel [photos]="toCarousel(p.photos)" [height]="160"></app-carousel>
         </td>
       </tr>
     </table>

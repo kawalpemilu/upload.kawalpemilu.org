@@ -57,7 +57,7 @@ import { Router } from '@angular/router';
                           *ngFor="let option of (filteredOptions$ | async)"
                           [value]="option"
                         >
-                          {{ option.parentNames[2] }} &gt; {{ option.name }}
+                          {{ option.parentNames[3] }} &gt; {{ option.name }}
                         </mat-option>
                       </mat-autocomplete>
                     </mat-form-field>

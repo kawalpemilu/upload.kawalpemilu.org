@@ -9,9 +9,11 @@ import {
   USER_ROLE,
   TpsAggregate,
   DPR_NAMES,
-  PPWP_NAMES
+  PPWP_NAMES,
+  Aggregate
 } from 'shared';
 import { UserService } from '../user.service';
+import { CarouselItem } from '../carousel/carousel.component';
 
 interface Tps {
   tpsNo: number;
@@ -76,5 +78,18 @@ export class TpsComponent implements OnInit {
 
   hasDpr(sum: any) {
     return Object.keys(DPR_NAMES).find(k => sum[k] !== undefined);
+  }
+
+  toCarousel(photos: { [url: string]: Aggregate }) {
+    const arr: CarouselItem[] = [];
+    for (const url of Object.keys(photos)) {
+      const p = photos[url];
+      arr.push({
+        url,
+        ts: p.ts,
+        sum: p.sum
+      });
+    }
+    return arr;
   }
 }

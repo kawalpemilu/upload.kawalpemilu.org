@@ -42,8 +42,8 @@ import { Component, OnInit, Input } from '@angular/core';
           />
         </td>
         <td>
-          <a target="_blank" href="http://m.me/kawalpemilu.org"
-            >http://m.me/kawalpemilu.org</a
+          <a target="_blank" href="https://m.me/kawalpemilu.org"
+            >https://m.me/kawalpemilu.org</a
           >
         </td>
       </tr>
@@ -63,6 +63,12 @@ import { Component, OnInit, Input } from '@angular/core';
         </td>
       </tr>
     </table>
+
+    <p>
+      Lihat situs
+      <a href="http://2014.kawalpemilu.org" target="_blank">KawalPemilu 2014</a>
+      yang lalu.
+    </p>
   `,
   styles: [``]
 })

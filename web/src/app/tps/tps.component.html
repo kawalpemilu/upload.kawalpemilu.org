@@ -10,7 +10,7 @@
     [style.background-color]="odd ? '#FFF' : '#EEE'"
   >
     <tr>
-      <td align="center" width="125">
+      <td align="center" width="125" valign="top">
         <div
           style="border: 1px solid black; width: 90px; padding: 5px; margin-top: 15px;"
         >
@@ -26,7 +26,7 @@
           ></app-upload-sequence>
         </p>
 
-        <div style="height: 135px; overflow-y: scroll">
+        <div style="height: 135px; overflow-y: auto">
           <table
             border="1"
             width="115"
@@ -79,58 +79,7 @@
       </td>
       <td style="padding: 10px">
         <ng-container *ngIf="tps.agg?.photos">
-          <div class="cdk-virtual-scroll-data-source">
-            <cdk-virtual-scroll-viewport
-              orientation="horizontal"
-              itemSize="125"
-              style="height: 230px"
-              class="viewport"
-            >
-              <div
-                *cdkVirtualFor="let url of Object.keys(tps.agg.photos)"
-                class="item"
-              >
-                <table cellpadding="0" cellspacing="0">
-                  <tbody>
-                    <tr>
-                      <td align="center" width="125" height="125" colspan="2">
-                        <app-thumbnail
-                          [url]="url"
-                          [srcSize]="110"
-                          [maxHeight]="'110px'"
-                          [maxWidth]="'110px'"
-                          [linkSize]="1280"
-                        ></app-thumbnail>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td align="center" colspan="2">
-                        <ng-container *ngIf="tps.agg.photos[url] as t">
-                          {{ t.ts | date: 'short' }}
-                        </ng-container>
-                      </td>
-                    </tr>
-                    <ng-container *ngIf="tps.agg.photos[url].sum as s">
-                      <ng-container *ngFor="let key of ALL_NAMES">
-                        <tr *ngIf="s[key] !== undefined">
-                          <td align="right">
-                            {{ PPWP_NAMES[key] || DPR_NAMES[key] }}:
-                          </td>
-                          <td
-                            align="right"
-                            width="40"
-                            style="padding-right: 5px"
-                          >
-                            {{ s[key] }}
-                          </td>
-                        </tr>
-                      </ng-container>
-                    </ng-container>
-                  </tbody>
-                </table>
-              </div>
-            </cdk-virtual-scroll-viewport>
-          </div>
+          <app-carousel [height]="230" [photos]="toCarousel(tps.agg.photos)"></app-carousel>
         </ng-container>
         <p *ngIf="tps.agg?.sum?.pending" style="color: orange">
           Ada foto yang masuk dan belum diproses.

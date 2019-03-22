@@ -13,15 +13,3 @@
   text-align: right;
   padding-right: 5px;
 }
-
-.cdk-virtual-scroll-data-source
-  .viewport
-  .cdk-virtual-scroll-content-wrapper {
-  display: flex;
-  flex-direction: row;
-}
-
-.cdk-virtual-scroll-data-source .item {
-  width: 125px;
-  height: 100%;
-}

@@ -7,7 +7,8 @@ import { UserService } from '../user.service';
 import { Observable, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { UploadService } from '../upload.service';
-import { UploadRequest } from 'shared';
+import { UploadRequest, SumMap } from 'shared';
+import { CarouselItem } from '../carousel/carousel.component';
 
 export interface Photos {
   kelId: number;
@@ -20,26 +21,7 @@ export interface Photos {
 @Component({
   selector: 'app-foto',
   templateUrl: './foto.component.html',
-  styles: [
-    `
-      .cdk-virtual-scroll-data-source .viewport {
-        height: 160px;
-        width: 100%;
-      }
-
-      .cdk-virtual-scroll-data-source
-        .viewport
-        .cdk-virtual-scroll-content-wrapper {
-        display: flex;
-        flex-direction: row;
-      }
-
-      .cdk-virtual-scroll-data-source .item {
-        width: 125px;
-        height: 100%;
-      }
-    `
-  ],
+  styles: [``],
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -95,5 +77,17 @@ export class FotoComponent {
         return Object.values(photosByTpsAndTpsNo);
       })
     );
+  }
+
+  toCarousel(photos: UploadRequest[]) {
+    const arr: CarouselItem[] = [];
+    for (const p of photos) {
+      arr.push({
+        url: p.url,
+        ts: p.ts,
+        sum: {} as SumMap
+      });
+    }
+    return arr;
   }
 }
