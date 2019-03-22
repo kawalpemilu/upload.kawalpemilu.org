@@ -4,7 +4,15 @@ import * as fs from 'fs';
 import * as util from 'util';
 
 import { H } from './hierarchy';
-import { FsPath, Upsert, SumMap, Aggregate, TpsAggregate } from 'shared';
+import {
+  FsPath,
+  Upsert,
+  SumMap,
+  Aggregate,
+  TpsAggregate,
+  toChild,
+  HierarchyNode
+} from 'shared';
 
 admin.initializeApp({
   credential: admin.credential.cert(require('./sa-key.json')),
@@ -119,10 +127,15 @@ const CHILDREN_STALENESS_MS = 1 * 60 * 1000;
 function updateChildrenCache(kelId) {
   return () => {
     delete dirtyKelId[kelId];
-    fsdb
-      .doc(FsPath.hieCache(kelId))
-      .set(H[kelId])
-      .catch(e => console.error(`update children cache failed: ${e.message}`));
+    const cache = H[kelId] as HierarchyNode;
+    if (cache) {
+      cache.child = toChild(cache);
+      delete cache.children;
+      fsdb
+        .doc(FsPath.hieCache(kelId))
+        .set(cache)
+        .catch(e => console.error(`children cache failed: ${e.message}`));
+    }
   };
 }
 

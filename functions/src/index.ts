@@ -170,7 +170,7 @@ const cache_c: any = {};
 let fallbackUntilTs = 0;
 app.get('/api/c/:id', async (req: any, res) => {
   const cid = +req.params.id;
-  if (isNaN(cid)) {
+  if (isNaN(cid) || cid >= 1e6) {
     return res.json({});
   }
 
@@ -201,13 +201,14 @@ app.get('/api/c/:id', async (req: any, res) => {
       snap = await fsdb.doc(FsPath.hie(cid)).get();
       c = snap.data() as HierarchyNode;
       console.warn(`Fallback to static hierarchy`);
-      if (c) {
-        c.children = toChildren(c);
-        c.data = c.data || {};
-        delete c.child;
-      } else {
-        c = {};
-      }
+    }
+
+    if (c) {
+      c.children = toChildren(c);
+      c.data = c.data || {};
+      delete c.child;
+    } else {
+      c = {};
     }
   }
 
