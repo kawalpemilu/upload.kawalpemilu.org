@@ -127,8 +127,9 @@ const CHILDREN_STALENESS_MS = 1 * 60 * 1000;
 function updateChildrenCache(kelId) {
   return () => {
     delete dirtyKelId[kelId];
-    const cache = H[kelId] as HierarchyNode;
+    let cache = H[kelId] as HierarchyNode;
     if (cache) {
+      cache = JSON.parse(JSON.stringify(cache));
       cache.child = toChild(cache);
       delete cache.children;
       fsdb
