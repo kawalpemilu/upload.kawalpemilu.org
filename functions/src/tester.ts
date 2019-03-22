@@ -241,8 +241,9 @@ async function loadTest() {
           if (res.id !== id) {
             throw new Error(`mismatch ${res.id} !== ${id}`);
           }
-          if (++nOk % 1000 === 0 || power_of_2(nOk)) {
-            console.log('nOk', nOk);
+          if (++nOk % 10000 === 0 || power_of_2(nOk)) {
+            const qps = Math.floor((1e3 * nOk) / (Date.now() - t0));
+            console.log('nOk', nOk, 'qps', qps);
           }
         })
         .catch(e => console.error(`request failed: ${e.message}`))
@@ -256,7 +257,8 @@ async function loadTest() {
   const t2 = Date.now();
   console.log(`response in ${t2 - t1}, nOk = ${nOk}`);
 
-  // Achieved 1000 RPS for read only APIs.
+  // Achieved 1000 RPS for read only APIs on firebase function.
+  // Achieved 600-700 RPS for read only APIs on appspot.
 }
 
 // parallelUpload().catch(console.error);

@@ -167,7 +167,9 @@ async function processCodeReferralAgg(batchSize: number) {
 
 (async () => {
   while (true) {
-    await processCodeReferralAgg(100);
+    await processCodeReferralAgg(100).catch(e =>
+      console.error(`process failed: ${e.message}`)
+    );
     await delay(1000 * 60 * 5);
   }
 })().catch(console.error);
