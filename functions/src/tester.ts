@@ -201,4 +201,63 @@ async function parallelUpload(concurrency = 500) {
   console.log('done all');
 }
 
-parallelUpload().catch(console.error);
+function power_of_2(n: number) {
+  return n && (n & (n - 1)) === 0;
+}
+
+async function requestWithRetry(uri, nTries = 5) {
+  return request({
+    method: 'GET',
+    uri,
+    json: true
+  }).catch(async e => {
+    if (nTries > 0) {
+      await delay(1000);
+      return requestWithRetry(uri, nTries - 1);
+    }
+    throw e;
+  });
+}
+
+async function loadTest() {
+  const kelIds = Object.keys(H).filter(id => H[id].depth === 4);
+  const promises = [];
+  let nOk = 0;
+  const n = Math.min(kelIds.length, 100000);
+  const t0 = Date.now();
+  const concurrency = 5000;
+  for (let i = 0; i < concurrency; i++) {
+    promises[i] = Promise.resolve();
+  }
+  for (let i = 0; i < n; i++) {
+    const id = +kelIds[i];
+    if (isNaN(id) || !id) throw new Error(`invalid id ${kelIds[i]}`);
+    // const url = `https://upload.kawalpemilu.org/api/c/${id}?abracadabra=1`;
+    const url = `https://kawal-c1.appspot.com/api/c/${id}`;
+    const j = i % concurrency;
+    promises[j] = promises[j].then(() =>
+      requestWithRetry(url)
+        .then(res => {
+          if (res.id !== id) {
+            throw new Error(`mismatch ${res.id} !== ${id}`);
+          }
+          if (++nOk % 1000 === 0 || power_of_2(nOk)) {
+            console.log('nOk', nOk);
+          }
+        })
+        .catch(e => console.error(`request failed: ${e.message}`))
+    );
+  }
+  const t1 = Date.now();
+
+  console.log(`requested ${n} kels in ${t1 - t0}`);
+  await Promise.all(promises);
+
+  const t2 = Date.now();
+  console.log(`response in ${t2 - t1}, nOk = ${nOk}`);
+
+  // Achieved 1000 RPS for read only APIs.
+}
+
+// parallelUpload().catch(console.error);
+loadTest().catch(console.error);

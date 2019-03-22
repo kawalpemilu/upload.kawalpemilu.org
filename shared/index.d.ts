@@ -232,6 +232,7 @@ export declare function isValidImageId(imageId: string): RegExpMatchArray;
 export declare function isValidUserId(uid: string): RegExpMatchArray;
 export declare class FsPath {
     static hie(id?: number): string;
+    static hieCache(id: number): string;
     static relawan(uid?: string): string;
     static relawanPhoto(uid?: string): string;
     static tps(kelId: number, tpsNo: number): string;

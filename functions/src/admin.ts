@@ -23,6 +23,8 @@ const fsdb = admin.firestore();
 // In memory database containing the aggregates of all children.
 let h: { [key: string]: { [key: string]: Aggregate } } = {};
 
+const dirtyKelId: { [kelId: string]: NodeJS.Timer } = {};
+
 function getUpsertData(parentId, childId): Aggregate {
   if (!h[parentId]) h[parentId] = {};
   const c = h[parentId];
@@ -113,6 +115,17 @@ async function doBackup() {
   lastBackupTs = ts;
 }
 
+const CHILDREN_STALENESS_MS = 1 * 60 * 1000;
+function updateChildrenCache(kelId) {
+  return () => {
+    delete dirtyKelId[kelId];
+    fsdb
+      .doc(FsPath.hieCache(kelId))
+      .set(H[kelId])
+      .catch(console.error);
+  };
+}
+
 async function processNewUpserts() {
   const upserts = await getUpsertBatch(100).catch(e => {
     console.error(e);
@@ -127,8 +140,15 @@ async function processNewUpserts() {
     const t0 = Date.now();
     const batch = fsdb.batch();
     for (const imageId of imageIds) {
-      const u = upserts[imageId];
-      await updateAggregates(u.request.kelId, u.request.tpsNo, u.action)
+      const u: Upsert = upserts[imageId];
+      const kelId = u.request.kelId;
+      if (!dirtyKelId[kelId]) {
+        dirtyKelId[kelId] = setTimeout(
+          updateChildrenCache(kelId),
+          CHILDREN_STALENESS_MS
+        );
+      }
+      await updateAggregates(kelId, u.request.tpsNo, u.action)
         .then(() =>
           batch.update(fsdb.doc(FsPath.upserts(imageId)), { done: 1 })
         )
