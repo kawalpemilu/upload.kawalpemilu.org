@@ -30,7 +30,10 @@
           ></app-upload-sequence>
         </td>
         <td>
-          <app-carousel [photos]="toCarousel(p.photos)" [height]="160"></app-carousel>
+          <app-carousel
+            [photos]="toCarousel(p.photos)"
+            [height]="160"
+          ></app-carousel>
         </td>
       </tr>
     </table>
@@ -40,13 +43,7 @@
 </ng-container>
 
 <p>
-  <b>Sekarang adalah masa uji coba</b>. Supaya nggak gaptek di hari-H, mari coba
-  sistemnya sekarang. Dengan menguji coba, kamu jadi tahu lokasi TPS yang akan
-  kamu kawal di hari-H.
-</p>
-
-<p>
-  Yuk kita coba. Caranya:
+  Yuk kita latihan upload foto, sekaligus menandai TPS mana yang akan kamu jaga:
 </p>
 
 <ul>
@@ -67,16 +64,11 @@
   <li>
     Setelah mendapatkan koneksi internet stabil, masuk ke situs ini dengan
     browser <b>Chrome</b> atau <b>Safari</b> untuk <i>upload</i> foto satu per
-    satu di TPS yang akan kamu kawal. Dengan meng-upload foto pada masa uji
-    coba, kamu jadi tahu nomor TPS yang kamu akan jaga di hari H*.
+    satu di TPS yang akan kamu kawal. Ngomong2, kamu juga boleh jaga TPS
+    lainnya, <i>upload</i> saja foto-foto nya di nomor TPS yang terdaftar di
+    sistem ini:
   </li>
 </ul>
-
-<p>
-  *Selain upload foto C1 dari TPS tempat kamu nyoblos, kamu boleh juga jaga TPS
-  lainnya - tinggal <i>upload</i> foto-foto nya di nomor TPS yang terdaftar di
-  sistem kami:
-</p>
 
 <p>
   <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
@@ -88,10 +80,10 @@
 
 <p>
   Pada tanggal <b>17 April 2019</b>, setelah penghitungan suara selesai, kamu
-  diharapkan kembali ke TPS dan memfoto Formulir C1 Plano. Biasanya, formulir
+  diharapkan kembali ke TPS dan memfoto Formulir <b>C1 PLANO</b>. Biasanya, formulir
   ini dipajang di papan besar seperti
   <a href="http://upload.kawalpemilu.org/assets/contoh.jpeg" target="_blank"
     >contoh foto ini</a
-  >. Setelah kamu memfoto Formulir C1 Plano, upload deh foto tersebut ke situs
+  >. Setelah kamu memfoto Formulir <b>C1 PLANO</b>, upload deh foto tersebut ke situs
   ini dengan cara di atas.
 </p>

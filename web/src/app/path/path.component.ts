@@ -28,7 +28,8 @@ import { Router } from '@angular/router';
               &gt;&nbsp;
             </span>
             {{ node.name | uppercase }}
-            <button mat-icon-button color="primary" (click)="toggle()">
+            &nbsp;
+            <button mat-raised-button color="primary" (click)="toggle()">
               <mat-icon>search</mat-icon>
             </button>
           </ng-container>
