@@ -35,6 +35,7 @@ interface State extends HierarchyNode {
 })
 export class TpsComponent implements OnInit {
   state$: Observable<State>;
+  digitize: { [tpsNo: string]: boolean } = {};
   USER_ROLE = USER_ROLE;
   PPWP_NAMES = PPWP_NAMES;
   DPR_NAMES = DPR_NAMES;

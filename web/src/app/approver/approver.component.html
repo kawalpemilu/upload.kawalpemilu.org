@@ -5,17 +5,17 @@
   cellspacing="0"
 >
   <tr>
-    <td align="right" valign="top">
-      <app-thumbnail
-        [url]="tps.url"
-        [linkSize]="3000"
-        [srcSize]="1024"
-        [maxWidth]="'100%'"
-      ></app-thumbnail>
-      <br />
+    <td align="left" valign="top">
       Foto by:
       <app-orang [profile]="tps.uploader" [activity]="true"></app-orang>
       <app-meta [meta]="tps.meta"></app-meta>
+      <br />
+      <app-thumbnail
+        [url]="tps.url"
+        [linkSize]="3000"
+        [srcSize]="1280"
+        [maxWidth]="'100%'"
+      ></app-thumbnail>
     </td>
     <td width="190" style="padding: 5px" valign="top">
       <ng-container *ngIf="tps.status === 'error'">
@@ -146,14 +146,6 @@
             Bungkusss!
           </button>
         </ng-container>
-        <br /><br />
-      </p>
-
-      <p>
-        <button mat-raised-button color="primary" (click)="location.back()">
-          <mat-icon>arrow_back</mat-icon>
-          Gak Jadi Deh
-        </button>
       </p>
     </td>
   </tr>

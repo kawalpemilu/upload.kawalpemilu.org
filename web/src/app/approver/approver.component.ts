@@ -1,4 +1,11 @@
-import { Component, OnDestroy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  Input,
+  OnInit,
+  Output,
+  EventEmitter
+} from '@angular/core';
 import {
   FsPath,
   TpsData,
@@ -11,13 +18,12 @@ import {
   IS_PLANO,
   C1Form
 } from 'shared';
-import { switchMap, startWith, take } from 'rxjs/operators';
+import { startWith, take } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { combineLatest, Subscription, Subject } from 'rxjs';
 import { FormGroup, Validators, FormBuilder } from '@angular/forms';
 import { ApiService } from '../api.service';
 import { UserService } from '../user.service';
-import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { HierarchyService } from '../hierarchy.service';
 
@@ -53,7 +59,7 @@ interface LembarSpec {
     `
   ]
 })
-export class ApproverComponent implements OnDestroy {
+export class ApproverComponent implements OnInit, OnDestroy {
   LABEL = {
     [SUM_KEY.jum]: '(I.B.4) # Pengguna Hak Pilih',
     [SUM_KEY.pas1]: 'Suara # 01',
@@ -129,7 +135,7 @@ export class ApproverComponent implements OnDestroy {
       '2.2': null,
       '2.3': null,
       '2.4': null,
-      '3': null,
+      '3': null
     },
 
     [LEMBAR_KEY.PARTAI16_PLANO_NO_DIGITIZE]: {
@@ -155,9 +161,8 @@ export class ApproverComponent implements OnDestroy {
       '2.15': null,
       '2.16': null,
 
-      '3': null,
+      '3': null
     },
-
 
     [LEMBAR_KEY.PARTAI5_NO_DIGITIZE]: {
       '1': null,
@@ -269,17 +274,18 @@ export class ApproverComponent implements OnDestroy {
   Object = Object;
   VALIDATORS = [Validators.pattern('^[0-9]{1,3}$')];
 
-  // Stays constant after first set.
-  kelId: number;
-  tpsNo: number;
+  @Input() kelId: number;
+  @Input() tpsNo: number;
+  @Input() imageId: string;
   kelName: string;
   tpsData: TpsData;
+
+  @Output() completed = new EventEmitter();
 
   // New TpsImage is emitted when the previous one completes.
   tps$ = new Subject<TpsImage>();
 
   // Reset these after digitizing an image.
-  imageId: string;
   formGroup: FormGroup;
   formType: FORM_TYPE;
   isPlano: IS_PLANO;
@@ -295,28 +301,22 @@ export class ApproverComponent implements OnDestroy {
     private fsdb: AngularFirestore,
     private api: ApiService,
     private formBuilder: FormBuilder,
-    private router: Router,
-    route: ActivatedRoute,
-    hie: HierarchyService
-  ) {
-    route.paramMap
-      .pipe(
-        switchMap(params => {
-          this.kelId = +params.get('kelId');
-          this.tpsNo = +params.get('tpsNo');
-          this.imageId = params.get('imageId');
-          hie
-            .get$(this.kelId)
-            .pipe(take(1))
-            .toPromise()
-            .then(node => (this.kelName = node.name));
-          return this.fsdb
-            .doc<TpsData>(FsPath.tps(this.kelId, this.tpsNo))
-            .valueChanges()
-            .pipe(take(1));
-        })
-      )
-      .subscribe(tpsData => {
+    private hie: HierarchyService
+  ) {}
+
+  ngOnInit() {
+    this.hie
+      .get$(this.kelId)
+      .pipe(take(1))
+      .toPromise()
+      .then(node => (this.kelName = node.name));
+
+    this.fsdb
+      .doc<TpsData>(FsPath.tps(this.kelId, this.tpsNo))
+      .valueChanges()
+      .pipe(take(1))
+      .toPromise()
+      .then(tpsData => {
         this.tpsData = tpsData;
         const img = this.tpsData.images[this.imageId];
         if (img) {
@@ -343,11 +343,12 @@ export class ApproverComponent implements OnDestroy {
         next = img;
       }
     }
+    this.tps$.next(next);
 
-    if (this.imageId) {
-      this.tps$.next(next);
-    } else {
-      this.router.navigate(['/t', this.kelId]);
+    if (!this.imageId) {
+      this.hie.update(this.userService.user, this.kelId).then(() => {
+        setTimeout(() => this.completed.next(), 1000);
+      });
     }
   }
 
@@ -382,7 +383,9 @@ export class ApproverComponent implements OnDestroy {
     const sum = {} as SumMap;
     if (this.formGroup) {
       this.formGroup.disable();
-      for (const key of this.LEMBAR[this.formType][this.isPlano][this.halaman]) {
+      for (const key of this.LEMBAR[this.formType][this.isPlano][
+        this.halaman
+      ]) {
         sum[key] = this.formGroup.get(key).value;
       }
     }
@@ -395,7 +398,7 @@ export class ApproverComponent implements OnDestroy {
       if (res.ok) {
         console.log('ok');
         this.tpsData.images[this.imageId].c1 = c1;
-        setTimeout(this.digitizeNextImage.bind(this), 1000);
+        setTimeout(this.digitizeNextImage.bind(this), 100);
       } else {
         console.error(res);
         alert(JSON.stringify(res));

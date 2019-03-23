@@ -39,7 +39,11 @@
     </p>
   </ng-container>
 
-  <ng-container *ngIf="(relawan$ | async) as relawan">
+  <ng-template #loading>
+    <p><mat-spinner></mat-spinner></p>
+  </ng-template>
+
+  <ng-container *ngIf="(relawan$ | async) as relawan; else loading">
     <table style="margin-top: 10px">
       <tr>
         <td><img [src]="relawan.profile.pic" height="70" /></td>
