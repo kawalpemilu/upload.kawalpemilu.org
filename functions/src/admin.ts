@@ -4,7 +4,15 @@ import * as fs from 'fs';
 import * as util from 'util';
 
 import { H } from './hierarchy';
-import { FsPath, Upsert, SumMap, Aggregate, TpsAggregate } from 'shared';
+import {
+  FsPath,
+  Upsert,
+  SumMap,
+  Aggregate,
+  TpsAggregate,
+  toChild,
+  HierarchyNode
+} from 'shared';
 
 admin.initializeApp({
   credential: admin.credential.cert(require('./sa-key.json')),
@@ -22,6 +30,8 @@ const fsdb = admin.firestore();
 
 // In memory database containing the aggregates of all children.
 let h: { [key: string]: { [key: string]: Aggregate } } = {};
+
+const dirtyKelId: { [kelId: string]: NodeJS.Timer } = {};
 
 function getUpsertData(parentId, childId): Aggregate {
   if (!h[parentId]) h[parentId] = {};
@@ -113,46 +123,73 @@ async function doBackup() {
   lastBackupTs = ts;
 }
 
+const CHILDREN_STALENESS_MS = 1 * 60 * 1000;
+function updateChildrenCache(kelId) {
+  return () => {
+    delete dirtyKelId[kelId];
+    let cache = H[kelId] as HierarchyNode;
+    if (cache) {
+      cache = JSON.parse(JSON.stringify(cache));
+      cache.child = toChild(cache);
+      delete cache.children;
+      fsdb
+        .doc(FsPath.hieCache(kelId))
+        .set(cache)
+        .catch(e => console.error(`children cache failed: ${e.message}`));
+    }
+  };
+}
+
 async function processNewUpserts() {
   const upserts = await getUpsertBatch(100).catch(e => {
-    console.error(e);
+    console.error(`get upsert batch failed: ${e.message}`);
     return {};
   });
   const imageIds = Object.keys(upserts);
   if (imageIds.length > 0) {
     await appendFileAsync('upserts.log', JSON.stringify(upserts) + '\n').catch(
-      console.error
+      e => console.error(`append upsert.log failed ${e.message}`)
     );
 
     const t0 = Date.now();
     const batch = fsdb.batch();
     for (const imageId of imageIds) {
-      const u = upserts[imageId];
-      await updateAggregates(u.request.kelId, u.request.tpsNo, u.action)
+      const u: Upsert = upserts[imageId];
+      const kelId = u.request.kelId;
+      if (!dirtyKelId[kelId]) {
+        dirtyKelId[kelId] = setTimeout(
+          updateChildrenCache(kelId),
+          CHILDREN_STALENESS_MS
+        );
+      }
+      await updateAggregates(kelId, u.request.tpsNo, u.action)
         .then(() =>
           batch.update(fsdb.doc(FsPath.upserts(imageId)), { done: 1 })
         )
-        .catch(console.error);
+        .catch(e => console.error(`update aggregates failed: ${e.message}`));
     }
     const t1 = Date.now();
     if (t1 - t0 > 100) {
       console.warn('Expensive update aggregates', t1 - t0, imageIds.length);
     }
     if (t1 - lastBackupTs > 60 * 60 * 1000) {
-      await doBackup().catch(console.error);
+      await doBackup().catch(e => console.error(`backup failed: ${e.message}`));
     }
-    await batch.commit().catch(console.error);
+    await batch
+      .commit()
+      .catch(e => console.error(`batch failed: ${e.message}`));
   }
   setTimeout(processNewUpserts, 1);
 }
 
 (async () => {
+  process.setMaxListeners(50);
   h = JSON.parse(await readFileAsync('h.json', 'utf8'));
   setTimeout(processNewUpserts, 1);
 
   process.on('SIGINT', async function() {
     console.log('Ctrl-C... do backup');
-    await doBackup().catch(console.error);
+    await doBackup().catch(e => console.error(`fbackup failed: ${e.message}`));
     console.log('Exiting...');
     process.exit(2);
   });
@@ -168,4 +205,4 @@ async function processNewUpserts() {
     const port = server.address().port;
     console.log(`App listening on port ${port}`);
   });
-})().catch(console.error);
+})().catch(e => console.error(`main error: ${e.message}`));

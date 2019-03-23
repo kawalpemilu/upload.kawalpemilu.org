@@ -18,29 +18,34 @@ export class AuthGuardService implements CanActivate {
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.userService.relawan$.pipe(
       switchMap(async relawan => {
-        if (relawan) {
-          if (relawan.profile.link) {
-            if ((relawan.profile.role || 0) >= (route.data.role || 0)) {
-              if (route.data.depth) {
-                if (relawan.depth) {
-                  return true;
-                }
-                console.log('No refferal ', relawan.depth, route.data.depth);
-                this.router.navigate(['/']);
-                return false;
-              }
-              return true;
-            }
-            console.log('No access ', relawan.profile.role, route.data.role);
+        if (!relawan) {
+          if (state.url !== '/') {
+            console.log('Save last url: ', state.url);
+            lsSetItem(LOCAL_STORAGE_LAST_URL, state.url);
             this.router.navigate(['/']);
-            return false;
           }
-          await this.userService.logout();
+          return false;
         }
-        console.log('Save last url: ', state.url);
-        lsSetItem(LOCAL_STORAGE_LAST_URL, state.url);
-        this.router.navigate(['/']);
-        return false;
+
+        if (!relawan.profile || !relawan.profile.link) {
+          await this.userService.logout();
+          this.router.navigate(['/']);
+          return false;
+        }
+
+        if ((relawan.profile.role || 0) < (route.data.role || 0)) {
+          console.log('No access ', relawan.profile.role, route.data.role);
+          this.router.navigate(['/']);
+          return false;
+        }
+
+        if (route.data.depth && !relawan.depth) {
+          console.log('No refferal ', relawan.depth, route.data.depth);
+          this.router.navigate(['/']);
+          return false;
+        }
+
+        return true;
       })
     );
   }

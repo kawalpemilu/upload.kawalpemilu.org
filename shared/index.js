@@ -82,7 +82,6 @@ var DPR_NAMES;
     DPR_NAMES["pSah"] = "P.Sah";
     DPR_NAMES["pTSah"] = "P.~Sah";
 })(DPR_NAMES = exports.DPR_NAMES || (exports.DPR_NAMES = {}));
-;
 var FORM_TYPE;
 (function (FORM_TYPE) {
     // Full blown until digitized.
@@ -144,6 +143,9 @@ var FsPath = /** @class */ (function () {
     }
     FsPath.hie = function (id) {
         return "h" + (typeof id === 'number' ? '/' + id : '');
+    };
+    FsPath.hieCache = function (id) {
+        return "h/" + id;
     };
     FsPath.relawan = function (uid) {
         return "r" + (uid ? '/' + uid : '');

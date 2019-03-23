@@ -55,7 +55,7 @@ export enum PPWP_NAMES {
   pas1 = 'S01',
   pas2 = 'S02',
   sah = 'Sah',
-  tSah = '~Sah',
+  tSah = '~Sah'
 }
 
 export enum DPR_NAMES {
@@ -82,7 +82,7 @@ export enum DPR_NAMES {
   pJum = 'P.PHP',
   pSah = 'P.Sah',
   pTSah = 'P.~Sah'
-};
+}
 
 export enum FORM_TYPE {
   // Full blown until digitized.
@@ -114,6 +114,7 @@ export interface PublicProfile {
   loginTs: number; // The timestamp of last login
   role: USER_ROLE;
   dr4: number; // Number of downstream referrals.
+  // TODO: migrate depth here.
 }
 
 export interface RelawanPhotos {
@@ -291,6 +292,10 @@ export function isValidUserId(uid: string) {
 export class FsPath {
   static hie(id?: number) {
     return `h${typeof id === 'number' ? '/' + id : ''}`;
+  }
+
+  static hieCache(id: number) {
+    return `hc/${id}`;
   }
 
   static relawan(uid?: string) {

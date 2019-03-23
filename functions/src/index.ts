@@ -64,6 +64,7 @@ function getServingUrl(objectName: string, ithRetry = 0, maxRetry = 10) {
         console.error(`${e.message}; path = ${path}, #${ithRetry}/${maxRetry}`);
         throw e;
       }
+      console.warn(`gsu retry ${ithRetry}: ${e.message}`);
       await delay(ithRetry * 1000);
       return getServingUrl(objectName, ithRetry + 1, maxRetry);
     });
@@ -86,6 +87,9 @@ exports.handlePhotoUpload = functions.storage
     m.u = userId;
     m.k = parseInt(kelurahanId, 10);
     m.t = parseInt(tpsNo, 10);
+    if (isNaN(m.k) || isNaN(m.t)) {
+      throw new Error(`Invalid lokasi ${object.name}`);
+    }
     m.v = await getServingUrl(object.name);
     m.a = Date.now();
     await fsdb.doc(FsPath.imageMetadata(imageId)).set(m);
@@ -166,7 +170,7 @@ const cache_c: any = {};
 let fallbackUntilTs = 0;
 app.get('/api/c/:id', async (req: any, res) => {
   const cid = +req.params.id;
-  if (isNaN(cid)) {
+  if (isNaN(cid) || cid >= 1e6) {
     return res.json({});
   }
 
@@ -180,15 +184,25 @@ app.get('/api/c/:id', async (req: any, res) => {
     try {
       c = await getChildren(cid);
     } catch (e) {
-      console.error(`API call failed on ${cid}: ${e.message} ${user.uid}`);
+      console.error(`fail c/${cid}: ${e.message} ${user && user.uid}`);
     }
   }
 
   if (!c) {
-    // Fallback to static hierarchy.
-    fallbackUntilTs = ts + 60 * 1000;
-    const snap = await fsdb.doc(FsPath.hie(cid)).get();
+    // Fallback to hierarchy with stale cache sum.
+    fallbackUntilTs = ts + 15 * 1000;
+    let snap = await fsdb.doc(FsPath.hieCache(cid)).get();
     c = snap.data() as HierarchyNode;
+    if (c) {
+      console.log(`Fallback to cache hierarchy`);
+    } else {
+      // Fallback to static hierarchy, without sum.
+      fallbackUntilTs = ts + 60 * 1000;
+      snap = await fsdb.doc(FsPath.hie(cid)).get();
+      c = snap.data() as HierarchyNode;
+      console.warn(`Fallback to static hierarchy`);
+    }
+
     if (c) {
       c.children = toChildren(c);
       c.data = c.data || {};
