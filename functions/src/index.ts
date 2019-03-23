@@ -537,39 +537,41 @@ app.post('/api/problem', async (req: any, res) => {
 
 app.post('/api/register/login', async (req: any, res) => {
   const user = req.user as admin.auth.DecodedIdToken;
+  if (user.uid !== user.user_id) {
+    console.error(`UID differs ${user.uid} !== ${user.user_id}`);
+    return res.json({ error: 'System error' });
+  }
+
   const token = req.body.token;
   try {
-    if (!token || !token.match(/^[a-zA-Z0-9]+$/)) {
-      console.error(`Invalid login ${user.uid} token: ${token}`);
-      return res.json({ error: 'Invalid token' });
-    }
-
-    const url = `https://graph.facebook.com/me?fields=link,picture.type(large)&access_token=${token}`;
-    const me = await request(url, { timeout: 5000, json: true });
-    if (!me || me.error) {
-      console.error(`Me ${user.uid} : ${token} : ${JSON.stringify(me)}`);
-      return res.json({ error: 'Invalid token' });
-    }
-    const p = APP_SCOPED_PREFIX_URL;
     let link = '';
-    if (!me.link || !me.link.startsWith(p)) {
-      if (!req.body.code) {
-        console.error(`Invalid login ${user.uid} link: ${link}`);
-      }
-    } else {
-      link = me.link.substring(p.length);
-      if (!link.match(/^[a-zA-Z0-9]+\/$/)) {
-        console.error(`Invalid login ${user.uid} shorten link: ${link}`);
-        link = '';
-      }
-    }
+    let pic = '';
 
-    if (user.uid !== user.user_id) {
-      console.error(`UID differs ${user.uid} !== ${user.user_id}`);
+    if (token) {
+      if (!token.match(/^[a-zA-Z0-9]+$/)) {
+        console.error(`Invalid token ${user.uid} ${token}`);
+        return res.json({ error: 'Invalid token' });
+      }
+      const url = `https://graph.facebook.com/me?fields=link,picture.type(large)&access_token=${token}`;
+      const me = await request(url, { timeout: 5000, json: true });
+      if (!me || me.error) {
+        console.error(`Me ${user.uid} : ${token} : ${JSON.stringify(me)}`);
+        return res.json({ error: 'Invalid token' });
+      }
+      const p = APP_SCOPED_PREFIX_URL;
+      if (!me.link || !me.link.startsWith(p)) {
+        console.error(`Invalid login ${user.uid} link: ${link}`);
+      } else {
+        link = me.link.substring(p.length);
+        if (!link.match(/^[a-zA-Z0-9]+\/$/)) {
+          console.error(`Invalid login ${user.uid} shorten link: ${link}`);
+          link = '';
+        }
+      }
+      pic = me.picture && me.picture.data && me.picture.data.url;
     }
 
     let code = '';
-    const pic = me.picture && me.picture.data && me.picture.data.url;
     const rRef = fsdb.doc(FsPath.relawan(user.uid));
     const ok = await fsdb.runTransaction(async t => {
       const r = (await t.get(rRef)).data() as Relawan;
@@ -593,9 +595,11 @@ app.post('/api/register/login', async (req: any, res) => {
           r.profile.noLink = 'y';
           r.profile.link = link;
         }
+        if (pic) {
+          r.profile.pic = pic;
+        }
         // @ts-ignore
         r.lastTs = Date.now();
-        r.profile.pic = pic || user.picture;
         t.update(rRef, r);
       } else {
         t.create(rRef, {
