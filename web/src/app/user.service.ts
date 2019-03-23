@@ -74,7 +74,7 @@ export class UserService {
 
     this.afAuth.auth
       .getRedirectResult()
-      .then(result => {
+      .then(async result => {
         const profile: any =
           result &&
           result.user &&
@@ -87,7 +87,8 @@ export class UserService {
             console.log('Navigate to last url: ', url);
             this.router.navigateByUrl(url);
           }
-          const body = { link: profile.link };
+          // @ts-ignore
+          const body = { token: result.credential.accessToken };
           return this.api.post(result.user, `register/login`, body);
         }
       })

@@ -145,7 +145,7 @@ var FsPath = /** @class */ (function () {
         return "h" + (typeof id === 'number' ? '/' + id : '');
     };
     FsPath.hieCache = function (id) {
-        return "h/" + id;
+        return "hc/" + id;
     };
     FsPath.relawan = function (uid) {
         return "r" + (uid ? '/' + uid : '');

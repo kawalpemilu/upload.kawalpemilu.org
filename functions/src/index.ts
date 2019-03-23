@@ -537,29 +537,41 @@ app.post('/api/problem', async (req: any, res) => {
 
 app.post('/api/register/login', async (req: any, res) => {
   const user = req.user as admin.auth.DecodedIdToken;
-  let link = req.body.link;
-  const p = APP_SCOPED_PREFIX_URL;
-  if (!link || !link.startsWith(p)) {
-    if (!req.body.code) {
-      console.error(`Invalid login ${user.uid} link: ${link}`);
+  const token = req.body.token;
+  try {
+    if (!token || !token.match(/^[a-zA-Z0-9]+$/)) {
+      console.error(`Invalid login ${user.uid} token: ${token}`);
+      return res.json({ error: 'Invalid token' });
     }
-    link = '';
-  } else {
-    link = link.substring(p.length);
-    if (!link.match(/^[a-zA-Z0-9]+\/$/)) {
-      console.error(`Invalid login ${user.uid} shorten link: ${link}`);
-      link = '';
+
+    const url = `https://graph.facebook.com/me?fields=link,picture.type(large)&access_token=${token}`;
+    const me = await request(url, { timeout: 5000, json: true });
+    if (!me || me.error) {
+      console.error(`Me ${user.uid} : ${token} : ${JSON.stringify(me)}`);
+      return res.json({ error: 'Invalid token' });
     }
-  }
+    const p = APP_SCOPED_PREFIX_URL;
+    let link = '';
+    if (!me.link || !me.link.startsWith(p)) {
+      if (!req.body.code) {
+        console.error(`Invalid login ${user.uid} link: ${link}`);
+      }
+    } else {
+      link = me.link.substring(p.length);
+      if (!link.match(/^[a-zA-Z0-9]+\/$/)) {
+        console.error(`Invalid login ${user.uid} shorten link: ${link}`);
+        link = '';
+      }
+    }
 
-  if (user.uid !== user.user_id) {
-    console.error(`UID differs ${user.uid} !== ${user.user_id}`);
-  }
+    if (user.uid !== user.user_id) {
+      console.error(`UID differs ${user.uid} !== ${user.user_id}`);
+    }
 
-  let code = '';
-  const rRef = fsdb.doc(FsPath.relawan(user.uid));
-  const ok = await fsdb
-    .runTransaction(async t => {
+    let code = '';
+    const pic = me.picture && me.picture.data && me.picture.data.url;
+    const rRef = fsdb.doc(FsPath.relawan(user.uid));
+    const ok = await fsdb.runTransaction(async t => {
       const r = (await t.get(rRef)).data() as Relawan;
       if (r) {
         if (!r.theCode && r.depth > 0) {
@@ -583,6 +595,7 @@ app.post('/api/register/login', async (req: any, res) => {
         }
         // @ts-ignore
         r.lastTs = Date.now();
+        r.profile.pic = pic || user.picture;
         t.update(rRef, r);
       } else {
         t.create(rRef, {
@@ -592,19 +605,19 @@ app.post('/api/register/login', async (req: any, res) => {
             link,
             email: user.email || '',
             name: user.name,
-            pic: user.picture,
+            pic: pic || user.picture,
             loginTs: Date.now()
           }
         });
       }
       return true;
-    })
-    .catch(e => {
-      console.error(`DB login ${user.uid}`, e);
-      return `Database error`;
     });
 
-  return res.json(ok === true ? { ok: true, code } : { error: ok });
+    return res.json(ok === true ? { ok: true, code } : { error: ok });
+  } catch (e) {
+    console.error(`login error ${user.uid} : ${e.message} : token: ${token}`);
+    return res.json({ error: `Login failed` });
+  }
 });
 
 async function generateCode(t) {
@@ -627,7 +640,7 @@ async function addGeneratedCode(r: Relawan, nama, t, code) {
     claimer: null,
     claimedTs: null,
     agg: 0,
-    bulk: null,
+    bulk: null
   };
   t.set(fsdb.doc(FsPath.codeReferral(code)), newCode);
 
@@ -722,7 +735,7 @@ app.post('/api/register/:code', async (req: any, res) => {
         await addGeneratedCode(issuer, '', t, newCode);
         if (Object.keys(issuer.code).length > MAX_REFERRALS) return null;
       }
-      
+
       // Abort if the issuer never generate the code.
       const i = issuer.code[newCode];
       if (!i) {
