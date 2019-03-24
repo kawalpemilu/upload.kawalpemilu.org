@@ -11,6 +11,7 @@ import { APP_SCOPED_PREFIX_URL, PublicProfile, USER_ROLE } from 'shared';
         [style.color]="getColor()"
         [style.font-weight]="getFontWeight()"
         [routerLink]="['/p', profile.uid]"
+        target="{{ blankTarget ? '_blank' : '_self' }}"
         >{{ profile.name }}</a
       >
       <ng-container *ngIf="showDr">&nbsp;({{ profile.dr4 || 0 }})</ng-container>
@@ -34,6 +35,7 @@ export class OrangComponent implements OnInit {
   @Input() profile: PublicProfile;
   @Input() activity: boolean;
   @Input() showDr = true;
+  @Input() blankTarget = false;
 
   constructor() {}
 

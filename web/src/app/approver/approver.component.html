@@ -7,7 +7,11 @@
   <tr>
     <td align="left" valign="top">
       Foto by:
-      <app-orang [profile]="tps.uploader" [activity]="true"></app-orang>
+      <app-orang
+        [profile]="tps.uploader"
+        [activity]="true"
+        [blankTarget]="true"
+      ></app-orang>
       <app-meta [meta]="tps.meta"></app-meta>
       <br />
       <app-thumbnail

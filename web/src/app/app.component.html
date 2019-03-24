@@ -10,17 +10,19 @@
     KawalPemilu - Jaga Suara 2019
   </h1>
 
-  <span style="flex: 1 1 auto;"></span>
-  <button mat-icon-button [matMenuTriggerFor]="menu">
-    <mat-icon>more_vert</mat-icon>
-  </button>
-
-  <mat-menu #menu="matMenu">
-    <button mat-menu-item (click)="logout()">
-      <mat-icon>power_settings_new</mat-icon>
-      <span>Logout</span>
+  <ng-container *ngIf="(userService.relawan$ | async)">
+    <span style="flex: 1 1 auto;"></span>
+    <button mat-icon-button [matMenuTriggerFor]="menu">
+      <mat-icon>more_vert</mat-icon>
     </button>
-  </mat-menu>
+
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>power_settings_new</mat-icon>
+        <span>Logout</span>
+      </button>
+    </mat-menu>
+  </ng-container>
 </mat-toolbar>
 
 <mat-sidenav-container class="sidenav-container">
@@ -78,15 +80,16 @@
             ><mat-icon>security</mat-icon> &nbsp; Admin Page</a
           >
         </mat-list-item>
-        <mat-list-item>
-          <a
-            mat-list-item
-            [routerLink]="['/faq']"
-            (click)="mobileQuery.matches && snav.toggle()"
-            ><mat-icon>help_outline</mat-icon> &nbsp; Pertanyaan Umum</a
-          >
-        </mat-list-item>
       </ng-container>
+
+      <mat-list-item>
+        <a
+          mat-list-item
+          [routerLink]="['/faq']"
+          (click)="mobileQuery.matches && snav.toggle()"
+          ><mat-icon>help_outline</mat-icon> &nbsp; Pertanyaan Umum</a
+        >
+      </mat-list-item>
 
       <p>
         <mat-divider></mat-divider>

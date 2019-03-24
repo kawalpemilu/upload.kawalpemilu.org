@@ -13,8 +13,8 @@ import { Component, OnInit } from '@angular/core';
       </li>
       <li>
         <b>Bolehkah saya hanya upload foto C1 Pilpres?</b><br />
-        Boleh. Mau Pilpres (istilahnya di formulir: PPWP) saja boleh, mau Pilpres DPR
-        DPRD sampai DPD pun boleh.<br /><br />
+        Boleh. Mau Pilpres (istilahnya di formulir: PPWP) saja boleh, mau
+        Pilpres DPR DPRD sampai DPD pun boleh.<br /><br />
       </li>
       <li>
         <b
@@ -42,8 +42,8 @@ import { Component, OnInit } from '@angular/core';
       </li>
       <li>
         <b>Kok perlu fotonya banyak banget?</b><br />
-        Karena Pemilu kita kali ini serentak. Karenanya ada 2 lembar C1 PLANO untuk
-        Pilpres (atau PPWP) dan 18 lembar untuk DPR RI.<br /><br />
+        Karena Pemilu kita kali ini serentak. Karenanya ada 2 lembar C1 PLANO
+        untuk Pilpres (atau PPWP) dan 18 lembar untuk DPR RI.<br /><br />
       </li>
       <li>
         <b>Bolehkah saya upload foto catatan hitungan saya sendiri?</b><br />
@@ -64,10 +64,14 @@ import { Component, OnInit } from '@angular/core';
           melapor?</b
         ><br />
         Bisa kirim fotonya via e-mail ke kawalpemilu2019@gmail.com Kirim direct
-        message di Facebook fanpage kami @kawalpemilu.org atau Twitter
-        @kawalpemilu2019 Posting fotonya di timeline Facebook atau Twitter kamu
-        dengan hestek #PantauFotoUpload. Pastikan privacy setting di medsos kamu
-        "public".<br /><br />
+        message di Facebook fanpage kami
+        <a href="https://m.me/kawalpemilu.org" target="_blank"
+          >m.me/kawalpemilu.org</a
+        >
+        atau Twitter
+        <a href="https://t.co/NiyEQBA509" target="_blank">@KawalPemilu2019</a>
+        Posting fotonya di timeline Facebook atau Twitter kamu dengan hestek
+        #PantauFotoUpload. Pastikan privacy setting di medsos kamu "public".<br /><br />
       </li>
       <li>
         <b

@@ -304,12 +304,15 @@ app.post(
     const tRef = fsdb.doc(FsPath.tps(p.kelId, p.tpsNo));
     const ok = await fsdb
       .runTransaction(async t => {
+        const u = (await t.get(rRef)).data() as Relawan;
+        if (!u || !u.profile || u.profile.uid !== user.uid) {
+          return 'Uploader not found';
+        }
+
         let photo = (await t.get(pRef)).data() as RelawanPhotos;
-        if (!photo) {
-          const u = (await t.get(rRef)).data() as Relawan;
-          if (!u || !u.profile || u.profile.uid !== user.uid) {
-            return 'Uploader not found';
-          }
+        if (photo) {
+          photo.profile = u.profile;
+        } else {
           photo = { profile: u.profile, uploads: [], count: 0 };
         }
 
