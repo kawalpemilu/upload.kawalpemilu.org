@@ -651,6 +651,7 @@ async function addGeneratedCode(r: Relawan, nama, t, code) {
   if (!r.code) r.code = {};
   r.code[code] = { name: nama, issuedTs: newCode.issuedTs } as CodeReferral;
   t.update(fsdb.doc(FsPath.relawan(r.profile.uid)), r);
+  return newCode;
 }
 
 app.post('/api/register/create_code', async (req: any, res) => {
@@ -704,8 +705,11 @@ app.post('/api/register/:code', async (req: any, res) => {
   const c = await fsdb
     .runTransaction(async t => {
       // Abort if the code does not exist or already claimed.
-      const cd = (await t.get(codeRef)).data() as CodeReferral;
-      if (!cd || cd.claimer) return cd;
+      let cd = (await t.get(codeRef)).data() as CodeReferral;
+      if (!cd || (!cd.bulk && cd.claimer)) {
+        console.error(`Referral ${user.uid} is not usable, ${code}`);
+        return null;
+      }
 
       // Abort if the claimer does not have relawan entry.
       const claimer = (await t.get(claimerRef)).data() as Relawan;
@@ -736,8 +740,11 @@ app.post('/api/register/:code', async (req: any, res) => {
       if (cd.bulk) {
         // CD is just a token, need to create an actual code.
         newCode = await generateCode(t);
-        await addGeneratedCode(issuer, '', t, newCode);
-        if (Object.keys(issuer.code).length > MAX_REFERRALS) return null;
+        cd = await addGeneratedCode(issuer, '', t, newCode);
+        if (Object.keys(issuer.code).length > MAX_REFERRALS) {
+          console.error(`Issuer ${user.uid} exceeds max referrals`);
+          return null;
+        }
       }
 
       // Abort if the issuer never generate the code.
@@ -753,7 +760,7 @@ app.post('/api/register/:code', async (req: any, res) => {
       claimer.depth = cd.depth;
       claimer.referrer = cd.issuer;
 
-      t.update(codeRef, cd);
+      t.update(fsdb.doc(FsPath.codeReferral(newCode)), cd);
       t.update(issuerRef, issuer);
       t.update(claimerRef, claimer);
       return cd;
@@ -763,7 +770,7 @@ app.post('/api/register/:code', async (req: any, res) => {
       return null;
     });
 
-  if (!c || !c.claimer || c.claimer.uid !== user.uid) {
+  if (!c || (!c.bulk && (!c.claimer || c.claimer.uid !== user.uid))) {
     return res.json({ error: `Maaf, kode ${code} tidak dapat digunakan` });
   }
   return res.json({ code: c });

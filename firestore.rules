@@ -27,7 +27,7 @@ service cloud.firestore {
  
     // Referral codes.
     match /c/{code} {
-      allow read: if resource.data.claimer == null;
+      allow read: if resource.data.claimer == null || resource.data.bulk;
     }
 
     // Photo Uploads.

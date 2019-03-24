@@ -76,7 +76,7 @@ export class RegistrasiComponent implements OnInit {
               .doc<CodeReferral>(FsPath.codeReferral(this.theCode))
               .valueChanges()
               .pipe(
-                map(c => (c && c.claimer ? null : c)),
+                map(c => (c && (c.bulk || !c.claimer) ? c : null)),
                 catchError(e => {
                   this.error = e.message;
                   return of(null);
