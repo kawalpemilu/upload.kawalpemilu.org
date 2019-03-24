@@ -33,7 +33,8 @@ import {
   toChildren,
   FORM_TYPE,
   IS_PLANO,
-  TpsAggregate
+  TpsAggregate,
+  PublicProfile
 } from 'shared';
 
 const t1 = Date.now();
@@ -432,6 +433,7 @@ app.post('/api/approve', [populateApprove()], async (req: any, res) => {
 
       const u = (await t.get(uRef)).data() as Upsert;
       if (!u) return 'No Upsert';
+      if (u.reviewer) return 'Already approved';
 
       const tRef = fsdb.doc(FsPath.tps(u.request.kelId, u.request.tpsNo));
       const tps = (await t.get(tRef)).data() as TpsData;
@@ -598,17 +600,17 @@ app.post('/api/register/login', async (req: any, res) => {
         r.profile.pic = pic || user.picture;
         t.update(rRef, r);
       } else {
-        t.create(rRef, {
-          lowerCaseName: user.name.toLowerCase(),
-          profile: {
-            uid: user.user_id,
-            link,
-            email: user.email || '',
-            name: user.name,
-            pic: pic || user.picture,
-            loginTs: Date.now()
-          }
-        });
+        const profile: PublicProfile = {
+          uid: user.user_id,
+          link,
+          email: user.email || '',
+          name: user.name,
+          pic: pic || user.picture,
+          role: 0,
+          dr4: 0,
+          loginTs: Date.now()
+        };
+        t.create(rRef, { lowerCaseName: user.name.toLowerCase(), profile });
       }
       return true;
     });
@@ -768,6 +770,8 @@ app.post('/api/register/:code', async (req: any, res) => {
 app.post('/api/change_role', async (req: any, res) => {
   const user = req.user as admin.auth.DecodedIdToken;
   const tuid = req.body.uid;
+
+  // A user cannot change his/her own role.
   if (!isValidUserId(tuid) || tuid === user.uid) {
     console.error(`Invalid tuid ${user.uid} to ${tuid}`);
     return res.json({ error: 'Invalid uid' });
@@ -786,13 +790,36 @@ app.post('/api/change_role', async (req: any, res) => {
     .runTransaction(async t => {
       const actor = (await t.get(actorRef)).data() as Relawan;
       if (!actor) return `No relawan for ${user.uid}`;
-      if (actor.profile.role < USER_ROLE.ADMIN)
-        return `Not an admin ${user.uid}`;
+      if (actor.profile.role < USER_ROLE.ADMIN) return `Not an admin`;
 
       const target = (await t.get(targetRef)).data() as Relawan;
       if (!target) return `No relawan for ${tuid}`;
       if (target.profile.role === role) return `No change`;
-      if (target.profile.role === USER_ROLE.ADMIN) return `Admin demoted`;
+      if (target.profile.role === USER_ROLE.ADMIN) return `Demoting admin`;
+
+      if (target.referrer) {
+        const referrerRef = fsdb.doc(FsPath.relawan(target.referrer.uid));
+        const referrer = (await t.get(referrerRef)).data() as Relawan;
+        if (!referrer) {
+          console.error(`Referrer missing: ${tuid} ${target.referrer.uid}`);
+        } else {
+          let refCode = '';
+          for (const code of Object.keys(referrer.code)) {
+            const c = referrer.code[code];
+            if (c.claimer && c.claimer.uid === tuid) {
+              if (refCode) console.error(`Duplicate code ${refCode} ${code}`);
+              refCode = code;
+            }
+          }
+          if (!refCode) {
+            console.error(`Claimer ${user.uid} ${tuid} ${target.referrer.uid}`);
+          } else {
+            referrer.code[refCode].claimer.role = role;
+            t.update(referrerRef, referrer);
+          }
+        }
+      }
+
       target.profile.role = role;
       t.update(targetRef, target);
 
@@ -807,7 +834,7 @@ app.post('/api/change_role', async (req: any, res) => {
     });
 
   if (ok !== true) {
-    console.error(`User ${user.uid} doing ${ok}`);
+    console.error(`Change role ${user.uid} -> ${tuid} : ${ok}`);
     return res.json({ error: 'Unable to change role' });
   }
 
