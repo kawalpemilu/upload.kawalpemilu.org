@@ -7,9 +7,9 @@ import { APP_SCOPED_PREFIX_URL, PublicProfile, USER_ROLE } from 'shared';
     <ng-container *ngIf="profile; else siapaini">
       <a
         *ngIf="activity; else fblink"
-        style="text-decoration: none"
         [style.color]="getColor()"
         [style.font-weight]="getFontWeight()"
+        [style.text-decoration]="getTextDecoration('none')"
         [routerLink]="['/p', profile.uid]"
         target="{{ blankTarget ? '_blank' : '_self' }}"
         >{{ profile.name }}</a
@@ -22,6 +22,7 @@ import { APP_SCOPED_PREFIX_URL, PublicProfile, USER_ROLE } from 'shared';
         href="{{ SCOPED_PREFIX + profile.link }}"
         [style.color]="getColor(profile.role)"
         [style.font-weight]="getFontWeight()"
+        [style.text-decoration]="getTextDecoration()"
         target="_blank"
         >{{ profile.name }}</a
       >
@@ -64,5 +65,9 @@ export class OrangComponent implements OnInit {
 
   getFontWeight() {
     return this.profile.role > 0 ? 'bold' : '';
+  }
+
+  getTextDecoration(def) {
+    return this.profile.role === USER_ROLE.BANNED ? 'line-through' : def;
   }
 }

@@ -47,7 +47,7 @@
     <table style="margin-top: 10px">
       <tr>
         <td><img [src]="relawan.profile.pic" height="70" /></td>
-        <td>
+        <td valign="top" style="padding-left: 5px">
           <app-orang [profile]="relawan.profile"></app-orang><br />
           Role: {{ USER_ROLE[relawan.profile.role || 0] }}<br />
           <!-- <ng-container *ngIf="curRel.profile.role >= USER_ROLE.ADMIN">
@@ -71,13 +71,24 @@
         (relawan.profile.role || 0) < USER_ROLE.ADMIN
       "
     >
-      Kalo angkat jadi admin, gak bisa downgrade lagi!<br />
+      Change Role:<br />
       <mat-radio-group
-        [ngModel]="relawan.profile.role || 0"
-        (ngModelChange)="changeRole(curRel.auth, relawan.profile.uid, $event)"
+        [(ngModel)]="previousRole"
+        (ngModelChange)="changeRole(curRel.auth, relawan, $event)"
       >
+        <mat-radio-button [value]="USER_ROLE.BANNED"
+          ><span
+            class="banned"
+            [style.font-weight]="
+              relawan.profile.role == USER_ROLE.BANNED ? 'bold' : ''
+            "
+            >BAN!</span
+          ></mat-radio-button
+        >
+        &nbsp;
         <mat-radio-button [value]="USER_ROLE.RELAWAN"
           ><span
+            [style.color]="relawan.profile.dr4 > 0 ? 'brown' : ''"
             [style.font-weight]="
               (relawan.profile.role || 0) == USER_ROLE.RELAWAN ? 'bold' : ''
             "

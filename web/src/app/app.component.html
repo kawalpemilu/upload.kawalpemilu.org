@@ -48,38 +48,40 @@
       <ng-container
         *ngIf="(userService.relawan$ | async) as relawan; else login"
       >
-        <mat-list-item *ngIf="relawan.depth > 0">
-          <a
-            mat-list-item
-            [routerLink]="['/c', 0]"
-            (click)="mobileQuery.matches && snav.toggle()"
-            ><mat-icon>group_add</mat-icon> &nbsp; Rekrut Teman</a
-          >
-        </mat-list-item>
-        <mat-list-item>
-          <a
-            mat-list-item
-            [routerLink]="['/foto']"
-            (click)="mobileQuery.matches && snav.toggle()"
-            ><mat-icon>add_a_photo</mat-icon> &nbsp; Tes Upload Foto
-          </a>
-        </mat-list-item>
-        <mat-list-item>
-          <a
-            mat-list-item
-            [routerLink]="['/h', 0]"
-            (click)="mobileQuery.matches && snav.toggle()"
-            ><mat-icon>table_chart</mat-icon> &nbsp; Cakupan TPS</a
-          >
-        </mat-list-item>
-        <mat-list-item *ngIf="relawan.profile.role >= USER_ROLE.ADMIN">
-          <a
-            mat-list-item
-            [routerLink]="['/p', relawan.auth.uid]"
-            (click)="mobileQuery.matches && snav.toggle()"
-            ><mat-icon>security</mat-icon> &nbsp; Admin Page</a
-          >
-        </mat-list-item>
+        <ng-container *ngIf="relawan.profile.role != USER_ROLE.BANNED">
+          <mat-list-item *ngIf="relawan.depth > 0">
+            <a
+              mat-list-item
+              [routerLink]="['/c', 0]"
+              (click)="mobileQuery.matches && snav.toggle()"
+              ><mat-icon>group_add</mat-icon> &nbsp; Rekrut Teman</a
+            >
+          </mat-list-item>
+          <mat-list-item>
+            <a
+              mat-list-item
+              [routerLink]="['/foto']"
+              (click)="mobileQuery.matches && snav.toggle()"
+              ><mat-icon>add_a_photo</mat-icon> &nbsp; Tes Upload Foto
+            </a>
+          </mat-list-item>
+          <mat-list-item>
+            <a
+              mat-list-item
+              [routerLink]="['/h', 0]"
+              (click)="mobileQuery.matches && snav.toggle()"
+              ><mat-icon>table_chart</mat-icon> &nbsp; Cakupan TPS</a
+            >
+          </mat-list-item>
+          <mat-list-item *ngIf="relawan.profile.role >= USER_ROLE.ADMIN">
+            <a
+              mat-list-item
+              [routerLink]="['/p', relawan.auth.uid]"
+              (click)="mobileQuery.matches && snav.toggle()"
+              ><mat-icon>security</mat-icon> &nbsp; Admin Page</a
+            >
+          </mat-list-item>
+        </ng-container>
       </ng-container>
 
       <mat-list-item>
@@ -103,7 +105,33 @@
     [style.padding-right.px]="PADDING"
     style="min-height: 400px"
   >
-    <router-outlet *ngIf="!userService.isLoading; else loading"></router-outlet>
+    <ng-container *ngIf="!userService.isLoading; else loading">
+      <ng-container
+        *ngIf="
+          (userService.relawan$ | async)?.profile?.role == USER_ROLE.BANNED;
+          else render
+        "
+      >
+        <p>
+          Halo,
+          <app-orang
+            [profile]="(userService.relawan$ | async).profile"
+          ></app-orang>
+        </p>
+        <p>
+          Maaf, anda untuk sementara ini kami ban dari sistem KawalPemilu.
+        </p>
+        <p>
+          Apabila ini sebuah kesalahan, harap kontak kami melalui channel di
+          bawah.
+        </p>
+        <app-kontak [showInfo]="false"></app-kontak>
+      </ng-container>
+      <ng-template #render>
+        <router-outlet></router-outlet>
+      </ng-template>
+    </ng-container>
+
     <ng-template #loading>
       <p><mat-spinner></mat-spinner></p>
     </ng-template>

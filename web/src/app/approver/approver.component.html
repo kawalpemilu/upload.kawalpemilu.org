@@ -129,7 +129,12 @@
           (change)="setFormType($event.value)"
         >
           <mat-radio-button *ngFor="let e of FORM_TYPE_ENTRIES" [value]="e[0]">
-            {{ e[1] }}
+            <ng-container *ngIf="e[0] == FORM_TYPE.MALICIOUS; else normal">
+              MALICIOUS<br />(<b style="color: red">BAN USER</b>)
+            </ng-container>
+            <ng-template #normal>
+              {{ e[1] }}
+            </ng-template>
           </mat-radio-button>
         </mat-radio-group>
       </ng-template>

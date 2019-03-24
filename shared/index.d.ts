@@ -3,6 +3,7 @@ export declare const MAX_REFERRALS = 1000;
 export declare const MAX_NUM_UPLOADS = 100;
 export declare const LOCAL_STORAGE_LAST_URL = "last_url";
 export declare enum USER_ROLE {
+    BANNED = -1,
     RELAWAN = 0,
     MODERATOR = 1,
     ADMIN = 2
@@ -84,7 +85,7 @@ export declare enum FORM_TYPE {
     DPRD_KAB_KOTA = 8,
     DPRK = 9,
     OTHERS = 10,
-    DELETED = 11
+    MALICIOUS = 11
 }
 export declare type SumMap = {
     [key in SUM_KEY]: number;

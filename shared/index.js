@@ -6,6 +6,7 @@ exports.MAX_NUM_UPLOADS = 100;
 exports.LOCAL_STORAGE_LAST_URL = 'last_url';
 var USER_ROLE;
 (function (USER_ROLE) {
+    USER_ROLE[USER_ROLE["BANNED"] = -1] = "BANNED";
     USER_ROLE[USER_ROLE["RELAWAN"] = 0] = "RELAWAN";
     USER_ROLE[USER_ROLE["MODERATOR"] = 1] = "MODERATOR";
     USER_ROLE[USER_ROLE["ADMIN"] = 2] = "ADMIN";
@@ -97,8 +98,7 @@ var FORM_TYPE;
     FORM_TYPE[FORM_TYPE["DPRK"] = 9] = "DPRK";
     // Up to choosing this type.
     FORM_TYPE[FORM_TYPE["OTHERS"] = 10] = "OTHERS";
-    FORM_TYPE[FORM_TYPE["DELETED"] = 11] = "DELETED";
-    // TODO: MALICIOUS
+    FORM_TYPE[FORM_TYPE["MALICIOUS"] = 11] = "MALICIOUS";
 })(FORM_TYPE = exports.FORM_TYPE || (exports.FORM_TYPE = {}));
 var IS_PLANO;
 (function (IS_PLANO) {

@@ -5,6 +5,7 @@ export const MAX_NUM_UPLOADS = 100;
 export const LOCAL_STORAGE_LAST_URL = 'last_url';
 
 export enum USER_ROLE {
+  BANNED = -1,
   RELAWAN = 0,
   MODERATOR = 1,
   ADMIN = 2
@@ -100,8 +101,7 @@ export enum FORM_TYPE {
 
   // Up to choosing this type.
   OTHERS,
-  DELETED,
-  // TODO: MALICIOUS
+  MALICIOUS
 }
 
 export type SumMap = { [key in SUM_KEY]: number };

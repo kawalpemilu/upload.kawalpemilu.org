@@ -14,7 +14,9 @@ import {
   catchError,
   debounceTime,
   distinctUntilChanged,
-  map
+  map,
+  tap,
+  shareReplay
 } from 'rxjs/operators';
 import { User } from 'firebase';
 import { ApiService } from '../api.service';
@@ -33,6 +35,7 @@ export class ProfileComponent implements OnInit {
   relawan$: Observable<Relawan>;
   relawanPhotos$: Observable<RelawanPhotos>;
   relawans$: Observable<Relawan[]>;
+  previousRole: USER_ROLE;
 
   constructor(
     public userService: UserService,
@@ -50,7 +53,13 @@ export class ProfileComponent implements OnInit {
             catchError(e => {
               console.log(e.message);
               return of(null);
-            })
+            }),
+            tap((r: Relawan) => {
+              if (r) {
+                this.previousRole = r.profile.role || 0;
+              }
+            }),
+            shareReplay(1)
           )
       )
     );
@@ -91,9 +100,22 @@ export class ProfileComponent implements OnInit {
     return APP_SCOPED_PREFIX_URL;
   }
 
-  async changeRole(user: User, uid: string, role: number) {
+  async changeRole(user: User, relawan: Relawan, role: number) {
+    if (
+      role === USER_ROLE.ADMIN &&
+      !confirm(
+        `WARNING: THIS IS IRREVERSIBLE!\nPromote ${relawan.profile.name} to ${
+          USER_ROLE[role]
+        }?`
+      )
+    ) {
+      setTimeout(() => (this.previousRole = relawan.profile.role || 0), 200);
+      return;
+    }
+
+    const uid = relawan.profile.uid;
     const res = await this.api.post(user, `change_role`, { uid, role });
-    console.log(`Change role to ${role}`, res);
+    console.log(`Changed role to ${role}`, res);
   }
 
   getCodes(relawan: Relawan) {

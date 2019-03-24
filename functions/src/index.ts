@@ -390,7 +390,7 @@ function populateApprove() {
       console.warn(`Invalid form ${JSON.stringify(b.c1)} for ${user.uid}`);
       return res.json({ error: 'Invalid form' });
     }
-    if (b.c1.type !== FORM_TYPE.DELETED && b.c1.type !== FORM_TYPE.OTHERS) {
+    if (b.c1.type !== FORM_TYPE.MALICIOUS && b.c1.type !== FORM_TYPE.OTHERS) {
       if (!IS_PLANO[b.c1.plano]) {
         console.warn(`Invalid plano ${JSON.stringify(b.c1)} for ${user.uid}`);
         return res.json({ error: 'Invalid form' });
@@ -426,8 +426,16 @@ app.post('/api/approve', [populateApprove()], async (req: any, res) => {
   const ua = req.headers['user-agent'];
   const ip = getIp(req);
 
-  const ts = Date.now();
   const uRef = fsdb.doc(FsPath.upserts(a.imageId));
+  if (a.c1.type === FORM_TYPE.MALICIOUS) {
+    const u = (await uRef.get()).data() as Upsert;
+    const tuid = u.uploader.uid;
+    console.log(`Mal ${a.imageId} ${tuid}, a = ${user.uid}`);
+    const okBan = await changeRole(user.uid, tuid, USER_ROLE.BANNED, true);
+    if (okBan !== true) console.error(`Ban failed ${okBan}`);
+  }
+
+  const ts = Date.now();
   const rRef = fsdb.doc(FsPath.relawan(user.uid));
   const ok = await fsdb
     .runTransaction(async t => {
@@ -456,37 +464,35 @@ app.post('/api/approve', [populateApprove()], async (req: any, res) => {
       u.action.sum.pending = 0;
       u.action.sum.error = 0;
       u.action.sum.janggal = 0;
-      Object.keys(tps.images)
-        .map(i => tps.images[i])
-        .forEach(i => {
-          if (!i.c1) {
-            u.action.sum.cakupan = 1;
-            u.action.sum.pending = 1;
-          } else if (i.c1.type === FORM_TYPE.DELETED) {
-            u.action.photos[i.url] = null;
-            u.action.sum.cakupan = 1;
-          } else if (i.c1.type === FORM_TYPE.OTHERS) {
-            u.action.photos[i.url] = null;
-            u.action.sum.cakupan = 1;
-          } else {
-            u.action.sum.cakupan = 1;
-            u.action.photos[i.url] = {
-              c1: i.c1,
-              sum: i.sum,
-              ts: i.reviewer.ts
-            };
-            u.action.ts = Math.max(u.action.ts, i.reviewer.ts);
-            for (const key of Object.keys(i.sum)) {
-              if (typeof u.action.sum[key] === 'number') {
-                if (u.action.sum[key] !== i.sum[key]) {
-                  u.action.sum.janggal = 1;
-                }
-              } else {
-                u.action.sum[key] = i.sum[key];
+      for (const imageId of Object.keys(tps.images)) {
+        const i = tps.images[imageId];
+        if (!i.c1) {
+          u.action.sum.cakupan = 1;
+          u.action.sum.pending = 1;
+        } else if (i.c1.type === FORM_TYPE.MALICIOUS) {
+          u.action.photos[i.url] = null;
+        } else if (i.c1.type === FORM_TYPE.OTHERS) {
+          u.action.photos[i.url] = null;
+          u.action.sum.cakupan = 1;
+        } else {
+          u.action.sum.cakupan = 1;
+          u.action.photos[i.url] = {
+            c1: i.c1,
+            sum: i.sum,
+            ts: i.reviewer.ts
+          };
+          u.action.ts = Math.max(u.action.ts, i.reviewer.ts);
+          for (const key of Object.keys(i.sum)) {
+            if (typeof u.action.sum[key] === 'number') {
+              if (u.action.sum[key] !== i.sum[key]) {
+                u.action.sum.janggal = 1;
               }
+            } else {
+              u.action.sum[key] = i.sum[key];
             }
           }
-        });
+        }
+      }
 
       t.update(uRef, u);
       t.update(tRef, tps);
@@ -781,30 +787,23 @@ app.post('/api/register/:code', async (req: any, res) => {
   return res.json({ code: c });
 });
 
-app.post('/api/change_role', async (req: any, res) => {
-  const user = req.user as admin.auth.DecodedIdToken;
-  const tuid = req.body.uid;
-
-  // A user cannot change his/her own role.
-  if (!isValidUserId(tuid) || tuid === user.uid) {
-    console.error(`Invalid tuid ${user.uid} to ${tuid}`);
-    return res.json({ error: 'Invalid uid' });
-  }
-
-  const role = req.body.role;
-  if (!USER_ROLE[role] || typeof role !== 'number') {
-    console.error(`Invalid role ${user.uid} to ${role}`);
-    return res.json({ error: 'Invalid role' });
-  }
-
+async function changeRole(
+  actorUid: string,
+  tuid: string,
+  role: USER_ROLE,
+  maliciousPhoto = false
+) {
   const ts = Date.now();
-  const actorRef = fsdb.doc(FsPath.relawan(user.uid));
+  const actorRef = fsdb.doc(FsPath.relawan(actorUid));
   const targetRef = fsdb.doc(FsPath.relawan(tuid));
-  const ok = await fsdb
+  return await fsdb
     .runTransaction(async t => {
       const actor = (await t.get(actorRef)).data() as Relawan;
-      if (!actor) return `No relawan for ${user.uid}`;
-      if (actor.profile.role < USER_ROLE.ADMIN) return `Not an admin`;
+      if (!actor) return `No relawan for ${actorUid}`;
+      if (actor.profile.role < USER_ROLE.ADMIN) {
+        if (!maliciousPhoto) return `Not an admin`;
+        if (actor.profile.role < USER_ROLE.MODERATOR) return `Not a moderator`;
+      }
 
       const target = (await t.get(targetRef)).data() as Relawan;
       if (!target) return `No relawan for ${tuid}`;
@@ -826,7 +825,7 @@ app.post('/api/change_role', async (req: any, res) => {
             }
           }
           if (!refCode) {
-            console.error(`Claimer ${user.uid} ${tuid} ${target.referrer.uid}`);
+            console.error(`Claimer ${actorUid} ${tuid} ${target.referrer.uid}`);
           } else {
             referrer.code[refCode].claimer.role = role;
             t.update(referrerRef, referrer);
@@ -838,15 +837,33 @@ app.post('/api/change_role', async (req: any, res) => {
       t.update(targetRef, target);
 
       const logRef = fsdb.doc(FsPath.changeLog(autoId()));
-      const cl: ChangeLog = { auid: user.uid, tuid, role, ts };
+      const cl: ChangeLog = { auid: actorUid, tuid, role, ts };
       t.create(logRef, cl);
       return true;
     })
     .catch(e => {
-      console.error(`DB change role ${user.uid}`, e);
+      console.error(`DB change role ${actorUid}`, e);
       return `Database error`;
     });
+}
 
+app.post('/api/change_role', async (req: any, res) => {
+  const user = req.user as admin.auth.DecodedIdToken;
+  const tuid = req.body.uid;
+
+  // A user cannot change his/her own role.
+  if (!isValidUserId(tuid) || tuid === user.uid) {
+    console.error(`Invalid tuid ${user.uid} to ${tuid}`);
+    return res.json({ error: 'Invalid uid' });
+  }
+
+  const role: USER_ROLE = req.body.role;
+  if (!USER_ROLE[role] || typeof role !== 'number') {
+    console.error(`Invalid role ${user.uid} to ${role}`);
+    return res.json({ error: 'Invalid role' });
+  }
+
+  const ok = await changeRole(user.uid, tuid, role);
   if (ok !== true) {
     console.error(`Change role ${user.uid} -> ${tuid} : ${ok}`);
     return res.json({ error: 'Unable to change role' });
