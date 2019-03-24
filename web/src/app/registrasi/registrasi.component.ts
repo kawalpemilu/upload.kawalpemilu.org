@@ -54,7 +54,7 @@ export class RegistrasiComponent implements OnInit {
   error: string;
   USER_ROLE = USER_ROLE;
   isLoading = false;
-  useSuperCode = false; // Turn this on next week?
+  useSuperCode = true;
 
   constructor(
     public userService: UserService,
@@ -76,7 +76,7 @@ export class RegistrasiComponent implements OnInit {
               .doc<CodeReferral>(FsPath.codeReferral(this.theCode))
               .valueChanges()
               .pipe(
-                map(c => (c && c.claimer ? null : c)),
+                map(c => (c && (c.bulk || !c.claimer) ? c : null)),
                 catchError(e => {
                   this.error = e.message;
                   return of(null);
@@ -116,7 +116,6 @@ export class RegistrasiComponent implements OnInit {
         }
         const body = { code: 1, link: APP_SCOPED_PREFIX_URL + r.profile.link };
         const res: any = await this.api.post(r.auth, `register/login`, body);
-        console.log('res', res);
         if (res.ok) {
           return res.code;
         }

@@ -539,39 +539,41 @@ app.post('/api/problem', async (req: any, res) => {
 
 app.post('/api/register/login', async (req: any, res) => {
   const user = req.user as admin.auth.DecodedIdToken;
+  if (user.uid !== user.user_id) {
+    console.error(`UID differs ${user.uid} !== ${user.user_id}`);
+    return res.json({ error: 'System error' });
+  }
+
   const token = req.body.token;
   try {
-    if (!token || !token.match(/^[a-zA-Z0-9]+$/)) {
-      console.error(`Invalid login ${user.uid} token: ${token}`);
-      return res.json({ error: 'Invalid token' });
-    }
-
-    const url = `https://graph.facebook.com/me?fields=link,picture.type(large)&access_token=${token}`;
-    const me = await request(url, { timeout: 5000, json: true });
-    if (!me || me.error) {
-      console.error(`Me ${user.uid} : ${token} : ${JSON.stringify(me)}`);
-      return res.json({ error: 'Invalid token' });
-    }
-    const p = APP_SCOPED_PREFIX_URL;
     let link = '';
-    if (!me.link || !me.link.startsWith(p)) {
-      if (!req.body.code) {
-        console.error(`Invalid login ${user.uid} link: ${link}`);
-      }
-    } else {
-      link = me.link.substring(p.length);
-      if (!link.match(/^[a-zA-Z0-9]+\/$/)) {
-        console.error(`Invalid login ${user.uid} shorten link: ${link}`);
-        link = '';
-      }
-    }
+    let pic = '';
 
-    if (user.uid !== user.user_id) {
-      console.error(`UID differs ${user.uid} !== ${user.user_id}`);
+    if (token) {
+      if (!token.match(/^[a-zA-Z0-9]+$/)) {
+        console.error(`Invalid token ${user.uid} ${token}`);
+        return res.json({ error: 'Invalid token' });
+      }
+      const url = `https://graph.facebook.com/me?fields=link,picture.type(large)&access_token=${token}`;
+      const me = await request(url, { timeout: 5000, json: true });
+      if (!me || me.error) {
+        console.error(`Me ${user.uid} : ${token} : ${JSON.stringify(me)}`);
+        return res.json({ error: 'Invalid token' });
+      }
+      const p = APP_SCOPED_PREFIX_URL;
+      if (!me.link || !me.link.startsWith(p)) {
+        console.error(`Invalid login ${user.uid} link: ${link}`);
+      } else {
+        link = me.link.substring(p.length);
+        if (!link.match(/^[a-zA-Z0-9]+\/$/)) {
+          console.error(`Invalid login ${user.uid} shorten link: ${link}`);
+          link = '';
+        }
+      }
+      pic = me.picture && me.picture.data && me.picture.data.url;
     }
 
     let code = '';
-    const pic = me.picture && me.picture.data && me.picture.data.url;
     const rRef = fsdb.doc(FsPath.relawan(user.uid));
     const ok = await fsdb.runTransaction(async t => {
       const r = (await t.get(rRef)).data() as Relawan;
@@ -595,9 +597,11 @@ app.post('/api/register/login', async (req: any, res) => {
           r.profile.noLink = 'y';
           r.profile.link = link;
         }
+        if (pic) {
+          r.profile.pic = pic;
+        }
         // @ts-ignore
         r.lastTs = Date.now();
-        r.profile.pic = pic || user.picture;
         t.update(rRef, r);
       } else {
         const profile: PublicProfile = {
@@ -649,6 +653,7 @@ async function addGeneratedCode(r: Relawan, nama, t, code) {
   if (!r.code) r.code = {};
   r.code[code] = { name: nama, issuedTs: newCode.issuedTs } as CodeReferral;
   t.update(fsdb.doc(FsPath.relawan(r.profile.uid)), r);
+  return newCode;
 }
 
 app.post('/api/register/create_code', async (req: any, res) => {
@@ -702,8 +707,11 @@ app.post('/api/register/:code', async (req: any, res) => {
   const c = await fsdb
     .runTransaction(async t => {
       // Abort if the code does not exist or already claimed.
-      const cd = (await t.get(codeRef)).data() as CodeReferral;
-      if (!cd || cd.claimer) return cd;
+      let cd = (await t.get(codeRef)).data() as CodeReferral;
+      if (!cd || (!cd.bulk && cd.claimer)) {
+        console.error(`Referral ${user.uid} is not usable, ${code}`);
+        return null;
+      }
 
       // Abort if the claimer does not have relawan entry.
       const claimer = (await t.get(claimerRef)).data() as Relawan;
@@ -734,8 +742,11 @@ app.post('/api/register/:code', async (req: any, res) => {
       if (cd.bulk) {
         // CD is just a token, need to create an actual code.
         newCode = await generateCode(t);
-        await addGeneratedCode(issuer, '', t, newCode);
-        if (Object.keys(issuer.code).length > MAX_REFERRALS) return null;
+        cd = await addGeneratedCode(issuer, '', t, newCode);
+        if (Object.keys(issuer.code).length > MAX_REFERRALS) {
+          console.error(`Issuer ${user.uid} exceeds max referrals`);
+          return null;
+        }
       }
 
       // Abort if the issuer never generate the code.
@@ -751,7 +762,7 @@ app.post('/api/register/:code', async (req: any, res) => {
       claimer.depth = cd.depth;
       claimer.referrer = cd.issuer;
 
-      t.update(codeRef, cd);
+      t.update(fsdb.doc(FsPath.codeReferral(newCode)), cd);
       t.update(issuerRef, issuer);
       t.update(claimerRef, claimer);
       return cd;
@@ -761,7 +772,7 @@ app.post('/api/register/:code', async (req: any, res) => {
       return null;
     });
 
-  if (!c || !c.claimer || c.claimer.uid !== user.uid) {
+  if (!c || (!c.bulk && (!c.claimer || c.claimer.uid !== user.uid))) {
     return res.json({ error: `Maaf, kode ${code} tidak dapat digunakan` });
   }
   return res.json({ code: c });
