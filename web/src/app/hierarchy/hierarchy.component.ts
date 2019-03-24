@@ -29,17 +29,17 @@ export class HierarchyComponent implements OnInit, OnDestroy {
   @ViewChild('header') myHeaderEl: ElementRef;
   @ViewChild('footer') myFooterEl: ElementRef;
 
-    // https://simple.wikipedia.org/wiki/Stellar_classification
-    SETELLAR_COLOR = [
-      '#9db4ff', // 5m blue
-      '#aabfff', // 15m deep blue white
-      '#cad8ff', // 45m blue white
-      '#ffddb4', // 2h pale yellow orange
-      '#ffbd6f', // 6h light orange red
-      '#f84235', // 20h scarlet
-      '#ba3059', // 2d magenta
-      '#605170' // dark purple
-    ];
+  // https://simple.wikipedia.org/wiki/Stellar_classification
+  SETELLAR_COLOR = [
+    '#9db4ff', // 5m blue
+    '#aabfff', // 15m deep blue white
+    '#cad8ff', // 45m blue white
+    '#ffddb4', // 2h pale yellow orange
+    '#ffbd6f', // 6h light orange red
+    '#f84235', // 20h scarlet
+    '#ba3059', // 2d magenta
+    '#605170' // dark purple
+  ];
 
   ROW_HEIGHT = 40;
   paddingTemp;
@@ -52,6 +52,10 @@ export class HierarchyComponent implements OnInit, OnDestroy {
 
   get TOOLBAR_HEIGHT() {
     return AppComponent.TOOLBAR_HEIGHT;
+  }
+
+  get PATH_HEIGHT() {
+    return AppComponent.PATH_HEIGHT;
   }
 
   getWilayah(state: HierarchyNode) {
@@ -68,7 +72,9 @@ export class HierarchyComponent implements OnInit, OnDestroy {
     this.width = window.innerWidth;
 
     const effectiveHeight =
-      this.TOOLBAR_HEIGHT * 2 + (2 + this.numRows) * this.ROW_HEIGHT;
+      this.TOOLBAR_HEIGHT +
+      this.PATH_HEIGHT +
+      (2 + this.numRows) * this.ROW_HEIGHT;
 
     if (effectiveHeight < this.height) {
       const footerTop = `${effectiveHeight - this.ROW_HEIGHT}px`;
@@ -82,7 +88,7 @@ export class HierarchyComponent implements OnInit, OnDestroy {
 
   @HostListener('window:scroll', ['$event'])
   scrollHandler() {
-    if (window.pageYOffset > this.TOOLBAR_HEIGHT * 2) {
+    if (window.pageYOffset > this.TOOLBAR_HEIGHT + this.PATH_HEIGHT) {
       this.myHeaderEl.nativeElement.classList.add('sticky');
     } else {
       this.myHeaderEl.nativeElement.classList.remove('sticky');

@@ -31,6 +31,7 @@ import { USER_ROLE } from 'shared';
 })
 export class AppComponent implements OnDestroy {
   static TOOLBAR_HEIGHT = 64;
+  static PATH_HEIGHT = 74;
   static PADDING = 10;
 
   USER_ROLE = USER_ROLE;

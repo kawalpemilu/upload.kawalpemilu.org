@@ -8,8 +8,7 @@ import { take } from 'rxjs/operators';
   template: `
     <a style="cursor: pointer" [style.color]="color" (click)="navigate()">{{
       name | uppercase
-    }}</a>
-    &nbsp;
+    }}</a>&nbsp;
   `,
   styles: [``]
 })

@@ -18,7 +18,7 @@ import { Router } from '@angular/router';
   template: `
     <table cellpadding="0" cellspacing="0" width="100%">
       <tr>
-        <td style="line-height: 175%" [style.height.px]="TOOLBAR_HEIGHT">
+        <td style="line-height: 175%" [style.height.px]="PATH_HEIGHT">
           <ng-container *ngIf="!isSearching">
             <span *ngFor="let id of node.parentIds; let i = index">
               <app-hie-link
@@ -83,6 +83,7 @@ import { Router } from '@angular/router';
         text-decoration: none;
       }
       .form {
+        margin-top: 5px;
         min-width: 250px;
         max-width: 500px;
         width: 100%;
@@ -103,8 +104,8 @@ export class PathComponent implements OnInit {
     private router: Router
   ) {}
 
-  get TOOLBAR_HEIGHT() {
-    return AppComponent.TOOLBAR_HEIGHT;
+  get PATH_HEIGHT() {
+    return AppComponent.PATH_HEIGHT;
   }
 
   ngOnInit() {
