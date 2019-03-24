@@ -17,10 +17,10 @@ export class HierarchyService {
     console.log('Loaded HierarchyService');
   }
 
-  async update(user: User, id: number) {
+  async update(id: number) {
     if (this.hierarchy$[id]) {
       return this.api
-        .get(user, `c/${id}?${Date.now()}`)
+        .get(this.userService.user, `c/${id}?${Date.now()}`)
         .then((c: HierarchyNode) => {
           this.hierarchy$[id].next(c);
           lsSetItem(`h/${id}`, c);
@@ -53,10 +53,7 @@ export class HierarchyService {
         ) {
           console.log('Fetch node', id, ts - this.lastTs, cacheTimeoutMs);
           this.lastTs = ts;
-          this.userService.relawan$
-            .pipe(take(1))
-            .toPromise()
-            .then(r => this.update(r.auth, id).catch(console.error));
+          return this.update(id).catch(console.error);
         }
       });
 

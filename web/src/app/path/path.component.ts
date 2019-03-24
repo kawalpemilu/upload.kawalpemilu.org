@@ -28,6 +28,14 @@ import { Router } from '@angular/router';
               &gt;&nbsp;
             </span>
             {{ node.name | uppercase }}
+            <button
+              mat-icon-button
+              color="primary"
+              [disabled]="isRefreshing"
+              (click)="refresh(node.id)"
+            >
+              <mat-icon>refresh</mat-icon>
+            </button>
             &nbsp;
             <button mat-raised-button color="primary" (click)="toggle()">
               <mat-icon>search</mat-icon>
@@ -98,6 +106,8 @@ export class PathComponent implements OnInit {
   myControl = new FormControl();
   filteredOptions$: Observable<HierarchyNode[]>;
 
+  isRefreshing = false;
+
   constructor(
     public hie: HierarchyService,
     private fsdb: AngularFirestore,
@@ -125,6 +135,12 @@ export class PathComponent implements OnInit {
           .valueChanges()
       )
     );
+  }
+
+  async refresh(id: number) {
+    this.isRefreshing = true;
+    await this.hie.update(id).catch(console.error);
+    this.isRefreshing = false;
   }
 
   toggle() {

@@ -36,7 +36,7 @@ export class LaporButtonComponent implements OnInit {
     this.isLoading = true;
     await this.api.post(user, `problem`, { imageId: this.imageId });
     await new Promise(resolve => setTimeout(resolve, 1000));
-    await this.hie.update(user, this.id);
+    await this.hie.update(this.id);
     this.isLoading = false;
   }
 }

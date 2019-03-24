@@ -346,7 +346,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
     this.tps$.next(next);
 
     if (!this.imageId) {
-      this.hie.update(this.userService.user, this.kelId).then(() => {
+      this.hie.update(this.kelId).then(() => {
         setTimeout(() => this.completed.next(), 1000);
       });
     }

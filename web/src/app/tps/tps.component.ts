@@ -76,6 +76,7 @@ export class TpsComponent implements OnInit {
           };
           state.tpsList.push(t);
         });
+        this.showingSlice = null;
         if (state.tpsList.length > 200) {
           this.populateSlices(state.tpsList, 40);
         } else if (state.tpsList.length > 100) {
