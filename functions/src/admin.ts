@@ -31,7 +31,23 @@ const fsdb = admin.firestore();
 // In memory database containing the aggregates of all children.
 let h: { [key: string]: { [key: string]: Aggregate } } = {};
 
+const CHILDREN_STALENESS_MS = 1 * 60 * 1000;
 const dirtyKelId: { [kelId: string]: NodeJS.Timer } = {};
+function updateChildrenCache(kelId) {
+  return () => {
+    delete dirtyKelId[kelId];
+    let cache = H[kelId] as HierarchyNode;
+    if (cache) {
+      cache = JSON.parse(JSON.stringify(cache));
+      cache.child = toChild(cache);
+      delete cache.children;
+      fsdb
+        .doc(FsPath.hieCache(kelId))
+        .set(cache)
+        .catch(e => console.error(`children cache failed: ${e.message}`));
+    }
+  };
+}
 
 function getUpsertData(parentId, childId): Aggregate {
   if (!h[parentId]) h[parentId] = {};
@@ -81,6 +97,13 @@ async function updateAggregates(
       target.sum[key] = (target.sum[key] || 0) + delta.sum[key];
     }
     target.ts = Math.max(target.ts || delta.ts, delta.ts);
+
+    if (!dirtyKelId[path[i]]) {
+      dirtyKelId[path[i]] = setTimeout(
+        updateChildrenCache(path[i]),
+        CHILDREN_STALENESS_MS
+      );
+    }
   }
 }
 
@@ -123,23 +146,6 @@ async function doBackup() {
   lastBackupTs = ts;
 }
 
-const CHILDREN_STALENESS_MS = 1 * 60 * 1000;
-function updateChildrenCache(kelId) {
-  return () => {
-    delete dirtyKelId[kelId];
-    let cache = H[kelId] as HierarchyNode;
-    if (cache) {
-      cache = JSON.parse(JSON.stringify(cache));
-      cache.child = toChild(cache);
-      delete cache.children;
-      fsdb
-        .doc(FsPath.hieCache(kelId))
-        .set(cache)
-        .catch(e => console.error(`children cache failed: ${e.message}`));
-    }
-  };
-}
-
 async function processNewUpserts() {
   const upserts = await getUpsertBatch(100).catch(e => {
     console.error(`get upsert batch failed: ${e.message}`);
@@ -156,12 +162,6 @@ async function processNewUpserts() {
     for (const imageId of imageIds) {
       const u: Upsert = upserts[imageId];
       const kelId = u.request.kelId;
-      if (!dirtyKelId[kelId]) {
-        dirtyKelId[kelId] = setTimeout(
-          updateChildrenCache(kelId),
-          CHILDREN_STALENESS_MS
-        );
-      }
       await updateAggregates(kelId, u.request.tpsNo, u.action)
         .then(() =>
           batch.update(fsdb.doc(FsPath.upserts(imageId)), { done: 1 })
