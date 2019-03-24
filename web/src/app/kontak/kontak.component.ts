@@ -67,7 +67,7 @@ import { Component, OnInit, Input } from '@angular/core';
     <p>
       Lihat situs
       <a href="http://2014.kawalpemilu.org" target="_blank">KawalPemilu 2014</a>
-      yang lalu.
+      yang lalu dan <a href="https://qr.ae/TW8oSn" target="_blank">bagaimana prosesnya dicapai</a>.
     </p>
   `,
   styles: [``]

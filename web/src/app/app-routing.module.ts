@@ -9,12 +9,13 @@ import { USER_ROLE } from 'shared';
 import { ProfileComponent } from './profile/profile.component';
 import { ApproverComponent } from './approver/approver.component';
 import { HomeComponent } from './home/home.component';
+import { FaqComponent } from './faq/faq.component';
 
 const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    component: HomeComponent,
+    component: HomeComponent
   },
   {
     path: 'h/:id',
@@ -25,6 +26,10 @@ const routes: Routes = [
   {
     path: 'c/:code',
     component: RegistrasiComponent
+  },
+  {
+    path: 'faq',
+    component: FaqComponent
   },
   { path: 'foto', component: FotoComponent, canActivate: [AuthGuardService] },
   {

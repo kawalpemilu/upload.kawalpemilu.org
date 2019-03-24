@@ -13,7 +13,7 @@ import { APP_SCOPED_PREFIX_URL, PublicProfile, USER_ROLE } from 'shared';
         [routerLink]="['/p', profile.uid]"
         >{{ profile.name }}</a
       >
-      <ng-container *ngIf="showDr">&nbsp;({{ profile.dr4 }})</ng-container>
+      <ng-container *ngIf="showDr">&nbsp;({{ profile.dr4 || 0 }})</ng-container>
     </ng-container>
 
     <ng-template #fblink>

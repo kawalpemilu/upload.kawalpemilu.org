@@ -6,7 +6,8 @@ import { UserService } from '../user.service';
   template: `
     <ng-container *ngIf="(userService.relawan$ | async) as relawan; else login">
       <p>
-        Selamat datang, <app-orang [profile]="relawan.profile"></app-orang>!
+        Selamat datang,
+        <app-orang [profile]="relawan.profile" [showDr]="false"></app-orang>
       </p>
 
       <p>

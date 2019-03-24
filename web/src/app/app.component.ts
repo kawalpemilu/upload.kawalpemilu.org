@@ -10,7 +10,7 @@ import { USER_ROLE } from 'shared';
   styles: [
     `
       mat-sidenav {
-        width: 225px;
+        width: 235px;
       }
       h1.app-name {
         margin-left: 8px;

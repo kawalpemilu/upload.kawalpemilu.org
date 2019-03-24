@@ -78,6 +78,14 @@
             ><mat-icon>security</mat-icon> &nbsp; Admin Page</a
           >
         </mat-list-item>
+        <mat-list-item>
+          <a
+            mat-list-item
+            [routerLink]="['/faq']"
+            (click)="mobileQuery.matches && snav.toggle()"
+            ><mat-icon>help_outline</mat-icon> &nbsp; Pertanyaan Umum</a
+          >
+        </mat-list-item>
       </ng-container>
 
       <p>

@@ -55,6 +55,7 @@ import { MetaComponent } from './meta/meta.component';
 import { HomeComponent } from './home/home.component';
 import { KontakComponent } from './kontak/kontak.component';
 import { CarouselComponent } from './carousel/carousel.component';
+import { FaqComponent } from './faq/faq.component';
 
 @NgModule({
   entryComponents: [RegistrasiComponent, CopySnackBarComponent],
@@ -77,7 +78,8 @@ import { CarouselComponent } from './carousel/carousel.component';
     MetaComponent,
     HomeComponent,
     KontakComponent,
-    CarouselComponent
+    CarouselComponent,
+    FaqComponent
   ],
   imports: [
     BrowserModule,
