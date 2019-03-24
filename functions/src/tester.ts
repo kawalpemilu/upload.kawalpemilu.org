@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import * as request from 'request-promise';
 import * as fs from 'fs';
 
-import { UploadRequest, ImageMetadata, SumMap } from 'shared';
+import { UploadRequest, ImageMetadata, SumMap, FsPath, Relawan } from 'shared';
 
 import { H } from './hierarchy';
 
@@ -14,6 +14,7 @@ admin.initializeApp({
 });
 
 const auth = admin.auth();
+const fsdb = admin.firestore();
 
 interface User {
   uid: string;
@@ -261,5 +262,41 @@ async function loadTest() {
   // Achieved 600-700 RPS for read only APIs on appspot.
 }
 
+async function fixClaimersRole() {
+  const mods = await fsdb
+    .collection(FsPath.relawan())
+    .where('profile.role', '>', 0)
+    .get();
+  for (const snap of mods.docs) {
+    const r = snap.data() as Relawan;
+    console.log(snap.id, ' -> ', r.profile.role, r.profile.name);
+
+    await fsdb.runTransaction(async t => {
+      const rRef = fsdb.doc(FsPath.relawan(snap.id));
+      const relawan = (await t.get(rRef)).data() as Relawan;
+      if (!(relawan.profile.role > 0)) throw new Error(`Ga ada role`);
+      if (!relawan.referrer) {
+        console.log(`Ga ada referer ${snap.id} ${relawan.profile.name}`);
+        return;
+      }
+      const referrerRef = fsdb.doc(FsPath.relawan(relawan.referrer.uid));
+      const referrer = (await t.get(referrerRef)).data() as Relawan;
+      const codes = Object.keys(referrer.code).filter(c => {
+        const claimer = referrer.code[c].claimer;
+        return claimer && claimer.uid === relawan.profile.uid;
+      });
+      if (codes.length !== 1) throw new Error(`Kode aneh`);
+      const cr = referrer.code[codes[0]];
+      if (cr.claimer.role !== relawan.profile.role) {
+        console.log(`Set ${referrer.profile.name} -> ${cr.claimer.name} ${cr.claimer.role} -> ${relawan.profile.role}`);
+        cr.claimer.role = relawan.profile.role;
+        t.update(referrerRef, referrer);
+      }
+    });
+    // throw new Error('halt');
+  }
+}
+
 // parallelUpload().catch(console.error);
-loadTest().catch(console.error);
+// loadTest().catch(console.error);
+fixClaimersRole().catch(console.error);

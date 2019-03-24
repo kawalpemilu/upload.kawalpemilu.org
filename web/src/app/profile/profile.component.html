@@ -18,7 +18,6 @@
     >
       <tr>
         <th>Orang</th>
-        <th>Role</th>
         <th>Referrer</th>
       </tr>
       <tr *ngFor="let r of arr; let i = index">
@@ -27,7 +26,6 @@
             r.profile.dr4 || 0
           }})
         </td>
-        <td>{{ USER_ROLE[r.profile.role] }}</td>
         <td>
           <app-orang [profile]="r.referrer" [activity]="true"></app-orang>
         </td>
@@ -50,7 +48,7 @@
         <td>
           <app-orang [profile]="relawan.profile"></app-orang> ({{
             relawan.profile.dr4 || 0
-          }})<br>
+          }})<br />
           Role: {{ USER_ROLE[relawan.profile.role || 0] }}<br />
           <!-- <ng-container *ngIf="curRel.profile.role >= USER_ROLE.ADMIN">
             {{ relawan.profile.email }}<br />
