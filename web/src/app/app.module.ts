@@ -34,6 +34,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatBadgeModule } from '@angular/material/badge';
 
 import { HttpClientModule } from '@angular/common/http';
 import {
@@ -107,7 +108,8 @@ import { CarouselComponent } from './carousel/carousel.component';
     MatCheckboxModule,
     MatMenuModule,
     MatTabsModule,
-    MatAutocompleteModule
+    MatAutocompleteModule,
+    MatBadgeModule
   ],
   providers: [{ provide: LOCALE_ID, useValue: 'id' }],
   bootstrap: [AppComponent]

@@ -24,7 +24,15 @@ interface Tps {
 
 interface State extends HierarchyNode {
   tpsList: Tps[];
-  numPending: number;
+}
+
+interface Slice {
+  tpsLo: number;
+  tpsHi: number;
+  lo: number;
+  hi: number;
+  pending: number;
+  error: number;
 }
 
 @Component({
@@ -36,6 +44,8 @@ interface State extends HierarchyNode {
 export class TpsComponent implements OnInit {
   state$: Observable<State>;
   digitize: { [tpsNo: string]: boolean } = {};
+  showingSlice: Slice;
+  slices: Slice[];
   USER_ROLE = USER_ROLE;
   PPWP_NAMES = PPWP_NAMES;
   DPR_NAMES = DPR_NAMES;
@@ -66,11 +76,47 @@ export class TpsComponent implements OnInit {
           };
           state.tpsList.push(t);
         });
+        if (state.tpsList.length > 200) {
+          this.populateSlices(state.tpsList, 40);
+        } else if (state.tpsList.length > 100) {
+          this.populateSlices(state.tpsList, 20);
+        } else if (state.tpsList.length > 20) {
+          this.populateSlices(state.tpsList, 10);
+        } else {
+          this.populateSlices(state.tpsList, 400);
+          this.showingSlice = this.slices[0];
+        }
+        console.log(JSON.stringify(this.slices, null, 2));
         return state;
       })
     );
 
     console.log('TpsComponent inited');
+  }
+
+  populateSlices(arr: Tps[], jump: number) {
+    this.slices = [];
+    let lo = 0;
+    let hi = 0;
+    for (let tpsLo = 1; hi < arr.length; ) {
+      const tpsHi = tpsLo + jump;
+      let pending = 0;
+      let error = 0;
+      while (hi < arr.length && arr[hi].tpsNo < tpsHi) {
+        if (arr[hi].agg && arr[hi].agg.sum) {
+          pending += arr[hi].agg.sum.pending || 0;
+          error += arr[hi].agg.sum.error || 0;
+        }
+        hi++;
+      }
+      this.slices.push({ tpsLo, tpsHi, lo, hi, pending, error });
+      lo = hi;
+      tpsLo = tpsHi;
+    }
+  }
+
+  getSlice(arr: Tps[], s: Slice) {
+    return arr.slice(s.lo, s.hi);
   }
 
   hasPpwp(sum: any) {

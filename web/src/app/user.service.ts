@@ -3,7 +3,7 @@ import { AngularFireAuth } from '@angular/fire/auth';
 
 import { auth, User } from 'firebase/app';
 import { Observable, of } from 'rxjs';
-import { tap, switchMap, shareReplay, filter } from 'rxjs/operators';
+import { tap, switchMap, shareReplay, filter, map } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
 import {
   FsPath,
@@ -11,7 +11,8 @@ import {
   LOCAL_STORAGE_LAST_URL,
   Upsert,
   RelawanPhotos,
-  lsGetItem
+  lsGetItem,
+  USER_ROLE
 } from 'shared';
 import { ApiService } from './api.service';
 import { Router } from '@angular/router';
@@ -24,6 +25,7 @@ export class UserService {
   relawan$: Observable<Relawan>;
   relawanPhotos$: Observable<RelawanPhotos>;
   upsert$: { [imageId: string]: Observable<Upsert> } = {};
+  isModerator$: Observable<boolean>;
   isLoading = true;
 
   constructor(
@@ -59,6 +61,10 @@ export class UserService {
         return r;
       }),
       shareReplay(1)
+    );
+
+    this.isModerator$ = this.relawan$.pipe(
+      map(r => r && r.profile.role >= USER_ROLE.MODERATOR)
     );
 
     this.relawanPhotos$ = user$.pipe(

@@ -158,7 +158,7 @@ export class RegistrasiComponent implements OnInit {
         const dr4 = ca.claimer
           ? (cb.claimer.dr4 || 0) - (ca.claimer.dr4 || 0)
           : 0;
-        return dr4 ? dr4 : cb.issuedTs - ca.issuedTs;
+        return dr4 ? dr4 : ca.claimedTs - cb.claimedTs;
       });
   }
 

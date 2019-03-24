@@ -8,18 +8,19 @@ import { APP_SCOPED_PREFIX_URL, PublicProfile, USER_ROLE } from 'shared';
       <a
         *ngIf="activity; else fblink"
         style="text-decoration: none"
-        [style.color]="getColor(profile.role)"
-        [style.font-weight]="getFontWeight(profile.role)"
+        [style.color]="getColor()"
+        [style.font-weight]="getFontWeight()"
         [routerLink]="['/p', profile.uid]"
         >{{ profile.name }}</a
       >
+      <ng-container *ngIf="showDr">&nbsp;({{ profile.dr4 }})</ng-container>
     </ng-container>
 
     <ng-template #fblink>
       <a
         href="{{ SCOPED_PREFIX + profile.link }}"
         [style.color]="getColor(profile.role)"
-        [style.font-weight]="getFontWeight(profile.role)"
+        [style.font-weight]="getFontWeight()"
         target="_blank"
         >{{ profile.name }}</a
       >
@@ -32,6 +33,7 @@ import { APP_SCOPED_PREFIX_URL, PublicProfile, USER_ROLE } from 'shared';
 export class OrangComponent implements OnInit {
   @Input() profile: PublicProfile;
   @Input() activity: boolean;
+  @Input() showDr = true;
 
   constructor() {}
 
@@ -42,17 +44,23 @@ export class OrangComponent implements OnInit {
     return APP_SCOPED_PREFIX_URL;
   }
 
-  getColor(role) {
-    if (role >= USER_ROLE.ADMIN) {
+  getColor() {
+    if (this.profile.role >= USER_ROLE.ADMIN) {
       return 'orange';
     }
-    if (role >= USER_ROLE.MODERATOR) {
+    if (this.profile.role >= USER_ROLE.MODERATOR) {
       return 'green';
     }
-    return '';
+    if (this.profile.role < 0) {
+      return 'red';
+    }
+    if (this.profile.dr4 > 0) {
+      return 'brown';
+    }
+    return 'blue';
   }
 
-  getFontWeight(role) {
-    return role > 0 ? 'bold' : '';
+  getFontWeight() {
+    return this.profile.role > 0 ? 'bold' : '';
   }
 }

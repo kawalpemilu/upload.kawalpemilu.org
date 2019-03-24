@@ -1,7 +1,7 @@
 <ng-container *ngIf="(state$ | async) as state">
   <ng-container *ngIf="state.code && state.relawan">
     <p>
-      <app-orang [profile]="state.code.issuer"></app-orang>
+      <app-orang [profile]="state.code.issuer" [showDr]="false"></app-orang>
       mengundang kamu menjadi relawan KawalPemilu - Jaga Suara 2019.
     </p>
 
@@ -208,10 +208,9 @@
               [style.background-color]="odd ? '#FFF' : '#EEE'"
             >
               <ng-container *ngIf="state.relawan.code[code] as c">
-                <td align="center">{{ codes.length - i }}</td>
+                <td align="center">{{ i + 1 }}</td>
                 <td>
                   <app-orang [profile]="c.claimer"></app-orang>
-                  ({{ c.claimer.dr4 || 0 }})
                 </td>
                 <td>{{ c.claimedTs | date: 'shortDate' }}</td>
               </ng-container>

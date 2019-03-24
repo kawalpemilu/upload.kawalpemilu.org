@@ -100,7 +100,8 @@ export enum FORM_TYPE {
 
   // Up to choosing this type.
   OTHERS,
-  DELETED
+  DELETED,
+  // TODO: MALICIOUS
 }
 
 export type SumMap = { [key in SUM_KEY]: number };

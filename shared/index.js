@@ -98,6 +98,7 @@ var FORM_TYPE;
     // Up to choosing this type.
     FORM_TYPE[FORM_TYPE["OTHERS"] = 10] = "OTHERS";
     FORM_TYPE[FORM_TYPE["DELETED"] = 11] = "DELETED";
+    // TODO: MALICIOUS
 })(FORM_TYPE = exports.FORM_TYPE || (exports.FORM_TYPE = {}));
 var IS_PLANO;
 (function (IS_PLANO) {

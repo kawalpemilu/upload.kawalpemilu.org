@@ -22,12 +22,14 @@
       </tr>
       <tr *ngFor="let r of arr; let i = index">
         <td>
-          <app-orang [profile]="r.profile" [activity]="true"></app-orang> ({{
-            r.profile.dr4 || 0
-          }})
+          <app-orang [profile]="r.profile" [activity]="true"></app-orang>
         </td>
         <td>
-          <app-orang [profile]="r.referrer" [activity]="true"></app-orang>
+          <app-orang
+            [profile]="r.referrer"
+            [activity]="true"
+            [showDr]="false"
+          ></app-orang>
         </td>
       </tr>
     </table>
@@ -46,16 +48,18 @@
       <tr>
         <td><img [src]="relawan.profile.pic" height="70" /></td>
         <td>
-          <app-orang [profile]="relawan.profile"></app-orang> ({{
-            relawan.profile.dr4 || 0
-          }})<br />
+          <app-orang [profile]="relawan.profile"></app-orang><br />
           Role: {{ USER_ROLE[relawan.profile.role || 0] }}<br />
           <!-- <ng-container *ngIf="curRel.profile.role >= USER_ROLE.ADMIN">
             {{ relawan.profile.email }}<br />
           </ng-container> -->
           Joined: {{ relawan.profile.loginTs | date: 'medium' }}<br />
           Referrer:
-          <app-orang [profile]="relawan.referrer" [activity]="true"></app-orang>
+          <app-orang
+            [profile]="relawan.referrer"
+            [activity]="true"
+            [showDr]="false"
+          ></app-orang>
         </td>
       </tr>
     </table>
@@ -135,6 +139,7 @@
                   <app-orang
                     [profile]="c.claimer"
                     [activity]="true"
+                    [showDr]="false"
                   ></app-orang>
                 </td>
                 <td align="center">{{ c.claimer.dr4 || 0 }}</td>
