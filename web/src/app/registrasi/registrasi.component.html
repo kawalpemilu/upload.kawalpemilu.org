@@ -150,16 +150,13 @@
               referral hanya bisa dipakai oleh satu orang):
             </p>
 
-            <table border="1" cellspacing="0">
-              <tr bgcolor="lightgray">
+            <table border="1" cellspacing="0" class="alternating">
+              <tr [style.background-color]="'lightgray'">
                 <th width="30">#</th>
                 <td><b>Nama</b></td>
                 <td><b>URL kode referral untuk dibagikan</b></td>
               </tr>
-              <tr
-                *ngFor="let code of codes; let odd = odd; let i = index"
-                [style.background-color]="odd ? '#FFF' : '#EEE'"
-              >
+              <tr *ngFor="let code of codes; let i = index">
                 <td align="center">{{ i + 1 }}</td>
                 <td>{{ state.relawan.code[code].name }}</td>
                 <td style="padding: 7px">
@@ -197,16 +194,13 @@
             undangan kamu beserta total downstream referral mereka:
           </p>
 
-          <table border="1" cellpadding="5" cellspacing="0">
-            <tr bgcolor="lightgray">
+          <table border="1" cellpadding="5" cellspacing="0" class="alternating">
+            <tr [style.background-color]="'lightgray'">
               <th width="30">#</th>
               <th>Nama teman kamu</th>
               <th>Join date</th>
             </tr>
-            <tr
-              *ngFor="let code of codes; let odd = odd; let i = index"
-              [style.background-color]="odd ? '#FFF' : '#EEE'"
-            >
+            <tr *ngFor="let code of codes; let i = index">
               <ng-container *ngIf="state.relawan.code[code] as c">
                 <td align="center">{{ i + 1 }}</td>
                 <td>

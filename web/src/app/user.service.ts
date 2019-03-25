@@ -24,6 +24,7 @@ export class UserService {
   user: User;
   relawan$: Observable<Relawan>;
   relawanPhotos$: Observable<RelawanPhotos>;
+  topUploaders$: Observable<Relawan[]>;
   upsert$: { [imageId: string]: Observable<Upsert> } = {};
   isModerator$: Observable<boolean>;
   isLoading = true;
@@ -77,6 +78,13 @@ export class UserService {
       ),
       shareReplay(1)
     );
+
+    this.topUploaders$ = this.fsdb
+      .collection<Relawan>(FsPath.relawanPhoto(), ref =>
+        ref.orderBy('count', 'desc').limit(20)
+      )
+      .valueChanges()
+      .pipe(shareReplay(1));
 
     this.afAuth.auth
       .getRedirectResult()

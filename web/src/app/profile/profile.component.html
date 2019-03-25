@@ -127,24 +127,15 @@
       >
         <ng-container *ngIf="relawan.code">
           <p></p>
-          <table width="100%" style="max-width: 400px">
+          <table width="100%" style="max-width: 400px" class="alternating">
             <tr [style.background-color]="'lightgray'">
               <th width="40">#</th>
               <th>Name</th>
               <th width="50">#DR</th>
               <th width="75">Join Date</th>
             </tr>
-            <ng-container
-              *ngFor="
-                let code of getCodes(relawan);
-                let odd = odd;
-                let i = index
-              "
-            >
-              <tr
-                *ngIf="relawan.code[code] as c"
-                [style.background-color]="odd ? '#FFF' : '#EEE'"
-              >
+            <ng-container *ngFor="let code of getCodes(relawan); let i = index">
+              <tr *ngIf="relawan.code[code] as c">
                 <td align="center">{{ i + 1 }}</td>
                 <td>
                   <app-orang

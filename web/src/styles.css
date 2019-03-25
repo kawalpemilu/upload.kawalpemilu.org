@@ -20,6 +20,14 @@ body {
   animation: 1s alertAnim forwards;
 }
 
+.alternating tr:nth-child(even) {
+  background-color: #FFF;
+}
+
+.alternating tr:nth-child(odd) {
+  background-color: #EEE;
+}
+
 .cdk-virtual-scroll-data-source .viewport .cdk-virtual-scroll-content-wrapper {
   display: flex;
   flex-direction: row;

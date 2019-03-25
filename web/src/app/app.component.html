@@ -81,6 +81,14 @@
               ><mat-icon>security</mat-icon> &nbsp; Admin Page</a
             >
           </mat-list-item>
+          <mat-list-item *ngIf="relawan.profile.role >= USER_ROLE.ADMIN">
+            <a
+              mat-list-item
+              [routerLink]="['/scoreboard']"
+              (click)="mobileQuery.matches && snav.toggle()"
+              ><mat-icon>show_chart</mat-icon> &nbsp; Scoreboard</a
+            >
+          </mat-list-item>
         </ng-container>
       </ng-container>
 
@@ -103,7 +111,7 @@
   <mat-sidenav-content
     [style.padding-left.px]="PADDING"
     [style.padding-right.px]="PADDING"
-    style="min-height: 400px"
+    style="min-height: 425px"
   >
     <ng-container *ngIf="!userService.isLoading; else loading">
       <ng-container

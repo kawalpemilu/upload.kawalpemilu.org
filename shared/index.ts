@@ -121,7 +121,9 @@ export interface PublicProfile {
 export interface RelawanPhotos {
   profile: PublicProfile;
   uploads: UploadRequest[];
-  count: number;
+  count: number; // Number of uploaded photos.
+  nTps: number; // Number of different TPS uploaded.
+  nKel: number; // Number of different kelurahans uploaded.
 }
 
 export interface Relawan {

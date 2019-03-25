@@ -23,6 +23,9 @@ service cloud.firestore {
     match /p/{userId} {
       // Moderator can read user photos if know the uid.
       allow get: if request.auth.uid == userId || getUserRole() >= 1;
+
+      // Admins can see the scoreboard.
+      allow list: if request.query.limit <= 20 && getUserRole() >= 2;
     }
  
     // Referral codes.

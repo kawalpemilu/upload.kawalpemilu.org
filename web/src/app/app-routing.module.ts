@@ -10,6 +10,7 @@ import { ProfileComponent } from './profile/profile.component';
 import { ApproverComponent } from './approver/approver.component';
 import { HomeComponent } from './home/home.component';
 import { FaqComponent } from './faq/faq.component';
+import { ScoreboardComponent } from './scoreboard/scoreboard.component';
 
 const routes: Routes = [
   {
@@ -38,6 +39,14 @@ const routes: Routes = [
     canActivate: [AuthGuardService],
     data: {
       role: USER_ROLE.MODERATOR
+    }
+  },
+  {
+    path: 'scoreboard',
+    component: ScoreboardComponent,
+    canActivate: [AuthGuardService],
+    data: {
+      role: USER_ROLE.ADMIN
     }
   },
   {

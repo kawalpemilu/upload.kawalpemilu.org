@@ -313,7 +313,13 @@ app.post(
         if (photo) {
           photo.profile = u.profile;
         } else {
-          photo = { profile: u.profile, uploads: [], count: 0 };
+          photo = {
+            profile: u.profile,
+            uploads: [],
+            count: 0,
+            nTps: 0,
+            nKel: 0
+          };
         }
 
         let tps = (await t.get(tRef)).data() as TpsData;
@@ -324,6 +330,10 @@ app.post(
         if (photo.count > MAX_NUM_UPLOADS) {
           return 'Exceeded max number of uploads';
         }
+
+        const pu = photo.uploads;
+        photo.nTps = new Set(pu.map(up => up.kelId + '-' + up.tpsNo)).size;
+        photo.nKel = new Set(pu.map(up => up.kelId)).size;
 
         const ua = req.headers['user-agent'];
         const ip = getIp(req);

@@ -90,7 +90,8 @@ export class ProfileComponent implements OnInit {
               .limit(5)
           )
           .valueChanges()
-      )
+      ),
+      shareReplay(1)
     );
   }
 

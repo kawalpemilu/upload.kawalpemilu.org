@@ -56,6 +56,7 @@ import { HomeComponent } from './home/home.component';
 import { KontakComponent } from './kontak/kontak.component';
 import { CarouselComponent } from './carousel/carousel.component';
 import { FaqComponent } from './faq/faq.component';
+import { ScoreboardComponent } from './scoreboard/scoreboard.component';
 
 @NgModule({
   entryComponents: [RegistrasiComponent, CopySnackBarComponent],
@@ -79,7 +80,8 @@ import { FaqComponent } from './faq/faq.component';
     HomeComponent,
     KontakComponent,
     CarouselComponent,
-    FaqComponent
+    FaqComponent,
+    ScoreboardComponent
   ],
   imports: [
     BrowserModule,

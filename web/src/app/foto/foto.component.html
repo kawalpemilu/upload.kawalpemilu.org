@@ -6,15 +6,12 @@
       <b>Tips:</b> klik nama kelurahan di bawah untuk meng-upload foto lain di
       kelurahan yang sama.
     </p>
-    <table border="1" cellpadding="5" cellspacing="0">
-      <tr bgcolor="lightgray" height="30">
+    <table border="1" cellpadding="5" cellspacing="0" class="alternating">
+      <tr height="30" [style.background-color]="'lightgray'">
         <th width="120">Lokasi TPS</th>
         <td width="100%"><b>Foto-foto yang telah kamu upload</b></td>
       </tr>
-      <tr
-        *ngFor="let p of photos; let odd = odd; let i = index"
-        [style.background-color]="odd ? '#FFF' : '#EEE'"
-      >
+      <tr *ngFor="let p of photos; let i = index">
         <td align="center" width="120">
           <a style="text-decoration: none" [routerLink]="['/t', p.kelId]">{{
             p.kelName || p.kelId
@@ -80,10 +77,10 @@
 
 <p>
   Pada tanggal <b>17 April 2019</b>, setelah penghitungan suara selesai, kamu
-  diharapkan kembali ke TPS dan memfoto Formulir <b>C1 PLANO</b>. Biasanya, formulir
-  ini dipajang di papan besar seperti
+  diharapkan kembali ke TPS dan memfoto Formulir <b>C1 PLANO</b>. Biasanya,
+  formulir ini dipajang di papan besar seperti
   <a href="http://upload.kawalpemilu.org/assets/contoh.jpeg" target="_blank"
     >contoh foto ini</a
-  >. Setelah kamu memfoto Formulir <b>C1 PLANO</b>, upload deh foto tersebut ke situs
-  ini dengan cara di atas.
+  >. Setelah kamu memfoto Formulir <b>C1 PLANO</b>, upload deh foto tersebut ke
+  situs ini dengan cara di atas.
 </p>

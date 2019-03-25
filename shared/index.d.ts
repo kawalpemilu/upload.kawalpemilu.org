@@ -104,6 +104,8 @@ export interface RelawanPhotos {
     profile: PublicProfile;
     uploads: UploadRequest[];
     count: number;
+    nTps: number;
+    nKel: number;
 }
 export interface Relawan {
     lowerCaseName: string;
