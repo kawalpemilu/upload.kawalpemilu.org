@@ -483,7 +483,6 @@ app.post('/api/approve', [populateApprove()], async (req: any, res) => {
           u.action.photos[i.url] = null;
         } else if (i.c1.type === FORM_TYPE.OTHERS) {
           u.action.photos[i.url] = null;
-          u.action.sum.cakupan = 1;
         } else {
           u.action.sum.cakupan = 1;
           u.action.photos[i.url] = {

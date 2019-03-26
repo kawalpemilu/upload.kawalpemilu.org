@@ -2,6 +2,7 @@
   <ng-container *ngIf="curRel.profile.role >= USER_ROLE.ADMIN">
     <mat-form-field style="width: 225px">
       <input
+        #nama
         matInput
         placeholder="Cari Nama User"
         type="text"
@@ -9,15 +10,33 @@
         (input)="cari$.next($event.target.value)"
       />
     </mat-form-field>
+    <button mat-icon-button color="primary" (click)="cari$.next(nama.value)">
+      <mat-icon>search</mat-icon>
+    </button>
+
+    <p style="margin-top: 0">
+      <mat-radio-group
+        (change)="filterRole$.next($event.value)"
+        class="role"
+        [value]="ANY_ROLE"
+      >
+        <mat-radio-button [value]="ANY_ROLE">All</mat-radio-button>
+        <mat-radio-button [value]="USER_ROLE.BANNED">Ban</mat-radio-button>
+        <mat-radio-button [value]="USER_ROLE.RELAWAN">Rel</mat-radio-button>
+        <mat-radio-button [value]="USER_ROLE.MODERATOR">Mod</mat-radio-button>
+        <mat-radio-button [value]="USER_ROLE.ADMIN">Adm</mat-radio-button>
+      </mat-radio-group>
+    </p>
 
     <table
       *ngIf="(relawans$ | async) as arr"
       border="1"
       cellspacing="0"
       cellpadding="5"
+      width="400"
     >
       <tr>
-        <th>Orang</th>
+        <th>Nama Orang</th>
         <th>Referrer</th>
       </tr>
       <tr *ngFor="let r of arr; let i = index">

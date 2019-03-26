@@ -6,8 +6,8 @@ import {
   USER_ROLE,
   RelawanPhotos
 } from 'shared';
-import { AngularFirestore } from '@angular/fire/firestore';
-import { Observable, of, Subject } from 'rxjs';
+import { AngularFirestore, Query } from '@angular/fire/firestore';
+import { Observable, of, Subject, BehaviorSubject, combineLatest } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import {
   switchMap,
@@ -30,8 +30,10 @@ import { UserService } from '../user.service';
 export class ProfileComponent implements OnInit {
   cari$ = new Subject<string>();
   USER_ROLE = USER_ROLE;
+  ANY_ROLE = -2;
   Object = Object;
 
+  filterRole$ = new BehaviorSubject(-2);
   relawan$: Observable<Relawan>;
   relawanPhotos$: Observable<RelawanPhotos>;
   relawans$: Observable<Relawan[]>;
@@ -78,17 +80,24 @@ export class ProfileComponent implements OnInit {
       )
     );
 
-    this.relawans$ = this.cari$.pipe(
+    const prefix$ = this.cari$.pipe(
       debounceTime(500),
-      distinctUntilChanged(),
-      switchMap(prefix =>
+      distinctUntilChanged()
+    );
+    this.relawans$ = combineLatest(prefix$, this.filterRole$).pipe(
+      switchMap(([prefix, filterRole]) =>
         this.fsdb
-          .collection<Relawan>(FsPath.relawan(), ref =>
-            ref
+          .collection<Relawan>(FsPath.relawan(), (ref: Query) => {
+            console.log('prefix', prefix, 'role', filterRole);
+            let r = ref;
+            if (filterRole !== this.ANY_ROLE) {
+              r = r.where('profile.role', '==', filterRole);
+            }
+            return r
               .where('lowerCaseName', '>=', prefix.toLowerCase())
               .where('lowerCaseName', '<=', prefix.toLowerCase() + '{')
-              .limit(5)
-          )
+              .limit(5);
+          })
           .valueChanges()
       ),
       shareReplay(1)
