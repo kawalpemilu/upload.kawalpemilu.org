@@ -13,6 +13,14 @@
     <button mat-icon-button color="primary" (click)="cari$.next(nama.value)">
       <mat-icon>search</mat-icon>
     </button>
+    <button
+      mat-icon-button
+      color="primary"
+      *ngIf="showResult"
+      (click)="showResult = false"
+    >
+      <mat-icon>cancel</mat-icon>
+    </button>
 
     <p style="margin-top: 0">
       <mat-radio-group
@@ -28,30 +36,35 @@
       </mat-radio-group>
     </p>
 
-    <table
-      *ngIf="(relawans$ | async) as arr"
-      border="1"
-      cellspacing="0"
-      cellpadding="5"
-      width="400"
-    >
-      <tr>
-        <th>Nama Orang</th>
-        <th>Referrer</th>
-      </tr>
-      <tr *ngFor="let r of arr; let i = index">
-        <td>
-          <app-orang [profile]="r.profile" [activity]="true"></app-orang>
-        </td>
-        <td>
-          <app-orang
-            [profile]="r.referrer"
-            [activity]="true"
-            [showDr]="false"
-          ></app-orang>
-        </td>
-      </tr>
-    </table>
+    <ng-container *ngIf="(relawans$ | async) as arr">
+      <table
+        *ngIf="showResult"
+        class="alternating"
+        cellspacing="0"
+        cellpadding="5"
+        width="400"
+        border="1"
+      >
+        <ng-container>
+          <tr [style.background-color]="'lightgray'">
+            <th>Nama Orang</th>
+            <th>Referrer</th>
+          </tr>
+          <tr *ngFor="let r of arr; let i = index">
+            <td>
+              <app-orang [profile]="r.profile" [activity]="true"></app-orang>
+            </td>
+            <td>
+              <app-orang
+                [profile]="r.referrer"
+                [activity]="true"
+                [showDr]="false"
+              ></app-orang>
+            </td>
+          </tr>
+        </ng-container>
+      </table>
+    </ng-container>
 
     <p>
       <mat-divider></mat-divider>
@@ -176,30 +189,34 @@
         label="Photos ({{ relawanPhotos.count }})"
       >
         <p></p>
-        <table border="1" cellspacing="0" cellpadding="5" width="400">
-          <tbody>
-            <tr>
-              <th width="40">#</th>
-              <th width="125">Foto</th>
-              <th width="300">Detil</th>
-            </tr>
-            <tr *ngFor="let u of relawanPhotos.uploads; let i = index">
-              <th>
-                {{ relawanPhotos.count - i }}
-              </th>
-              <td align="center">
-                <app-thumbnail [url]="u.url"></app-thumbnail><br />
-              </td>
-              <td>
-                {{ u.ts | date: 'medium' }}<br />
-                <app-hie-link [id]="u.kelId" [name]="u.kelName"></app-hie-link
-                ><br />
-                TPS: <b>#{{ u.tpsNo }}</b
-                ><br />
-                <app-meta [meta]="u.meta"></app-meta>
-              </td>
-            </tr>
-          </tbody>
+        <table
+          border="1"
+          cellspacing="0"
+          cellpadding="5"
+          width="400"
+          class="alternating"
+        >
+          <tr [style.background-color]="'lightgray'">
+            <th width="40">#</th>
+            <th width="115">Foto</th>
+            <th width="300">Detil</th>
+          </tr>
+          <tr *ngFor="let u of relawanPhotos.uploads; let i = index">
+            <th>
+              {{ relawanPhotos.count - i }}
+            </th>
+            <td align="center">
+              <app-thumbnail [url]="u.url"></app-thumbnail><br />
+            </td>
+            <td>
+              {{ u.ts | date: 'medium' }}<br />
+              <app-hie-link [id]="u.kelId" [name]="u.kelName"></app-hie-link
+              ><br />
+              TPS: <b>#{{ u.tpsNo }}</b
+              ><br />
+              <app-meta [meta]="u.meta"></app-meta>
+            </td>
+          </tr>
         </table>
       </mat-tab>
     </mat-tab-group>

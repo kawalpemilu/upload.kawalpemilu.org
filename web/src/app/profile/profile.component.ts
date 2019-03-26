@@ -34,6 +34,8 @@ export class ProfileComponent implements OnInit {
   Object = Object;
 
   filterRole$ = new BehaviorSubject(-2);
+  showResult = false;
+
   relawan$: Observable<Relawan>;
   relawanPhotos$: Observable<RelawanPhotos>;
   relawans$: Observable<Relawan[]>;
@@ -100,6 +102,7 @@ export class ProfileComponent implements OnInit {
           })
           .valueChanges()
       ),
+      tap(() => (this.showResult = true)),
       shareReplay(1)
     );
   }

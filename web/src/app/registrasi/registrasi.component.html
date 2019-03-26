@@ -75,16 +75,14 @@
         Indonesia untuk mengawal TPS. Ya, ada 800.000+ TPS yang perlu dijaga!
         Banyak, kan?
       </p>
-      <p>
-        Karenanya, ayo rekrut teman-teman kamu di kelurahan yang
-        <b>BELUM dikawal</b>
-        untuk ikut jadi Relawan yang meng-upload foto C1 PLANO! Jika kamu punya
-        teman Facebook yang bertempat tinggal di kelurahan tersebut (<a
-          [routerLink]="['/h', 0]"
-          >lihat Cakupan TPS</a
-        >), ayo undang mereka dengan memberikan kode referral di bawah ini:
-      </p>
-
+      Karenanya, ayo rekrut teman-teman kamu di kelurahan yang
+      <b>BELUM dikawal</b>
+      untuk ikut jadi Relawan yang meng-upload foto C1 PLANO! Jika kamu punya
+      teman Facebook yang bertempat tinggal di kelurahan tersebut (<a
+        [routerLink]="['/h', 0]"
+        >lihat Cakupan TPS</a
+      >), ayo undang mereka dengan memberikan kode referral di bawah ini:
+      <br />
       <ng-container *ngIf="useSuperCode">
         <ng-container *ngIf="(theCode$ | async) as ccc; else getting">
           <mat-form-field style="width: 375px">
@@ -96,9 +94,17 @@
               #ui
             />
           </mat-form-field>
-          &nbsp;
+          <br />
+
+          <button mat-raised-button color="primary" (click)="share(ccc)">
+            <mat-icon>share</mat-icon>
+            Share on Facebook
+          </button>
+
+          atau
+
           <button mat-raised-button color="primary" (click)="copyCode(ui)">
-            <mat-icon>file_copy</mat-icon> Copy
+            <mat-icon>file_copy</mat-icon> Copy Link
           </button>
         </ng-container>
 
@@ -106,7 +112,7 @@
           <p><mat-spinner></mat-spinner></p>
         </ng-template>
       </ng-container>
-
+      <br /><br />
       <p>
         <b style="color: red">Catatan penting</b>: Mulai sekarang sampai tanggal
         <b>15 April 2019</b>, semua relawan diminta untuk mencoba

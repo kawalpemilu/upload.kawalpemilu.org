@@ -113,6 +113,22 @@
     <meta name="theme-color" content="#ffffff" />
 
     <script>
+      window.fbAsyncInit = function() {
+        FB.init({
+          appId: '662471847169648',
+          autoLogAppEvents: true,
+          xfbml: true,
+          version: 'v3.2'
+        });
+      };
+    </script>
+    <script
+      async
+      defer
+      src="https://connect.facebook.net/en_US/sdk.js"
+    ></script>
+
+    <script>
       window.ga =
         window.ga ||
         function() {

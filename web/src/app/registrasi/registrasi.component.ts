@@ -202,4 +202,10 @@ export class RegistrasiComponent implements OnInit {
     namaCtrl.setValue('');
     this.isLoading = false;
   }
+
+  share(ccc) {
+    const href = `https://upload.kawalpemilu.org/c/${ccc}`;
+    // @ts-ignore
+    FB.ui({ method: 'share', href }, function(response) {});
+  }
 }
