@@ -75,15 +75,20 @@ function getServingUrl(objectName: string, ithRetry = 0, maxRetry = 10) {
 exports.handlePhotoUpload = functions.storage
   .object()
   .onFinalize(async object => {
+    const paths = object.name.split('/');
+    // object.name = uploads/{kelurahanId}/{tpsNo}/{userId}/{imageId}
+    const [dir, kelurahanId, tpsNo, userId, imageId] = paths;
+
+    if (dir !== 'uploads') {
+      return null;
+    }
+
     // Exit if this is triggered on a file that is not an image.
     if (!object.contentType.startsWith('image/')) {
       console.warn(`Not an image: ${object.name}`);
       return null;
     }
 
-    const paths = object.name.split('/');
-    // object.name = uploads/{kelurahanId}/{tpsNo}/{userId}/{imageId}
-    const [, kelurahanId, tpsNo, userId, imageId] = paths;
     const m = {} as ImageMetadata;
     m.u = userId;
     m.k = parseInt(kelurahanId, 10);
@@ -160,15 +165,44 @@ app.use((err, req, res, next) => {
   }
 });
 
-function getChildren(cid): Promise<HierarchyNode> {
-  const host = '35.188.68.201:8080';
-  const options = { timeout: 2000, json: true };
-  return request(`http://${host}/api/c/${cid}`, options);
-}
-
 const CACHE_TIMEOUT = 1;
 const cache_c: any = {};
 let fallbackUntilTs = 0;
+async function getHierarchyNode(cid: number) {
+  const ts = Date.now();
+  if (fallbackUntilTs < ts) {
+    try {
+      const host = '35.193.104.134:8080';
+      const options = { timeout: 2000, json: true };
+      return await request(`http://${host}/api/c/${cid}`, options);
+    } catch (e) {
+      console.error(`fail c/${cid}: ${e.message}`);
+      fallbackUntilTs = ts + 15 * 1000;
+    }
+  }
+
+  // Fallback to hierarchy with stale cache sum.
+  let snap = await fsdb.doc(FsPath.hieCache(cid)).get();
+  let c = snap.data() as HierarchyNode;
+  if (c) {
+    console.log(`Fallback to cache hierarchy`);
+  } else {
+    // Fallback to static hierarchy, without sum.
+    snap = await fsdb.doc(FsPath.hie(cid)).get();
+    c = snap.data() as HierarchyNode;
+    console.warn(`Fallback to static hierarchy`);
+  }
+
+  if (c) {
+    c.children = toChildren(c);
+    c.data = c.data || {};
+    delete c.child;
+  } else {
+    c = {} as HierarchyNode;
+  }
+  return c;
+}
+
 app.get('/api/c/:id', async (req: any, res) => {
   const cid = +req.params.id;
   if (isNaN(cid) || cid >= 1e6) {
@@ -179,41 +213,7 @@ app.get('/api/c/:id', async (req: any, res) => {
   res.setHeader('Cache-Control', `max-age=${CACHE_TIMEOUT}`);
   if (c) return res.json(c);
 
-  const ts = Date.now();
-  const user = req.user as admin.auth.DecodedIdToken;
-  if (fallbackUntilTs < ts) {
-    try {
-      c = await getChildren(cid);
-    } catch (e) {
-      console.error(`fail c/${cid}: ${e.message} ${user && user.uid}`);
-    }
-  }
-
-  if (!c) {
-    // Fallback to hierarchy with stale cache sum.
-    fallbackUntilTs = ts + 15 * 1000;
-    let snap = await fsdb.doc(FsPath.hieCache(cid)).get();
-    c = snap.data() as HierarchyNode;
-    if (c) {
-      console.log(`Fallback to cache hierarchy`);
-    } else {
-      // Fallback to static hierarchy, without sum.
-      fallbackUntilTs = ts + 60 * 1000;
-      snap = await fsdb.doc(FsPath.hie(cid)).get();
-      c = snap.data() as HierarchyNode;
-      console.warn(`Fallback to static hierarchy`);
-    }
-
-    if (c) {
-      c.children = toChildren(c);
-      c.data = c.data || {};
-      delete c.child;
-    } else {
-      c = {};
-    }
-  }
-
-  cache_c[cid] = c;
+  c = cache_c[cid] = await getHierarchyNode(cid);
   setTimeout(() => delete cache_c[cid], CACHE_TIMEOUT * 1000);
   return res.json(c);
 });
@@ -271,7 +271,7 @@ function populateKelName() {
     let mem = cache[p.kelId];
     if (!mem) {
       try {
-        const c = await getChildren(p.kelId);
+        const c = await getHierarchyNode(p.kelId);
         if (!c || !c.name) {
           console.warn(`Children missing ${p.kelId}, ${user.uid}`);
           return res.json({ error: 'kelId does not exists' });
