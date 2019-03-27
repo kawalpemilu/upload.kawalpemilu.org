@@ -99,23 +99,31 @@
           <table>
             <tr>
               <td><mat-icon>share</mat-icon></td>
-              <td>Share on:</td>
-              <td style="padding-right: 10px">
-                <button mat-icon-button color="primary" (click)="share(ccc)">
-                  <img
-                    width="40"
-                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHsSURBVGhD7ZjNLgNhGEZ7ZS1i5a/TEvdDLCywE0sXoTMSEZZW4t8FWEqIlg0Lo41nIprzxfv1pWMxJzm7d56e9GfTWkVFRcX/ptFMk3orPa63Oi+NVpqPw8Frfb7m3oIyRqORpOv0AmN2TTlxTCSdJoyVYr2ZzSvLzuAjpLFSTNIjZdkZ53feYE9ZdmCkVJVlh0bKVFl2aMTr1FKWb+xc5efXD3m395q/v+ffoGcKlWWHRjxOLmb5yem9Uhl6rlBZdmjE42b/nf8Jeq5QWXZoxOPFzYMyw9BzhcqyQyMeu89vyvxidessn17ex/thlWWHRjwO/2AHTLYzvCWVZYdGPBJ0F1JZdmjEI0F3IZVlh0ZijeGp+4obhcqyQyOxxnB5+4gbhcqyQyOxxrB3cIcbhcqyQyOxxrC9e4sbhcqyQyMeCboLqSw7NOKRoLuQyrJDIx4JugupLDs04pGgu5DKskMjHgm6C6ksOzTikaC7kMqyQyMeCboLqSw7NOKRoLuQyrJDIx4JugupLDs04pGgu5DKskMjHgm6C6ksOzTikaC7kMqy89t/LRJ0F3CEvxaT9AiGynGkP3eb2TyOleBEqzOrrDj6D68Nj5XginJGo//xzenr1Bsa/kt7/d/gYb2dzSijoqKi4l9Sq30A+M9r/MIZv3oAAAAASUVORK5CYII="
-                  />
-                </button>
+              <td style="padding-right: 5px">Share:</td>
+              <td style="padding-right: 7px">
+                <img
+                  style="cursor: pointer"
+                  (click)="share(ccc)"
+                  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAACJ0lEQVRYR2NkYGBgsAifqsnMxNLxj+G/ExMDAw9IjGaA8d+3//+Y9v37/7fsxMrs64xgyxmYTzAwMfDRzFJsBv9j+PSX4a8Fo3XkzI0MDP/96Go51LJ///5tZrSMnPGZkmDn4WJjMNWVYZCV4GdgZ2Nh+PXnL8PXb78Yzl17xnDv8Tu8/vr3799XRuvIGf/J9X2kjz5DUpAxAycHK4YRs1efZli4/hxBo8l2QHyAEUNqmClOC2jqABFBbobVEyIZWFmZB8YBga7aDMWJNiiW//j5h+HMlScM3378BovvP3GP4fDZB7SJguIkW4ZAFy0Uw5Oq1zLcuv+GoIXoCshKAw05zgwuVipws758+8XgkTKfZMtBGshyQGOuC4OzpTLcwo9ffjB4py0cxg5QlhNmUJETgvswyE2bQVtFHM7//uM3Q8+8wyghcP7aM4ZX774SDBWioiAp2IQhKdiYoGHICtLq1jNcu/OKoB6aOcAnYyHDh08/BsYBoDLBJXEuQcuJzgWkRgGoEoorX009B4AqG+QKpzTZlsHWWAFuwacvPxliylbB+X/+/GUAiREDiEoD6AaNvHJgNARGQ2A0BIZ5CERN+8rwn4mLmGITpsbRXIlBUQbRPvj56w/D0s0XSDECrBbcMbGKmLGZkZHBh2Td1NDwn2HjgHVO//1j+MDE+s+CEeQRUA+ZkYGxk4GBwYmJiYmbGp7DZQYo2JkYmfYwsPwrP7ok6yYA8Y0pwEbg9PYAAAAASUVORK5CYII="
+                />
               </td>
-              <td style="padding: 7px 10px 0 0">
+              <td style="padding-right: 7px">
+                <a
+                #wa
+                href="{{ whatsappHref(ccc) }} "
+                data-action="share/whatsapp/share"
+                  ><img
+                    src="data:image/png;base64,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"
+                /></a>
+              </td>
+              <td style="padding-right: 7px">
                 <app-tweet
                   [url]="shareUrl(ccc)"
                   text="Yuk ikut KawalPemilu 2019, pake referral saya:"
                   hashtags="PantauFotoUpload"
                 ></app-tweet>
               </td>
-              <td>
+              <td width="100">
                 <button mat-icon-button color="primary" (click)="copyCode(ui)">
                   <mat-icon>file_copy</mat-icon> Copy Link
                 </button>

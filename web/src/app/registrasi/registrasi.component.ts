@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { UserService } from '../user.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { switchMap, catchError, map } from 'rxjs/operators';
+import { switchMap, catchError, map, tap } from 'rxjs/operators';
 import { ApiService } from '../api.service';
 import { Observable, of, combineLatest } from 'rxjs';
 import { User } from 'firebase';
@@ -47,6 +47,8 @@ export class CopySnackBarComponent {}
   ]
 })
 export class RegistrasiComponent implements OnInit {
+  @ViewChild('wa') waEl: ElementRef;
+
   state$: Observable<RegistrationState>;
   theCode: string;
   theCode$: Observable<string>;
@@ -210,5 +212,13 @@ export class RegistrasiComponent implements OnInit {
 
   shareUrl(ccc) {
     return `https://upload.kawalpemilu.org/c/${ccc}`;
+  }
+
+  whatsappHref(ccc) {
+    const url = encodeURIComponent(this.shareUrl(ccc));
+    const text = `Yuk ikut KawalPemilu 2019, pake referral saya: ${url} #PantauFotoUpload`;
+    setTimeout(() => {
+      this.waEl.nativeElement.href = `whatsapp://send?text=${text}`;
+    }, 500);
   }
 }
