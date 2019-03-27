@@ -90,29 +90,45 @@
               type="text"
               matInput
               style="width: 350px"
-              value="https://upload.kawalpemilu.org/c/{{ ccc }}"
+              [value]="shareUrl(ccc)"
               #ui
             />
           </mat-form-field>
           <br />
 
-          <button mat-raised-button color="primary" (click)="share(ccc)">
-            <mat-icon>share</mat-icon>
-            Share on Facebook
-          </button>
-
-          atau
-
-          <button mat-raised-button color="primary" (click)="copyCode(ui)">
-            <mat-icon>file_copy</mat-icon> Copy Link
-          </button>
+          <table>
+            <tr>
+              <td><mat-icon>share</mat-icon></td>
+              <td>Share on:</td>
+              <td style="padding-right: 10px">
+                <button mat-icon-button color="primary" (click)="share(ccc)">
+                  <img
+                    width="40"
+                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHsSURBVGhD7ZjNLgNhGEZ7ZS1i5a/TEvdDLCywE0sXoTMSEZZW4t8FWEqIlg0Lo41nIprzxfv1pWMxJzm7d56e9GfTWkVFRcX/ptFMk3orPa63Oi+NVpqPw8Frfb7m3oIyRqORpOv0AmN2TTlxTCSdJoyVYr2ZzSvLzuAjpLFSTNIjZdkZ53feYE9ZdmCkVJVlh0bKVFl2aMTr1FKWb+xc5efXD3m395q/v+ffoGcKlWWHRjxOLmb5yem9Uhl6rlBZdmjE42b/nf8Jeq5QWXZoxOPFzYMyw9BzhcqyQyMeu89vyvxidessn17ex/thlWWHRjwO/2AHTLYzvCWVZYdGPBJ0F1JZdmjEI0F3IZVlh0ZijeGp+4obhcqyQyOxxnB5+4gbhcqyQyOxxrB3cIcbhcqyQyOxxrC9e4sbhcqyQyMeCboLqSw7NOKRoLuQyrJDIx4JugupLDs04pGgu5DKskMjHgm6C6ksOzTikaC7kMqyQyMeCboLqSw7NOKRoLuQyrJDIx4JugupLDs04pGgu5DKskMjHgm6C6ksOzTikaC7kMqy89t/LRJ0F3CEvxaT9AiGynGkP3eb2TyOleBEqzOrrDj6D68Nj5XginJGo//xzenr1Bsa/kt7/d/gYb2dzSijoqKi4l9Sq30A+M9r/MIZv3oAAAAASUVORK5CYII="
+                  />
+                </button>
+              </td>
+              <td style="padding: 7px 10px 0 0">
+                <app-tweet
+                  [url]="shareUrl(ccc)"
+                  text="Yuk ikut KawalPemilu 2019, pake referral saya:"
+                  hashtags="PantauFotoUpload"
+                ></app-tweet>
+              </td>
+              <td>
+                <button mat-icon-button color="primary" (click)="copyCode(ui)">
+                  <mat-icon>file_copy</mat-icon> Copy Link
+                </button>
+              </td>
+            </tr>
+          </table>
         </ng-container>
 
         <ng-template #getting>
           <p><mat-spinner></mat-spinner></p>
         </ng-template>
       </ng-container>
-      <br /><br />
+
       <p>
         <b style="color: red">Catatan penting</b>: Mulai sekarang sampai tanggal
         <b>15 April 2019</b>, semua relawan diminta untuk mencoba

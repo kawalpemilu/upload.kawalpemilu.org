@@ -204,8 +204,11 @@ export class RegistrasiComponent implements OnInit {
   }
 
   share(ccc) {
-    const href = `https://upload.kawalpemilu.org/c/${ccc}`;
     // @ts-ignore
-    FB.ui({ method: 'share', href }, function(response) {});
+    FB.ui({ method: 'share', href: this.shareUrl(ccc) }, function() {});
+  }
+
+  shareUrl(ccc) {
+    return `https://upload.kawalpemilu.org/c/${ccc}`;
   }
 }

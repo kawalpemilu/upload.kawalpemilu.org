@@ -57,6 +57,7 @@ import { KontakComponent } from './kontak/kontak.component';
 import { CarouselComponent } from './carousel/carousel.component';
 import { FaqComponent } from './faq/faq.component';
 import { ScoreboardComponent } from './scoreboard/scoreboard.component';
+import { TweetComponent } from './tweet/tweet.component';
 
 @NgModule({
   entryComponents: [RegistrasiComponent, CopySnackBarComponent],
@@ -81,7 +82,8 @@ import { ScoreboardComponent } from './scoreboard/scoreboard.component';
     KontakComponent,
     CarouselComponent,
     FaqComponent,
-    ScoreboardComponent
+    ScoreboardComponent,
+    TweetComponent
   ],
   imports: [
     BrowserModule,
