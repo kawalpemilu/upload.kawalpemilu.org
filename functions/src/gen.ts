@@ -1,7 +1,15 @@
 import * as fs from 'fs';
 import * as parse from 'csv-parse/lib/sync';
 
-import { HierarchyNode } from 'shared';
+import {
+  HierarchyNode,
+  toChild,
+  Aggregate,
+  FORM_TYPE,
+  IS_PLANO,
+  SUM_KEY,
+  SumMap
+} from 'shared';
 
 function toInt(s: string): number {
   const i = parseInt(s, 10);
@@ -169,3 +177,26 @@ console.log(tot);
 
 // fs.writeFileSync(`src/hierarchy.js`, `exports.H = ${JSON.stringify(h)};`);
 // console.log('all ok');
+
+function loadTest() {
+  console.log(JSON.stringify(h).length);
+  for (const id of Object.keys(h)) {
+    const x = h[id];
+    if (x.child) throw new Error(`xxx`);
+    x.child = toChild(x);
+    x.data = {};
+    for (const [i, c] of x.children.entries()) {
+      const agg = (x.data[c[0]] = {} as Aggregate);
+      agg.ts = Date.now();
+      agg.c1 = { type: FORM_TYPE.DPD, plano: IS_PLANO.NO };
+      agg.sum = {} as SumMap;
+      for (const key in SUM_KEY) {
+        agg.sum[key] = Math.floor(Math.random() * 500);
+      }
+    }
+  }
+  console.log(JSON.stringify(h).length);
+
+  console.log('finish');
+  setTimeout(() => console.log('xxx'), 20000);
+}
