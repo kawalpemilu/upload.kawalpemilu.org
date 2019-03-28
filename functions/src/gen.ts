@@ -4,11 +4,11 @@ import * as parse from 'csv-parse/lib/sync';
 import {
   HierarchyNode,
   toChild,
-  Aggregate,
   FORM_TYPE,
   IS_PLANO,
   SUM_KEY,
-  SumMap
+  SumMap,
+  TpsAggregate
 } from 'shared';
 
 function toInt(s: string): number {
@@ -186,7 +186,7 @@ function loadTest() {
     x.child = toChild(x);
     x.data = {};
     for (const [i, c] of x.children.entries()) {
-      const agg = (x.data[c[0]] = {} as Aggregate);
+      const agg = (x.data[c[0]] = {} as TpsAggregate);
       agg.ts = Date.now();
       agg.c1 = { type: FORM_TYPE.DPD, plano: IS_PLANO.NO };
       agg.sum = {} as SumMap;

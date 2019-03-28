@@ -2,9 +2,12 @@ import { Component, OnInit, Input } from '@angular/core';
 import { SumMap, PPWP_NAMES, DPR_NAMES } from 'shared';
 
 export interface CarouselItem {
+  kelId: number;
+  tpsNo: number;
   url: string;
   ts: number;
   sum: SumMap;
+  error: boolean;
 }
 
 @Component({
@@ -18,7 +21,11 @@ export interface CarouselItem {
         class="viewport"
       >
         <div *cdkVirtualFor="let p of photos" class="item">
-          <table cellpadding="0" cellspacing="0">
+          <table
+            cellpadding="0"
+            cellspacing="0"
+            [style.background-color]="p.error ? '#FDD' : ''"
+          >
             <tbody>
               <tr>
                 <td align="center" width="125" height="125" colspan="2">
@@ -48,6 +55,14 @@ export interface CarouselItem {
                   </ng-container>
                   <ng-template #showdate>
                     {{ p.ts | date: 'short' }}
+                    <ng-container *ngIf="lapor">
+                      <br />
+                      <app-lapor-button
+                        [kelId]="p.kelId"
+                        [tpsNo]="p.tpsNo"
+                        [url]="p.url"
+                      ></app-lapor-button>
+                    </ng-container>
                   </ng-template>
                 </td>
               </tr>
@@ -72,6 +87,7 @@ export interface CarouselItem {
 export class CarouselComponent implements OnInit {
   @Input() photos: CarouselItem[];
   @Input() height: number;
+  @Input() lapor = false;
 
   PPWP_NAMES = PPWP_NAMES;
   DPR_NAMES = DPR_NAMES;

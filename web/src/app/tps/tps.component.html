@@ -50,97 +50,108 @@
           </p>
         </td>
       </tr>
-      <tr *ngIf="!digitize[tps.tpsNo]">
-        <td align="center" width="125" valign="top">
-          <div
-            style="border: 1px solid black; width: 90px; padding: 5px; margin-top: 15px;"
-            [style.cursor]="(userService.isModerator$ | async) ? 'pointer' : ''"
-          >
-            TPS # <b style="font-size: large">{{ tps.tpsNo }}</b>
-          </div>
 
-          <p>
+      <ng-container *ngIf="!digitize[tps.tpsNo]">
+        <tr height="60">
+          <td align="center" width="125" style="padding: 10px 0;">
+            <div
+              style="border: 1px solid black; width: 90px; padding: 5px"
+              [style.cursor]="
+                (userService.isModerator$ | async) ? 'pointer' : ''
+              "
+            >
+              TPS # <b style="font-size: large">{{ tps.tpsNo }}</b>
+            </div>
+          </td>
+          <td rowspan="3" style="padding: 10px">
+            <ng-container *ngIf="tps.agg?.photos">
+              <app-carousel
+                [height]="275"
+                [photos]="toCarousel(state.id, tps.tpsNo, tps.agg.photos)"
+                [lapor]="true"
+              ></app-carousel>
+            </ng-container>
+            <p *ngIf="tps.agg?.sum?.pending" style="color: orange">
+              Ada foto yang masuk dan belum diproses.
+              <br />
+              <br />
+              <button
+                *ngIf="(userService.isModerator$ | async)"
+                mat-raised-button
+                color="warn"
+                (click)="digitize[tps.tpsNo] = true"
+              >
+                Digitize
+              </button>
+            </p>
+          </td>
+        </tr>
+
+        <tr height="45">
+          <td align="center" valign="top">
             <app-upload-sequence
               [kelId]="state.id"
               [kelName]="state.name"
               [tpsNo]="tps.tpsNo"
               [value]="'Upload Foto'"
             ></app-upload-sequence>
-          </p>
+          </td>
+        </tr>
 
-          <div style="height: 135px; overflow-y: auto">
-            <table
-              border="1"
-              width="115"
-              *ngIf="tps.agg as d"
-              cellspacing="0"
-              align="center"
-              [style.background-color]="
-                d.sum.error ? '#FDD' : d.sum.pending ? '#FFD' : ''
-              "
-            >
-              <thead *ngIf="hasPpwp(d.sum)">
-                <tr>
-                  <th colspan="2">PPWP</th>
-                </tr>
-
-                <ng-container *ngFor="let k of Object.keys(PPWP_NAMES)">
-                  <tr *ngIf="d.sum[k] !== undefined">
-                    <td class="label">{{ PPWP_NAMES[k] }}:</td>
-                    <td class="angka">{{ d.sum[k] }}</td>
+        <tr height="100%">
+          <td align="center">
+            <div style="height: 100%; overflow-y: auto">
+              <table
+                border="1"
+                width="115"
+                *ngIf="tps.agg as d"
+                cellspacing="0"
+                [style.background-color]="
+                  d.sum.error ? '#FDD' : d.sum.pending ? '#FFD' : ''
+                "
+              >
+                <thead *ngIf="hasPpwp(d.sum)">
+                  <tr>
+                    <th colspan="2">PPWP</th>
                   </tr>
-                </ng-container>
-              </thead>
 
-              <tbody *ngIf="hasDpr(d.sum)">
-                <tr>
-                  <th colspan="2">DPR</th>
-                </tr>
-                <ng-container *ngFor="let k of Object.keys(DPR_NAMES)">
-                  <tr *ngIf="d.sum[k] !== undefined">
-                    <td class="label">{{ DPR_NAMES[k] }}:</td>
-                    <td class="angka">{{ d.sum[k] }}</td>
+                  <ng-container *ngFor="let k of Object.keys(PPWP_NAMES)">
+                    <tr *ngIf="d.sum[k] !== undefined">
+                      <td class="label">{{ PPWP_NAMES[k] }}:</td>
+                      <td class="angka">{{ d.sum[k] }}</td>
+                    </tr>
+                  </ng-container>
+                </thead>
+
+                <tbody *ngIf="hasDpr(d.sum)">
+                  <tr>
+                    <th colspan="2">DPR</th>
                   </tr>
-                </ng-container>
-              </tbody>
-            </table>
-          </div>
+                  <ng-container *ngFor="let k of Object.keys(DPR_NAMES)">
+                    <tr *ngIf="d.sum[k] !== undefined">
+                      <td class="label">{{ DPR_NAMES[k] }}:</td>
+                      <td class="angka">{{ d.sum[k] }}</td>
+                    </tr>
+                  </ng-container>
+                </tbody>
+              </table>
 
-          <p>
-            <ng-container *ngIf="tps.agg as d">
-              <span *ngIf="d.url && d.sum.error" style="color: red">
-                Kesalahan telah dilaporkan untuk TPS ini
-              </span>
-              <app-lapor-button
-                *ngIf="d.url && !d.sum.error"
-                [id]="state.id"
-                [imageId]="d.imageId"
-              ></app-lapor-button>
-            </ng-container>
-          </p>
-        </td>
-        <td style="padding: 10px">
-          <ng-container *ngIf="tps.agg?.photos">
-            <app-carousel
-              [height]="230"
-              [photos]="toCarousel(tps.agg.photos)"
-            ></app-carousel>
-          </ng-container>
-          <p *ngIf="tps.agg?.sum?.pending" style="color: orange">
-            Ada foto yang masuk dan belum diproses.
-            <br />
-            <br />
-            <button
-              *ngIf="(userService.isModerator$ | async)"
-              mat-raised-button
-              color="warn"
-              (click)="digitize[tps.tpsNo] = true"
-            >
-              Digitize
-            </button>
-          </p>
-        </td>
-      </tr>
+              <!-- <p>
+              <ng-container *ngIf="tps.agg as d">
+                <span *ngIf="d.url && d.sum.error" style="color: red">
+                  Kesalahan telah dilaporkan untuk TPS ini
+                </span>
+                <app-lapor-button
+                  *ngIf="d.url && !d.sum.error"
+                  [id]="state.id"
+                  [imageId]="d.imageId"
+                ></app-lapor-button>
+              </ng-container>
+            </p> -->
+            </div>
+          </td>
+        </tr>
+      </ng-container>
     </table>
   </ng-container>
 </ng-container>

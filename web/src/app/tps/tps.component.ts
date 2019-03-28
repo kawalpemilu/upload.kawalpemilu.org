@@ -87,7 +87,6 @@ export class TpsComponent implements OnInit {
           this.populateSlices(state.tpsList, 400);
           this.showingSlice = this.slices[0];
         }
-        console.log(JSON.stringify(this.slices, null, 2));
         return state;
       })
     );
@@ -128,15 +127,12 @@ export class TpsComponent implements OnInit {
     return Object.keys(DPR_NAMES).find(k => sum[k] !== undefined);
   }
 
-  toCarousel(photos: { [url: string]: Aggregate }) {
+  toCarousel(kelId, tpsNo, photos: { [url: string]: Aggregate }) {
     const arr: CarouselItem[] = [];
     for (const url of Object.keys(photos)) {
       const p = photos[url];
-      arr.push({
-        url,
-        ts: p.ts,
-        sum: p.sum
-      });
+      const error = !!p.sum.error;
+      arr.push({ kelId, tpsNo, url, ts: p.ts, sum: p.sum, error });
     }
     return arr;
   }

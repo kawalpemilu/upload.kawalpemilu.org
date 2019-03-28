@@ -1,6 +1,8 @@
 export declare const APP_SCOPED_PREFIX_URL = "https://www.facebook.com/app_scoped_user_id/";
 export declare const MAX_REFERRALS = 1000;
 export declare const MAX_NUM_UPLOADS = 100;
+export declare const MAX_URL_LENGTH = 300;
+export declare const MAX_REASON_LENGTH = 300;
 export declare const LOCAL_STORAGE_LAST_URL = "last_url";
 export declare enum USER_ROLE {
     BANNED = -1,
@@ -150,7 +152,12 @@ export interface TpsAggregate extends Aggregate {
 export interface TpsImage {
     uploader: UpsertProfile;
     reviewer: UpsertProfile;
-    reporter: UpsertProfile;
+    reports: {
+        [ts: string]: {
+            reporter: UpsertProfile;
+            reason: string;
+        };
+    };
     c1: C1Form;
     sum: SumMap;
     url: string;
@@ -194,6 +201,12 @@ export interface ApproveRequest {
     sum: SumMap;
     c1: C1Form;
 }
+export interface ProblemRequest {
+    kelId: number;
+    tpsNo: number;
+    url: string;
+    reason: string;
+}
 export interface ChildData {
     id: number;
     name: string;
@@ -207,12 +220,12 @@ export interface HierarchyNode {
     parentIds: number[];
     parentNames: string[];
     child?: {
-        [id: string]: ChildData;
+        [cid: string]: ChildData;
     };
     children: any[];
     depth: number;
     data: {
-        [key: string]: Aggregate;
+        [cid: string]: TpsAggregate;
     };
 }
 export interface ImageMetadata {

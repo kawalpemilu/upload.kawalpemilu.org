@@ -34,7 +34,10 @@ import {
   FORM_TYPE,
   IS_PLANO,
   TpsAggregate,
-  PublicProfile
+  PublicProfile,
+  ProblemRequest,
+  MAX_URL_LENGTH,
+  MAX_REASON_LENGTH
 } from 'shared';
 
 const t1 = Date.now();
@@ -267,7 +270,15 @@ function populateKelName() {
   const cache = {};
   return async (req, res, next) => {
     const user = req.user as admin.auth.DecodedIdToken;
-    const p = req.parsedBody as UploadRequest;
+    const p = req.parsedBody as {
+      kelId: number;
+      tpsNo: number;
+      kelName: string;
+    };
+    if (!p.kelId || !p.tpsNo) {
+      console.warn(`Missing ${p.kelId} ${p.tpsNo}, ${user.uid}`);
+      return res.json({ error: 'missing parameters' });
+    }
     let mem = cache[p.kelId];
     if (!mem) {
       try {
@@ -352,7 +363,7 @@ app.post(
         tps.images[p.imageId] = {
           uploader,
           reviewer: null,
-          reporter: null,
+          reports: null,
           c1: null,
           sum: {} as SumMap,
           url: p.url,
@@ -519,41 +530,78 @@ app.post('/api/approve', [populateApprove()], async (req: any, res) => {
   return res.json({ ok: true });
 });
 
-app.post('/api/problem', async (req: any, res) => {
-  const user = req.user as admin.auth.DecodedIdToken;
-  const imageId = req.body.imageId;
-  if (!isValidImageId(imageId)) {
-    return res.json({ error: 'Invalid imageId' });
-  }
+app.post(
+  '/api/problem',
+  [
+    (req, res, next) => {
+      const user = req.user as admin.auth.DecodedIdToken;
+      const b = req.body as ProblemRequest;
+      const p: ProblemRequest = (req.parsedBody = {
+        kelId: +b.kelId,
+        tpsNo: +b.tpsNo,
+        url: b.url,
+        reason: b.reason
+      });
 
-  const uRef = fsdb.doc(FsPath.upserts(imageId));
-  const rRef = fsdb.doc(FsPath.relawan(user.uid));
-  const ok = await fsdb
-    .runTransaction(async t => {
-      const u = (await t.get(uRef)).data() as Upsert;
-      if (!u || !u.action) {
-        return 'Invalid imageId';
+      if (typeof p.url !== 'string' || p.url.length > MAX_URL_LENGTH) {
+        console.warn(`URL problem ${user.uid} ${p.kelId} ${p.tpsNo}`);
+        return res.json({ error: 'invalid URL' });
       }
-      const r = (await t.get(rRef)).data() as Relawan;
-      u.reporter = {
-        ...r.profile,
-        ts: Date.now(),
-        ua: req.headers['user-agent'],
-        ip: getIp(req)
-      };
-      // TODO: ability to individually report error to each image.
-      u.action = { sum: { error: 1 } } as TpsAggregate;
-      u.done = 0;
-      t.update(uRef, u);
-      return true;
-    })
-    .catch(e => {
-      console.error(`DB lapor ${user.uid}`, e);
-      return `Database error`;
-    });
 
-  return res.json(ok === true ? { ok: true } : { error: ok });
-});
+      if (typeof p.reason !== 'string' || p.reason.length > MAX_REASON_LENGTH) {
+        console.warn(`Reason problem ${user.uid} ${p.kelId} ${p.tpsNo}`);
+        return res.json({ error: 'invalid reason' });
+      }
+
+      next();
+    },
+    populateKelName()
+  ],
+  async (req: any, res) => {
+    const user = req.user as admin.auth.DecodedIdToken;
+    const p = req.parsedBody as ProblemRequest;
+
+    const ts = Date.now();
+    const ip = getIp(req);
+    const ua = req.headers['user-agent'];
+    const tRef = fsdb.doc(FsPath.tps(p.kelId, p.tpsNo));
+    const rRef = fsdb.doc(FsPath.relawan(user.uid));
+    const ok = await fsdb
+      .runTransaction(async t => {
+        const tps = (await t.get(tRef)).data() as TpsData;
+        const imageId = Object.keys(tps.images).find(
+          i => tps.images[i].url === p.url
+        );
+        if (!imageId) return 'invalid URL';
+        const uRef = fsdb.doc(FsPath.upserts(imageId));
+        const u = (await t.get(uRef)).data() as Upsert;
+        if (!u || !u.action) 'imageId not found';
+
+        const r = (await t.get(rRef)).data() as Relawan;
+        const reporter: UpsertProfile = { ...r.profile, ts, ua, ip };
+
+        const img = tps.images[imageId];
+        img.reports = img.reports || {};
+        img.reports[ts] = { reporter, reason: p.reason };
+        img.sum.error = 1;
+
+        u.reporter = reporter;
+        u.action = { sum: { error: 1 }, photos: {} } as TpsAggregate;
+        u.action.photos[p.url] = { c1: img.c1, sum: img.sum, ts };
+        u.done = 0;
+
+        t.update(tRef, tps);
+        t.update(uRef, u);
+        return true;
+      })
+      .catch(e => {
+        console.error(`DB lapor ${user.uid}`, e);
+        return `Database error`;
+      });
+
+    return res.json(ok === true ? { ok: true } : { error: ok });
+  }
+);
 
 app.post('/api/register/login', async (req: any, res) => {
   const user = req.user as admin.auth.DecodedIdToken;

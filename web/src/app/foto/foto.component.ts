@@ -79,13 +79,17 @@ export class FotoComponent {
     );
   }
 
-  toCarousel(photos: UploadRequest[]) {
+  toCarousel(kelId, tpsNo, photos: UploadRequest[]) {
     const arr: CarouselItem[] = [];
     for (const p of photos) {
       arr.push({
+        kelId,
+        tpsNo,
         url: p.url,
         ts: p.ts,
-        sum: {} as SumMap
+        sum: {} as SumMap,
+        // TODO: reflect the current error state.
+        error: false
       });
     }
     return arr;
