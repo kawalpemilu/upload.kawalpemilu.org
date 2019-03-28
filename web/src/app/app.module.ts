@@ -35,6 +35,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatDialogModule } from '@angular/material/dialog';
 
 import { HttpClientModule } from '@angular/common/http';
 import {
@@ -45,7 +46,10 @@ import { ThumbnailComponent } from './thumbnail/thumbnail.component';
 import { ApproverComponent } from './approver/approver.component';
 import { FotoComponent } from './foto/foto.component';
 import { HieLinkComponent } from './hie-link/hie-link.component';
-import { LaporButtonComponent } from './lapor-button/lapor-button.component';
+import {
+  LaporButtonComponent,
+  LaporReasonDialogComponent
+} from './lapor-button/lapor-button.component';
 import { ChatComponent } from './chat/chat.component';
 import { registerLocaleData } from '@angular/common';
 import localeId from '@angular/common/locales/id';
@@ -60,7 +64,7 @@ import { ScoreboardComponent } from './scoreboard/scoreboard.component';
 import { TweetComponent } from './tweet/tweet.component';
 
 @NgModule({
-  entryComponents: [RegistrasiComponent, CopySnackBarComponent],
+  entryComponents: [RegistrasiComponent, CopySnackBarComponent, LaporReasonDialogComponent],
   declarations: [
     AppComponent,
     HierarchyComponent,
@@ -74,6 +78,7 @@ import { TweetComponent } from './tweet/tweet.component';
     FotoComponent,
     HieLinkComponent,
     LaporButtonComponent,
+    LaporReasonDialogComponent,
     ChatComponent,
     OrangComponent,
     ProfileComponent,
@@ -115,7 +120,8 @@ import { TweetComponent } from './tweet/tweet.component';
     MatMenuModule,
     MatTabsModule,
     MatAutocompleteModule,
-    MatBadgeModule
+    MatBadgeModule,
+    MatDialogModule
   ],
   providers: [{ provide: LOCALE_ID, useValue: 'id' }],
   bootstrap: [AppComponent]

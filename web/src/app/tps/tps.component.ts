@@ -20,6 +20,7 @@ interface Tps {
   laki: number;
   perempuan: number;
   agg: TpsAggregate;
+  items: CarouselItem[];
 }
 
 interface State extends HierarchyNode {
@@ -72,8 +73,12 @@ export class TpsComponent implements OnInit {
             tpsNo: arr[0],
             laki: arr[1],
             perempuan: arr[2],
-            agg: state.data[arr[0]] as TpsAggregate
+            agg: state.data[arr[0]] as TpsAggregate,
+            items: null
           };
+          if (t.agg) {
+            t.items = this.toCarousel(state.id, t.tpsNo, t.agg.photos);
+          }
           state.tpsList.push(t);
         });
         this.showingSlice = null;
@@ -129,7 +134,20 @@ export class TpsComponent implements OnInit {
 
   toCarousel(kelId, tpsNo, photos: { [url: string]: Aggregate }) {
     const arr: CarouselItem[] = [];
-    for (const url of Object.keys(photos)) {
+    const urls = Object.keys(photos).sort((a, b) => {
+      const pa = photos[a];
+      const pb = photos[b];
+      let diff = pa.c1.type - pb.c1.type;
+      if (diff) {
+        return diff;
+      }
+      diff = pa.c1.plano - pb.c1.plano;
+      if (diff) {
+        return diff;
+      }
+      return pa.ts - pb.ts;
+    });
+    for (const url of urls) {
       const p = photos[url];
       const error = !!p.sum.error;
       arr.push({ kelId, tpsNo, url, ts: p.ts, sum: p.sum, error });

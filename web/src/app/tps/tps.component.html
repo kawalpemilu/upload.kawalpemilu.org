@@ -67,7 +67,7 @@
             <ng-container *ngIf="tps.agg?.photos">
               <app-carousel
                 [height]="275"
-                [photos]="toCarousel(state.id, tps.tpsNo, tps.agg.photos)"
+                [photos]="tps.items"
                 [lapor]="true"
               ></app-carousel>
             </ng-container>

@@ -16,6 +16,7 @@ export interface Photos {
   tpsNo: number;
   photos: UploadRequest[];
   uploadTs: number;
+  items: CarouselItem[];
 }
 
 @Component({
@@ -44,7 +45,8 @@ export class FotoComponent {
               kelName,
               tpsNo,
               photos: [],
-              uploadTs: 0
+              uploadTs: 0,
+              items: null
             };
           }
           return key;
@@ -74,7 +76,10 @@ export class FotoComponent {
             p.uploadTs = Math.max(p.uploadTs, u.ts);
           });
         }
-        return Object.values(photosByTpsAndTpsNo);
+        return Object.values(photosByTpsAndTpsNo).map(p => {
+          p.items = this.toCarousel(p.kelId, p.tpsNo, p.photos);
+          return p;
+        });
       })
     );
   }

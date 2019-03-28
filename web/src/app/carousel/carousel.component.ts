@@ -28,7 +28,7 @@ export interface CarouselItem {
           >
             <tbody>
               <tr>
-                <td align="center" width="125" height="125" colspan="2">
+                <td align="center" width="120" height="125" colspan="2">
                   <app-thumbnail
                     *ngIf="!p.url.startsWith('data')"
                     [url]="p.url"

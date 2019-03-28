@@ -27,10 +27,7 @@
           ></app-upload-sequence>
         </td>
         <td>
-          <app-carousel
-            [photos]="toCarousel(p.kelId, p.tpsNo, p.photos)"
-            [height]="160"
-          ></app-carousel>
+          <app-carousel [photos]="p.items" [height]="160"></app-carousel>
         </td>
       </tr>
     </table>
