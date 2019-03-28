@@ -1,4 +1,4 @@
-import { BrowserModule } from '@angular/platform-browser';
+import { BrowserModule, Title } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule, LOCALE_ID } from '@angular/core';
@@ -64,7 +64,11 @@ import { ScoreboardComponent } from './scoreboard/scoreboard.component';
 import { TweetComponent } from './tweet/tweet.component';
 
 @NgModule({
-  entryComponents: [RegistrasiComponent, CopySnackBarComponent, LaporReasonDialogComponent],
+  entryComponents: [
+    RegistrasiComponent,
+    CopySnackBarComponent,
+    LaporReasonDialogComponent
+  ],
   declarations: [
     AppComponent,
     HierarchyComponent,
@@ -123,7 +127,7 @@ import { TweetComponent } from './tweet/tweet.component';
     MatBadgeModule,
     MatDialogModule
   ],
-  providers: [{ provide: LOCALE_ID, useValue: 'id' }],
+  providers: [{ provide: LOCALE_ID, useValue: 'id' }, Title],
   bootstrap: [AppComponent]
 })
 export class AppModule {}

@@ -5,10 +5,11 @@ import {
 } from '@angular/core';
 import { UserService } from '../user.service';
 import { Observable, combineLatest } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, shareReplay } from 'rxjs/operators';
 import { UploadService } from '../upload.service';
 import { UploadRequest, SumMap } from 'shared';
 import { CarouselItem } from '../carousel/carousel.component';
+import { Title } from '@angular/platform-browser';
 
 export interface Photos {
   kelId: number;
@@ -29,7 +30,11 @@ export interface Photos {
 export class FotoComponent {
   photos$: Observable<Photos[]>;
 
-  constructor(userService: UserService, private uploadService: UploadService) {
+  constructor(
+    userService: UserService,
+    uploadService: UploadService,
+    titleService: Title
+  ) {
     this.photos$ = combineLatest(
       userService.relawanPhotos$,
       uploadService.status$
@@ -76,11 +81,14 @@ export class FotoComponent {
             p.uploadTs = Math.max(p.uploadTs, u.ts);
           });
         }
+        const uname = userService.user && userService.user.displayName;
+        titleService.setTitle(`Foto ${uname} :: KPJS 2019`);
         return Object.values(photosByTpsAndTpsNo).map(p => {
           p.items = this.toCarousel(p.kelId, p.tpsNo, p.photos);
           return p;
         });
-      })
+      }),
+      shareReplay(1)
     );
   }
 

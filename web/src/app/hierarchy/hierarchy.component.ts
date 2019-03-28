@@ -19,6 +19,7 @@ import {
 } from 'rxjs/operators';
 import { HierarchyNode, SUM_KEY } from 'shared';
 import { AppComponent } from '../app.component';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-hierarchy',
@@ -28,6 +29,8 @@ import { AppComponent } from '../app.component';
 export class HierarchyComponent implements OnInit, OnDestroy {
   @ViewChild('header') myHeaderEl: ElementRef;
   @ViewChild('footer') myFooterEl: ElementRef;
+
+  WILAYAH = ['Nasional', 'Propinsi', 'Kabupaten', 'Kecamatan', 'Kelurahan'];
 
   // https://simple.wikipedia.org/wiki/Stellar_classification
   SETELLAR_COLOR = [
@@ -48,7 +51,11 @@ export class HierarchyComponent implements OnInit, OnDestroy {
   width: number;
   numRows = 0;
 
-  constructor(private hie: HierarchyService, private route: ActivatedRoute) {}
+  constructor(
+    private hie: HierarchyService,
+    private route: ActivatedRoute,
+    private titleService: Title
+  ) {}
 
   get TOOLBAR_HEIGHT() {
     return AppComponent.TOOLBAR_HEIGHT;
@@ -56,14 +63,6 @@ export class HierarchyComponent implements OnInit, OnDestroy {
 
   get PATH_HEIGHT() {
     return AppComponent.PATH_HEIGHT;
-  }
-
-  getWilayah(state: HierarchyNode) {
-    if (!state) {
-      return '';
-    }
-    const level = ['Propinsi', 'Kabupaten', 'Kecamatan', 'Kelurahan'];
-    return `Nama ${level[state.depth]}`;
   }
 
   @HostListener('window:resize', ['$event'])
@@ -104,6 +103,8 @@ export class HierarchyComponent implements OnInit, OnDestroy {
       distinctUntilChanged(),
       switchMap(id => this.hie.get$(id)),
       tap(state => {
+        const wilayah = this.WILAYAH[state.depth];
+        this.titleService.setTitle(`${wilayah} ${state.name} :: KPJS 2019`);
         this.numRows = state.children.length;
         this.onWindowResize();
       }),

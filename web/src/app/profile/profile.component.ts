@@ -21,6 +21,7 @@ import {
 import { User } from 'firebase';
 import { ApiService } from '../api.service';
 import { UserService } from '../user.service';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-profile',
@@ -45,7 +46,8 @@ export class ProfileComponent implements OnInit {
     public userService: UserService,
     private fsdb: AngularFirestore,
     private route: ActivatedRoute,
-    private api: ApiService
+    private api: ApiService,
+    private titleService: Title
   ) {
     const uid$ = this.route.paramMap.pipe(map(params => params.get('uid')));
     this.relawan$ = uid$.pipe(
@@ -59,8 +61,12 @@ export class ProfileComponent implements OnInit {
               return of(null);
             }),
             tap((r: Relawan) => {
+              const u = userService.user && userService.user.displayName;
               if (r) {
                 this.previousRole = r.profile.role || 0;
+                this.titleService.setTitle(`Profile ${u} -> ${r.profile.name}`);
+              } else {
+                this.titleService.setTitle(`Profile ${u} :: KPJS 2019`);
               }
             }),
             shareReplay(1)

@@ -14,6 +14,7 @@ import {
 } from 'shared';
 import { UserService } from '../user.service';
 import { CarouselItem } from '../carousel/carousel.component';
+import { Title } from '@angular/platform-browser';
 
 interface Tps {
   tpsNo: number;
@@ -56,7 +57,8 @@ export class TpsComponent implements OnInit {
   constructor(
     public hie: HierarchyService,
     public userService: UserService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private titleService: Title
   ) {}
 
   ngOnInit() {
@@ -67,6 +69,7 @@ export class TpsComponent implements OnInit {
       distinctUntilChanged(),
       switchMap(id => this.hie.get$(id)),
       map((state: State) => {
+        this.titleService.setTitle(`Kelurahan ${state.name} :: KPJS 2019`);
         state.tpsList = [];
         state.children.forEach(arr => {
           const t: Tps = {

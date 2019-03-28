@@ -17,6 +17,7 @@ import {
 } from 'shared';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { MatSnackBar } from '@angular/material';
+import { Title } from '@angular/platform-browser';
 
 interface RegistrationState {
   relawan: Relawan;
@@ -65,7 +66,8 @@ export class RegistrasiComponent implements OnInit {
     private router: Router,
     private api: ApiService,
     private formBuilder: FormBuilder,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private titleService: Title
   ) {}
 
   ngOnInit() {
@@ -105,7 +107,12 @@ export class RegistrasiComponent implements OnInit {
     );
 
     this.state$ = combineLatest(code$, this.userService.relawan$).pipe(
-      map(([code, relawan]) => ({ code, relawan }))
+      map(([code, relawan]) => ({ code, relawan })),
+      tap(state => {
+        const from = (state.code && state.code.name) || '???';
+        const to = (state.relawan && state.relawan.profile.name) || '???';
+        this.titleService.setTitle(`${from} refers ${to} :: KPJS 2019`);
+      })
     );
 
     this.theCode$ = this.userService.relawan$.pipe(

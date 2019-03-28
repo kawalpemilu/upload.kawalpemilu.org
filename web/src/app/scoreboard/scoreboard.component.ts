@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from '../user.service';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-scoreboard',
@@ -39,7 +40,10 @@ import { UserService } from '../user.service';
   styles: [``]
 })
 export class ScoreboardComponent implements OnInit {
-  constructor(public userService: UserService) {}
+  constructor(public userService: UserService, titleService: Title) {
+    const uname = userService.user && userService.user.displayName;
+    titleService.setTitle(`Scoreboard ${uname} :: KPJS 2019`);
+  }
 
   ngOnInit() {}
 }
