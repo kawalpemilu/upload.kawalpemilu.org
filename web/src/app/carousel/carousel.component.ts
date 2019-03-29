@@ -1,4 +1,11 @@
-import { Component, OnInit, Input, Inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  Input,
+  Inject,
+  Output,
+  EventEmitter
+} from '@angular/core';
 import {
   SumMap,
   PPWP_NAMES,
@@ -8,13 +15,15 @@ import {
   IS_PLANO,
   ImageMetadata,
   ErrorReports,
-  PublicProfile
+  PublicProfile,
+  USER_ROLE
 } from 'shared';
 import {
   MatBottomSheetRef,
   MatBottomSheet,
   MAT_BOTTOM_SHEET_DATA
 } from '@angular/material';
+import { UserService } from '../user.service';
 
 export interface CarouselItem {
   kelId: number;
@@ -22,6 +31,7 @@ export interface CarouselItem {
   c1: C1Form;
   meta: ImageMetadata;
   url: string;
+  imageId: string;
   ts: number;
   sum: SumMap;
   error: boolean;
@@ -182,6 +192,19 @@ export class BottomSheetErrorComponent {
                   </td>
                 </tr>
               </ng-container>
+
+              <ng-container *ngIf="p.reviewer">
+                <ng-container *ngIf="(userService.relawan$ | async) as r">
+                  <tr *ngIf="r.profile.role >= USER_ROLE.ADMIN" height="50">
+                    <td colspan="2" align="center">
+                      <button mat-raised-button color="warn" (click)="edit(p)">
+                        Edit &nbsp;
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                    </td>
+                  </tr>
+                </ng-container>
+              </ng-container>
             </tbody>
           </table>
         </div>
@@ -195,17 +218,27 @@ export class CarouselComponent implements OnInit {
   @Input() height: number;
   @Input() lapor = false;
 
+  @Output() edited = new EventEmitter();
+
+  USER_ROLE = USER_ROLE;
   IS_PLANO = IS_PLANO;
   FORM_TYPE = FORM_TYPE;
   PPWP_NAMES = PPWP_NAMES;
   DPR_NAMES = DPR_NAMES;
   ALL_NAMES = Object.keys(PPWP_NAMES).concat(Object.keys(DPR_NAMES));
 
-  constructor(private bottomSheet: MatBottomSheet) {}
+  constructor(
+    private bottomSheet: MatBottomSheet,
+    public userService: UserService
+  ) {}
 
   ngOnInit() {}
 
   openReports(reports) {
     this.bottomSheet.open(BottomSheetErrorComponent, { data: reports });
+  }
+
+  edit(p: CarouselItem) {
+    this.edited.next(p);
   }
 }

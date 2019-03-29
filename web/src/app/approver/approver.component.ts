@@ -280,6 +280,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
   kelName: string;
   tpsData: TpsData;
 
+  @Output() imageIdChange = new EventEmitter<string>();
   @Output() completed = new EventEmitter();
 
   // New TpsImage is emitted when the previous one completes.
@@ -328,7 +329,8 @@ export class ApproverComponent implements OnInit, OnDestroy {
   }
 
   digitizeNextImage() {
-    this.imageId = null;
+    this.imageId = '';
+    this.imageIdChange.emit('');
     this.formType = null;
     this.isPlano = null;
     this.halaman = null;
@@ -340,14 +342,21 @@ export class ApproverComponent implements OnInit, OnDestroy {
       const img = this.tpsData.images[id];
       if (!img.c1 && (!this.imageId || next.uploader.ts > img.uploader.ts)) {
         this.imageId = id;
+        this.imageIdChange.emit(id);
         next = img;
       }
     }
     this.tps$.next(next);
 
     if (!this.imageId) {
+      this.imageId = 'done';
+      this.imageIdChange.emit('done');
       this.hie.update(this.kelId).then(() => {
-        setTimeout(() => this.completed.next(), 1000);
+        setTimeout(() => {
+          this.imageId = '';
+          this.imageIdChange.emit('');
+          this.completed.next();
+        }, 100);
       });
     }
   }
@@ -398,7 +407,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
       if (res.ok) {
         console.log('ok');
         this.tpsData.images[this.imageId].c1 = c1;
-        setTimeout(this.digitizeNextImage.bind(this), 100);
+        setTimeout(this.digitizeNextImage.bind(this), 1000);
       } else {
         console.error(res);
         alert(JSON.stringify(res));

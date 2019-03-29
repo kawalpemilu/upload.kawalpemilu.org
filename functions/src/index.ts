@@ -467,7 +467,8 @@ app.post('/api/approve', [populateApprove()], async (req: any, res) => {
 
       const u = (await t.get(uRef)).data() as Upsert;
       if (!u) return 'No Upsert';
-      if (u.reviewer) return 'Already approved';
+      if (r.profile.role < USER_ROLE.ADMIN && u.reviewer)
+        return 'Already approved';
 
       const tRef = fsdb.doc(FsPath.tps(u.request.kelId, u.request.tpsNo));
       const tps = (await t.get(tRef)).data() as TpsData;

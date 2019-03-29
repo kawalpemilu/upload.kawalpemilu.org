@@ -104,6 +104,7 @@ export class FotoComponent {
         // TODO: reflect the current error state.
         error: false,
         c1: null,
+        imageId: null,
         meta: null,
         reports: null,
         uploader: null,

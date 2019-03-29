@@ -30,33 +30,41 @@
       *ngFor="let tps of getSlice(state.tpsList, showingSlice); let odd = odd"
       [style.background-color]="odd ? '#FFF' : '#EEE'"
     >
-      <tr *ngIf="digitize[tps.tpsNo]">
-        <td colspan="2">
-          <app-approver
-            [kelId]="state.id"
-            [tpsNo]="tps.tpsNo"
-            (completed)="digitize[tps.tpsNo] = false"
-          ></app-approver>
+      <ng-template #digitize>
+        <tr *ngIf="digitize[tps.tpsNo] === 'done'">
+          <td colspan="2">
+            <p><mat-spinner></mat-spinner></p>
+          </td>
+        </tr>
+        <tr *ngIf="digitize[tps.tpsNo] !== 'done'">
+          <td colspan="2">
+            <app-approver
+              [kelId]="state.id"
+              [tpsNo]="tps.tpsNo"
+              [(imageId)]="digitize[tps.tpsNo]"
+              (completed)="digitize[tps.tpsNo] = ''"
+            ></app-approver>
 
-          <p style="padding: 0 10px">
-            <button
-              mat-raised-button
-              color="primary"
-              (click)="digitize[tps.tpsNo] = false"
-            >
-              <mat-icon>arrow_back</mat-icon>
-              Gak Jadi Digitize Deh
-            </button>
-          </p>
-        </td>
-      </tr>
+            <p style="padding: 0 10px">
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="digitize[tps.tpsNo] = ''"
+              >
+                <mat-icon>arrow_back</mat-icon>
+                Gak Jadi Digitize Deh
+              </button>
+            </p>
+          </td>
+        </tr>
+      </ng-template>
 
-      <ng-container *ngIf="!digitize[tps.tpsNo]">
+      <ng-container *ngIf="!digitize[tps.tpsNo]; else digitize">
         <tr height="60">
           <td align="center" width="125" style="padding: 10px 0;">
             <div
               style="border: 1px solid black; width: 90px; padding: 5px"
-              (click)="showDetails(state, tps.tpsNo)"
+              (click)="toggleDetails(state, tps.tpsNo)"
               [style.cursor]="
                 (userService.isModerator$ | async) ? 'pointer' : ''
               "
@@ -67,7 +75,11 @@
           <td rowspan="3" style="padding: 10px">
             <ng-container *ngIf="details[tps.tpsNo] as details$; else fotopub">
               <ng-container *ngIf="(details$ | async) as detail; else loadTps">
-                <app-carousel [height]="475" [photos]="detail"></app-carousel>
+                <app-carousel
+                  [height]="475"
+                  [photos]="detail"
+                  (edited)="digitize[tps.tpsNo] = $event.imageId"
+                ></app-carousel>
               </ng-container>
               <ng-template #loadTps>
                 <div style="height: 475px">
@@ -92,7 +104,7 @@
                 *ngIf="(userService.isModerator$ | async)"
                 mat-raised-button
                 color="warn"
-                (click)="digitize[tps.tpsNo] = true"
+                (click)="digitize[tps.tpsNo] = 'next'"
               >
                 Digitize
               </button>

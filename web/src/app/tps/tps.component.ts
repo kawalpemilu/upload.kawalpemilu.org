@@ -48,7 +48,7 @@ interface Slice {
 })
 export class TpsComponent implements OnInit {
   state$: Observable<State>;
-  digitize: { [tpsNo: string]: boolean } = {};
+  digitize: { [tpsNo: string]: string } = {};
   details: { [tpsNo: string]: Observable<CarouselItem[]> } = {};
   showingSlice: Slice;
   slices: Slice[];
@@ -67,6 +67,7 @@ export class TpsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    let previousId = -1;
     this.state$ = this.route.paramMap.pipe(
       map(params => params.get('id')),
       filter(Boolean),
@@ -89,7 +90,10 @@ export class TpsComponent implements OnInit {
           }
           state.tpsList.push(t);
         });
-        this.showingSlice = null;
+        if (previousId !== state.id) {
+          previousId = state.id;
+          this.showingSlice = null;
+        }
         if (state.tpsList.length > 200) {
           this.populateSlices(state.tpsList, 40);
         } else if (state.tpsList.length > 100) {
@@ -160,6 +164,7 @@ export class TpsComponent implements OnInit {
         sum: p.sum,
         error,
         c1: null,
+        imageId: null,
         meta: null,
         reports: null,
         reviewer: null,
@@ -169,43 +174,46 @@ export class TpsComponent implements OnInit {
     return arr;
   }
 
-  showDetails(state: HierarchyNode, tpsNo: number) {
-    if (!this.details[tpsNo]) {
-      this.details[tpsNo] = this.fsdb
-        .doc<TpsData>(FsPath.tps(state.id, tpsNo))
-        .valueChanges()
-        .pipe(
-          map(tps => {
-            const arr: CarouselItem[] = [];
-            const imageIds = Object.keys(tps.images).sort((a, b) => {
-              const ia = tps.images[a];
-              const ib = tps.images[b];
-              const ta = (ia.c1 && ia.c1.type * 10 + ia.c1.plano) || 0;
-              const tb = (ib.c1 && ib.c1.type * 10 + ib.c1.plano) || 0;
-              const va = ta * 1e14 + ia.uploader.ts;
-              const vb = tb * 1e14 + ib.uploader.ts;
-              return va - vb;
-            });
-            for (const imageId of imageIds) {
-              const i = tps.images[imageId];
-              arr.push({
-                kelId: state.id,
-                tpsNo,
-                c1: i.c1,
-                meta: i.meta,
-                url: i.url,
-                ts: i.uploader.ts,
-                sum: i.sum,
-                error: false,
-                reports:
-                  Object.keys(i.reports || {}).length > 0 ? i.reports : null,
-                uploader: i.uploader,
-                reviewer: i.reviewer
-              });
-            }
-            return arr;
-          })
-        );
+  toggleDetails(state: HierarchyNode, tpsNo: number) {
+    if (this.details[tpsNo]) {
+      this.details[tpsNo] = null;
+      return;
     }
+    this.details[tpsNo] = this.fsdb
+      .doc<TpsData>(FsPath.tps(state.id, tpsNo))
+      .valueChanges()
+      .pipe(
+        map(tps => {
+          const arr: CarouselItem[] = [];
+          const imageIds = Object.keys(tps.images).sort((a, b) => {
+            const ia = tps.images[a];
+            const ib = tps.images[b];
+            const ta = (ia.c1 && ia.c1.type * 10 + ia.c1.plano) || 0;
+            const tb = (ib.c1 && ib.c1.type * 10 + ib.c1.plano) || 0;
+            const va = ta * 1e14 + ia.uploader.ts;
+            const vb = tb * 1e14 + ib.uploader.ts;
+            return va - vb;
+          });
+          for (const imageId of imageIds) {
+            const i = tps.images[imageId];
+            arr.push({
+              kelId: state.id,
+              tpsNo,
+              c1: i.c1,
+              meta: i.meta,
+              url: i.url,
+              imageId,
+              ts: i.uploader.ts,
+              sum: i.sum,
+              error: false,
+              reports:
+                Object.keys(i.reports || {}).length > 0 ? i.reports : null,
+              uploader: i.uploader,
+              reviewer: i.reviewer
+            });
+          }
+          return arr;
+        })
+      );
   }
 }

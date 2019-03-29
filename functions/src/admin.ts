@@ -95,6 +95,9 @@ async function updateAggregates(
     for (const key in delta.sum) {
       target.sum[key] = (target.sum[key] || 0) + delta.sum[key];
     }
+    Object.keys(target.sum)
+      .filter(key => !delta.sum.hasOwnProperty(key))
+      .forEach(key => delete target.sum[key]);
     target.ts = Math.max(target.ts || delta.ts, delta.ts);
 
     if (!dirtyKelId[path[i]]) {
