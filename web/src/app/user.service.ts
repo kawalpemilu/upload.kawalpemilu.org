@@ -27,6 +27,7 @@ export class UserService {
   topUploaders$: Observable<Relawan[]>;
   topReporters$: Observable<Relawan[]>;
   topReviewers$: Observable<Relawan[]>;
+  topReferrers$: Observable<Relawan[]>;
   upsert$: { [imageId: string]: Observable<Upsert> } = {};
   isModerator$: Observable<boolean>;
   isLoading = true;
@@ -98,6 +99,13 @@ export class UserService {
     this.topReviewers$ = this.fsdb
       .collection<Relawan>(FsPath.relawan(), ref =>
         ref.orderBy('reviewCount', 'desc').limit(20)
+      )
+      .valueChanges()
+      .pipe(shareReplay(1));
+
+    this.topReferrers$ = this.fsdb
+      .collection<Relawan>(FsPath.relawan(), ref =>
+        ref.orderBy('profile.dr4', 'desc').limit(20)
       )
       .valueChanges()
       .pipe(shareReplay(1));

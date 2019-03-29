@@ -29,6 +29,7 @@ import { Title } from '@angular/platform-browser';
       </tr>
     </table>
 
+    <p><mat-divider></mat-divider></p>
     <h2>Top Reviewers</h2>
     <table
       *ngIf="(userService.topReviewers$ | async) as arr"
@@ -49,6 +50,7 @@ import { Title } from '@angular/platform-browser';
       </tr>
     </table>
 
+    <p><mat-divider></mat-divider></p>
     <h2>Top Reporters</h2>
     <table
       *ngIf="(userService.topReporters$ | async) as arr"
@@ -66,6 +68,33 @@ import { Title } from '@angular/platform-browser';
         <td align="center">{{ i + 1 }}</td>
         <td><app-orang [profile]="r.profile" [activity]="true"></app-orang></td>
         <td align="center">{{ r.reportCount }}</td>
+      </tr>
+    </table>
+
+    <p><mat-divider></mat-divider></p>
+    <h2>Top Downstream Referrals</h2>
+    <table
+      *ngIf="(userService.topReferrers$ | async) as arr"
+      cellspacing="0"
+      cellpadding="5"
+      style="margin-top: 10px"
+      class="alternating"
+    >
+      <tr [style.background-color]="'lightgray'">
+        <th>#</th>
+        <th width="200" align="left">Nama Orang</th>
+        <th>#DR</th>
+      </tr>
+      <tr *ngFor="let r of arr; let i = index">
+        <td align="center">{{ i + 1 }}</td>
+        <td>
+          <app-orang
+            [profile]="r.profile"
+            [activity]="true"
+            [showDr]="false"
+          ></app-orang>
+        </td>
+        <td align="center">{{ r.profile.dr4 }}</td>
       </tr>
     </table>
 

@@ -20,7 +20,6 @@ admin.initializeApp({
 });
 
 const writeFileAsync = util.promisify(fs.writeFile);
-const existsAsync = util.promisify(fs.exists);
 const renameAsync = util.promisify(fs.rename);
 const copyFileAsync = util.promisify(fs.copyFile);
 const readFileAsync = util.promisify(fs.readFile);
@@ -135,7 +134,7 @@ async function getUpsertBatch(limit: number): Promise<Upserts> {
 let lastBackupTs = Date.now();
 async function doBackup() {
   const ts = Date.now();
-  if (await existsAsync('upserts.log')) {
+  if (fs.existsSync('upserts.log')) {
     await renameAsync('upserts.log', `data/upserts_${ts}.log`);
   } else {
     console.log('No upserts.log found');
