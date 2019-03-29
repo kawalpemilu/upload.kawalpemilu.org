@@ -53,6 +53,7 @@ export declare enum PPWP_NAMES {
     tSah = "~Sah"
 }
 export declare enum DPR_NAMES {
+    pJum = "P.PHP",
     pkb = "1.PKB",
     ger = "2.Grnd",
     pdi = "3.PDIP",
@@ -73,7 +74,6 @@ export declare enum DPR_NAMES {
     pna = "18.PNA",
     pbb = "19.PBB",
     pkp = "20.PKPI",
-    pJum = "P.PHP",
     pSah = "P.Sah",
     pTSah = "P.~Sah"
 }

@@ -62,6 +62,7 @@ var PPWP_NAMES;
 })(PPWP_NAMES = exports.PPWP_NAMES || (exports.PPWP_NAMES = {}));
 var DPR_NAMES;
 (function (DPR_NAMES) {
+    DPR_NAMES["pJum"] = "P.PHP";
     DPR_NAMES["pkb"] = "1.PKB";
     DPR_NAMES["ger"] = "2.Grnd";
     DPR_NAMES["pdi"] = "3.PDIP";
@@ -82,7 +83,6 @@ var DPR_NAMES;
     DPR_NAMES["pna"] = "18.PNA";
     DPR_NAMES["pbb"] = "19.PBB";
     DPR_NAMES["pkp"] = "20.PKPI";
-    DPR_NAMES["pJum"] = "P.PHP";
     DPR_NAMES["pSah"] = "P.Sah";
     DPR_NAMES["pTSah"] = "P.~Sah";
 })(DPR_NAMES = exports.DPR_NAMES || (exports.DPR_NAMES = {}));

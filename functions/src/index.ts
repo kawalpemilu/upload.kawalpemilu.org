@@ -311,6 +311,7 @@ app.post(
     const user = req.user as admin.auth.DecodedIdToken;
     const p = req.parsedBody as UploadRequest;
 
+    const ts = p.ts;
     const rRef = fsdb.doc(FsPath.relawan(user.uid));
     const pRef = fsdb.doc(FsPath.relawanPhoto(user.uid));
     const tRef = fsdb.doc(FsPath.tps(p.kelId, p.tpsNo));
@@ -339,9 +340,7 @@ app.post(
 
         photo.uploads.unshift(p);
         photo.count++;
-        if (photo.count > MAX_NUM_UPLOADS) {
-          return 'Exceeded max number of uploads';
-        }
+        if (photo.count > MAX_NUM_UPLOADS) return 'Exceeded max uploads';
 
         const pu = photo.uploads;
         photo.nTps = new Set(pu.map(up => up.kelId + '-' + up.tpsNo)).size;
@@ -349,17 +348,7 @@ app.post(
 
         const ua = req.headers['user-agent'];
         const ip = getIp(req);
-        const uploader = {
-          ...photo.profile,
-          ts: p.ts,
-          ua,
-          ip
-        } as UpsertProfile;
-        const action = {
-          sum: { cakupan: 1, pending: 1 },
-          ts: p.ts
-        } as Aggregate;
-        const upsert = { request: p, uploader, done: 0, action } as Upsert;
+        const uploader = { ...photo.profile, ts, ua, ip } as UpsertProfile;
 
         tps.images[p.imageId] = {
           uploader,
@@ -371,6 +360,9 @@ app.post(
           meta: p.meta
         };
         tps.imgCount++;
+
+        const action = computeAction(tps);
+        const upsert = { request: p, uploader, done: 0, action } as Upsert;
 
         t.create(fsdb.doc(FsPath.upserts(p.imageId)), upsert);
         t.set(pRef, photo);
@@ -442,6 +434,39 @@ function populateApprove() {
   };
 }
 
+function computeAction(tps: TpsData) {
+  const action = { sum: {} as SumMap, photos: {}, ts: 0, c1: null };
+  for (const imageId of Object.keys(tps.images)) {
+    const i = tps.images[imageId];
+    if (!i.c1) {
+      action.sum.cakupan = 1;
+      action.sum.pending = 1;
+    } else if (i.c1.type === FORM_TYPE.MALICIOUS) {
+      action.photos[i.url] = null;
+    } else if (i.c1.type === FORM_TYPE.OTHERS) {
+      action.photos[i.url] = null;
+    } else {
+      action.sum.cakupan = 1;
+      action.photos[i.url] = {
+        c1: i.c1,
+        sum: i.sum,
+        ts: i.reviewer.ts
+      };
+      action.ts = Math.max(action.ts, i.reviewer.ts);
+      for (const key of Object.keys(i.sum)) {
+        if (typeof action.sum[key] === 'number') {
+          if (action.sum[key] !== i.sum[key]) {
+            action.sum.janggal = 1;
+          }
+        } else {
+          action.sum[key] = i.sum[key];
+        }
+      }
+    }
+  }
+  return action;
+}
+
 app.post('/api/approve', [populateApprove()], async (req: any, res) => {
   const user = req.user as admin.auth.DecodedIdToken;
   const a = req.parsedBody as ApproveRequest;
@@ -476,46 +501,12 @@ app.post('/api/approve', [populateApprove()], async (req: any, res) => {
 
       const img = tps.images[a.imageId];
       if (!img) return 'No Image';
-
       img.c1 = a.c1;
       img.sum = a.sum;
 
       u.reviewer = img.reviewer = { ...r.profile, ts, ua, ip };
-      u.action = { sum: {} as SumMap, photos: {}, ts: 0, c1: a.c1 };
+      u.action = computeAction(tps);
       u.done = 0;
-
-      u.action.sum.cakupan = 0;
-      u.action.sum.pending = 0;
-      u.action.sum.error = 0;
-      u.action.sum.janggal = 0;
-      for (const imageId of Object.keys(tps.images)) {
-        const i = tps.images[imageId];
-        if (!i.c1) {
-          u.action.sum.cakupan = 1;
-          u.action.sum.pending = 1;
-        } else if (i.c1.type === FORM_TYPE.MALICIOUS) {
-          u.action.photos[i.url] = null;
-        } else if (i.c1.type === FORM_TYPE.OTHERS) {
-          u.action.photos[i.url] = null;
-        } else {
-          u.action.sum.cakupan = 1;
-          u.action.photos[i.url] = {
-            c1: i.c1,
-            sum: i.sum,
-            ts: i.reviewer.ts
-          };
-          u.action.ts = Math.max(u.action.ts, i.reviewer.ts);
-          for (const key of Object.keys(i.sum)) {
-            if (typeof u.action.sum[key] === 'number') {
-              if (u.action.sum[key] !== i.sum[key]) {
-                u.action.sum.janggal = 1;
-              }
-            } else {
-              u.action.sum[key] = i.sum[key];
-            }
-          }
-        }
-      }
 
       t.update(rRef, r);
       t.update(uRef, u);
