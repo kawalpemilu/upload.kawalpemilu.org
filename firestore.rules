@@ -16,7 +16,7 @@ service cloud.firestore {
       allow get: if request.auth.uid == userId || getUserRole() >= 1;
 
       // Only Admin can perform search for user profile.
-      allow list: if request.query.limit <= 10 && getUserRole() >= 2;
+      allow list: if request.query.limit <= 20 && getUserRole() >= 2;
     }
  
     // Relawan photos.

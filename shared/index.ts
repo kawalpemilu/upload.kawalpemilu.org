@@ -4,6 +4,7 @@ export const MAX_REFERRALS = 1000;
 export const MAX_NUM_UPLOADS = 100;
 export const MAX_URL_LENGTH = 300;
 export const MAX_REASON_LENGTH = 300;
+export const MAX_REPORT_ERRORS = 10;
 export const LOCAL_STORAGE_LAST_URL = 'last_url';
 
 export enum USER_ROLE {
@@ -136,6 +137,9 @@ export interface Relawan {
   code: { [code: string]: CodeReferral }; // Code referrals
   auth: any; // firebase.User reference.
   theCode: string; // The code to refer others.
+  reportCount: number; // The number of errors reported.
+  maxReports: number; // Whitelist this person to go beyond.
+  reviewCount: number; // The number of images reviewed.
 }
 
 export interface ChangeLog {

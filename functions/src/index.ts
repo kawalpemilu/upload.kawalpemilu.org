@@ -37,7 +37,8 @@ import {
   PublicProfile,
   ProblemRequest,
   MAX_URL_LENGTH,
-  MAX_REASON_LENGTH
+  MAX_REASON_LENGTH,
+  MAX_REPORT_ERRORS
 } from 'shared';
 
 const t1 = Date.now();
@@ -462,6 +463,7 @@ app.post('/api/approve', [populateApprove()], async (req: any, res) => {
     .runTransaction(async t => {
       const r = (await t.get(rRef)).data() as Relawan;
       if (!r || r.profile.role < USER_ROLE.MODERATOR) 'Not Authorized';
+      r.reviewCount = (r.reviewCount || 0) + 1;
 
       const u = (await t.get(uRef)).data() as Upsert;
       if (!u) return 'No Upsert';
@@ -514,6 +516,7 @@ app.post('/api/approve', [populateApprove()], async (req: any, res) => {
         }
       }
 
+      t.update(rRef, r);
       t.update(uRef, u);
       t.update(tRef, tps);
       return true;
@@ -575,9 +578,13 @@ app.post(
         if (!imageId) return 'invalid URL';
         const uRef = fsdb.doc(FsPath.upserts(imageId));
         const u = (await t.get(uRef)).data() as Upsert;
-        if (!u || !u.action) 'imageId not found';
+        if (!u) return 'imageId not found';
 
         const r = (await t.get(rRef)).data() as Relawan;
+        r.reportCount = (r.reportCount || 0) + 1;
+        const maxReports = r.maxReports || MAX_REPORT_ERRORS;
+        if (r.reportCount > maxReports) return 'too many reports';
+
         const reporter: UpsertProfile = { ...r.profile, ts, ua, ip };
 
         const img = tps.images[imageId];
@@ -592,6 +599,7 @@ app.post(
 
         t.update(tRef, tps);
         t.update(uRef, u);
+        t.update(rRef, r);
         return true;
       })
       .catch(e => {
@@ -599,7 +607,12 @@ app.post(
         return `Database error`;
       });
 
-    return res.json(ok === true ? { ok: true } : { error: ok });
+    if (ok !== true) {
+      console.error(`Report ${user.uid} : ${ok}`);
+      return res.json({ error: ok });
+    }
+
+    return res.json({ ok: true });
   }
 );
 
@@ -685,7 +698,12 @@ app.post('/api/register/login', async (req: any, res) => {
       return true;
     });
 
-    return res.json(ok === true ? { ok: true, code } : { error: ok });
+    if (ok !== true) {
+      console.error(`login failed ${user.uid} : ${ok}`);
+      return res.json({ error: ok });
+    }
+
+    return res.json({ ok: true, code });
   } catch (e) {
     console.error(`login error ${user.uid} : ${e.message} : token: ${token}`);
     return res.json({ error: `Login failed` });

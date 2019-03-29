@@ -22,20 +22,54 @@ import { Title } from '@angular/platform-browser';
       </tr>
       <tr *ngFor="let r of arr; let i = index">
         <td align="center">{{ i + 1 }}</td>
-        <td>
-          <app-orang [profile]="r.profile" [activity]="true"></app-orang>
-        </td>
-        <td align="center">
-          {{ r.count }}
-        </td>
-        <td align="center">
-          {{ r.nKel }}
-        </td>
-        <td align="center">
-          {{ r.nTps }}
-        </td>
+        <td><app-orang [profile]="r.profile" [activity]="true"></app-orang></td>
+        <td align="center">{{ r.count }}</td>
+        <td align="center">{{ r.nKel }}</td>
+        <td align="center">{{ r.nTps }}</td>
       </tr>
     </table>
+
+    <h2>Top Reviewers</h2>
+    <table
+      *ngIf="(userService.topReviewers$ | async) as arr"
+      cellspacing="0"
+      cellpadding="5"
+      style="margin-top: 10px"
+      class="alternating"
+    >
+      <tr [style.background-color]="'lightgray'">
+        <th>#</th>
+        <th width="200" align="left">Nama Orang</th>
+        <th>#Reviews</th>
+      </tr>
+      <tr *ngFor="let r of arr; let i = index">
+        <td align="center">{{ i + 1 }}</td>
+        <td><app-orang [profile]="r.profile" [activity]="true"></app-orang></td>
+        <td align="center">{{ r.reviewCount }}</td>
+      </tr>
+    </table>
+
+    <h2>Top Reporters</h2>
+    <table
+      *ngIf="(userService.topReporters$ | async) as arr"
+      cellspacing="0"
+      cellpadding="5"
+      style="margin-top: 10px"
+      class="alternating"
+    >
+      <tr [style.background-color]="'lightgray'">
+        <th>#</th>
+        <th width="200" align="left">Nama Orang</th>
+        <th>#Reports</th>
+      </tr>
+      <tr *ngFor="let r of arr; let i = index">
+        <td align="center">{{ i + 1 }}</td>
+        <td><app-orang [profile]="r.profile" [activity]="true"></app-orang></td>
+        <td align="center">{{ r.reportCount }}</td>
+      </tr>
+    </table>
+
+    <br /><br />
   `,
   styles: [``]
 })

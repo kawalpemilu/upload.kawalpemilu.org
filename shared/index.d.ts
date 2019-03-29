@@ -3,6 +3,7 @@ export declare const MAX_REFERRALS = 1000;
 export declare const MAX_NUM_UPLOADS = 100;
 export declare const MAX_URL_LENGTH = 300;
 export declare const MAX_REASON_LENGTH = 300;
+export declare const MAX_REPORT_ERRORS = 10;
 export declare const LOCAL_STORAGE_LAST_URL = "last_url";
 export declare enum USER_ROLE {
     BANNED = -1,
@@ -119,6 +120,9 @@ export interface Relawan {
     };
     auth: any;
     theCode: string;
+    reportCount: number;
+    maxReports: number;
+    reviewCount: number;
 }
 export interface ChangeLog {
     auid: string;

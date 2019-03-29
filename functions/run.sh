@@ -5,15 +5,25 @@ ssh)
     ;;
 
 admin)
-    (cd ../shared; npm run build) && \
-    npm run build && \
-    node --max-old-space-size=5120 lib/admin.js
+    (
+        cd ../shared
+        npm run build
+    ) &&
+        npm run build &&
+        node --max-old-space-size=5120 lib/admin.js
     ;;
 
 referral)
-    (cd ../shared; npm run build) && \
-    npm run build && \
-    node --max-old-space-size=1024 lib/referral.js
+    (
+        cd ../shared
+        npm run build
+    ) &&
+        npm run build &&
+        node --max-old-space-size=1024 lib/referral.js
+    ;;
+
+backup)
+    gcloud beta firestore export gs://kawal-c1.appspot.com/firestore-dump/mar-28
     ;;
 
 esac

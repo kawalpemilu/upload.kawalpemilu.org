@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
 import * as fs from 'fs';
 
-import { FsPath, HierarchyNode, ChildData, toChildren, toChild } from 'shared';
+import { FsPath, HierarchyNode, toChildren, toChild } from 'shared';
 
 admin.initializeApp({
   credential: admin.credential.cert(require('../src/sa-key.json')),
