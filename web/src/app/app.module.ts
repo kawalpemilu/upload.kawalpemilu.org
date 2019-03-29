@@ -36,6 +36,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatDialogModule } from '@angular/material/dialog';
+import { MatBottomSheetModule } from '@angular/material/bottom-sheet';
 
 import { HttpClientModule } from '@angular/common/http';
 import {
@@ -58,7 +59,10 @@ import { ProfileComponent } from './profile/profile.component';
 import { MetaComponent } from './meta/meta.component';
 import { HomeComponent } from './home/home.component';
 import { KontakComponent } from './kontak/kontak.component';
-import { CarouselComponent } from './carousel/carousel.component';
+import {
+  CarouselComponent,
+  BottomSheetErrorComponent
+} from './carousel/carousel.component';
 import { FaqComponent } from './faq/faq.component';
 import { ScoreboardComponent } from './scoreboard/scoreboard.component';
 import { TweetComponent } from './tweet/tweet.component';
@@ -67,7 +71,8 @@ import { TweetComponent } from './tweet/tweet.component';
   entryComponents: [
     RegistrasiComponent,
     CopySnackBarComponent,
-    LaporReasonDialogComponent
+    LaporReasonDialogComponent,
+    BottomSheetErrorComponent
   ],
   declarations: [
     AppComponent,
@@ -90,6 +95,7 @@ import { TweetComponent } from './tweet/tweet.component';
     HomeComponent,
     KontakComponent,
     CarouselComponent,
+    BottomSheetErrorComponent,
     FaqComponent,
     ScoreboardComponent,
     TweetComponent
@@ -125,7 +131,8 @@ import { TweetComponent } from './tweet/tweet.component';
     MatTabsModule,
     MatAutocompleteModule,
     MatBadgeModule,
-    MatDialogModule
+    MatDialogModule,
+    MatBottomSheetModule
   ],
   providers: [{ provide: LOCALE_ID, useValue: 'id' }, Title],
   bootstrap: [AppComponent]

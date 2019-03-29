@@ -102,7 +102,12 @@ export class FotoComponent {
         ts: p.ts,
         sum: {} as SumMap,
         // TODO: reflect the current error state.
-        error: false
+        error: false,
+        c1: null,
+        meta: null,
+        reports: null,
+        uploader: null,
+        reviewer: null
       });
     }
     return arr;

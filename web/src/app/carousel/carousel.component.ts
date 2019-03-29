@@ -1,13 +1,72 @@
-import { Component, OnInit, Input } from '@angular/core';
-import { SumMap, PPWP_NAMES, DPR_NAMES } from 'shared';
+import { Component, OnInit, Input, Inject } from '@angular/core';
+import {
+  SumMap,
+  PPWP_NAMES,
+  DPR_NAMES,
+  C1Form,
+  FORM_TYPE,
+  IS_PLANO,
+  ImageMetadata,
+  ErrorReports,
+  PublicProfile
+} from 'shared';
+import {
+  MatBottomSheetRef,
+  MatBottomSheet,
+  MAT_BOTTOM_SHEET_DATA
+} from '@angular/material';
 
 export interface CarouselItem {
   kelId: number;
   tpsNo: number;
+  c1: C1Form;
+  meta: ImageMetadata;
   url: string;
   ts: number;
   sum: SumMap;
   error: boolean;
+  reports: ErrorReports;
+  uploader: PublicProfile;
+  reviewer: PublicProfile;
+}
+
+@Component({
+  selector: 'app-bottom-sheet-error',
+  template: `
+    <mat-nav-list>
+      <div *ngFor="let r of reports">
+        <app-orang
+          [profile]="r.reporter"
+          [activity]="true"
+          [blankTarget]="true"
+        ></app-orang
+        >:
+        {{ r.reason }}
+      </div>
+    </mat-nav-list>
+  `
+})
+export class BottomSheetErrorComponent {
+  reports: any[] = [];
+
+  constructor(
+    private bottomSheetRef: MatBottomSheetRef<BottomSheetErrorComponent>,
+    @Inject(MAT_BOTTOM_SHEET_DATA) public data: ErrorReports
+  ) {
+    for (const ts of Object.keys(data || {})) {
+      const d = data[ts];
+      this.reports.push({
+        reporter: d.reporter,
+        reason: d.reason,
+        ts: +ts
+      });
+    }
+  }
+
+  openLink(event: MouseEvent): void {
+    this.bottomSheetRef.dismiss();
+    event.preventDefault();
+  }
 }
 
 @Component({
@@ -66,12 +125,59 @@ export interface CarouselItem {
                   </ng-template>
                 </td>
               </tr>
+              <tr *ngIf="p.uploader as uploader">
+                <td colspan="2" align="center">
+                  by
+                  <app-orang
+                    [profile]="uploader"
+                    [activity]="true"
+                    [blankTarget]="true"
+                  ></app-orang>
+                  <ng-container *ngIf="p.meta as meta">
+                    <app-meta [meta]="meta"></app-meta>
+                  </ng-container>
+                </td>
+              </tr>
+              <tr *ngIf="p.reports as reports">
+                <td colspan="2" align="center">
+                  <button
+                    mat-button
+                    color="warn"
+                    (click)="openReports(reports)"
+                  >
+                    Lihat Laporan
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="p.reviewer as reviewer">
+                <td colspan="2" align="center">
+                  <app-orang
+                    [profile]="reviewer"
+                    [activity]="true"
+                    [showDr]="false"
+                    [blankTarget]="true"
+                  ></app-orang>
+                </td>
+              </tr>
+              <tr *ngIf="p.c1 as c1">
+                <td colspan="2" align="center">
+                  <ng-container
+                    *ngIf="c1.type == FORM_TYPE.MALICIOUS; else normal"
+                  >
+                    <b style="color: red">MALICIOUS</b>
+                  </ng-container>
+                  <ng-template #normal>
+                    {{ FORM_TYPE[c1.type] }}
+                    {{ IS_PLANO[c1.plano] == IS_PLANO.YES ? 'PLANO' : '' }}
+                  </ng-template>
+                </td>
+              </tr>
               <ng-container *ngFor="let key of ALL_NAMES">
                 <tr *ngIf="p.sum[key] !== undefined">
                   <td align="right">
                     {{ PPWP_NAMES[key] || DPR_NAMES[key] }}:
                   </td>
-                  <td align="right" width="40" style="padding-right: 5px">
+                  <td align="center" width="40" style="padding-right: 5px">
                     {{ p.sum[key] }}
                   </td>
                 </tr>
@@ -89,11 +195,17 @@ export class CarouselComponent implements OnInit {
   @Input() height: number;
   @Input() lapor = false;
 
+  IS_PLANO = IS_PLANO;
+  FORM_TYPE = FORM_TYPE;
   PPWP_NAMES = PPWP_NAMES;
   DPR_NAMES = DPR_NAMES;
   ALL_NAMES = Object.keys(PPWP_NAMES).concat(Object.keys(DPR_NAMES));
 
-  constructor() {}
+  constructor(private bottomSheet: MatBottomSheet) {}
 
   ngOnInit() {}
+
+  openReports(reports) {
+    this.bottomSheet.open(BottomSheetErrorComponent, { data: reports });
+  }
 }

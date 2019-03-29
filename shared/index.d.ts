@@ -149,15 +149,16 @@ export interface TpsAggregate extends Aggregate {
         [url: string]: Aggregate;
     };
 }
+export interface ErrorReports {
+    [ts: string]: {
+        reporter: UpsertProfile;
+        reason: string;
+    };
+}
 export interface TpsImage {
     uploader: UpsertProfile;
     reviewer: UpsertProfile;
-    reports: {
-        [ts: string]: {
-            reporter: UpsertProfile;
-            reason: string;
-        };
-    };
+    reports: ErrorReports;
     c1: C1Form;
     sum: SumMap;
     url: string;

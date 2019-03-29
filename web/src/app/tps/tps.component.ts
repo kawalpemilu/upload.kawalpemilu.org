@@ -10,11 +10,14 @@ import {
   TpsAggregate,
   DPR_NAMES,
   PPWP_NAMES,
-  Aggregate
+  Aggregate,
+  TpsData,
+  FsPath
 } from 'shared';
 import { UserService } from '../user.service';
 import { CarouselItem } from '../carousel/carousel.component';
 import { Title } from '@angular/platform-browser';
+import { AngularFirestore } from '@angular/fire/firestore';
 
 interface Tps {
   tpsNo: number;
@@ -46,6 +49,7 @@ interface Slice {
 export class TpsComponent implements OnInit {
   state$: Observable<State>;
   digitize: { [tpsNo: string]: boolean } = {};
+  details: { [tpsNo: string]: Observable<CarouselItem[]> } = {};
   showingSlice: Slice;
   slices: Slice[];
   USER_ROLE = USER_ROLE;
@@ -58,7 +62,8 @@ export class TpsComponent implements OnInit {
     public hie: HierarchyService,
     public userService: UserService,
     private route: ActivatedRoute,
-    private titleService: Title
+    private titleService: Title,
+    private fsdb: AngularFirestore
   ) {}
 
   ngOnInit() {
@@ -140,21 +145,67 @@ export class TpsComponent implements OnInit {
     const urls = Object.keys(photos).sort((a, b) => {
       const pa = photos[a];
       const pb = photos[b];
-      let diff = pa.c1.type - pb.c1.type;
-      if (diff) {
-        return diff;
-      }
-      diff = pa.c1.plano - pb.c1.plano;
-      if (diff) {
-        return diff;
-      }
-      return pa.ts - pb.ts;
+      const va = (pa.c1.type * 10 + pa.c1.plano) * 1e14 + pa.ts;
+      const vb = (pb.c1.type * 10 + pb.c1.plano) * 1e14 + pb.ts;
+      return va - vb;
     });
     for (const url of urls) {
       const p = photos[url];
       const error = !!p.sum.error;
-      arr.push({ kelId, tpsNo, url, ts: p.ts, sum: p.sum, error });
+      arr.push({
+        kelId,
+        tpsNo,
+        url,
+        ts: p.ts,
+        sum: p.sum,
+        error,
+        c1: null,
+        meta: null,
+        reports: null,
+        reviewer: null,
+        uploader: null
+      });
     }
     return arr;
+  }
+
+  showDetails(state: HierarchyNode, tpsNo: number) {
+    if (!this.details[tpsNo]) {
+      this.details[tpsNo] = this.fsdb
+        .doc<TpsData>(FsPath.tps(state.id, tpsNo))
+        .valueChanges()
+        .pipe(
+          map(tps => {
+            const arr: CarouselItem[] = [];
+            const imageIds = Object.keys(tps.images).sort((a, b) => {
+              const ia = tps.images[a];
+              const ib = tps.images[b];
+              const ta = (ia.c1 && ia.c1.type * 10 + ia.c1.plano) || 0;
+              const tb = (ib.c1 && ib.c1.type * 10 + ib.c1.plano) || 0;
+              const va = ta * 1e14 + ia.uploader.ts;
+              const vb = tb * 1e14 + ib.uploader.ts;
+              return va - vb;
+            });
+            for (const imageId of imageIds) {
+              const i = tps.images[imageId];
+              arr.push({
+                kelId: state.id,
+                tpsNo,
+                c1: i.c1,
+                meta: i.meta,
+                url: i.url,
+                ts: i.uploader.ts,
+                sum: i.sum,
+                error: false,
+                reports:
+                  Object.keys(i.reports || {}).length > 0 ? i.reports : null,
+                uploader: i.uploader,
+                reviewer: i.reviewer
+              });
+            }
+            return arr;
+          })
+        );
+    }
   }
 }
