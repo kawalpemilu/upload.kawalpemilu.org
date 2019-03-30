@@ -155,7 +155,7 @@
     <mat-tab-group>
       <mat-tab
         *ngIf="curRel.profile.role >= USER_ROLE.ADMIN"
-        label="Downstream Referrals ({{ (relawan.profile.dr4 || 1) - 1 }})"
+        label="Referrals ({{ (relawan.profile.dr4 || 1) - 1 }})"
       >
         <ng-container *ngIf="relawan.code">
           <p></p>
@@ -184,41 +184,75 @@
         </ng-container>
       </mat-tab>
 
-      <mat-tab
-        *ngIf="(relawanPhotos$ | async) as relawanPhotos"
-        label="Photos ({{ relawanPhotos.count }})"
-      >
-        <p></p>
-        <table
-          border="1"
-          cellspacing="0"
-          cellpadding="5"
-          width="400"
-          class="alternating"
+      <ng-container *ngIf="(relawanPhotos$ | async) as relawanPhotos">
+        <mat-tab label="Photos ({{ relawanPhotos.count }})">
+          <p></p>
+          <table
+            border="1"
+            cellspacing="0"
+            cellpadding="5"
+            width="400"
+            class="alternating"
+          >
+            <tr [style.background-color]="'lightgray'">
+              <th width="40">#</th>
+              <th width="115">Foto</th>
+              <th width="300">Detil</th>
+            </tr>
+            <tr *ngFor="let u of relawanPhotos.uploads; let i = index">
+              <th>
+                {{ relawanPhotos.count - i }}
+              </th>
+              <td align="center">
+                <app-thumbnail [url]="u.url"></app-thumbnail><br />
+              </td>
+              <td>
+                {{ u.ts | date: 'medium' }}<br />
+                <app-hie-link [id]="u.kelId" [name]="u.kelName"></app-hie-link
+                ><br />
+                TPS: <b>#{{ u.tpsNo }}</b
+                ><br />
+                <app-meta [meta]="u.meta"></app-meta>
+              </td>
+            </tr>
+          </table>
+        </mat-tab>
+
+        <mat-tab
+          *ngIf="relawanPhotos.reportCount > 0"
+          label="Reports ({{ relawanPhotos.reportCount }})"
         >
-          <tr [style.background-color]="'lightgray'">
-            <th width="40">#</th>
-            <th width="115">Foto</th>
-            <th width="300">Detil</th>
-          </tr>
-          <tr *ngFor="let u of relawanPhotos.uploads; let i = index">
-            <th>
-              {{ relawanPhotos.count - i }}
-            </th>
-            <td align="center">
-              <app-thumbnail [url]="u.url"></app-thumbnail><br />
-            </td>
-            <td>
-              {{ u.ts | date: 'medium' }}<br />
-              <app-hie-link [id]="u.kelId" [name]="u.kelName"></app-hie-link
-              ><br />
-              TPS: <b>#{{ u.tpsNo }}</b
-              ><br />
-              <app-meta [meta]="u.meta"></app-meta>
-            </td>
-          </tr>
-        </table>
-      </mat-tab>
+          <p></p>
+          <table
+            border="1"
+            cellspacing="0"
+            cellpadding="5"
+            width="400"
+            class="alternating"
+          >
+            <tr [style.background-color]="'lightgray'">
+              <th width="40">#</th>
+              <th width="115">Foto</th>
+              <th width="300">Laporan</th>
+            </tr>
+            <tr *ngFor="let r of relawanPhotos.reports; let i = index">
+              <th>
+                {{ i + 1 }}
+              </th>
+              <td align="center">
+                <app-thumbnail [url]="r.url"></app-thumbnail><br />
+              </td>
+              <td>
+                <app-hie-link [id]="r.kelId" [name]="r.kelName"></app-hie-link>
+                <br />
+                TPS # <b>{{ r.tpsNo }}</b
+                ><br />
+                <p>{{ r.reason }}</p>
+              </td>
+            </tr>
+          </table>
+        </mat-tab>
+      </ng-container>
     </mat-tab-group>
 
     <p></p>

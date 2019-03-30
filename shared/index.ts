@@ -243,6 +243,7 @@ export interface ApproveRequest {
 
 export interface ProblemRequest {
   kelId: number;
+  kelName: string;
   tpsNo: number;
   url: string;
   reason: string;

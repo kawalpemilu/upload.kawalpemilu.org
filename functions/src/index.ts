@@ -597,6 +597,7 @@ app.post(
       const b = req.body as ProblemRequest;
       const p: ProblemRequest = (req.parsedBody = {
         kelId: +b.kelId,
+        kelName: '',
         tpsNo: +b.tpsNo,
         url: b.url,
         reason: b.reason
