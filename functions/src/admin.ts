@@ -211,7 +211,7 @@ function recomputeH(id: number, depth: number) {
       }
       for (const key in csum) {
         if (ch.sum[key] !== csum[key]) {
-          console.log('missing', id, H[id].name, key, ch.sum[key], csum[key]);
+          console.log('missing', cid, H[cid].name, key, ch.sum[key], csum[key]);
           ch.sum[key] = csum[key];
         }
       }
