@@ -200,8 +200,13 @@ export interface UploadRequest {
     meta: ImageMetadata;
     url: string;
     ts: number;
+    c1: C1Form;
+    sum: SumMap;
 }
 export interface ApproveRequest {
+    kelId: number;
+    kelName: string;
+    tpsNo: number;
     imageId: string;
     sum: SumMap;
     c1: C1Form;

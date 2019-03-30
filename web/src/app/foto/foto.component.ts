@@ -100,12 +100,12 @@ export class FotoComponent {
         tpsNo,
         url: p.url,
         ts: p.ts,
-        sum: {} as SumMap,
+        sum: p.sum || {} as SumMap,
         // TODO: reflect the current error state.
         error: false,
-        c1: null,
-        imageId: null,
-        meta: null,
+        c1: p.c1,
+        imageId: p.imageId,
+        meta: p.meta,
         reports: null,
         uploader: null,
         reviewer: null

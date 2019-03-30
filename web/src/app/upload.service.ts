@@ -9,7 +9,7 @@ import {
 import { autoId, ImageMetadata, UploadRequest } from 'shared';
 import { ApiService } from './api.service';
 import { User } from 'firebase';
-import { BehaviorSubject} from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 export interface UploadStatus {
   imageId: string;
@@ -94,7 +94,9 @@ export class UploadService {
         tpsNo,
         meta: metadata,
         url: null, // Will be populated on the server.
-        ts: null // Will be populated on the server.
+        ts: null, // Will be populated on the server.
+        c1: null, // Will be populated later by Moderator
+        sum: null // Will be populated later by Moderator
       };
       const res: any = await this.api.post(user, `upload`, request);
       if (!res.ok) {

@@ -66,6 +66,7 @@ import {
 import { FaqComponent } from './faq/faq.component';
 import { ScoreboardComponent } from './scoreboard/scoreboard.component';
 import { TweetComponent } from './tweet/tweet.component';
+import { CariKelComponent } from './cari-kel/cari-kel.component';
 
 @NgModule({
   entryComponents: [
@@ -98,7 +99,8 @@ import { TweetComponent } from './tweet/tweet.component';
     BottomSheetErrorComponent,
     FaqComponent,
     ScoreboardComponent,
-    TweetComponent
+    TweetComponent,
+    CariKelComponent
   ],
   imports: [
     BrowserModule,

@@ -135,7 +135,7 @@ function getServingUrl(url, size) {
 }
 exports.getServingUrl = getServingUrl;
 function isValidImageId(imageId) {
-    return typeof imageId === 'string' && imageId.match(/^[A-Za-z0-9]{20}$/);
+    return typeof imageId === 'string' && imageId.match(/^[A-Za-z0-9]{20}(-[0-9]+-[0-9]+)*$/);
 }
 exports.isValidImageId = isValidImageId;
 function isValidUserId(uid) {

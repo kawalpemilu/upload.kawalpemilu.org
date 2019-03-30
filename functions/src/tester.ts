@@ -116,6 +116,8 @@ function makeRequest(kelId, tpsNo) {
     kelName: '',
     tpsNo,
     url: null,
+    c1: null,
+    sum: null,
     meta,
     ts: 0
   };

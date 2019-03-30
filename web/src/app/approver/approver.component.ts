@@ -16,9 +16,9 @@ import {
   FORM_TYPE,
   enumEntries,
   IS_PLANO,
-  C1Form
+  HierarchyNode
 } from 'shared';
-import { startWith, take } from 'rxjs/operators';
+import { startWith, take, distinctUntilChanged } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { combineLatest, Subscription, Subject } from 'rxjs';
 import { FormGroup, Validators, FormBuilder } from '@angular/forms';
@@ -274,6 +274,8 @@ export class ApproverComponent implements OnInit, OnDestroy {
   Object = Object;
   VALIDATORS = [Validators.pattern('^[0-9]{1,3}$')];
 
+  initialKelId: number;
+  initialTpsNo: number;
   @Input() kelId: number;
   @Input() tpsNo: number;
   @Input() imageId: string;
@@ -294,6 +296,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
   approveStatus: 'pending' | 'ready' | 'approved';
   autoSumSub: Subscription;
 
+  isChangeKel = false;
   isLoading = false;
 
   constructor(
@@ -306,6 +309,9 @@ export class ApproverComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    this.initialKelId = this.kelId;
+    this.initialTpsNo = this.tpsNo;
+
     this.hie
       .get$(this.kelId)
       .pipe(take(1))
@@ -351,7 +357,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
     if (!this.imageId) {
       this.imageId = 'done';
       this.imageIdChange.emit('done');
-      this.hie.update(this.kelId).then(() => {
+      this.hie.update(this.initialKelId).then(() => {
         setTimeout(() => {
           this.imageId = '';
           this.imageIdChange.emit('');
@@ -373,8 +379,14 @@ export class ApproverComponent implements OnInit, OnDestroy {
       return;
     }
     this.autoSumSub = combineLatest([
-      p1.valueChanges.pipe(startWith(0)),
-      p2.valueChanges.pipe(startWith(0))
+      p1.valueChanges.pipe(
+        startWith(0),
+        distinctUntilChanged()
+      ),
+      p2.valueChanges.pipe(
+        startWith(0),
+        distinctUntilChanged()
+      )
     ]).subscribe((v: number[]) => {
       this.formGroup.get(SUM_KEY[SUM_KEY.sah]).setValue(v[0] + v[1]);
     });
@@ -401,12 +413,19 @@ export class ApproverComponent implements OnInit, OnDestroy {
 
     try {
       const user = this.userService.user;
-      const c1: C1Form = { type: this.formType, plano: this.isPlano };
-      const body: ApproveRequest = { sum, imageId: this.imageId, c1 };
+      const body: ApproveRequest = {
+        kelId: this.kelId,
+        kelName: '',
+        tpsNo: this.tpsNo,
+        sum,
+        imageId: this.imageId,
+        c1: { type: this.formType, plano: this.isPlano }
+      };
       const res: any = await this.api.post(user, `approve`, body);
       if (res.ok) {
         console.log('ok');
-        this.tpsData.images[this.imageId].c1 = c1;
+        this.approveStatus = 'approved';
+        this.tpsData.images[this.imageId].c1 = body.c1;
         setTimeout(this.digitizeNextImage.bind(this), 1000);
       } else {
         console.error(res);
@@ -421,7 +440,6 @@ export class ApproverComponent implements OnInit, OnDestroy {
       this.formGroup.enable();
     }
     this.isLoading = false;
-    this.approveStatus = 'approved';
   }
 
   setFormType(type: FORM_TYPE) {
@@ -488,6 +506,28 @@ export class ApproverComponent implements OnInit, OnDestroy {
     return this.formGroup.get(ctrlName).hasError('pattern')
       ? 'Rentang angka 0..999'
       : '';
+  }
+
+  changeKel() {
+    this.isChangeKel = true;
+    setTimeout(() => {
+      const els = document.getElementsByClassName('searchwilayah');
+      if (els.length > 0) {
+        (els[0] as HTMLInputElement).focus();
+      }
+    }, 100);
+  }
+
+  changeKelId(state: HierarchyNode) {
+    this.kelId = state.id;
+    this.hie
+      .get$(this.kelId)
+      .pipe(take(1))
+      .toPromise()
+      .then(node => {
+        this.kelName = node.name;
+        this.isChangeKel = false;
+      });
   }
 
   // const mapLink =

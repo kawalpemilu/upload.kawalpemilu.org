@@ -169,7 +169,16 @@ export class BottomSheetErrorComponent {
                   ></app-orang>
                 </td>
               </tr>
-              <tr *ngIf="p.c1 as c1">
+              <ng-template #pending>
+                <tr>
+                  <td colspan="2" align="center">
+                  <p style="color: orange">
+                    Foto ini belum diproses.
+                    </p>
+                  </td>
+                </tr>
+              </ng-template>
+              <tr *ngIf="p.c1 as c1; else pending">
                 <td colspan="2" align="center">
                   <ng-container
                     *ngIf="c1.type == FORM_TYPE.MALICIOUS; else normal"

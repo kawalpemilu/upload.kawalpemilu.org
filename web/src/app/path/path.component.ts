@@ -2,15 +2,6 @@ import { Component, Input, OnInit } from '@angular/core';
 import { HierarchyService } from '../hierarchy.service';
 import { HierarchyNode } from 'shared';
 import { AppComponent } from '../app.component';
-import { FormControl } from '@angular/forms';
-import { Observable } from 'rxjs';
-import { AngularFirestore } from '@angular/fire/firestore';
-import {
-  switchMap,
-  filter,
-  debounceTime,
-  distinctUntilChanged
-} from 'rxjs/operators';
 import { Router } from '@angular/router';
 
 @Component({
@@ -43,42 +34,10 @@ import { Router } from '@angular/router';
           </ng-container>
 
           <ng-container *ngIf="isSearching">
-            <form class="form">
-              <table cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td>
-                    <mat-form-field style="width: 100%">
-                      <input
-                        class="searchwilayah"
-                        type="text"
-                        placeholder="Cari nama Kelurahan kamu"
-                        aria-label="Number"
-                        matInput
-                        [formControl]="myControl"
-                        [matAutocomplete]="auto"
-                      />
-                      <mat-autocomplete
-                        #auto="matAutocomplete"
-                        autoActiveFirstOption
-                        (optionSelected)="navigate($event.option.value)"
-                      >
-                        <mat-option
-                          *ngFor="let option of (filteredOptions$ | async)"
-                          [value]="option"
-                        >
-                          {{ option.parentNames[3] }} &gt; {{ option.name }}
-                        </mat-option>
-                      </mat-autocomplete>
-                    </mat-form-field>
-                  </td>
-                  <td width="30">
-                    <button mat-icon-button (click)="toggle()">
-                      <mat-icon>cancel</mat-icon>
-                    </button>
-                  </td>
-                </tr>
-              </table>
-            </form>
+            <app-cari-kel
+              (kelId)="navigate($event)"
+              (cancel)="toggle()"
+            ></app-cari-kel>
           </ng-container>
         </td>
       </tr>
@@ -103,39 +62,15 @@ export class PathComponent implements OnInit {
   @Input() node: HierarchyNode;
 
   isSearching = false;
-  myControl = new FormControl();
-  filteredOptions$: Observable<HierarchyNode[]>;
-
   isRefreshing = false;
 
-  constructor(
-    public hie: HierarchyService,
-    private fsdb: AngularFirestore,
-    private router: Router
-  ) {}
+  constructor(public hie: HierarchyService, private router: Router) {}
 
   get PATH_HEIGHT() {
     return AppComponent.PATH_HEIGHT;
   }
 
-  ngOnInit() {
-    this.filteredOptions$ = this.myControl.valueChanges.pipe(
-      filter(Boolean),
-      debounceTime(500),
-      distinctUntilChanged(),
-      switchMap(prefix =>
-        this.fsdb
-          .collection<HierarchyNode>('h', ref =>
-            ref
-              .where('depth', '==', 4)
-              .where('name', '>=', ('' + prefix).toUpperCase())
-              .where('name', '<=', ('' + prefix).toUpperCase() + '{')
-              .limit(10)
-          )
-          .valueChanges()
-      )
-    );
-  }
+  ngOnInit() {}
 
   async refresh(id: number) {
     this.isRefreshing = true;
@@ -159,6 +94,5 @@ export class PathComponent implements OnInit {
   navigate(a) {
     this.router.navigate([a.depth < 4 ? '/h' : '/t', a.id]);
     this.isSearching = false;
-    this.myControl.setValue('');
   }
 }

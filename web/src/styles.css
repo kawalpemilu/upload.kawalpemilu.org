@@ -20,11 +20,19 @@ body {
   animation: 1s alertAnim forwards;
 }
 
-.alternating tr:nth-child(even) {
+.alternating > tr:nth-child(even) {
   background-color: #FFF;
 }
 
-.alternating tr:nth-child(odd) {
+.alternating > tr:nth-child(odd) {
+  background-color: #EEE;
+}
+
+.alternating > tbody > tr:nth-child(even) {
+  background-color: #FFF;
+}
+
+.alternating > tbody > tr:nth-child(odd) {
   background-color: #EEE;
 }
 

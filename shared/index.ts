@@ -225,9 +225,15 @@ export interface UploadRequest {
   meta: ImageMetadata;
   url: string;
   ts: number;
+  // Will be filled when approved.
+  c1: C1Form;
+  sum: SumMap;
 }
 
 export interface ApproveRequest {
+  kelId: number;
+  kelName: string;
+  tpsNo: number;
   imageId: string;
   sum: SumMap;
   c1: C1Form;
@@ -305,7 +311,7 @@ export function getServingUrl(url: string, size: number) {
 }
 
 export function isValidImageId(imageId: string) {
-  return typeof imageId === 'string' && imageId.match(/^[A-Za-z0-9]{20}$/);
+  return typeof imageId === 'string' && imageId.match(/^[A-Za-z0-9]{20}(-[0-9]+-[0-9]+)*$/);
 }
 
 export function isValidUserId(uid: string) {

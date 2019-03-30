@@ -234,7 +234,9 @@ function populateServingUrl() {
       meta: extractImageMetadata(b.meta),
       ts: Date.now(),
       url: null, // Populated below.
-      kelName: '' // Will be populated in the next middleware.
+      kelName: '', // Will be populated in the next middleware.
+      c1: null, // Will be populated on approved
+      sum: null // Will be populated on approved
     });
 
     if (p.imageId.startsWith('zzzzzzz')) {
@@ -277,7 +279,7 @@ function populateKelName() {
       kelName: string;
     };
     if (!p.kelId || !p.tpsNo) {
-      console.warn(`Missing ${p.kelId} ${p.tpsNo}, ${user.uid}`);
+      console.warn(`KelName ${p.kelId} ${p.tpsNo}, ${user.uid}`);
       return res.json({ error: 'missing parameters' });
     }
     let mem = cache[p.kelId];
@@ -304,81 +306,83 @@ function populateKelName() {
   };
 }
 
+async function uploadPhoto(p: UploadRequest, req) {
+  const user = req.user as admin.auth.DecodedIdToken;
+  const ts = p.ts;
+  const rRef = fsdb.doc(FsPath.relawan(user.uid));
+  const pRef = fsdb.doc(FsPath.relawanPhoto(user.uid));
+  const tRef = fsdb.doc(FsPath.tps(p.kelId, p.tpsNo));
+  return await fsdb
+    .runTransaction(async t => {
+      const r = (await t.get(rRef)).data() as Relawan;
+      if (!r || !r.profile || r.profile.uid !== user.uid) {
+        return 'Uploader not found';
+      }
+
+      let photo = (await t.get(pRef)).data() as RelawanPhotos;
+      if (photo) {
+        photo.profile = r.profile;
+      } else {
+        photo = {
+          profile: r.profile,
+          uploads: [],
+          count: 0,
+          nTps: 0,
+          nKel: 0
+        };
+      }
+
+      let tps = (await t.get(tRef)).data() as TpsData;
+      tps = tps || { images: {}, imgCount: 0 };
+
+      photo.uploads.unshift(p);
+      photo.count++;
+      if (photo.count > MAX_NUM_UPLOADS) return 'Exceeded max uploads';
+
+      const pu = photo.uploads;
+      photo.nTps = new Set(pu.map(up => up.kelId + '-' + up.tpsNo)).size;
+      photo.nKel = new Set(pu.map(up => up.kelId)).size;
+
+      const ua = req.headers['user-agent'];
+      const ip = getIp(req);
+      const uploader = { ...photo.profile, ts, ua, ip } as UpsertProfile;
+
+      tps.images[p.imageId] = {
+        uploader,
+        reviewer: null,
+        reports: null,
+        c1: null,
+        sum: {} as SumMap,
+        url: p.url,
+        meta: p.meta
+      };
+      tps.imgCount++;
+
+      const action = computeAction(tps);
+      const upsert = { request: p, uploader, done: 0, action } as Upsert;
+
+      t.create(fsdb.doc(FsPath.upserts(p.imageId)), upsert);
+      t.set(pRef, photo);
+      t.set(tRef, tps);
+      return true;
+    })
+    .catch(e => {
+      console.error(`DB error ${user.uid}`, e);
+      return `Database error`;
+    });
+}
+
 app.post(
   '/api/upload',
   [populateServingUrl(), populateKelName()],
   async (req: any, res) => {
     const user = req.user as admin.auth.DecodedIdToken;
     const p = req.parsedBody as UploadRequest;
-
-    const ts = p.ts;
-    const rRef = fsdb.doc(FsPath.relawan(user.uid));
-    const pRef = fsdb.doc(FsPath.relawanPhoto(user.uid));
-    const tRef = fsdb.doc(FsPath.tps(p.kelId, p.tpsNo));
-    const ok = await fsdb
-      .runTransaction(async t => {
-        const u = (await t.get(rRef)).data() as Relawan;
-        if (!u || !u.profile || u.profile.uid !== user.uid) {
-          return 'Uploader not found';
-        }
-
-        let photo = (await t.get(pRef)).data() as RelawanPhotos;
-        if (photo) {
-          photo.profile = u.profile;
-        } else {
-          photo = {
-            profile: u.profile,
-            uploads: [],
-            count: 0,
-            nTps: 0,
-            nKel: 0
-          };
-        }
-
-        let tps = (await t.get(tRef)).data() as TpsData;
-        tps = tps || { images: {}, imgCount: 0 };
-
-        photo.uploads.unshift(p);
-        photo.count++;
-        if (photo.count > MAX_NUM_UPLOADS) return 'Exceeded max uploads';
-
-        const pu = photo.uploads;
-        photo.nTps = new Set(pu.map(up => up.kelId + '-' + up.tpsNo)).size;
-        photo.nKel = new Set(pu.map(up => up.kelId)).size;
-
-        const ua = req.headers['user-agent'];
-        const ip = getIp(req);
-        const uploader = { ...photo.profile, ts, ua, ip } as UpsertProfile;
-
-        tps.images[p.imageId] = {
-          uploader,
-          reviewer: null,
-          reports: null,
-          c1: null,
-          sum: {} as SumMap,
-          url: p.url,
-          meta: p.meta
-        };
-        tps.imgCount++;
-
-        const action = computeAction(tps);
-        const upsert = { request: p, uploader, done: 0, action } as Upsert;
-
-        t.create(fsdb.doc(FsPath.upserts(p.imageId)), upsert);
-        t.set(pRef, photo);
-        t.set(tRef, tps);
-        return true;
-      })
-      .catch(e => {
-        console.error(`DB error ${user.uid}`, e);
-        return `Database error`;
-      });
-
+    const ok = await uploadPhoto(p, req);
     if (ok !== true) {
       console.error(`Upload failed ${user.uid}: ${ok}`);
       return res.json({ error: ok });
     }
-
     return res.json({ ok: true });
   }
 );
@@ -391,9 +395,13 @@ function getIp(req: express.Request) {
 function populateApprove() {
   return async (req, res, next) => {
     const user = req.user as admin.auth.DecodedIdToken;
-    const b = req.body as ApproveRequest;
+    const b = req.parsedBody as ApproveRequest;
 
-    const a = {} as ApproveRequest;
+    const a = {
+      kelId: b.kelId,
+      tpsNo: b.tpsNo,
+      kelName: b.kelName
+    } as ApproveRequest;
     if (!b || !isValidImageId(b.imageId)) {
       console.warn(`Invalid imageId ${b.imageId} for user ${user.uid}`);
       return res.json({ error: 'Invalid imageId' });
@@ -467,63 +475,114 @@ function computeAction(tps: TpsData) {
   return action;
 }
 
-app.post('/api/approve', [populateApprove()], async (req: any, res) => {
-  const user = req.user as admin.auth.DecodedIdToken;
-  const a = req.parsedBody as ApproveRequest;
-  const ua = req.headers['user-agent'];
-  const ip = getIp(req);
+app.post(
+  '/api/approve',
+  [
+    (req, res, next) => {
+      const b = req.body as ApproveRequest;
+      const p: ApproveRequest = {
+        kelId: +b.kelId,
+        kelName: '',
+        tpsNo: +b.tpsNo,
+        imageId: b.imageId,
+        sum: b.sum,
+        c1: b.c1
+      };
+      req.parsedBody = p;
+      next();
+    },
+    populateKelName(),
+    populateApprove()
+  ],
+  async (req: any, res) => {
+    const user = req.user as admin.auth.DecodedIdToken;
+    const a = req.parsedBody as ApproveRequest;
+    const ua = req.headers['user-agent'];
+    const ip = getIp(req);
+    const ts = Date.now();
 
-  const uRef = fsdb.doc(FsPath.upserts(a.imageId));
-  if (a.c1.type === FORM_TYPE.MALICIOUS) {
-    const u = (await uRef.get()).data() as Upsert;
-    const tuid = u.uploader.uid;
-    console.log(`Mal ${a.imageId} ${tuid}, a = ${user.uid}`);
-    const okBan = await changeRole(user.uid, tuid, USER_ROLE.BANNED, true);
-    if (okBan !== true) console.error(`Ban failed ${okBan}`);
+    const uRef = fsdb.doc(FsPath.upserts(a.imageId));
+    const upsert = (await uRef.get()).data() as Upsert;
+    if (!upsert) {
+      console.warn(`No upsert ${user.uid} : ${a.imageId}`);
+      return res.json({ error: 'No upsert' });
+    }
+
+    if (a.c1.type === FORM_TYPE.MALICIOUS) {
+      const tuid = upsert.uploader.uid;
+      console.log(`Mal ${a.imageId} ${tuid}, a = ${user.uid}`);
+      const okBan = await changeRole(user.uid, tuid, USER_ROLE.BANNED, true);
+      if (okBan !== true) console.error(`Ban failed ${okBan}`);
+    } else if (
+      upsert.request.kelId !== a.kelId ||
+      upsert.request.tpsNo !== a.tpsNo
+    ) {
+      // Moving photo to another TPS is like make a copy then set the old to OTHERS.
+      const copy: UploadRequest = {
+        imageId: upsert.request.imageId + '-' + a.kelId + '-' + a.tpsNo,
+        kelId: a.kelId,
+        kelName: a.kelName,
+        tpsNo: a.tpsNo,
+        meta: upsert.request.meta,
+        url: upsert.request.url,
+        ts,
+        c1: null,
+        sum: null
+      };
+      await uploadPhoto(copy, req);
+      a.c1.type = FORM_TYPE.OTHERS;
+    }
+
+    const rRef = fsdb.doc(FsPath.relawan(user.uid));
+    const ok = await fsdb
+      .runTransaction(async t => {
+        const r = (await t.get(rRef)).data() as Relawan;
+        if (!r || r.profile.role < USER_ROLE.MODERATOR) 'Not Authorized';
+        r.reviewCount = (r.reviewCount || 0) + 1;
+
+        const u = (await t.get(uRef)).data() as Upsert;
+        if (!u) return 'No Upsert';
+        if (r.profile.role < USER_ROLE.ADMIN && u.reviewer)
+          return 'Already approved';
+
+        const pRef = fsdb.doc(FsPath.relawanPhoto(u.uploader.uid));
+        const rp = (await t.get(pRef)).data() as RelawanPhotos;
+        if (!rp) return 'No relawan photo';
+        const photo = rp.uploads.find(p => p.imageId === a.imageId);
+        if (!photo) return `No photo for ${a.imageId}`;
+
+        const tRef = fsdb.doc(FsPath.tps(u.request.kelId, u.request.tpsNo));
+        const tps = (await t.get(tRef)).data() as TpsData;
+        if (!tps) return 'No TPS';
+
+        const img = tps.images[a.imageId];
+        if (!img) return 'No Image';
+
+        photo.c1 = img.c1 = a.c1;
+        photo.sum = img.sum = a.sum;
+
+        u.reviewer = img.reviewer = { ...r.profile, ts, ua, ip };
+        u.action = computeAction(tps);
+        u.done = 0;
+
+        t.update(pRef, rp);
+        t.update(rRef, r);
+        t.update(uRef, u);
+        t.update(tRef, tps);
+        return true;
+      })
+      .catch(e => {
+        console.error(`DB error approve ${user.uid}`, e);
+        return `Database error`;
+      });
+
+    if (ok !== true) {
+      console.warn(`Error approve ${user.uid} : ${ok}`);
+      return res.json({ error: ok });
+    }
+    return res.json({ ok: true });
   }
-
-  const ts = Date.now();
-  const rRef = fsdb.doc(FsPath.relawan(user.uid));
-  const ok = await fsdb
-    .runTransaction(async t => {
-      const r = (await t.get(rRef)).data() as Relawan;
-      if (!r || r.profile.role < USER_ROLE.MODERATOR) 'Not Authorized';
-      r.reviewCount = (r.reviewCount || 0) + 1;
-
-      const u = (await t.get(uRef)).data() as Upsert;
-      if (!u) return 'No Upsert';
-      if (r.profile.role < USER_ROLE.ADMIN && u.reviewer)
-        return 'Already approved';
-
-      const tRef = fsdb.doc(FsPath.tps(u.request.kelId, u.request.tpsNo));
-      const tps = (await t.get(tRef)).data() as TpsData;
-      if (!tps) return 'No TPS';
-
-      const img = tps.images[a.imageId];
-      if (!img) return 'No Image';
-      img.c1 = a.c1;
-      img.sum = a.sum;
-
-      u.reviewer = img.reviewer = { ...r.profile, ts, ua, ip };
-      u.action = computeAction(tps);
-      u.done = 0;
-
-      t.update(rRef, r);
-      t.update(uRef, u);
-      t.update(tRef, tps);
-      return true;
-    })
-    .catch(e => {
-      console.error(`DB error approve ${user.uid}`, e);
-      return `Database error`;
-    });
-
-  if (ok !== true) {
-    console.warn(`Error approve ${user.uid} : ${ok}`);
-    return res.json({ error: ok });
-  }
-  return res.json({ ok: true });
-});
+);
 
 app.post(
   '/api/problem',
