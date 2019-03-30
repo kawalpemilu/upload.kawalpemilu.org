@@ -184,9 +184,49 @@ async function processNewUpserts() {
   setTimeout(processNewUpserts, 1);
 }
 
+function aggregate(dst, src) {
+  for (const key in src) {
+    dst[key] = (dst[key] || 0) + src[key];
+  }
+}
+
+function recomputeH(id: number, depth: number) {
+  const arr = H[id].children;
+  const all = {};
+  if (depth === 4) {
+    for (const tpsNo of arr) {
+      const sum = h[id] && h[id][tpsNo[0]] && h[id][tpsNo[0]].sum;
+      if (sum) aggregate(all, sum);
+    }
+  } else {
+    if (!h[id]) h[id] = {};
+    const hh = h[id];
+    for (const cid of arr) {
+      const csum = recomputeH(cid[0], depth + 1);
+      if (!hh[cid[0]]) hh[cid[0]] = {} as Aggregate;
+      const ch: Aggregate = hh[cid[0]];
+      for (const key in ch.sum) {
+        if (ch.sum[key] !== csum[key]) {
+          console.log('wrong', id, H[id].name, key, ch.sum[key], csum[key]);
+          ch.sum[key] = csum[key];
+        }
+      }
+      for (const key in csum) {
+        if (ch.sum[key] !== csum[key]) {
+          console.log('missing', id, H[id].name, key, ch.sum[key], csum[key]);
+          ch.sum[key] = csum[key];
+        }
+      }
+      aggregate(all, recomputeH(cid[0], depth + 1));
+    }
+  }
+  return all;
+}
+
 (async () => {
   process.setMaxListeners(50);
   h = JSON.parse(await readFileAsync('h.json', 'utf8'));
+  recomputeH(0, 0);
   setTimeout(processNewUpserts, 1);
 
   process.on('SIGINT', async function() {

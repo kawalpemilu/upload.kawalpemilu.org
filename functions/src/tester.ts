@@ -9,7 +9,8 @@ import {
   SumMap,
   FsPath,
   Relawan,
-  RelawanPhotos
+  RelawanPhotos,
+  Aggregate
 } from 'shared';
 
 import { H } from './hierarchy';
@@ -359,18 +360,34 @@ async function checkHierarchy() {
         if (sum) agg(all, sum);
       }
     } else {
+      if (!h[id]) h[id] = {};
+      const hh = h[id];
       for (const cid of arr) {
-        agg(all, recCheck(cid[0], depth + 1));
+        const csum = recCheck(cid[0], depth + 1);
+        if (!hh[cid[0]]) hh[cid[0]] = {};
+        const ch: Aggregate = hh[cid[0]];
+        for (const key in ch.sum) {
+          if (ch.sum[key] !== csum[key]) {
+            console.log('wrong', id, H[id].name, key, ch.sum[key], csum[key]);
+            ch.sum[key] = csum[key];
+          }
+        }
+        for (const key in csum) {
+          if (ch.sum[key] !== csum[key]) {
+            console.log('missing', id, H[id].name, key, ch.sum[key], csum[key]);
+            ch.sum[key] = csum[key];
+          }
+        }
+        agg(all, csum);
       }
     }
     return all;
   }
-
-  console.log('all', JSON.stringify(recCheck(0, 0), null, 2));
+  recCheck(0, 0);
 }
 
 // parallelUpload().catch(console.error);
 // loadTest().catch(console.error);
 // fixClaimersRole().catch(console.error);
-fixUploadersCount().catch(console.error);
-// checkHierarchy().catch(console.error);
+// fixUploadersCount().catch(console.error);
+checkHierarchy().catch(console.error);
