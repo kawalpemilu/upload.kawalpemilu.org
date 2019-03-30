@@ -106,7 +106,11 @@ export interface PublicProfile {
 export interface RelawanPhotos {
     profile: PublicProfile;
     uploads: UploadRequest[];
-    count: number;
+    reports: ProblemRequest[];
+    uploadCount: number;
+    maxUploadCount: number;
+    reportCount: number;
+    maxReportCount: number;
     nTps: number;
     nKel: number;
 }
@@ -120,8 +124,6 @@ export interface Relawan {
     };
     auth: any;
     theCode: string;
-    reportCount: number;
-    maxReports: number;
     reviewCount: number;
 }
 export interface ChangeLog {

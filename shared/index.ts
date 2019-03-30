@@ -124,7 +124,11 @@ export interface PublicProfile {
 export interface RelawanPhotos {
   profile: PublicProfile;
   uploads: UploadRequest[];
-  count: number; // Number of uploaded photos.
+  reports: ProblemRequest[];
+  uploadCount: number; // Number of uploaded photos.
+  maxUploadCount: number; // Whitelist this person to go beyond.
+  reportCount: number; // Number of reported photos.
+  maxReportCount: number; // Whitelist this person to go beyond.
   nTps: number; // Number of different TPS uploaded.
   nKel: number; // Number of different kelurahans uploaded.
 }
@@ -137,8 +141,6 @@ export interface Relawan {
   code: { [code: string]: CodeReferral }; // Code referrals
   auth: any; // firebase.User reference.
   theCode: string; // The code to refer others.
-  reportCount: number; // The number of errors reported.
-  maxReports: number; // Whitelist this person to go beyond.
   reviewCount: number; // The number of images reviewed.
 }
 

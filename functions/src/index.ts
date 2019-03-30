@@ -326,7 +326,11 @@ async function uploadPhoto(p: UploadRequest, req) {
         photo = {
           profile: r.profile,
           uploads: [],
-          count: 0,
+          uploadCount: 0,
+          maxUploadCount: 0,
+          reports: [],
+          reportCount: 0,
+          maxReportCount: 0,
           nTps: 0,
           nKel: 0
         };
@@ -336,8 +340,9 @@ async function uploadPhoto(p: UploadRequest, req) {
       tps = tps || { images: {}, imgCount: 0 };
 
       photo.uploads.unshift(p);
-      photo.count++;
-      if (photo.count > MAX_NUM_UPLOADS) return 'Exceeded max uploads';
+      photo.uploadCount = photo.uploads.length;
+      const maxNumUploads = photo.maxUploadCount || MAX_NUM_UPLOADS;
+      if (photo.uploadCount > maxNumUploads) return 'Exceeded max uploads';
 
       const pu = photo.uploads;
       photo.nTps = new Set(pu.map(up => up.kelId + '-' + up.tpsNo)).size;
@@ -619,7 +624,7 @@ app.post(
     const ip = getIp(req);
     const ua = req.headers['user-agent'];
     const tRef = fsdb.doc(FsPath.tps(p.kelId, p.tpsNo));
-    const rRef = fsdb.doc(FsPath.relawan(user.uid));
+    const rpRef = fsdb.doc(FsPath.relawanPhoto(user.uid));
     const ok = await fsdb
       .runTransaction(async t => {
         const tps = (await t.get(tRef)).data() as TpsData;
@@ -631,12 +636,14 @@ app.post(
         const u = (await t.get(uRef)).data() as Upsert;
         if (!u) return 'imageId not found';
 
-        const r = (await t.get(rRef)).data() as Relawan;
-        r.reportCount = (r.reportCount || 0) + 1;
-        const maxReports = r.maxReports || MAX_REPORT_ERRORS;
-        if (r.reportCount > maxReports) return 'too many reports';
+        const rp = (await t.get(rpRef)).data() as RelawanPhotos;
+        rp.reports = rp.reports || [];
+        rp.reports.unshift(p);
+        rp.reportCount = rp.reports.length;
+        const maxReports = rp.maxReportCount || MAX_REPORT_ERRORS;
+        if (rp.reportCount > maxReports) return 'too many reports';
 
-        const reporter: UpsertProfile = { ...r.profile, ts, ua, ip };
+        const reporter: UpsertProfile = { ...rp.profile, ts, ua, ip };
 
         const img = tps.images[imageId];
         img.reports = img.reports || {};
@@ -644,13 +651,12 @@ app.post(
         img.sum.error = 1;
 
         u.reporter = reporter;
-        u.action = { sum: { error: 1 }, photos: {} } as TpsAggregate;
-        u.action.photos[p.url] = { c1: img.c1, sum: img.sum, ts };
+        u.action = computeAction(tps);
         u.done = 0;
 
         t.update(tRef, tps);
         t.update(uRef, u);
-        t.update(rRef, r);
+        t.update(rpRef, rp);
         return true;
       })
       .catch(e => {

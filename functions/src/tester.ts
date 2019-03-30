@@ -314,25 +314,24 @@ async function fixClaimersRole() {
 }
 
 async function fixUploadersCount() {
-  const mods = await fsdb
-    .collection(FsPath.relawanPhoto())
-    .orderBy('count', 'desc')
-    .get();
+  const mods = await fsdb.collection(FsPath.relawanPhoto()).get();
   for (const snap of mods.docs) {
     const photo = snap.data() as RelawanPhotos;
-    if (photo.nKel) continue;
+    // if (photo.nKel) continue;
 
     const pu = photo.uploads;
     const nTps = new Set(pu.map(up => up.kelId + '-' + up.tpsNo)).size;
     const nKel = new Set(pu.map(up => up.kelId)).size;
+    const uploadCount = photo.uploads.length;
     console.log(
-      `Updating ${photo.profile.name} : ${photo.count} ${nTps} ${nKel}`
+      `Updating ${photo.profile.name} : ${photo.uploadCount} ${nTps} ${nKel}`
     );
 
     await fsdb.doc(FsPath.relawanPhoto(snap.id)).update({
       nTps,
-      nKel
-    });
+      nKel,
+      uploadCount
+    } as RelawanPhotos);
   }
 }
 
@@ -373,5 +372,5 @@ async function checkHierarchy() {
 // parallelUpload().catch(console.error);
 // loadTest().catch(console.error);
 // fixClaimersRole().catch(console.error);
-// fixUploadersCount().catch(console.error);
-checkHierarchy().catch(console.error);
+fixUploadersCount().catch(console.error);
+// checkHierarchy().catch(console.error);
