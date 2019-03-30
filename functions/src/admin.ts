@@ -199,12 +199,10 @@ function recomputeH(id: number, depth: number) {
       if (sum) aggregate(all, sum);
     }
   } else {
-    if (!h[id]) h[id] = {};
-    const hh = h[id];
     for (const cid of arr) {
       const csum = recomputeH(cid[0], depth + 1);
-      if (!hh[cid[0]]) hh[cid[0]] = {} as Aggregate;
-      const ch: Aggregate = hh[cid[0]];
+      const ch = getUpsertData(id, cid[0]);
+      ch.sum = ch.sum || {} as SumMap;
       for (const key in ch.sum) {
         if (ch.sum[key] !== csum[key]) {
           console.log('wrong', id, H[id].name, key, ch.sum[key], csum[key]);
