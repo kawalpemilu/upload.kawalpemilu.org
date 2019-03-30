@@ -76,13 +76,13 @@
             <ng-container *ngIf="details[tps.tpsNo] as details$; else fotopub">
               <ng-container *ngIf="(details$ | async) as detail; else loadTps">
                 <app-carousel
-                  [height]="400"
+                  [height]="425"
                   [photos]="detail"
                   (edited)="digitize[tps.tpsNo] = $event.imageId"
                 ></app-carousel>
               </ng-container>
               <ng-template #loadTps>
-                <div style="height: 400px">
+                <div style="height: 425px">
                   <mat-spinner></mat-spinner>
                 </div>
               </ng-template>

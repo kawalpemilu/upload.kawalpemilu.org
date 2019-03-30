@@ -161,6 +161,8 @@ export class BottomSheetErrorComponent {
               </tr>
               <tr *ngIf="p.reviewer as reviewer">
                 <td colspan="2" align="center">
+                  <br />
+                  {{ reviewer.ts | date: 'short' }}
                   <app-orang
                     [profile]="reviewer"
                     [activity]="true"
@@ -172,8 +174,8 @@ export class BottomSheetErrorComponent {
               <ng-template #pending>
                 <tr>
                   <td colspan="2" align="center">
-                  <p style="color: orange">
-                    Foto ini belum diproses.
+                    <p style="color: orange">
+                      Foto ini belum diproses.
                     </p>
                   </td>
                 </tr>

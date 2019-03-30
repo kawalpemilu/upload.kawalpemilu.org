@@ -48,8 +48,8 @@ interface Slice {
 })
 export class TpsComponent implements OnInit {
   state$: Observable<State>;
-  digitize: { [tpsNo: string]: string } = {};
-  details: { [tpsNo: string]: Observable<CarouselItem[]> } = {};
+  digitize: { [tpsNo: string]: string };
+  details: { [tpsNo: string]: Observable<CarouselItem[]> };
   showingSlice: Slice;
   slices: Slice[];
   USER_ROLE = USER_ROLE;
@@ -93,6 +93,8 @@ export class TpsComponent implements OnInit {
         if (previousId !== state.id) {
           previousId = state.id;
           this.showingSlice = null;
+          this.digitize = {};
+          this.details = {};
         }
         if (state.tpsList.length > 200) {
           this.populateSlices(state.tpsList, 40);
@@ -163,7 +165,7 @@ export class TpsComponent implements OnInit {
         ts: p.ts,
         sum: p.sum,
         error,
-        c1: null,
+        c1: p.c1,
         imageId: null,
         meta: null,
         reports: null,
