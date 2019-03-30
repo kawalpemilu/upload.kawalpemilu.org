@@ -569,6 +569,7 @@ app.post(
 
         photo.c1 = img.c1 = a.c1;
         photo.sum = img.sum = a.sum;
+        img.sum.pending = 0;
 
         u.reviewer = img.reviewer = { ...r.profile, ts, ua, ip };
         u.action = computeAction(tps);
