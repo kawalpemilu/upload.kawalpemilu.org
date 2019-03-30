@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HierarchyNode, lsGetItem, lsSetItem } from 'shared';
+import { HierarchyNode, lsGetItem, lsSetItem, SumMap } from 'shared';
 import { ApiService } from './api.service';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { filter, take, distinctUntilChanged, map } from 'rxjs/operators';
@@ -22,6 +22,9 @@ export class HierarchyService {
       return this.api
         .get(this.userService.user, `c/${id}?${Date.now()}`)
         .then((c: HierarchyNode) => {
+          Object.keys(c.data || {})
+            .filter(cid => !c.data[cid].sum)
+            .forEach(cid => (c.data[cid].sum = {} as SumMap));
           this.hierarchy$[id].next(c);
           lsSetItem(`h/${id}`, c);
         })
