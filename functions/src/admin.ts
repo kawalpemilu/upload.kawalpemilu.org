@@ -95,9 +95,6 @@ async function updateAggregates(
     for (const key in delta.sum) {
       target.sum[key] = (target.sum[key] || 0) + delta.sum[key];
     }
-    Object.keys(target.sum)
-      .filter(key => !delta.sum.hasOwnProperty(key))
-      .forEach(key => delete target.sum[key]);
     target.ts = Math.max(target.ts || delta.ts, delta.ts);
 
     if (!dirtyKelId[path[i]]) {
@@ -202,7 +199,7 @@ function recomputeH(id: number, depth: number) {
     for (const cid of arr) {
       const csum = recomputeH(cid[0], depth + 1);
       const ch = getUpsertData(id, cid[0]);
-      ch.sum = ch.sum || {} as SumMap;
+      ch.sum = ch.sum || ({} as SumMap);
       for (const key in ch.sum) {
         if (ch.sum[key] !== csum[key]) {
           console.log('wrong', id, H[id].name, key, ch.sum[key], csum[key]);
@@ -211,7 +208,14 @@ function recomputeH(id: number, depth: number) {
       }
       for (const key in csum) {
         if (ch.sum[key] !== csum[key]) {
-          console.log('missing', cid, H[cid].name, key, ch.sum[key], csum[key]);
+          console.log(
+            'missing',
+            cid[0],
+            H[cid[0]].name,
+            key,
+            ch.sum[key],
+            csum[key]
+          );
           ch.sum[key] = csum[key];
         }
       }

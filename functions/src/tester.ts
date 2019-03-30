@@ -351,6 +351,13 @@ async function checkHierarchy() {
     }
   }
 
+  function getUpsertData(parentId, childId): Aggregate {
+    if (!h[parentId]) h[parentId] = {};
+    const c = h[parentId];
+    if (!c[childId]) c[childId] = { sum: {} as SumMap, ts: 0, c1: null };
+    return c[childId];
+  }
+
   function recCheck(id: number, depth: number) {
     const arr = H[id].children;
     const all = {};
@@ -360,21 +367,27 @@ async function checkHierarchy() {
         if (sum) agg(all, sum);
       }
     } else {
-      if (!h[id]) h[id] = {};
-      const hh = h[id];
       for (const cid of arr) {
         const csum = recCheck(cid[0], depth + 1);
-        if (!hh[cid[0]]) hh[cid[0]] = {};
-        const ch: Aggregate = hh[cid[0]];
+        const ch = getUpsertData(id, cid[0]);
         for (const key in ch.sum) {
           if (ch.sum[key] !== csum[key]) {
             console.log('wrong', id, H[id].name, key, ch.sum[key], csum[key]);
             ch.sum[key] = csum[key];
           }
         }
+        const c = H[cid[0]];
         for (const key in csum) {
           if (ch.sum[key] !== csum[key]) {
-            console.log('missing', id, H[id].name, key, ch.sum[key], csum[key]);
+            console.log(
+              'missing',
+              cid[0],
+              c.name,
+              c.depth,
+              key,
+              ch.sum[key],
+              csum[key]
+            );
             ch.sum[key] = csum[key];
           }
         }
