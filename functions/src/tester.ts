@@ -1,6 +1,7 @@
 import * as admin from 'firebase-admin';
 import * as request from 'request-promise';
 import * as fs from 'fs';
+import * as util from 'util';
 
 import {
   UploadRequest,
@@ -22,6 +23,8 @@ admin.initializeApp({
 
 const auth = admin.auth();
 const fsdb = admin.firestore();
+
+const readFileAsync = util.promisify(fs.readFile);
 
 interface User {
   uid: string;
@@ -333,7 +336,42 @@ async function fixUploadersCount() {
   }
 }
 
+async function checkHierarchy() {
+  const h = JSON.parse(await readFileAsync('h.json', 'utf8'));
+  let cnt = 0;
+  for (const id of Object.keys(h)) {
+    const node = h[id];
+    if (node.depth === 4) cnt++;
+  }
+  console.log('cnt', cnt);
+
+  function agg(dst, src) {
+    for (const key in src) {
+      dst[key] = (dst[key] || 0) + src[key];
+    }
+  }
+
+  function recCheck(id: number, depth: number) {
+    const arr = H[id].children;
+    const all = {};
+    if (depth === 4) {
+      for (const tpsNo of arr) {
+        const sum = h[id] && h[id][tpsNo[0]] && h[id][tpsNo[0]].sum;
+        if (sum) agg(all, sum);
+      }
+    } else {
+      for (const cid of arr) {
+        agg(all, recCheck(cid[0], depth + 1));
+      }
+    }
+    return all;
+  }
+
+  console.log('all', JSON.stringify(recCheck(0, 0), null, 2));
+}
+
 // parallelUpload().catch(console.error);
 // loadTest().catch(console.error);
 // fixClaimersRole().catch(console.error);
-fixUploadersCount().catch(console.error);
+// fixUploadersCount().catch(console.error);
+checkHierarchy().catch(console.error);
