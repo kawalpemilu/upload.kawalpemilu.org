@@ -111,6 +111,7 @@ export interface RelawanPhotos {
     maxUploadCount: number;
     reportCount: number;
     maxReportCount: number;
+    reviewCount: number;
     nTps: number;
     nKel: number;
 }
@@ -124,7 +125,6 @@ export interface Relawan {
     };
     auth: any;
     theCode: string;
-    reviewCount: number;
 }
 export interface ChangeLog {
     auid: string;

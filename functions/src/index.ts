@@ -331,6 +331,7 @@ async function uploadPhoto(p: UploadRequest, req) {
           reports: [],
           reportCount: 0,
           maxReportCount: 0,
+          reviewCount: 0,
           nTps: 0,
           nKel: 0
         };
@@ -539,11 +540,14 @@ app.post(
     }
 
     const rRef = fsdb.doc(FsPath.relawan(user.uid));
+    const rpRef = fsdb.doc(FsPath.relawanPhoto(user.uid));
     const ok = await fsdb
       .runTransaction(async t => {
         const r = (await t.get(rRef)).data() as Relawan;
         if (!r || r.profile.role < USER_ROLE.MODERATOR) 'Not Authorized';
-        r.reviewCount = (r.reviewCount || 0) + 1;
+        const rp = (await t.get(rpRef)).data() as RelawanPhotos;
+        rp.profile = r.profile;
+        rp.reviewCount = (rp.reviewCount || 0) + 1;
 
         const u = (await t.get(uRef)).data() as Upsert;
         if (!u) return 'No Upsert';
@@ -551,9 +555,9 @@ app.post(
           return 'Already approved';
 
         const pRef = fsdb.doc(FsPath.relawanPhoto(u.uploader.uid));
-        const rp = (await t.get(pRef)).data() as RelawanPhotos;
-        if (!rp) return 'No relawan photo';
-        const photo = rp.uploads.find(p => p.imageId === a.imageId);
+        const urp = (await t.get(pRef)).data() as RelawanPhotos;
+        if (!urp) return 'No relawan photo';
+        const photo = urp.uploads.find(p => p.imageId === a.imageId);
         if (!photo) return `No photo for ${a.imageId}`;
 
         const tRef = fsdb.doc(FsPath.tps(u.request.kelId, u.request.tpsNo));
@@ -570,7 +574,8 @@ app.post(
         u.action = computeAction(tps);
         u.done = 0;
 
-        t.update(pRef, rp);
+        t.update(pRef, urp);
+        t.update(rpRef, rp);
         t.update(rRef, r);
         t.update(uRef, u);
         t.update(tRef, tps);

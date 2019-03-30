@@ -129,6 +129,7 @@ export interface RelawanPhotos {
   maxUploadCount: number; // Whitelist this person to go beyond.
   reportCount: number; // Number of reported photos.
   maxReportCount: number; // Whitelist this person to go beyond.
+  reviewCount: number; // The number of images reviewed.
   nTps: number; // Number of different TPS uploaded.
   nKel: number; // Number of different kelurahans uploaded.
 }
@@ -141,7 +142,6 @@ export interface Relawan {
   code: { [code: string]: CodeReferral }; // Code referrals
   auth: any; // firebase.User reference.
   theCode: string; // The code to refer others.
-  reviewCount: number; // The number of images reviewed.
 }
 
 export interface ChangeLog {

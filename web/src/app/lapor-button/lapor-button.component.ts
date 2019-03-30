@@ -91,6 +91,7 @@ export class LaporButtonComponent implements OnInit {
   ngOnInit() {
     this.data = {
       kelId: this.kelId,
+      kelName: '',
       tpsNo: this.tpsNo,
       url: this.url,
       reason: ''
