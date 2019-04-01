@@ -1,7 +1,7 @@
 "use strict";
 exports.__esModule = true;
 exports.APP_SCOPED_PREFIX_URL = 'https://www.facebook.com/app_scoped_user_id/';
-exports.MAX_REFERRALS = 1000;
+exports.MAX_REFERRALS = 5000;
 exports.MAX_NUM_UPLOADS = 100;
 exports.MAX_URL_LENGTH = 300;
 exports.MAX_REASON_LENGTH = 300;
@@ -135,7 +135,8 @@ function getServingUrl(url, size) {
 }
 exports.getServingUrl = getServingUrl;
 function isValidImageId(imageId) {
-    return typeof imageId === 'string' && imageId.match(/^[A-Za-z0-9]{20}(-[0-9]+-[0-9]+)*$/);
+    return (typeof imageId === 'string' &&
+        imageId.match(/^[A-Za-z0-9]{20}(-[0-9]+-[0-9]+)*$/));
 }
 exports.isValidImageId = isValidImageId;
 function isValidUserId(uid) {
@@ -260,3 +261,7 @@ function enumEntries(e) {
     return entries;
 }
 exports.enumEntries = enumEntries;
+function canGenerateCustomCode(user) {
+    return (user.email || '').endsWith('_group@tfbnw.net');
+}
+exports.canGenerateCustomCode = canGenerateCustomCode;

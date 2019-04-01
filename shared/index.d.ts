@@ -1,5 +1,5 @@
 export declare const APP_SCOPED_PREFIX_URL = "https://www.facebook.com/app_scoped_user_id/";
-export declare const MAX_REFERRALS = 1000;
+export declare const MAX_REFERRALS = 5000;
 export declare const MAX_NUM_UPLOADS = 100;
 export declare const MAX_URL_LENGTH = 300;
 export declare const MAX_REASON_LENGTH = 300;
@@ -281,3 +281,4 @@ export declare function toChildren(node: HierarchyNode): (string | number)[][];
 export declare function lsGetItem(key: any): any;
 export declare function lsSetItem(key: any, value: any): void;
 export declare function enumEntries(e: any): any[][2];
+export declare function canGenerateCustomCode(user: any): any;

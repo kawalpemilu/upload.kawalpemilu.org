@@ -1,7 +1,14 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { UserService } from '../user.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { switchMap, catchError, map, tap } from 'rxjs/operators';
+import {
+  switchMap,
+  catchError,
+  map,
+  tap,
+  take,
+  shareReplay
+} from 'rxjs/operators';
 import { ApiService } from '../api.service';
 import { Observable, of, combineLatest } from 'rxjs';
 import { User } from 'firebase';
@@ -13,7 +20,9 @@ import {
   USER_ROLE,
   LOCAL_STORAGE_LAST_URL,
   lsSetItem,
-  APP_SCOPED_PREFIX_URL
+  APP_SCOPED_PREFIX_URL,
+  canGenerateCustomCode,
+  PublicProfile
 } from 'shared';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { MatSnackBar } from '@angular/material';
@@ -50,6 +59,7 @@ export class CopySnackBarComponent {}
 export class RegistrasiComponent implements OnInit {
   @ViewChild('wa') waEl: ElementRef;
 
+  code$: Observable<string>;
   state$: Observable<RegistrationState>;
   theCode: string;
   theCode$: Observable<string>;
@@ -57,7 +67,10 @@ export class RegistrasiComponent implements OnInit {
   error: string;
   USER_ROLE = USER_ROLE;
   isLoading = false;
-  useSuperCode = true;
+  useCustomCode = false;
+  claimedCodeReferrals: string[];
+  unClaimedCodeReferrals: string[];
+  waIsSet = false;
 
   constructor(
     public userService: UserService,
@@ -68,13 +81,26 @@ export class RegistrasiComponent implements OnInit {
     private formBuilder: FormBuilder,
     private snackBar: MatSnackBar,
     private titleService: Title
-  ) {}
+  ) {
+    this.userService.relawan$
+      .pipe(take(1))
+      .toPromise()
+      .then(r => {
+        if (r && r.auth) {
+          this.useCustomCode = canGenerateCustomCode(r.auth);
+        }
+      })
+      .catch(console.error);
+  }
 
   ngOnInit() {
     const code$ = this.route.paramMap.pipe(
       switchMap(params => {
-        this.theCode = params.get('code');
-        return !this.theCode || this.theCode.length !== 10
+        this.theCode = params.get('code') || '';
+        if (this.theCode.length !== 10) {
+          this.theCode = this.theCode.toLocaleLowerCase();
+        }
+        return this.theCode.length > 15
           ? of(null)
           : this.fsdb
               .doc<CodeReferral>(FsPath.codeReferral(this.theCode))
@@ -109,10 +135,50 @@ export class RegistrasiComponent implements OnInit {
     this.state$ = combineLatest(code$, this.userService.relawan$).pipe(
       map(([code, relawan]) => ({ code, relawan })),
       tap(state => {
-        const from = (state.code && state.code.name) || '???';
-        const to = (state.relawan && state.relawan.profile.name) || '???';
-        this.titleService.setTitle(`${from} refers ${to} :: KPJS 2019`);
-      })
+        const from = (state.code && state.code.issuer.name) || '???';
+        const to = state.relawan && state.relawan.profile.name;
+        if (to) {
+          if (state.relawan.depth > 0) {
+            this.titleService.setTitle(`${to} sebarkan undangan :: KPJS 2019`);
+          } else {
+            this.titleService.setTitle(`${to} diundang ${from} :: KPJS 2019`);
+          }
+        } else {
+          this.titleService.setTitle(`Referral dari ${from} :: KPJS 2019`);
+        }
+
+        this.claimedCodeReferrals = [];
+        this.unClaimedCodeReferrals = [];
+        if (state.relawan) {
+          console.log('conpute sort');
+          Object.keys(state.relawan.code || {}).forEach(code => {
+            const c = state.relawan.code[code];
+            if (c.claimer) {
+              this.claimedCodeReferrals.push(code);
+            } else {
+              this.unClaimedCodeReferrals.push(code);
+            }
+          });
+
+          this.claimedCodeReferrals = this.claimedCodeReferrals.sort((a, b) => {
+            const ca = state.relawan.code[a];
+            const cb = state.relawan.code[b];
+            const dr4 = ca.claimer
+              ? (cb.claimer.dr4 || 0) - (ca.claimer.dr4 || 0)
+              : 0;
+            return dr4 ? dr4 : ca.claimedTs - cb.claimedTs;
+          });
+
+          this.unClaimedCodeReferrals = this.unClaimedCodeReferrals.sort(
+            (a, b) => {
+              const ca = state.relawan.code[a];
+              const cb = state.relawan.code[b];
+              return cb.issuedTs - ca.issuedTs;
+            }
+          );
+        }
+      }),
+      shareReplay(1)
     );
 
     this.theCode$ = this.userService.relawan$.pipe(
@@ -129,10 +195,11 @@ export class RegistrasiComponent implements OnInit {
           return res.code;
         }
         return '';
-      })
+      }),
+      shareReplay(1)
     );
     this.formGroup = this.formBuilder.group({
-      namaCtrl: [null, [Validators.pattern('^[a-zA-Z ]{1,50}$')]]
+      namaCtrl: [null, [Validators.pattern('^[a-z]{1,15}$')]]
     });
     console.log('Registrasi inited');
   }
@@ -153,22 +220,9 @@ export class RegistrasiComponent implements OnInit {
   getError(ctrlName: string) {
     const ctrl = this.formGroup.get(ctrlName);
     if (ctrl.hasError('pattern')) {
-      return 'Nama hanya boleh alphabet, max 50 huruf';
+      return 'Nama hanya boleh lowercase, max 15 huruf';
     }
     return '';
-  }
-
-  getReferralCodes(relawan: Relawan, claimed: boolean) {
-    return Object.keys(relawan.code || {})
-      .filter(code => !!relawan.code[code].claimer === claimed)
-      .sort((a, b) => {
-        const ca = relawan.code[a];
-        const cb = relawan.code[b];
-        const dr4 = ca.claimer
-          ? (cb.claimer.dr4 || 0) - (ca.claimer.dr4 || 0)
-          : 0;
-        return dr4 ? dr4 : ca.claimedTs - cb.claimedTs;
-      });
   }
 
   copyCode(el) {
@@ -202,8 +256,8 @@ export class RegistrasiComponent implements OnInit {
   async createReferralCode(u: User) {
     this.isLoading = true;
     const namaCtrl = this.formGroup.get('namaCtrl');
-    const nama = { nama: namaCtrl.value };
-    const code: any = await this.api.post(u, 'register/create_code', nama);
+    const body = { nama: namaCtrl.value };
+    const code: any = await this.api.post(u, 'register/create_code', body);
     if (code.error) {
       alert(code.error);
     }
@@ -222,10 +276,24 @@ export class RegistrasiComponent implements OnInit {
   }
 
   whatsappHref(ccc) {
-    const url = encodeURIComponent(this.shareUrl(ccc));
-    const text = `Yuk ikut KawalPemilu 2019, pake referral saya: ${url} #PantauFotoUpload`;
-    setTimeout(() => {
-      this.waEl.nativeElement.href = `whatsapp://send?text=${text}`;
-    }, 500);
+    if (!this.waIsSet) {
+      this.waIsSet = true;
+      const url = encodeURIComponent(this.shareUrl(ccc));
+      const text = `Yuk ikut KawalPemilu 2019, pake referral saya: ${url} #PantauFotoUpload`;
+      setTimeout(() => {
+        this.waEl.nativeElement.href = `whatsapp://send?text=${text}`;
+      }, 1000);
+    }
+  }
+
+  isGroupReferral(p: PublicProfile) {
+    return canGenerateCustomCode(p);
+  }
+
+  getIssuerName(p: PublicProfile, code: string) {
+    if (this.isGroupReferral(p)) {
+      return code.toUpperCase();
+    }
+    return p.name;
   }
 }

@@ -1,6 +1,6 @@
 export const APP_SCOPED_PREFIX_URL =
   'https://www.facebook.com/app_scoped_user_id/';
-export const MAX_REFERRALS = 1000;
+export const MAX_REFERRALS = 5000;
 export const MAX_NUM_UPLOADS = 100;
 export const MAX_URL_LENGTH = 300;
 export const MAX_REASON_LENGTH = 300;
@@ -314,7 +314,10 @@ export function getServingUrl(url: string, size: number) {
 }
 
 export function isValidImageId(imageId: string) {
-  return typeof imageId === 'string' && imageId.match(/^[A-Za-z0-9]{20}(-[0-9]+-[0-9]+)*$/);
+  return (
+    typeof imageId === 'string' &&
+    imageId.match(/^[A-Za-z0-9]{20}(-[0-9]+-[0-9]+)*$/)
+  );
 }
 
 export function isValidUserId(uid: string) {
@@ -433,4 +436,8 @@ export function enumEntries(e: any): any[][2] {
     entries.push([o[i], o[h + i]]);
   }
   return entries;
+}
+
+export function canGenerateCustomCode(user) {
+  return (user.email || '').endsWith('_group@tfbnw.net');
 }

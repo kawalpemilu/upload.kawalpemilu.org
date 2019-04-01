@@ -24,7 +24,6 @@ import {
   USER_ROLE,
   isValidUserId,
   ChangeLog,
-  Aggregate,
   SumMap,
   RelawanPhotos,
   UpsertProfile,
@@ -33,12 +32,12 @@ import {
   toChildren,
   FORM_TYPE,
   IS_PLANO,
-  TpsAggregate,
   PublicProfile,
   ProblemRequest,
   MAX_URL_LENGTH,
   MAX_REASON_LENGTH,
-  MAX_REPORT_ERRORS
+  MAX_REPORT_ERRORS,
+  canGenerateCustomCode
 } from 'shared';
 
 const t1 = Date.now();
@@ -785,7 +784,7 @@ async function generateCode(t) {
   return code;
 }
 
-async function addGeneratedCode(r: Relawan, nama, t, code) {
+async function addGeneratedCode(r: Relawan, nama, t, code, bulk = null) {
   const newCode: CodeReferral = {
     issuer: r.profile,
     issuedTs: Date.now(),
@@ -794,9 +793,9 @@ async function addGeneratedCode(r: Relawan, nama, t, code) {
     claimer: null,
     claimedTs: null,
     agg: 0,
-    bulk: null
+    bulk
   };
-  t.set(fsdb.doc(FsPath.codeReferral(code)), newCode);
+  t.create(fsdb.doc(FsPath.codeReferral(code)), newCode);
 
   if (!r.code) r.code = {};
   r.code[code] = { name: nama, issuedTs: newCode.issuedTs } as CodeReferral;
@@ -806,9 +805,15 @@ async function addGeneratedCode(r: Relawan, nama, t, code) {
 
 app.post('/api/register/create_code', async (req: any, res) => {
   const user = req.user as admin.auth.DecodedIdToken;
-  const nama = req.body.nama;
-  if (!nama || !nama.match(/^[A-Za-z ]{1,50}$/))
-    return res.json({ error: 'Nama tidak valid' });
+
+  if (!canGenerateCustomCode(user)) {
+    console.error(`Unauthorized creator ${user.uid}`);
+    return res.json({ error: 'Not authorized' });
+  }
+
+  const code = req.body.nama;
+  if (!code || !code.match(/^[a-z]{1,15}$/))
+    return res.json({ error: 'Code tidak valid' });
 
   const rRef = fsdb.doc(FsPath.relawan(user.uid));
   const c = await fsdb
@@ -816,8 +821,7 @@ app.post('/api/register/create_code', async (req: any, res) => {
       const r = (await t.get(rRef)).data() as Relawan;
       if (!r) return 'no_user';
       if (r.depth === undefined) return 'no_trust';
-      const code = await generateCode(t);
-      await addGeneratedCode(r, nama, t, code);
+      await addGeneratedCode(r, 'Netizen', t, code, true);
       if (Object.keys(r.code).length > MAX_REFERRALS) return 'no_quota';
       return code;
     })
@@ -845,7 +849,7 @@ app.post('/api/register/create_code', async (req: any, res) => {
 app.post('/api/register/:code', async (req: any, res) => {
   const user = req.user as admin.auth.DecodedIdToken;
   const code = req.params.code;
-  if (!new RegExp('^[a-zA-Z0-9]{10}$').test(code)) {
+  if (!new RegExp('^[a-zA-Z0-9]{1,15}$').test(code)) {
     return res.json({ error: 'Kode referral tidak valid' });
   }
 

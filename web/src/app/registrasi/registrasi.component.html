@@ -1,14 +1,19 @@
 <ng-container *ngIf="(state$ | async) as state">
   <ng-container *ngIf="state.code && state.relawan">
     <p>
-      <app-orang [profile]="state.code.issuer" [showDr]="false"></app-orang>
+      <ng-container *ngIf="isGroupReferral(state.code.issuer); else orang">
+        <b>{{ theCode.toUpperCase() }}</b>
+      </ng-container>
+      <ng-template #orang>
+        <app-orang [profile]="state.code.issuer" [showDr]="false"></app-orang>
+      </ng-template>
       mengundang kamu menjadi relawan KawalPemilu - Jaga Suara 2019.
     </p>
 
-    <p>
+    <!-- <p>
       <b style="color: red">Catatan</b>: <b>JANGAN terima undangan ini</b> jika
       kamu tidak mengenal atau mempercayai si pengundang di atas.
-    </p>
+    </p> -->
 
     <p *ngIf="error" style="color: red">{{ error }}</p>
 
@@ -18,7 +23,8 @@
       color="primary"
       (click)="registerCode(state.relawan.auth, state.code)"
     >
-      Terima undangan dari {{ state.code.issuer.name }}
+      Terima undangan dari
+      {{ getIssuerName(state.code.issuer, theCode) }}
     </button>
 
     <app-kontak></app-kontak>
@@ -28,14 +34,14 @@
     <p>
       <b>{{ state.code.name }}</b
       >, kamu diundang oleh
-      <b>{{ state.code.issuer.name }}</b>
+      <b>{{ getIssuerName(state.code.issuer, theCode) }}</b>
       untuk menjadi relawan KawalPemilu.
     </p>
 
-    <p>
+    <!-- <p>
       <b style="color: red">Catatan</b>: <b>JANGAN terima undangan ini</b> jika
       kamu tidak mengenal atau mempercayai si pengundang di atas.
-    </p>
+    </p> -->
 
     <p>Untuk menerima undangan, kamu harus login terlebih dahulu:</p>
 
@@ -83,59 +89,57 @@
         >lihat Cakupan TPS</a
       >), ayo undang mereka dengan memberikan kode referral di bawah ini:
       <br />
-      <ng-container *ngIf="useSuperCode">
-        <ng-container *ngIf="(theCode$ | async) as ccc; else getting">
-          <mat-form-field style="width: 375px">
-            <input
-              type="text"
-              matInput
-              style="width: 350px"
-              [value]="shareUrl(ccc)"
-              #ui
-            />
-          </mat-form-field>
-          <br />
+      <ng-container *ngIf="(theCode$ | async) as ccc; else getting">
+        <mat-form-field style="width: 375px">
+          <input
+            type="text"
+            matInput
+            style="width: 350px"
+            [value]="shareUrl(ccc)"
+            #ui
+          />
+        </mat-form-field>
+        <br />
 
-          <table>
-            <tr>
-              <td><mat-icon>share</mat-icon></td>
-              <td style="padding-right: 5px">Share:</td>
-              <td style="padding-right: 7px">
-                <img
-                  style="cursor: pointer"
-                  (click)="share(ccc)"
-                  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAACJ0lEQVRYR2NkYGBgsAifqsnMxNLxj+G/ExMDAw9IjGaA8d+3//+Y9v37/7fsxMrs64xgyxmYTzAwMfDRzFJsBv9j+PSX4a8Fo3XkzI0MDP/96Go51LJ///5tZrSMnPGZkmDn4WJjMNWVYZCV4GdgZ2Nh+PXnL8PXb78Yzl17xnDv8Tu8/vr3799XRuvIGf/J9X2kjz5DUpAxAycHK4YRs1efZli4/hxBo8l2QHyAEUNqmClOC2jqABFBbobVEyIZWFmZB8YBga7aDMWJNiiW//j5h+HMlScM3378BovvP3GP4fDZB7SJguIkW4ZAFy0Uw5Oq1zLcuv+GoIXoCshKAw05zgwuVipws758+8XgkTKfZMtBGshyQGOuC4OzpTLcwo9ffjB4py0cxg5QlhNmUJETgvswyE2bQVtFHM7//uM3Q8+8wyghcP7aM4ZX774SDBWioiAp2IQhKdiYoGHICtLq1jNcu/OKoB6aOcAnYyHDh08/BsYBoDLBJXEuQcuJzgWkRgGoEoorX009B4AqG+QKpzTZlsHWWAFuwacvPxliylbB+X/+/GUAiREDiEoD6AaNvHJgNARGQ2A0BIZ5CERN+8rwn4mLmGITpsbRXIlBUQbRPvj56w/D0s0XSDECrBbcMbGKmLGZkZHBh2Td1NDwn2HjgHVO//1j+MDE+s+CEeQRUA+ZkYGxk4GBwYmJiYmbGp7DZQYo2JkYmfYwsPwrP7ok6yYA8Y0pwEbg9PYAAAAASUVORK5CYII="
-                />
-              </td>
-              <td style="padding-right: 7px">
-                <a
-                  #wa
-                  href="{{ whatsappHref(ccc) }} "
-                  data-action="share/whatsapp/share"
-                  ><img
-                    src="data:image/png;base64,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"
-                /></a>
-              </td>
-              <td>
-                <app-tweet
-                  [url]="shareUrl(ccc)"
-                  text="Yuk ikut KawalPemilu 2019, pake referral saya:"
-                  hashtags="PantauFotoUpload"
-                ></app-tweet>
-              </td>
-              <td>
-                <button mat-button color="primary" (click)="copyCode(ui)">
-                  <mat-icon>file_copy</mat-icon> Copy Link
-                </button>
-              </td>
-            </tr>
-          </table>
-        </ng-container>
-
-        <ng-template #getting>
-          <p><mat-spinner></mat-spinner></p>
-        </ng-template>
+        <table>
+          <tr>
+            <td><mat-icon>share</mat-icon></td>
+            <td style="padding-right: 5px">Share:</td>
+            <td style="padding-right: 7px">
+              <img
+                style="cursor: pointer"
+                (click)="share(ccc)"
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAACJ0lEQVRYR2NkYGBgsAifqsnMxNLxj+G/ExMDAw9IjGaA8d+3//+Y9v37/7fsxMrs64xgyxmYTzAwMfDRzFJsBv9j+PSX4a8Fo3XkzI0MDP/96Go51LJ///5tZrSMnPGZkmDn4WJjMNWVYZCV4GdgZ2Nh+PXnL8PXb78Yzl17xnDv8Tu8/vr3799XRuvIGf/J9X2kjz5DUpAxAycHK4YRs1efZli4/hxBo8l2QHyAEUNqmClOC2jqABFBbobVEyIZWFmZB8YBga7aDMWJNiiW//j5h+HMlScM3378BovvP3GP4fDZB7SJguIkW4ZAFy0Uw5Oq1zLcuv+GoIXoCshKAw05zgwuVipws758+8XgkTKfZMtBGshyQGOuC4OzpTLcwo9ffjB4py0cxg5QlhNmUJETgvswyE2bQVtFHM7//uM3Q8+8wyghcP7aM4ZX774SDBWioiAp2IQhKdiYoGHICtLq1jNcu/OKoB6aOcAnYyHDh08/BsYBoDLBJXEuQcuJzgWkRgGoEoorX009B4AqG+QKpzTZlsHWWAFuwacvPxliylbB+X/+/GUAiREDiEoD6AaNvHJgNARGQ2A0BIZ5CERN+8rwn4mLmGITpsbRXIlBUQbRPvj56w/D0s0XSDECrBbcMbGKmLGZkZHBh2Td1NDwn2HjgHVO//1j+MDE+s+CEeQRUA+ZkYGxk4GBwYmJiYmbGp7DZQYo2JkYmfYwsPwrP7ok6yYA8Y0pwEbg9PYAAAAASUVORK5CYII="
+              />
+            </td>
+            <td style="padding-right: 7px">
+              <a
+                #wa
+                href="{{ whatsappHref(ccc) }} "
+                data-action="share/whatsapp/share"
+                ><img
+                  src="data:image/png;base64,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"
+              /></a>
+            </td>
+            <td>
+              <app-tweet
+                [url]="shareUrl(ccc)"
+                text="Yuk ikut KawalPemilu 2019, pake referral saya:"
+                hashtags="PantauFotoUpload"
+              ></app-tweet>
+            </td>
+            <td>
+              <button mat-button color="primary" (click)="copyCode(ui)">
+                <mat-icon>file_copy</mat-icon> Copy Link
+              </button>
+            </td>
+          </tr>
+        </table>
       </ng-container>
+
+      <ng-template #getting>
+        <p><mat-spinner></mat-spinner></p>
+      </ng-template>
 
       <p>
         <b style="color: red">Catatan penting</b>: Mulai sekarang sampai tanggal
@@ -145,13 +149,13 @@
         TPS tersebut (dengan adanya foto yang kamu upload di TPS tersebut).
       </p>
 
-      <ng-container *ngIf="!useSuperCode">
+      <ng-container *ngIf="useCustomCode">
         <form [formGroup]="formGroup">
           <mat-form-field style="width: 275px">
             <input
               matInput
               autocomplete="off"
-              placeholder="Nama teman kamu (dicantumkan di undangan)"
+              placeholder="Code referral (case sensitive)"
               formControlName="namaCtrl"
               type="text"
               required
@@ -169,15 +173,15 @@
             color="primary"
             (click)="createReferralCode(state.relawan.auth)"
           >
-            Buat Kode Referral
+            Buat Group Kode Referral
           </button>
         </form>
 
-        <ng-container *ngIf="getReferralCodes(state.relawan, false) as codes">
+        <ng-container *ngIf="unClaimedCodeReferrals as codes">
           <ng-container *ngIf="codes.length > 0">
             <p>
-              Kirimkan URL kode referral dibawah ini ke teman kamu (satu kode
-              referral hanya bisa dipakai oleh satu orang):
+              Satu URL group kode referral bisa terima 5000 users (essentially
+              unlimited):
             </p>
 
             <table border="1" cellspacing="0" class="alternating">
@@ -211,7 +215,7 @@
         </ng-container>
       </ng-container>
 
-      <ng-container *ngIf="getReferralCodes(state.relawan, true) as codes">
+      <ng-container *ngIf="claimedCodeReferrals as codes">
         <ng-container *ngIf="codes.length > 0">
           <p><mat-divider></mat-divider></p>
           <p>
