@@ -247,6 +247,7 @@ export interface ProblemRequest {
   tpsNo: number;
   url: string;
   reason: string;
+  ts: number;
 }
 
 export interface ChildData {

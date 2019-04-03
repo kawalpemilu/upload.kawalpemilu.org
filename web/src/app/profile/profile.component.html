@@ -246,8 +246,10 @@
                 <app-hie-link [id]="r.kelId" [name]="r.kelName"></app-hie-link>
                 <br />
                 TPS # <b>{{ r.tpsNo }}</b
-                ><br />
-                <p>{{ r.reason }}</p>
+                ><br /><br />
+                {{ r.ts | date: 'short' }}
+                <br />
+                {{ r.reason }}
               </td>
             </tr>
           </table>

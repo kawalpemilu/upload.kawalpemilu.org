@@ -94,7 +94,8 @@ export class LaporButtonComponent implements OnInit {
       kelName: '',
       tpsNo: this.tpsNo,
       url: this.url,
-      reason: ''
+      reason: '',
+      ts: 0
     };
   }
 

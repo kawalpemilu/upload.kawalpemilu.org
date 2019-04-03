@@ -605,7 +605,8 @@ app.post(
         kelName: '',
         tpsNo: +b.tpsNo,
         url: b.url,
-        reason: b.reason
+        reason: b.reason,
+        ts: Date.now()
       });
 
       if (typeof p.url !== 'string' || p.url.length > MAX_URL_LENGTH) {
@@ -642,7 +643,24 @@ app.post(
         const u = (await t.get(uRef)).data() as Upsert;
         if (!u) return 'imageId not found';
 
-        const rp = (await t.get(rpRef)).data() as RelawanPhotos;
+        let rp = (await t.get(rpRef)).data() as RelawanPhotos;
+        if (!rp) {
+          const rRef = fsdb.doc(FsPath.relawan(user.uid));
+          const r = (await t.get(rRef)).data() as Relawan;
+          rp = {
+            profile: r.profile,
+            uploads: [],
+            uploadCount: 0,
+            maxUploadCount: 0,
+            reports: [],
+            reportCount: 0,
+            maxReportCount: 0,
+            reviewCount: 0,
+            nTps: 0,
+            nKel: 0
+          };
+        }
+  
         rp.reports = rp.reports || [];
         rp.reports.unshift(p);
         rp.reportCount = rp.reports.length;
@@ -662,7 +680,7 @@ app.post(
 
         t.update(tRef, tps);
         t.update(uRef, u);
-        t.update(rpRef, rp);
+        t.set(rpRef, rp);
         return true;
       })
       .catch(e => {
