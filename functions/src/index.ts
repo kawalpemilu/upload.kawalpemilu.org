@@ -68,7 +68,9 @@ function getServingUrl(objectName: string, ithRetry = 0, maxRetry = 10) {
         console.error(`${e.message}; path = ${path}, #${ithRetry}/${maxRetry}`);
         throw e;
       }
-      console.warn(`gsu retry ${ithRetry}: ${e.message}`);
+      if (ithRetry * 2 >= maxRetry) {
+        console.log(`gsu retry ${ithRetry}: ${e.message}`);
+      }
       await delay(ithRetry * 1000);
       return getServingUrl(objectName, ithRetry + 1, maxRetry);
     });
@@ -250,7 +252,8 @@ function populateServingUrl() {
       return res.json({ error: 'Invalid imageId' });
     }
 
-    for (let i = 1; i <= 5; i++) {
+    const maxRetry = 15;
+    for (let i = 1; i <= maxRetry; i++) {
       const meta = (await fsdb
         .doc(FsPath.imageMetadata(p.imageId))
         .get()).data() as ImageMetadata;
@@ -258,7 +261,7 @@ function populateServingUrl() {
         p.url = meta.v;
         return next();
       }
-      if (i > 2) {
+      if (i * 2 > maxRetry) {
         console.info(`Metadata pending ${p.imageId}, #${i}, ${user.uid}`);
       }
       await delay(i * 1000);
@@ -660,7 +663,7 @@ app.post(
             nKel: 0
           };
         }
-  
+
         rp.reports = rp.reports || [];
         rp.reports.unshift(p);
         rp.reportCount = rp.reports.length;

@@ -23,7 +23,7 @@ import { Title } from '@angular/platform-browser';
       <tr *ngFor="let r of arr; let i = index">
         <td align="center">{{ i + 1 }}</td>
         <td><app-orang [profile]="r.profile" [activity]="true"></app-orang></td>
-        <td align="center">{{ r.count }}</td>
+        <td align="center">{{ r.uploadCount }}</td>
         <td align="center">{{ r.nKel }}</td>
         <td align="center">{{ r.nTps }}</td>
       </tr>
