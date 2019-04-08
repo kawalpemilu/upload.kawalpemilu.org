@@ -55,7 +55,9 @@
             [disabled]="isLoading"
             mat-raised-button
             color="primary"
-            (click)="formType = FORM_TYPE.OTHERS; approve()"
+            (click)="
+              formType = FORM_TYPE.OTHERS; isPlano = IS_PLANO.NO; approve()
+            "
           >
             Pindahkan Foto
           </button>

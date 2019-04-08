@@ -321,23 +321,8 @@ async function uploadPhoto(p: UploadRequest, req) {
         return 'Uploader not found';
       }
 
-      let photo = (await t.get(pRef)).data() as RelawanPhotos;
-      if (photo) {
-        photo.profile = r.profile;
-      } else {
-        photo = {
-          profile: r.profile,
-          uploads: [],
-          uploadCount: 0,
-          maxUploadCount: 0,
-          reports: [],
-          reportCount: 0,
-          maxReportCount: 0,
-          reviewCount: 0,
-          nTps: 0,
-          nKel: 0
-        };
-      }
+      const photo = await getRelawanPhotos(t, pRef, user.uid);
+      photo.profile = r.profile;
 
       let tps = (await t.get(tRef)).data() as TpsData;
       tps = tps || { images: {}, imgCount: 0 };
@@ -547,7 +532,7 @@ app.post(
       .runTransaction(async t => {
         const r = (await t.get(rRef)).data() as Relawan;
         if (!r || r.profile.role < USER_ROLE.MODERATOR) 'Not Authorized';
-        const rp = (await t.get(rpRef)).data() as RelawanPhotos;
+        const rp = await getRelawanPhotos(t, rpRef, user.uid);
         rp.profile = r.profile;
         rp.reviewCount = (rp.reviewCount || 0) + 1;
 
@@ -578,7 +563,7 @@ app.post(
         u.done = 0;
 
         t.update(pRef, urp);
-        t.update(rpRef, rp);
+        t.set(rpRef, rp);
         t.update(rRef, r);
         t.update(uRef, u);
         t.update(tRef, tps);
@@ -596,6 +581,25 @@ app.post(
     return res.json({ ok: true });
   }
 );
+
+async function getRelawanPhotos(t, rpRef, uid): Promise<RelawanPhotos> {
+  const rp = (await t.get(rpRef)).data() as RelawanPhotos;
+  if (rp) return rp;
+  const rRef = fsdb.doc(FsPath.relawan(uid));
+  const r = (await t.get(rRef)).data() as Relawan;
+  return {
+    profile: r.profile,
+    uploads: [],
+    uploadCount: 0,
+    maxUploadCount: 0,
+    reports: [],
+    reportCount: 0,
+    maxReportCount: 0,
+    reviewCount: 0,
+    nTps: 0,
+    nKel: 0
+  };
+}
 
 app.post(
   '/api/problem',
@@ -646,24 +650,7 @@ app.post(
         const u = (await t.get(uRef)).data() as Upsert;
         if (!u) return 'imageId not found';
 
-        let rp = (await t.get(rpRef)).data() as RelawanPhotos;
-        if (!rp) {
-          const rRef = fsdb.doc(FsPath.relawan(user.uid));
-          const r = (await t.get(rRef)).data() as Relawan;
-          rp = {
-            profile: r.profile,
-            uploads: [],
-            uploadCount: 0,
-            maxUploadCount: 0,
-            reports: [],
-            reportCount: 0,
-            maxReportCount: 0,
-            reviewCount: 0,
-            nTps: 0,
-            nKel: 0
-          };
-        }
-
+        const rp = await getRelawanPhotos(t, rpRef, user.uid);
         rp.reports = rp.reports || [];
         rp.reports.unshift(p);
         rp.reportCount = rp.reports.length;

@@ -185,7 +185,7 @@
       </mat-tab>
 
       <ng-container *ngIf="(relawanPhotos$ | async) as relawanPhotos">
-        <mat-tab label="Photos ({{ relawanPhotos.count }})">
+        <mat-tab label="Photos ({{ relawanPhotos.uploadCount }})">
           <p></p>
           <table
             border="1"
@@ -201,7 +201,7 @@
             </tr>
             <tr *ngFor="let u of relawanPhotos.uploads; let i = index">
               <th>
-                {{ relawanPhotos.count - i }}
+                {{ relawanPhotos.uploadCount - i }}
               </th>
               <td align="center">
                 <app-thumbnail [url]="u.url"></app-thumbnail><br />
