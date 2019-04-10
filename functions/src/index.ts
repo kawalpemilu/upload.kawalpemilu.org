@@ -436,15 +436,16 @@ function populateApprove() {
 }
 
 function computeAction(tps: TpsData) {
-  const action = { sum: {} as SumMap, photos: {}, ts: 0, c1: null };
+  const sum = { pending: 0, cakupan: 0 } as SumMap;
+  const action = { sum, photos: {}, ts: 0, c1: null };
   for (const imageId of Object.keys(tps.images)) {
     const i = tps.images[imageId];
     if (!i.c1) {
       action.sum.cakupan = 1;
       action.sum.pending = 1;
-    } else if (i.c1.type === FORM_TYPE.MALICIOUS) {
-      action.photos[i.url] = null;
-    } else if (i.c1.type === FORM_TYPE.OTHERS) {
+      continue;
+    }
+    if (i.c1.type === FORM_TYPE.MALICIOUS || i.c1.type === FORM_TYPE.OTHERS) {
       action.photos[i.url] = null;
     } else {
       action.sum.cakupan = 1;
@@ -454,14 +455,14 @@ function computeAction(tps: TpsData) {
         ts: i.reviewer.ts
       };
       action.ts = Math.max(action.ts, i.reviewer.ts);
-      for (const key of Object.keys(i.sum)) {
-        if (typeof action.sum[key] === 'number') {
-          if (action.sum[key] !== i.sum[key]) {
-            action.sum.janggal = 1;
-          }
-        } else {
-          action.sum[key] = i.sum[key];
+    }
+    for (const key of Object.keys(i.sum)) {
+      if (typeof action.sum[key] === 'number') {
+        if (action.sum[key] !== i.sum[key]) {
+          action.sum.janggal = 1;
         }
+      } else {
+        action.sum[key] = i.sum[key];
       }
     }
   }
@@ -554,6 +555,13 @@ app.post(
         const img = tps.images[a.imageId];
         if (!img) return 'No Image';
 
+        const asum = JSON.parse(JSON.stringify(a.sum));
+        for (const key of Object.keys(img.sum || {})) {
+          if (!a.sum.hasOwnProperty(key)) {
+            a.sum[key] = 0;
+          }
+        }
+
         photo.c1 = img.c1 = a.c1;
         photo.sum = img.sum = a.sum;
         img.sum.pending = 0;
@@ -561,6 +569,7 @@ app.post(
         u.reviewer = img.reviewer = { ...r.profile, ts, ua, ip };
         u.action = computeAction(tps);
         u.done = 0;
+        photo.sum = img.sum = asum;
 
         t.update(pRef, urp);
         t.set(rpRef, rp);

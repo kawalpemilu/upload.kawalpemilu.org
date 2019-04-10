@@ -10,7 +10,8 @@ import {
   FsPath,
   Relawan,
   RelawanPhotos,
-  Aggregate
+  Aggregate,
+  autoId
 } from 'shared';
 
 import { H } from './hierarchy';
@@ -26,6 +27,7 @@ const auth = admin.auth();
 const fsdb = admin.firestore();
 
 const readFileAsync = util.promisify(fs.readFile);
+const statAsync = util.promisify(fs.stat);
 
 interface User {
   uid: string;
@@ -103,15 +105,6 @@ async function getUser(uid: string) {
 }
 
 function makeRequest(kelId, tpsNo) {
-  const sum = {
-    pas1: Math.floor(Math.random() * 999),
-    pas2: 0,
-    sah: 0,
-    tSah: 1,
-    cakupan: 1,
-    pending: 0,
-    error: 0
-  } as SumMap;
   const imageId = `zzzzzzz${kelId}t${tpsNo}`;
   const meta = {} as ImageMetadata;
   const body: UploadRequest = {
@@ -163,32 +156,18 @@ function generateRequests() {
   return requests;
 }
 
-async function upload(body) {
-  for (let retry = 1; ; retry++) {
-    try {
-      const uid = '1oz4pZ0MTidjEteHbvlNdfvAu7p1';
-      const user = await getUser(uid);
-      const res = await request({
-        method: 'POST',
-        uri: 'https://upload.kawalpemilu.org/api/upload',
-        body,
-        headers: {
-          Authorization: `Bearer ${user.idToken}`
-        },
-        timeout: 5000,
-        json: true
-      });
-      if (!res.ok) throw new Error(`Result not OK: ${JSON.stringify(res)}`);
-      break;
-    } catch (e) {
-      if (retry > 3) console.warn(e.message, retry, body);
-      if (retry > 7) {
-        console.error(e.message, retry, body);
-        break;
-      }
-      await delay(retry * 1000);
-    }
-  }
+async function upload(uid, body: UploadRequest) {
+  const user = await getUser(uid);
+  return await request({
+    method: 'POST',
+    uri: 'https://upload.kawalpemilu.org/api/upload',
+    body,
+    headers: {
+      Authorization: `Bearer ${user.idToken}`
+    },
+    timeout: 60000,
+    json: true
+  });
 }
 
 async function parallelUpload(concurrency = 500) {
@@ -200,7 +179,7 @@ async function parallelUpload(concurrency = 500) {
   for (let i = 0, j = 0; i < requests.length; i++) {
     const idx = i;
     const req = requests[i];
-    promises[j] = promises[j].then(() => upload(req));
+    promises[j] = promises[j].then(() => upload('', req));
     if (j === 0) {
       promises[j] = promises[j].then(() => console.log('i', idx));
     }
@@ -399,8 +378,44 @@ async function checkHierarchy() {
   recCheck(0, 0);
 }
 
+async function kpuUpload() {
+  const kelId = 25221;
+  const tpsNo = 5;
+  const kpuScanUid = 'gEQFS1n5gpTzMTy5JASPPLk4yRA3';
+  const imageId = autoId();
+  const destination = `uploads/${kelId}/${tpsNo}/${kpuScanUid}/${imageId}`;
+
+  const bucket = admin.storage().bucket('kawal-c1.appspot.com');
+  const filename = '/Users/felixhalim/Downloads/dbz.jpg';
+
+  await bucket.upload(filename, { destination });
+
+  const stats = await statAsync(filename);
+  const res = await upload(kpuScanUid, {
+    imageId,
+    kelId,
+    kelName: '', // Will be populated on the server.
+    tpsNo,
+    meta: {
+      u: kpuScanUid,
+      k: kelId,
+      t: tpsNo,
+      a: Date.now(),
+      l: stats.mtime.getTime(), // Last Modified Timestamp.
+      s: stats.size // Size in Bytes.
+    } as ImageMetadata,
+    url: null, // Will be populated on the server.
+    ts: null, // Will be populated on the server.
+    c1: null, // Will be populated later by Moderator
+    sum: null // Will be populated later by Moderator
+  });
+
+  console.log(res);
+}
+
 // parallelUpload().catch(console.error);
 // loadTest().catch(console.error);
 // fixClaimersRole().catch(console.error);
 // fixUploadersCount().catch(console.error);
-checkHierarchy().catch(console.error);
+// checkHierarchy().catch(console.error);
+kpuUpload().catch(console.error);
