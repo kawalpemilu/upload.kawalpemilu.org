@@ -63,7 +63,6 @@ import {
   CarouselComponent,
   BottomSheetErrorComponent
 } from './carousel/carousel.component';
-import { FaqComponent } from './faq/faq.component';
 import { ScoreboardComponent } from './scoreboard/scoreboard.component';
 import { TweetComponent } from './tweet/tweet.component';
 import { CariKelComponent } from './cari-kel/cari-kel.component';
@@ -97,7 +96,6 @@ import { CariKelComponent } from './cari-kel/cari-kel.component';
     KontakComponent,
     CarouselComponent,
     BottomSheetErrorComponent,
-    FaqComponent,
     ScoreboardComponent,
     TweetComponent,
     CariKelComponent
