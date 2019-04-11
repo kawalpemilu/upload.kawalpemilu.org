@@ -84,6 +84,7 @@ import { Title } from '@angular/platform-browser';
         <th>#</th>
         <th width="200" align="left">Nama Orang</th>
         <th>#DR</th>
+        <th>#DDR</th>
       </tr>
       <tr *ngFor="let r of arr; let i = index">
         <td align="center">{{ i + 1 }}</td>
@@ -95,6 +96,7 @@ import { Title } from '@angular/platform-browser';
           ></app-orang>
         </td>
         <td align="center">{{ r.profile.dr4 }}</td>
+        <td align="center">{{ r.ddr }}</td>
       </tr>
     </table>
 

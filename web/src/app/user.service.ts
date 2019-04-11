@@ -108,7 +108,19 @@ export class UserService {
         ref.orderBy('profile.dr4', 'desc').limit(20)
       )
       .valueChanges()
-      .pipe(shareReplay(1));
+      .pipe(
+        map(rels => {
+          rels.forEach(rel => {
+            // @ts-ignore
+            rel.ddr = Object.keys(rel.code)
+              .map(c => rel.code[c])
+              .filter(c => c.claimer)
+              .reduce((p, cu) => p + 1, 0);
+          });
+          return rels;
+        }),
+        shareReplay(1)
+      );
 
     this.afAuth.auth
       .getRedirectResult()
