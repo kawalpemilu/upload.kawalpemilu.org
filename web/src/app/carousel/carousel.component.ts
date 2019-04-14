@@ -175,7 +175,7 @@ export class BottomSheetErrorComponent {
                 <tr>
                   <td colspan="2" align="center">
                     <p style="color: orange">
-                      Foto ini belum diproses.
+                      Terima kasih, foto kamu akan diproses.
                     </p>
                   </td>
                 </tr>

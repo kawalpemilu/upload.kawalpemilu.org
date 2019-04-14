@@ -173,7 +173,7 @@ app.use((err, req, res, next) => {
 const CACHE_TIMEOUT = 1;
 const cache_c: any = {};
 let fallbackUntilTs = 0;
-async function getHierarchyNode(cid: number) {
+async function getHierarchyNode(cid: number, uid: string) {
   const ts = Date.now();
   if (fallbackUntilTs < ts) {
     try {
@@ -181,7 +181,7 @@ async function getHierarchyNode(cid: number) {
       const options = { timeout: 2000, json: true };
       return await request(`http://${host}/api/c/${cid}`, options);
     } catch (e) {
-      console.error(`fail c/${cid}: ${e.message}`);
+      console.error(`fail c/${cid}: ${e.message}, uid ${uid}`);
       fallbackUntilTs = ts + 15 * 1000;
     }
   }
@@ -190,12 +190,12 @@ async function getHierarchyNode(cid: number) {
   let snap = await fsdb.doc(FsPath.hieCache(cid)).get();
   let c = snap.data() as HierarchyNode;
   if (c) {
-    console.log(`Fallback to cache hierarchy`);
+    console.log(`Cache hie for ${cid}, uid ${uid}`);
   } else {
     // Fallback to static hierarchy, without sum.
     snap = await fsdb.doc(FsPath.hie(cid)).get();
     c = snap.data() as HierarchyNode;
-    console.warn(`Fallback to static hierarchy`);
+    console.warn(`Static hie for ${cid}, uid ${uid}`);
   }
 
   if (c) {
@@ -218,7 +218,9 @@ app.get('/api/c/:id', async (req: any, res) => {
   res.setHeader('Cache-Control', `max-age=${CACHE_TIMEOUT}`);
   if (c) return res.json(c);
 
-  c = cache_c[cid] = await getHierarchyNode(cid);
+  const user = req.user as admin.auth.DecodedIdToken;
+  const uid = (user && user.uid) || 'public';
+  c = cache_c[cid] = await getHierarchyNode(cid, uid + ' from API');
   setTimeout(() => delete cache_c[cid], CACHE_TIMEOUT * 1000);
   return res.json(c);
 });
@@ -287,7 +289,7 @@ function populateKelName() {
     let mem = cache[p.kelId];
     if (!mem) {
       try {
-        const c = await getHierarchyNode(p.kelId);
+        const c = await getHierarchyNode(p.kelId, user.uid);
         if (!c || !c.name) {
           console.warn(`Children missing ${p.kelId}, ${user.uid}`);
           return res.json({ error: 'kelId does not exists' });
