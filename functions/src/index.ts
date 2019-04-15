@@ -173,16 +173,24 @@ app.use((err, req, res, next) => {
 const CACHE_TIMEOUT = 1;
 const cache_c: any = {};
 let fallbackUntilTs = 0;
+let privateFailCount = 0;
 async function getHierarchyNode(cid: number, uid: string) {
   const ts = Date.now();
-  if (fallbackUntilTs < ts) {
+  const isPublic = uid.startsWith('public');
+  const level = isPublic ? 'log' : 'error';
+  if (fallbackUntilTs < ts || (!isPublic && privateFailCount < 10)) {
     try {
       const host = '35.193.104.134:8080';
-      const options = { timeout: 2000, json: true };
-      return await request(`http://${host}/api/c/${cid}`, options);
+      const options = { timeout: isPublic ? 1500 : 3000, json: true };
+      const ret = await request(`http://${host}/api/c/${cid}`, options);
+      privateFailCount = 0;
+      return ret;
     } catch (e) {
-      console.error(`fail c/${cid}: ${e.message}, uid ${uid}`);
+      console[level](`fail c/${cid}: ${e.message}, uid ${uid}`);
       fallbackUntilTs = ts + 15 * 1000;
+      if (!isPublic) {
+        privateFailCount++;
+      }
     }
   }
 
@@ -190,12 +198,12 @@ async function getHierarchyNode(cid: number, uid: string) {
   let snap = await fsdb.doc(FsPath.hieCache(cid)).get();
   let c = snap.data() as HierarchyNode;
   if (c) {
-    console.log(`Cache hie for ${cid}, uid ${uid}`);
+    console[level](`Cache hie for ${cid}, uid ${uid}`);
   } else {
     // Fallback to static hierarchy, without sum.
     snap = await fsdb.doc(FsPath.hie(cid)).get();
     c = snap.data() as HierarchyNode;
-    console.warn(`Static hie for ${cid}, uid ${uid}`);
+    console[level](`Static hie for ${cid}, uid ${uid}`);
   }
 
   if (c) {

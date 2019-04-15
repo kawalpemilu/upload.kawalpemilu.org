@@ -23,7 +23,7 @@ referral)
     ;;
 
 backup)
-    gcloud beta firestore export gs://kawal-c1.appspot.com/firestore-dump/apr-13
+    gcloud beta firestore export gs://kawal-c1.appspot.com/firestore-dump/apr-15
     ;;
 
 esac
