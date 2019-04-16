@@ -551,8 +551,11 @@ app.post(
         if (r.profile.role < USER_ROLE.ADMIN && u.reviewer)
           return 'Already approved';
 
-        const pRef = fsdb.doc(FsPath.relawanPhoto(u.uploader.uid));
-        const urp = (await t.get(pRef)).data() as RelawanPhotos;
+        const self = u.uploader.uid === user.uid;
+        const pRef = self
+          ? null
+          : fsdb.doc(FsPath.relawanPhoto(u.uploader.uid));
+        const urp = self ? rp : ((await t.get(pRef)).data() as RelawanPhotos);
         if (!urp) return 'No relawan photo';
         const photo = urp.uploads.find(p => p.imageId === a.imageId);
         if (!photo) return `No photo for ${a.imageId}`;
@@ -580,7 +583,9 @@ app.post(
         u.done = 0;
         photo.sum = img.sum = asum;
 
-        t.update(pRef, urp);
+        if (pRef) {
+          t.update(pRef, urp);
+        }
         t.set(rpRef, rp);
         t.update(rRef, r);
         t.update(uRef, u);

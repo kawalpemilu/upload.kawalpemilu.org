@@ -182,15 +182,19 @@ export class BottomSheetErrorComponent {
               </ng-template>
               <tr *ngIf="p.c1 as c1; else pending">
                 <td colspan="2" align="center">
-                  <ng-container
-                    *ngIf="c1.type == FORM_TYPE.MALICIOUS; else normal"
-                  >
-                    <b style="color: red">MALICIOUS</b>
+                  <ng-container [ngSwitch]="c1.type">
+                    <ng-container *ngSwitchCase="FORM_TYPE.MALICIOUS">
+                      <p>Foto ini <b style="color: red">MALICIOUS</b></p>
+                    </ng-container>
+                    <ng-container *ngSwitchCase="FORM_TYPE.OTHERS">
+                      <p>Foto ini tidak ditampilkan ke publik.</p>
+                    </ng-container>
+                    <ng-container *ngSwitchDefault>
+                      {{ FORM_TYPE[c1.type] }}
+                      {{ c1.plano == IS_PLANO.YES ? '(P)' : '' }}
+                      {{ c1.halaman }}
+                    </ng-container>
                   </ng-container>
-                  <ng-template #normal>
-                    {{ FORM_TYPE[c1.type] }}
-                    {{ IS_PLANO[c1.plano] == IS_PLANO.YES ? 'PLANO' : '' }}
-                  </ng-template>
                 </td>
               </tr>
               <ng-container *ngFor="let key of ALL_NAMES">
