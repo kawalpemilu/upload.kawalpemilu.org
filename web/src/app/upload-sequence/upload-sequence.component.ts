@@ -3,6 +3,7 @@ import { UploadService } from '../upload.service';
 import { Router } from '@angular/router';
 
 import { UserService } from '../user.service';
+import { AppComponent } from '../app.component';
 
 /**
  *
@@ -51,9 +52,7 @@ export class UploadSequenceComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    // @ts-ignore
-    const ua = navigator.userAgent || navigator.vendor || window.opera;
-    if (ua.indexOf('FBAN') > -1 || ua.indexOf('FBAV') > -1) {
+    if (AppComponent.IN_APP_BROWSER) {
       this.accept = '';
     }
   }

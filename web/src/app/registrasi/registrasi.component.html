@@ -261,6 +261,11 @@
       />
       Login with Facebook
     </button>
+
+    <p *ngIf="!SUPPORTED_BROWSER" style="font-weight: bold; color: orange">
+      Jika kamu tidak bisa login atau mengupload, coba gunakan browser Chrome
+      atau Safari.
+    </p>
   </ng-template>
 
   <br /><br />

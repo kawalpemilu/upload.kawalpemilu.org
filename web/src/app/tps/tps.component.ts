@@ -29,6 +29,7 @@ interface Tps {
 
 interface State extends HierarchyNode {
   tpsList: Tps[];
+  isModerator: boolean;
 }
 
 interface Slice {
@@ -60,7 +61,7 @@ export class TpsComponent implements OnInit {
 
   constructor(
     public hie: HierarchyService,
-    public userService: UserService,
+    private userService: UserService,
     private route: ActivatedRoute,
     private titleService: Title,
     private fsdb: AngularFirestore
@@ -107,7 +108,15 @@ export class TpsComponent implements OnInit {
           this.showingSlice = this.slices[0];
         }
         return state;
-      })
+      }),
+      switchMap((state: State) =>
+        this.userService.isModerator$.pipe(
+          map(isMod => {
+            state.isModerator = isMod;
+            return state;
+          })
+        )
+      )
     );
 
     console.log('TpsComponent inited');
@@ -176,7 +185,10 @@ export class TpsComponent implements OnInit {
     return arr;
   }
 
-  toggleDetails(state: HierarchyNode, tpsNo: number) {
+  toggleDetails(state: State, tpsNo: number) {
+    if (!state.isModerator) {
+      return;
+    }
     if (this.details[tpsNo]) {
       this.details[tpsNo] = null;
       return;

@@ -65,9 +65,7 @@
             <div
               style="border: 1px solid black; width: 90px; padding: 5px"
               (click)="toggleDetails(state, tps.tpsNo)"
-              [style.cursor]="
-                (userService.isModerator$ | async) ? 'pointer' : ''
-              "
+              [style.cursor]="state.isModerator ? 'pointer' : ''"
             >
               TPS # <b style="font-size: large">{{ tps.tpsNo }}</b>
             </div>
@@ -101,7 +99,7 @@
               <br />
               <br />
               <button
-                *ngIf="(userService.isModerator$ | async)"
+                *ngIf="state.isModerator"
                 mat-raised-button
                 color="warn"
                 (click)="digitize[tps.tpsNo] = 'next'"

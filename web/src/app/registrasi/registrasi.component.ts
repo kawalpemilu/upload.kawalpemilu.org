@@ -27,6 +27,7 @@ import {
 import { AngularFirestore } from '@angular/fire/firestore';
 import { MatSnackBar } from '@angular/material';
 import { Title } from '@angular/platform-browser';
+import { AppComponent } from '../app.component';
 
 interface RegistrationState {
   relawan: Relawan;
@@ -202,6 +203,10 @@ export class RegistrasiComponent implements OnInit {
       namaCtrl: [null, [Validators.pattern('^[a-z]{1,15}$')]]
     });
     console.log('Registrasi inited');
+  }
+
+  get SUPPORTED_BROWSER() {
+    return AppComponent.SUPPORTED_BROWSER;
   }
 
   async registerCode(user: User, code: CodeReferral) {

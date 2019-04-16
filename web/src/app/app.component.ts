@@ -33,6 +33,8 @@ export class AppComponent implements OnDestroy {
   static TOOLBAR_HEIGHT = 64;
   static PATH_HEIGHT = 74;
   static PADDING = 10;
+  static SUPPORTED_BROWSER = true;
+  static IN_APP_BROWSER = true;
 
   USER_ROLE = USER_ROLE;
 
@@ -53,6 +55,18 @@ export class AppComponent implements OnDestroy {
     };
     this.mobileQuery.addListener(this._mobileQueryListener);
     this.adjustToolbarHeight();
+
+    // @ts-ignore
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    const ua = userAgent.toLowerCase();
+    AppComponent.IN_APP_BROWSER =
+      ua.indexOf('fban') > -1 || ua.indexOf('fbav') > -1;
+    AppComponent.SUPPORTED_BROWSER =
+      ua.indexOf('chrome') > -1 || ua.indexOf('safari') > -1;
+  }
+
+  get SUPPORTED_BROWSER() {
+    return AppComponent.SUPPORTED_BROWSER;
   }
 
   get TOOLBAR_HEIGHT() {

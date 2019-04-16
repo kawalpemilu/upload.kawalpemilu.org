@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from '../user.service';
+import { AppComponent } from '../app.component';
 
 @Component({
   selector: 'app-home',
@@ -84,6 +85,11 @@ import { UserService } from '../user.service';
   Login with Twitter
 </button> -->
 
+      <p *ngIf="!SUPPORTED_BROWSER" style="font-weight: bold; color: orange">
+        Jika kamu tidak bisa login atau mengupload, coba gunakan browser Chrome
+        atau Safari.
+      </p>
+
       <app-kontak></app-kontak>
     </ng-template>
   `,
@@ -102,4 +108,8 @@ export class HomeComponent implements OnInit {
   constructor(public userService: UserService) {}
 
   ngOnInit() {}
+
+  get SUPPORTED_BROWSER() {
+    return AppComponent.SUPPORTED_BROWSER;
+  }
 }
