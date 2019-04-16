@@ -162,9 +162,44 @@ export enum IS_PLANO {
   NO
 }
 
+export type Halaman =
+  | '0' // Invalid halaman
+  | '1'
+  | '2'
+  | '2.1'
+  | '2.2'
+  | '2.3'
+  | '2.4'
+  | '2.5'
+  | '2.6'
+  | '2.7'
+  | '2.8'
+  | '2.9'
+  | '2.10'
+  | '2.11'
+  | '2.12'
+  | '2.13'
+  | '2.14'
+  | '2.15'
+  | '2.16'
+  | '2.17'
+  | '2.18'
+  | '2.19'
+  | '2.20'
+  | '3';
+
+export function isValidHalaman(hal) {
+  if (!hal || typeof hal !== 'string') return false;
+  const h = hal.split('.');
+  if (!(+h[0] >= 1 && +h[0] <= 3)) return false;
+  if (h.length === 1) return true;
+  return h.length === 2 && +h[1] >= 1 && +h[1] <= 20;
+}
+
 export interface C1Form {
   type: FORM_TYPE;
   plano: IS_PLANO;
+  halaman: Halaman;
 }
 
 export interface Aggregate {

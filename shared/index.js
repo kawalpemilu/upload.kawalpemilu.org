@@ -108,6 +108,17 @@ var IS_PLANO;
     IS_PLANO[IS_PLANO["YES"] = 1] = "YES";
     IS_PLANO[IS_PLANO["NO"] = 2] = "NO";
 })(IS_PLANO = exports.IS_PLANO || (exports.IS_PLANO = {}));
+function isValidHalaman(hal) {
+    if (!hal || typeof hal !== 'string')
+        return false;
+    var h = hal.split('.');
+    if (!(+h[0] >= 1 && +h[0] <= 3))
+        return false;
+    if (h.length === 1)
+        return true;
+    return h.length === 2 && +h[1] >= 1 && +h[1] <= 20;
+}
+exports.isValidHalaman = isValidHalaman;
 function extractImageMetadata(m) {
     var validM = null;
     if (m) {

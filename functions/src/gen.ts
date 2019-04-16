@@ -188,7 +188,7 @@ function loadTest() {
     for (const [i, c] of x.children.entries()) {
       const agg = (x.data[c[0]] = {} as TpsAggregate);
       agg.ts = Date.now();
-      agg.c1 = { type: FORM_TYPE.DPD, plano: IS_PLANO.NO };
+      agg.c1 = { type: FORM_TYPE.DPD, plano: IS_PLANO.NO, halaman: '0' };
       agg.sum = {} as SumMap;
       for (const key in SUM_KEY) {
         agg.sum[key] = Math.floor(Math.random() * 500);

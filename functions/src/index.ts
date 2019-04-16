@@ -39,7 +39,8 @@ import {
   MAX_REPORT_ERRORS,
   canGenerateCustomCode,
   QuotaSegments,
-  QuotaSpecs
+  QuotaSpecs,
+  isValidHalaman
 } from 'shared';
 
 const t1 = Date.now();
@@ -412,7 +413,12 @@ function populateApprove() {
         return res.json({ error: 'Invalid form' });
       }
     }
-    a.c1 = { type: b.c1.type, plano: b.c1.plano };
+    if (b.c1.halaman !== '0' && !isValidHalaman(b.c1.halaman)) {
+      console.warn(`Invalid halaman ${b.c1.halaman} for ${user.uid}`);
+      return res.json({ error: 'Invalid halaman' });
+    }
+
+    a.c1 = { type: b.c1.type, plano: b.c1.plano, halaman: b.c1.halaman };
 
     if (!b || !b.sum) {
       console.warn(`No sum ${user.uid}`);
@@ -474,6 +480,7 @@ app.post(
   '/api/approve',
   [
     (req, res, next) => {
+      const user = req.user as admin.auth.DecodedIdToken;
       const b = req.body as ApproveRequest;
       const p: ApproveRequest = {
         kelId: +b.kelId,

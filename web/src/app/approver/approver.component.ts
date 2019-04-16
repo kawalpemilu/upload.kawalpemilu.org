@@ -16,6 +16,7 @@ import {
   FORM_TYPE,
   enumEntries,
   IS_PLANO,
+  Halaman,
   HierarchyNode
 } from 'shared';
 import { startWith, take, distinctUntilChanged } from 'rxjs/operators';
@@ -39,9 +40,7 @@ enum LEMBAR_KEY {
   CALON5_PLANO_NO_DIGITIZE
 }
 
-interface LembarSpec {
-  [halaman: string]: SUM_KEY[];
-}
+type LembarSpec = { [halaman in Halaman]: SUM_KEY[] };
 
 @Component({
   selector: 'app-approver',
@@ -92,7 +91,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
     [LEMBAR_KEY.PILPRES]: {
       '1': [SUM_KEY.jum],
       '2': [SUM_KEY.pas1, SUM_KEY.pas2, SUM_KEY.sah, SUM_KEY.tSah]
-    },
+    } as LembarSpec,
 
     [LEMBAR_KEY.PARTAI4]: {
       '1': [SUM_KEY.pJum],
@@ -101,7 +100,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
       '2.3': [SUM_KEY.per, SUM_KEY.ppp, SUM_KEY.psi, SUM_KEY.pan],
       '2.4': [SUM_KEY.han, SUM_KEY.dem, SUM_KEY.pbb, SUM_KEY.pkp],
       '3': [SUM_KEY.pSah, SUM_KEY.pTSah]
-    },
+    } as LembarSpec,
 
     [LEMBAR_KEY.PARTAI16_PLANO]: {
       '1': [SUM_KEY.pJum],
@@ -127,7 +126,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
       '2.16': [SUM_KEY.pkp],
 
       '3': [SUM_KEY.pSah, SUM_KEY.pTSah]
-    },
+    } as LembarSpec,
 
     [LEMBAR_KEY.PARTAI4_NO_DIGITIZE]: {
       '1': null,
@@ -136,7 +135,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
       '2.3': null,
       '2.4': null,
       '3': null
-    },
+    } as LembarSpec,
 
     [LEMBAR_KEY.PARTAI16_PLANO_NO_DIGITIZE]: {
       '1': null,
@@ -162,7 +161,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
       '2.16': null,
 
       '3': null
-    },
+    } as LembarSpec,
 
     [LEMBAR_KEY.PARTAI5_NO_DIGITIZE]: {
       '1': null,
@@ -172,7 +171,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
       '2.4': null,
       '2.5': null,
       '3': null
-    },
+    } as LembarSpec,
 
     [LEMBAR_KEY.PARTAI20_PLANO_NO_DIGITIZE]: {
       '1': null,
@@ -203,7 +202,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
       '2.20': null,
 
       '3': null
-    },
+    } as LembarSpec,
 
     [LEMBAR_KEY.CALON3_NO_DIGITIZE]: {
       '1': null,
@@ -211,7 +210,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
       '2.2': null,
       '2.3': null,
       '3': null
-    },
+    } as LembarSpec,
 
     [LEMBAR_KEY.CALON5_PLANO_NO_DIGITIZE]: {
       '1': null,
@@ -221,7 +220,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
       '2.4': null,
       '2.5': null,
       '3': null
-    }
+    } as LembarSpec
   };
 
   LEMBAR: { [key in FORM_TYPE]: { [key2 in IS_PLANO]: LembarSpec } } = {
@@ -292,7 +291,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
   formGroup: FormGroup;
   formType: FORM_TYPE;
   isPlano: IS_PLANO;
-  halaman: string;
+  halaman: Halaman;
   approveStatus: 'pending' | 'ready' | 'approved';
   autoSumSub: Subscription;
 
@@ -419,7 +418,11 @@ export class ApproverComponent implements OnInit, OnDestroy {
         tpsNo: this.tpsNo,
         sum,
         imageId: this.imageId,
-        c1: { type: this.formType, plano: this.isPlano }
+        c1: {
+          type: this.formType,
+          plano: this.isPlano,
+          halaman: this.halaman || '0'
+        }
       };
       const res: any = await this.api.post(user, `approve`, body);
       if (res.ok) {
@@ -463,7 +466,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
     this.tryUnsubscribe();
   }
 
-  setHalaman(hal: string) {
+  setHalaman(hal: Halaman) {
     this.halaman = hal;
     if (!this.getLembar()) {
       this.approveStatus = 'ready';
