@@ -175,7 +175,10 @@ app.use((err, req, res, next) => {
 
 let fallbackUntilTs = 0;
 let privateFailCount = 0;
-async function getHierarchyNode(cid: number, uid: string) {
+async function getHierarchyNode(
+  cid: number,
+  uid: string
+): Promise<HierarchyNode> {
   const ts = Date.now();
   const isPublic = uid.startsWith('public');
   const level = isPublic ? 'debug' : 'error';
@@ -217,14 +220,29 @@ async function getHierarchyNode(cid: number, uid: string) {
   return c;
 }
 
+type Cache12 = { ts: number; h: HierarchyNode };
+const cache_12: { [cid: string]: Cache12 } = {};
 app.get('/api/c/:id', async (req: any, res) => {
   const cid = +req.params.id;
   if (isNaN(cid) || cid >= 1e6) {
     return res.json({});
   }
+
+  const c = cache_12[cid];
+  const ts = Date.now();
+  if (c) {
+    if (c.h.depth < 1 && ts - c.ts < 60 * 1000) return res.json(c.h);
+    if (c.h.depth < 2 && ts - c.ts < 30 * 1000) return res.json(c.h);
+    if (ts - c.ts < 15 * 1000) return res.json(c.h);
+  }
+
   const user = req.user as admin.auth.DecodedIdToken;
   const uid = (user && user.uid) || 'public';
-  return res.json(await getHierarchyNode(cid, uid + ' from API'));
+  const h = await getHierarchyNode(cid, uid + ' from API');
+  if (h.depth <= 2 && user && user.uid) {
+    cache_12[cid] = { ts, h };
+  }
+  return res.json(h);
 });
 
 /** Fetches image metadata from Firestore, wait until it's populated. */
