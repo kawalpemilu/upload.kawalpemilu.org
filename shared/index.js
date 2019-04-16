@@ -161,16 +161,16 @@ var FsPath = /** @class */ (function () {
         return "h" + (typeof id === 'number' ? '/' + id : '');
     };
     FsPath.hieCache = function (id) {
-        return "hc/" + id;
+        return "hc2/" + id;
     };
     FsPath.relawan = function (uid) {
         return "r" + (uid ? '/' + uid : '');
     };
     FsPath.relawanPhoto = function (uid) {
-        return "p" + (uid ? '/' + uid : '');
+        return "p2" + (uid ? '/' + uid : '');
     };
     FsPath.tps = function (kelId, tpsNo) {
-        return "t/" + kelId + "-" + tpsNo;
+        return "t2/" + kelId + "-" + tpsNo;
     };
     FsPath.codeReferral = function (code) {
         return "c" + (code ? '/' + code : '');
@@ -179,10 +179,10 @@ var FsPath = /** @class */ (function () {
         return "l/" + logId;
     };
     FsPath.imageMetadata = function (imageId) {
-        return "i/" + imageId;
+        return "i2/" + imageId;
     };
     FsPath.upserts = function (imageId) {
-        return "u" + (imageId ? '/' + imageId : '');
+        return "u2" + (imageId ? '/' + imageId : '');
     };
     return FsPath;
 }());

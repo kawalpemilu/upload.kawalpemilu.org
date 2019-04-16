@@ -20,7 +20,7 @@ service cloud.firestore {
     }
  
     // Relawan photos.
-    match /p/{userId} {
+    match /p2/{userId} {
       // Moderator can read user photos if know the uid.
       allow get: if request.auth.uid == userId || getUserRole() >= 1;
 
@@ -34,7 +34,7 @@ service cloud.firestore {
     }
 
     // Photo Uploads.
-    match /u/{imageId} {
+    match /u2/{imageId} {
       // User can see their own uploaded photos.
       allow get: if request.auth.uid == resource.data.uploader.uid;
 
@@ -43,7 +43,7 @@ service cloud.firestore {
     }
 
     // TPS change log.
-    match /t/{tpsId} {
+    match /t2/{tpsId} {
       // Only Moderator and above can see the TPS history.
       allow get: if getUserRole() >= 1;
     }

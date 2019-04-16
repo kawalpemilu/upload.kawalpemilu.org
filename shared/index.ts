@@ -366,7 +366,7 @@ export class FsPath {
   }
 
   static hieCache(id: number) {
-    return `hc/${id}`;
+    return `hc2/${id}`;
   }
 
   static relawan(uid?: string) {
@@ -374,11 +374,11 @@ export class FsPath {
   }
 
   static relawanPhoto(uid?: string) {
-    return `p${uid ? '/' + uid : ''}`;
+    return `p2${uid ? '/' + uid : ''}`;
   }
 
   static tps(kelId: number, tpsNo: number) {
-    return `t/${kelId}-${tpsNo}`;
+    return `t2/${kelId}-${tpsNo}`;
   }
 
   static codeReferral(code?: string) {
@@ -390,11 +390,11 @@ export class FsPath {
   }
 
   static imageMetadata(imageId: string) {
-    return `i/${imageId}`;
+    return `i2/${imageId}`;
   }
 
   static upserts(imageId?: string) {
-    return `u${imageId ? '/' + imageId : ''}`;
+    return `u2${imageId ? '/' + imageId : ''}`;
   }
 }
 
