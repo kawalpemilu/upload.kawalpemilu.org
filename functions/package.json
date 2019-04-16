@@ -20,6 +20,7 @@
     "express": "^4.16.4",
     "firebase-admin": "~7.0.0",
     "firebase-functions": "^2.2.0",
+    "helmet": "^3.16.0",
     "request": "^2.88.0",
     "request-promise": "^4.2.4",
     "shared": "file:shared-1.0.0.tgz"

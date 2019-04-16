@@ -152,6 +152,7 @@ function rateLimitRequests() {
 const app = express();
 const bodyParser = require('body-parser');
 app.use(require('cors')({ origin: true }));
+app.use(require('helmet')());
 app.use(validateToken());
 app.use(rateLimitRequests());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -176,7 +177,7 @@ let privateFailCount = 0;
 async function getHierarchyNode(cid: number, uid: string) {
   const ts = Date.now();
   const isPublic = uid.startsWith('public');
-  const level = isPublic ? 'log' : 'error';
+  const level = isPublic ? 'debug' : 'error';
   if (fallbackUntilTs < ts || (!isPublic && privateFailCount < 10)) {
     try {
       const host = '35.193.104.134:8080';
