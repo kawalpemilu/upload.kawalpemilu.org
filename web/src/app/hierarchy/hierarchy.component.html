@@ -42,11 +42,18 @@
         <td class="index">{{ index + 1 }}</td>
         <td class="wilayah">
           <app-hie-link [id]="c[0]" [name]="c[1]"></app-hie-link>
+          &nbsp;
           <ng-container *ngIf="state.data[c[0]] as d">
+            <ng-container *ngIf="d.sum.error">
+              <sup [style.color]="'red'">{{ d.sum.error }}</sup>
+            </ng-container>
             <ng-container *ngIf="d.sum.pending">
               <span [style.color]="getColor(state, c[0])"
                 >({{ d.sum.pending }})
               </span>
+            </ng-container>
+            <ng-container *ngIf="d.sum.janggal">
+              <sub [style.color]="'orange'">{{ d.sum.janggal }}</sub>
             </ng-container>
           </ng-container>
         </td>

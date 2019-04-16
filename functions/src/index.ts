@@ -40,7 +40,8 @@ import {
   canGenerateCustomCode,
   QuotaSegments,
   QuotaSpecs,
-  isValidHalaman
+  isValidHalaman,
+  computeAction
 } from 'shared';
 
 const t1 = Date.now();
@@ -441,40 +442,6 @@ function populateApprove() {
     req.parsedBody = a;
     next();
   };
-}
-
-function computeAction(tps: TpsData) {
-  const sum = { pending: 0, cakupan: 0 } as SumMap;
-  const action = { sum, photos: {}, ts: 0, c1: null };
-  for (const imageId of Object.keys(tps.images)) {
-    const i = tps.images[imageId];
-    if (!i.c1) {
-      action.sum.cakupan = 1;
-      action.sum.pending = 1;
-      continue;
-    }
-    if (i.c1.type === FORM_TYPE.MALICIOUS || i.c1.type === FORM_TYPE.OTHERS) {
-      action.photos[i.url] = null;
-    } else {
-      action.sum.cakupan = 1;
-      action.photos[i.url] = {
-        c1: i.c1,
-        sum: i.sum,
-        ts: i.reviewer.ts
-      };
-      action.ts = Math.max(action.ts, i.reviewer.ts);
-    }
-    for (const key of Object.keys(i.sum)) {
-      if (typeof action.sum[key] === 'number') {
-        if (action.sum[key] !== i.sum[key]) {
-          action.sum.janggal = 1;
-        }
-      } else {
-        action.sum[key] = i.sum[key];
-      }
-    }
-  }
-  return action;
 }
 
 app.post(

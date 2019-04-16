@@ -478,6 +478,44 @@ export function canGenerateCustomCode(user) {
   return (user.email || '').endsWith('_group@tfbnw.net');
 }
 
+export function computeAction(tps: TpsData) {
+  const sum = { pending: 0, cakupan: 0, janggal: 0 } as SumMap;
+  const action = { sum, photos: {}, ts: 0, c1: null };
+  for (const imageId of Object.keys(tps.images)) {
+    const i = tps.images[imageId];
+    if (!i.c1) {
+      action.sum.cakupan = 1;
+      action.sum.pending = 1;
+      continue;
+    }
+    const ignore =
+      i.c1.type === FORM_TYPE.MALICIOUS || i.c1.type === FORM_TYPE.OTHERS;
+    if (ignore) {
+      action.photos[i.url] = null;
+    } else {
+      action.sum.cakupan = 1;
+      action.photos[i.url] = {
+        c1: i.c1,
+        sum: i.sum,
+        ts: i.reviewer.ts
+      };
+      action.ts = Math.max(action.ts, i.reviewer.ts);
+    }
+    for (const key of Object.keys(i.sum)) {
+      if (typeof action.sum[key] === 'number') {
+        if (action.sum[key] !== i.sum[key]) {
+          if (!ignore) {
+            action.sum.janggal = 1;
+          }
+        }
+      } else {
+        action.sum[key] = i.sum[key];
+      }
+    }
+  }
+  return action;
+}
+
 /**
  * Quota Manager.
  */

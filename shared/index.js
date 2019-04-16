@@ -276,6 +276,47 @@ function canGenerateCustomCode(user) {
     return (user.email || '').endsWith('_group@tfbnw.net');
 }
 exports.canGenerateCustomCode = canGenerateCustomCode;
+function computeAction(tps) {
+    var sum = { pending: 0, cakupan: 0, janggal: 0 };
+    var action = { sum: sum, photos: {}, ts: 0, c1: null };
+    for (var _i = 0, _a = Object.keys(tps.images); _i < _a.length; _i++) {
+        var imageId = _a[_i];
+        var i = tps.images[imageId];
+        if (!i.c1) {
+            action.sum.cakupan = 1;
+            action.sum.pending = 1;
+            continue;
+        }
+        var ignore = i.c1.type === FORM_TYPE.MALICIOUS || i.c1.type === FORM_TYPE.OTHERS;
+        if (ignore) {
+            action.photos[i.url] = null;
+        }
+        else {
+            action.sum.cakupan = 1;
+            action.photos[i.url] = {
+                c1: i.c1,
+                sum: i.sum,
+                ts: i.reviewer.ts
+            };
+            action.ts = Math.max(action.ts, i.reviewer.ts);
+        }
+        for (var _b = 0, _c = Object.keys(i.sum); _b < _c.length; _b++) {
+            var key = _c[_b];
+            if (typeof action.sum[key] === 'number') {
+                if (action.sum[key] !== i.sum[key]) {
+                    if (!ignore) {
+                        action.sum.janggal = 1;
+                    }
+                }
+            }
+            else {
+                action.sum[key] = i.sum[key];
+            }
+        }
+    }
+    return action;
+}
+exports.computeAction = computeAction;
 // The quota specifications: a list of quota restrictions.
 var QuotaSpecs = /** @class */ (function () {
     function QuotaSpecs(key) {

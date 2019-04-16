@@ -130,7 +130,13 @@
                 *ngIf="tps.agg as d"
                 cellspacing="0"
                 [style.background-color]="
-                  d.sum.error ? '#FDD' : d.sum.pending ? '#FFD' : ''
+                  d.sum.error
+                    ? '#FDD'
+                    : d.sum.pending
+                    ? '#FFD'
+                    : d.sum.janggal
+                    ? 'orange'
+                    : ''
                 "
               >
                 <thead *ngIf="hasPpwp(d.sum)">
