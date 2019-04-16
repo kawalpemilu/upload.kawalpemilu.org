@@ -283,3 +283,34 @@ export declare function lsGetItem(key: any): any;
 export declare function lsSetItem(key: any, value: any): void;
 export declare function enumEntries(e: any): any[][2];
 export declare function canGenerateCustomCode(user: any): any;
+/**
+ * Quota Manager.
+ */
+interface QuotaRestriction {
+    maxCount: number;
+    duration: number;
+}
+export declare type QuotaSpecKey = 'api';
+export interface Quota {
+    timestamp: number;
+    count: number;
+}
+export declare type QuotaSegments = {
+    [key: string]: Quota;
+};
+export declare class QuotaSpecs {
+    key: QuotaSpecKey;
+    static SPECS: {
+        [key in QuotaSpecKey]: string[];
+    };
+    static UNIT_TO_MS: {
+        [key: string]: number;
+    };
+    specs: {
+        [key: string]: QuotaRestriction;
+    };
+    constructor(key: QuotaSpecKey);
+    request(quota: QuotaSegments, now: number): QuotaSegments;
+    static getDurationMs(dur: string): number;
+}
+export {};

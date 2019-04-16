@@ -442,3 +442,75 @@ export function enumEntries(e: any): any[][2] {
 export function canGenerateCustomCode(user) {
   return (user.email || '').endsWith('_group@tfbnw.net');
 }
+
+/**
+ * Quota Manager.
+ */
+
+// Allow up to {maxCount} requests for given {duration}.
+interface QuotaRestriction {
+  maxCount: number;
+  duration: number;
+}
+
+export type QuotaSpecKey = 'api';
+
+// The number of request {count} since {timestamp}.
+export interface Quota {
+  timestamp: number;
+  count: number;
+}
+
+export type QuotaSegments = { [key: string]: Quota };
+
+// The quota specifications: a list of quota restrictions.
+export class QuotaSpecs {
+  static SPECS: { [key in QuotaSpecKey]: string[] } = {
+    api: ['30@1m', '200@10m', '600@1h']
+  };
+
+  static UNIT_TO_MS: { [key: string]: number } = {
+    d: 24 * 60 * 60 * 1000,
+    h: 60 * 60 * 1000,
+    m: 60 * 1000,
+    s: 1000
+  };
+
+  specs: { [key: string]: QuotaRestriction } = {};
+
+  constructor(public key: QuotaSpecKey) {
+    QuotaSpecs.SPECS[key].forEach(s => {
+      const p = s.split('@');
+      this.specs[s] = {
+        maxCount: parseInt(p[0], 10),
+        duration: QuotaSpecs.getDurationMs(p[1])
+      };
+    });
+  }
+
+  request(quota: QuotaSegments, now: number) {
+    for (const k in this.specs) {
+      const s = this.specs[k];
+      let q = quota[k];
+      if (!q || q.timestamp + s.duration < now) {
+        // Reset the quota since it's stale.
+        q = { timestamp: now, count: 0 };
+      }
+      if (++q.count > s.maxCount) {
+        // Abort, signify failure.
+        return;
+      }
+      quota[k] = q;
+    }
+    return quota;
+  }
+
+  // Converts '1d' string to number in milliseconds.
+  static getDurationMs(dur: string): number {
+    if (dur.length < 2) return NaN;
+    const i = dur.length - 1;
+    const num = parseInt(dur.substring(0, i), 10);
+    const unit = QuotaSpecs.UNIT_TO_MS[dur.substring(i)];
+    return num * unit;
+  }
+}

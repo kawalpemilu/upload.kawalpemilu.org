@@ -37,7 +37,9 @@ import {
   MAX_URL_LENGTH,
   MAX_REASON_LENGTH,
   MAX_REPORT_ERRORS,
-  canGenerateCustomCode
+  canGenerateCustomCode,
+  QuotaSegments,
+  QuotaSpecs
 } from 'shared';
 
 const t1 = Date.now();
@@ -129,19 +131,17 @@ function validateToken() {
   };
 }
 
-function maxRequestPerMinute(n: number) {
-  const qpm: { [uid: string]: number } = {};
+function rateLimitRequests() {
+  const quota: { [uid: string]: QuotaSegments } = {};
+  const quotaSpecs = new QuotaSpecs('api');
   return (req, res, next) => {
     if (!req.query.abracadabra) {
       const user = req.user as admin.auth.DecodedIdToken;
-      const num = (qpm[user.uid] = (qpm[user.uid] || 0) + 1);
-      if (num > n) {
+      quota[user.uid] = quota[user.uid] || {};
+      if (!quotaSpecs.request(quota[user.uid], Date.now())) {
         console.warn(`User ${user.uid} is rate-limited: ${req.url}`);
         res.status(403).json({ error: 'Rate-limited' });
         return null;
-      }
-      if (num === 1) {
-        setTimeout(() => delete qpm[user.uid], 60 * 1000);
       }
     }
     next();
@@ -152,7 +152,7 @@ const app = express();
 const bodyParser = require('body-parser');
 app.use(require('cors')({ origin: true }));
 app.use(validateToken());
-app.use(maxRequestPerMinute(30));
+app.use(rateLimitRequests());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use((err, req, res, next) => {
@@ -170,8 +170,6 @@ app.use((err, req, res, next) => {
   }
 });
 
-const CACHE_TIMEOUT = 1;
-const cache_c: any = {};
 let fallbackUntilTs = 0;
 let privateFailCount = 0;
 async function getHierarchyNode(cid: number, uid: string) {
@@ -221,16 +219,9 @@ app.get('/api/c/:id', async (req: any, res) => {
   if (isNaN(cid) || cid >= 1e6) {
     return res.json({});
   }
-
-  let c = cache_c[cid];
-  res.setHeader('Cache-Control', `max-age=${CACHE_TIMEOUT}`);
-  if (c) return res.json(c);
-
   const user = req.user as admin.auth.DecodedIdToken;
   const uid = (user && user.uid) || 'public';
-  c = cache_c[cid] = await getHierarchyNode(cid, uid + ' from API');
-  setTimeout(() => delete cache_c[cid], CACHE_TIMEOUT * 1000);
-  return res.json(c);
+  return res.json(await getHierarchyNode(cid, uid + ' from API'));
 });
 
 /** Fetches image metadata from Firestore, wait until it's populated. */

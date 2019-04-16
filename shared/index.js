@@ -265,3 +265,54 @@ function canGenerateCustomCode(user) {
     return (user.email || '').endsWith('_group@tfbnw.net');
 }
 exports.canGenerateCustomCode = canGenerateCustomCode;
+// The quota specifications: a list of quota restrictions.
+var QuotaSpecs = /** @class */ (function () {
+    function QuotaSpecs(key) {
+        var _this = this;
+        this.key = key;
+        this.specs = {};
+        QuotaSpecs.SPECS[key].forEach(function (s) {
+            var p = s.split('@');
+            _this.specs[s] = {
+                maxCount: parseInt(p[0], 10),
+                duration: QuotaSpecs.getDurationMs(p[1])
+            };
+        });
+    }
+    QuotaSpecs.prototype.request = function (quota, now) {
+        for (var k in this.specs) {
+            var s = this.specs[k];
+            var q = quota[k];
+            if (!q || q.timestamp + s.duration < now) {
+                // Reset the quota since it's stale.
+                q = { timestamp: now, count: 0 };
+            }
+            if (++q.count > s.maxCount) {
+                // Abort, signify failure.
+                return;
+            }
+            quota[k] = q;
+        }
+        return quota;
+    };
+    // Converts '1d' string to number in milliseconds.
+    QuotaSpecs.getDurationMs = function (dur) {
+        if (dur.length < 2)
+            return NaN;
+        var i = dur.length - 1;
+        var num = parseInt(dur.substring(0, i), 10);
+        var unit = QuotaSpecs.UNIT_TO_MS[dur.substring(i)];
+        return num * unit;
+    };
+    QuotaSpecs.SPECS = {
+        api: ['30@1m', '200@10m', '600@1h']
+    };
+    QuotaSpecs.UNIT_TO_MS = {
+        d: 24 * 60 * 60 * 1000,
+        h: 60 * 60 * 1000,
+        m: 60 * 1000,
+        s: 1000
+    };
+    return QuotaSpecs;
+}());
+exports.QuotaSpecs = QuotaSpecs;
