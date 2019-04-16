@@ -23,7 +23,13 @@ export interface Photos {
 @Component({
   selector: 'app-foto',
   templateUrl: './foto.component.html',
-  styles: [``],
+  styles: [
+    `
+      li {
+        margin-top: 10px;
+      }
+    `
+  ],
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -92,6 +98,10 @@ export class FotoComponent {
     );
   }
 
+  get MULAI_HITUNG() {
+    return Date.now() > 1555481939447;
+  }
+
   toCarousel(kelId, tpsNo, photos: UploadRequest[]) {
     const arr: CarouselItem[] = [];
     for (const p of photos) {
@@ -100,7 +110,7 @@ export class FotoComponent {
         tpsNo,
         url: p.url,
         ts: p.ts,
-        sum: p.sum || {} as SumMap,
+        sum: p.sum || ({} as SumMap),
         // TODO: reflect the current error state.
         error: false,
         c1: p.c1,
