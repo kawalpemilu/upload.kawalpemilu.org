@@ -60,6 +60,13 @@
           <mat-list-item>
             <a
               mat-list-item
+              (click)="openBadge(relawan) && snav.toggle()"
+              ><mat-icon>portrait</mat-icon> &nbsp; ID Badge
+            </a>
+          </mat-list-item>
+          <mat-list-item>
+            <a
+              mat-list-item
               [routerLink]="['/foto']"
               (click)="mobileQuery.matches && snav.toggle()"
               ><mat-icon>add_a_photo</mat-icon> &nbsp; Tes Upload Foto

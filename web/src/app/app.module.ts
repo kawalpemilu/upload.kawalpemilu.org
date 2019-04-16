@@ -51,7 +51,6 @@ import {
   LaporButtonComponent,
   LaporReasonDialogComponent
 } from './lapor-button/lapor-button.component';
-import { ChatComponent } from './chat/chat.component';
 import { registerLocaleData } from '@angular/common';
 import localeId from '@angular/common/locales/id';
 import { OrangComponent } from './orang/orang.component';
@@ -88,7 +87,6 @@ import { CariKelComponent } from './cari-kel/cari-kel.component';
     HieLinkComponent,
     LaporButtonComponent,
     LaporReasonDialogComponent,
-    ChatComponent,
     OrangComponent,
     ProfileComponent,
     MetaComponent,
