@@ -118,4 +118,42 @@ export class AppComponent implements OnDestroy {
     <img width="600" src="https://upload.kawalpemilu.org/assets/pemantau.png" />
   `;
   }
+
+  openBadge2(relawan) {
+    const width = 1024;
+    const win = window.open(
+      '',
+      '_blank',
+      `toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+    );
+    win.document.body.innerHTML = `
+    <img
+      height="200"
+      src="${relawan.profile.pic}"
+      style="
+        position: absolute;
+        top: 310px;
+        left: 175px;
+        z-index: -1;
+      "
+    />
+
+    <div
+      style="
+        width: ${width / 2 - 30}px;
+        margin-left: 30px;
+        text-align: center;
+        font-size: 26px;
+        font-weight: bold;
+        font-style: italic;
+        position: absolute;
+        top: 560px;
+      "
+    >
+      ${relawan.profile.name}
+    </div>
+
+    <img width="${width}" src="https://upload.kawalpemilu.org/assets/pemantau2.png" />
+  `;
+  }
 }

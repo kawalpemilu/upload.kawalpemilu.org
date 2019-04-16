@@ -945,7 +945,7 @@ app.post('/api/register/:code', async (req: any, res) => {
       return cd;
     })
     .catch(e => {
-      console.error(`DB register ${user.uid}`, e);
+      console.error(`DB register ${user.uid}, code: ${code}`, e);
       return null;
     });
 

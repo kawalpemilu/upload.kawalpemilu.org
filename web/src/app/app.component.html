@@ -60,7 +60,7 @@
           <mat-list-item>
             <a
               mat-list-item
-              (click)="openBadge(relawan) && snav.toggle()"
+              (click)="openBadge2(relawan) && snav.toggle()"
               ><mat-icon>portrait</mat-icon> &nbsp; ID Badge
             </a>
           </mat-list-item>
@@ -115,7 +115,7 @@
   <mat-sidenav-content
     [style.padding-left.px]="PADDING"
     [style.padding-right.px]="PADDING"
-    style="min-height: 425px"
+    style="min-height: 460px"
   >
     <ng-container *ngIf="!userService.isLoading; else loading">
       <ng-container
