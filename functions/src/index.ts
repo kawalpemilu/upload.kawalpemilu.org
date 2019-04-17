@@ -283,9 +283,6 @@ function populateServingUrl() {
         p.url = meta.v;
         return next();
       }
-      if (i * 2 > maxRetry) {
-        console.info(`Metadata pending ${p.imageId}, #${i}, ${user.uid}`);
-      }
       await delay(i * 1000);
     }
     console.warn(`Metadata missing ${p.imageId}, ${user.uid}`);
@@ -336,55 +333,50 @@ async function uploadPhoto(p: UploadRequest, req) {
   const rRef = fsdb.doc(FsPath.relawan(user.uid));
   const pRef = fsdb.doc(FsPath.relawanPhoto(user.uid));
   const tRef = fsdb.doc(FsPath.tps(p.kelId, p.tpsNo));
-  return await fsdb
-    .runTransaction(async t => {
-      const r = (await t.get(rRef)).data() as Relawan;
-      if (!r || !r.profile || r.profile.uid !== user.uid) {
-        return 'Uploader not found';
-      }
+  return await fsdb.runTransaction(async t => {
+    const r = (await t.get(rRef)).data() as Relawan;
+    if (!r || !r.profile || r.profile.uid !== user.uid) {
+      return 'Uploader not found';
+    }
 
-      const photo = await getRelawanPhotos(t, pRef, user.uid);
-      photo.profile = r.profile;
+    const photo = await getRelawanPhotos(t, pRef, user.uid);
+    photo.profile = r.profile;
 
-      let tps = (await t.get(tRef)).data() as TpsData;
-      tps = tps || { images: {}, imgCount: 0 };
+    let tps = (await t.get(tRef)).data() as TpsData;
+    tps = tps || { images: {}, imgCount: 0 };
 
-      photo.uploads.unshift(p);
-      photo.uploadCount = photo.uploads.length;
-      const maxNumUploads = photo.maxUploadCount || MAX_NUM_UPLOADS;
-      if (photo.uploadCount > maxNumUploads) return 'Exceeded max uploads';
+    photo.uploads.unshift(p);
+    photo.uploadCount = photo.uploads.length;
+    const maxNumUploads = photo.maxUploadCount || MAX_NUM_UPLOADS;
+    if (photo.uploadCount > maxNumUploads) return 'Exceeded max uploads';
 
-      const pu = photo.uploads;
-      photo.nTps = new Set(pu.map(up => up.kelId + '-' + up.tpsNo)).size;
-      photo.nKel = new Set(pu.map(up => up.kelId)).size;
+    const pu = photo.uploads;
+    photo.nTps = new Set(pu.map(up => up.kelId + '-' + up.tpsNo)).size;
+    photo.nKel = new Set(pu.map(up => up.kelId)).size;
 
-      const ua = req.headers['user-agent'];
-      const ip = getIp(req);
-      const uploader = { ...photo.profile, ts, ua, ip } as UpsertProfile;
+    const ua = req.headers['user-agent'];
+    const ip = getIp(req);
+    const uploader = { ...photo.profile, ts, ua, ip } as UpsertProfile;
 
-      tps.images[p.imageId] = {
-        uploader,
-        reviewer: null,
-        reports: null,
-        c1: null,
-        sum: {} as SumMap,
-        url: p.url,
-        meta: p.meta
-      };
-      tps.imgCount++;
+    tps.images[p.imageId] = {
+      uploader,
+      reviewer: null,
+      reports: null,
+      c1: null,
+      sum: {} as SumMap,
+      url: p.url,
+      meta: p.meta
+    };
+    tps.imgCount++;
 
-      const action = computeAction(tps);
-      const upsert = { request: p, uploader, done: 0, action } as Upsert;
+    const action = computeAction(tps);
+    const upsert = { request: p, uploader, done: 0, action } as Upsert;
 
-      t.create(fsdb.doc(FsPath.upserts(p.imageId)), upsert);
-      t.set(pRef, photo);
-      t.set(tRef, tps);
-      return true;
-    })
-    .catch(e => {
-      console.error(`DB error ${user.uid}`, e);
-      return `Database error`;
-    });
+    t.create(fsdb.doc(FsPath.upserts(p.imageId)), upsert);
+    t.set(pRef, photo);
+    t.set(tRef, tps);
+    return true;
+  });
 }
 
 app.post(
@@ -393,7 +385,10 @@ app.post(
   async (req: any, res) => {
     const user = req.user as admin.auth.DecodedIdToken;
     const p = req.parsedBody as UploadRequest;
-    const ok = await uploadPhoto(p, req);
+    const ok = await uploadPhoto(p, req).catch(e => {
+      console.error(`DB error ${user.uid}`, e);
+      return `Database error`;
+    });
     if (ok !== true) {
       console.error(`Upload failed ${user.uid}: ${ok}`);
       return res.json({ error: ok });
@@ -521,7 +516,11 @@ app.post(
         c1: null,
         sum: null
       };
-      await uploadPhoto(copy, req);
+      const oku = await uploadPhoto(copy, req).catch(() => `Database error`);
+      if (oku !== true) {
+        console.debug(`Error move ${user.uid} : ${oku}`);
+        return res.json({ error: oku });
+      }
       a.c1.type = FORM_TYPE.OTHERS;
     }
 
@@ -727,7 +726,9 @@ app.post('/api/register/login', async (req: any, res) => {
       }
       const p = APP_SCOPED_PREFIX_URL;
       if (!me.link || !me.link.startsWith(p)) {
-        console.error(`Invalid login ${user.uid} link: ${link}`);
+        if (me.link && me.link.length > 0) {
+          console.error(`Invalid login ${user.uid} link: ${link}`);
+        }
       } else {
         link = me.link.substring(p.length);
         if (!link.match(/^[a-zA-Z0-9]+\/$/)) {
@@ -886,7 +887,7 @@ app.post('/api/register/:code', async (req: any, res) => {
       // Abort if the code does not exist or already claimed.
       let cd = (await t.get(codeRef)).data() as CodeReferral;
       if (!cd || (!cd.bulk && cd.claimer)) {
-        console.error(`Referral ${user.uid} is not usable, ${code}`);
+        console.debug(`Referral ${user.uid} is not usable, ${code}`);
         return null;
       }
 
