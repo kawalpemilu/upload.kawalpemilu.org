@@ -189,6 +189,9 @@ export class BottomSheetErrorComponent {
                     <ng-container *ngSwitchCase="FORM_TYPE.OTHERS">
                       <p>Foto ini tidak ditampilkan ke publik.</p>
                     </ng-container>
+                    <ng-container *ngSwitchCase="FORM_TYPE.PEMANDANGAN">
+                      <p>Pemandangan di TPS.</p>
+                    </ng-container>
                     <ng-container *ngSwitchDefault>
                       {{ FORM_TYPE[c1.type] }}
                       {{ c1.plano == IS_PLANO.YES ? '(P)' : '' }}

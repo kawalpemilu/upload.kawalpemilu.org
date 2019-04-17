@@ -427,7 +427,11 @@ function populateApprove() {
       console.warn(`Invalid form ${JSON.stringify(b.c1)} for ${user.uid}`);
       return res.json({ error: 'Invalid form' });
     }
-    if (b.c1.type !== FORM_TYPE.MALICIOUS && b.c1.type !== FORM_TYPE.OTHERS) {
+    if (
+      b.c1.type !== FORM_TYPE.MALICIOUS &&
+      b.c1.type !== FORM_TYPE.OTHERS &&
+      b.c1.type !== FORM_TYPE.PEMANDANGAN
+    ) {
       if (!IS_PLANO[b.c1.plano]) {
         console.warn(`Invalid plano ${JSON.stringify(b.c1)} for ${user.uid}`);
         return res.json({ error: 'Invalid form' });

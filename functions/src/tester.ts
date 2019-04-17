@@ -11,7 +11,8 @@ import {
   Relawan,
   RelawanPhotos,
   Aggregate,
-  autoId
+  autoId,
+  TpsData
 } from 'shared';
 
 import { H } from './hierarchy';
@@ -413,9 +414,25 @@ async function kpuUpload() {
   console.log(res);
 }
 
+async function fixPemandangan() {
+  const mods = await fsdb
+    .collection('t2')
+    .get();
+  for (const snap of mods.docs) {
+    const t = snap.data() as TpsData;
+    for (const imageId of Object.keys(t.images)) {
+      const i = t.images[imageId];
+      if (i.c1 && i.c1.type === 10) {
+        console.log(snap.id, imageId);
+      }
+    }
+  }
+}
+
 // parallelUpload().catch(console.error);
 // loadTest().catch(console.error);
 // fixClaimersRole().catch(console.error);
 // fixUploadersCount().catch(console.error);
 // checkHierarchy().catch(console.error);
-kpuUpload().catch(console.error);
+// kpuUpload().catch(console.error);
+fixPemandangan().catch(console.error);

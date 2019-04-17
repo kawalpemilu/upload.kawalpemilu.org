@@ -262,6 +262,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
       [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.CALON3_NO_DIGITIZE]
     },
     [FORM_TYPE.OTHERS]: null,
+    [FORM_TYPE.PEMANDANGAN]: null,
     [FORM_TYPE.MALICIOUS]: null
   };
 
@@ -449,6 +450,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
     this.formType = +type;
     this.approveStatus =
       this.formType === FORM_TYPE.OTHERS ||
+      this.formType === FORM_TYPE.PEMANDANGAN ||
       this.formType === FORM_TYPE.MALICIOUS
         ? 'ready'
         : 'pending';
