@@ -1,7 +1,7 @@
 "use strict";
 exports.__esModule = true;
 exports.APP_SCOPED_PREFIX_URL = 'https://www.facebook.com/app_scoped_user_id/';
-exports.MAX_REFERRALS = 5000;
+exports.MAX_REFERRALS = 1500;
 exports.MAX_NUM_UPLOADS = 100;
 exports.MAX_URL_LENGTH = 300;
 exports.MAX_REASON_LENGTH = 300;
@@ -101,7 +101,8 @@ var FORM_TYPE;
     FORM_TYPE[FORM_TYPE["DPRK"] = 9] = "DPRK";
     // Up to choosing this type.
     FORM_TYPE[FORM_TYPE["OTHERS"] = 10] = "OTHERS";
-    FORM_TYPE[FORM_TYPE["MALICIOUS"] = 11] = "MALICIOUS";
+    FORM_TYPE[FORM_TYPE["PEMANDANGAN"] = 11] = "PEMANDANGAN";
+    FORM_TYPE[FORM_TYPE["MALICIOUS"] = 12] = "MALICIOUS";
 })(FORM_TYPE = exports.FORM_TYPE || (exports.FORM_TYPE = {}));
 var IS_PLANO;
 (function (IS_PLANO) {

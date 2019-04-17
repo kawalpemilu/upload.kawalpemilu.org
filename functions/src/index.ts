@@ -815,7 +815,9 @@ async function addGeneratedCode(r: Relawan, nama, t, code, bulk = null) {
 
   if (!r.code) r.code = {};
   r.code[code] = { name: nama, issuedTs: newCode.issuedTs } as CodeReferral;
-  t.update(fsdb.doc(FsPath.relawan(r.profile.uid)), r);
+  if (Object.keys(r.code).length < MAX_REFERRALS) {
+    t.update(fsdb.doc(FsPath.relawan(r.profile.uid)), r);
+  }
   return newCode;
 }
 
@@ -911,10 +913,6 @@ app.post('/api/register/:code', async (req: any, res) => {
         // CD is just a token, need to create an actual code.
         newCode = await generateCode(t);
         cd = await addGeneratedCode(issuer, '', t, newCode);
-        if (Object.keys(issuer.code).length > MAX_REFERRALS) {
-          console.error(`Issuer ${user.uid} exceeds max referrals`);
-          return null;
-        }
       }
 
       // Abort if the issuer never generate the code.
@@ -931,7 +929,9 @@ app.post('/api/register/:code', async (req: any, res) => {
       claimer.referrer = cd.issuer;
 
       t.update(fsdb.doc(FsPath.codeReferral(newCode)), cd);
-      t.update(issuerRef, issuer);
+      if (Object.keys(issuer.code).length < MAX_REFERRALS) {
+        t.update(issuerRef, issuer);
+      }
       t.update(claimerRef, claimer);
       return cd;
     })

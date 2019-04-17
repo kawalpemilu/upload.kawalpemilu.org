@@ -1,6 +1,6 @@
 export const APP_SCOPED_PREFIX_URL =
   'https://www.facebook.com/app_scoped_user_id/';
-export const MAX_REFERRALS = 5000;
+export const MAX_REFERRALS = 1500;
 export const MAX_NUM_UPLOADS = 100;
 export const MAX_URL_LENGTH = 300;
 export const MAX_REASON_LENGTH = 300;
@@ -104,6 +104,7 @@ export enum FORM_TYPE {
 
   // Up to choosing this type.
   OTHERS,
+  PEMANDANGAN,
   MALICIOUS
 }
 

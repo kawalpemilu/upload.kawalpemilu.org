@@ -1,5 +1,5 @@
 export declare const APP_SCOPED_PREFIX_URL = "https://www.facebook.com/app_scoped_user_id/";
-export declare const MAX_REFERRALS = 5000;
+export declare const MAX_REFERRALS = 1500;
 export declare const MAX_NUM_UPLOADS = 100;
 export declare const MAX_URL_LENGTH = 300;
 export declare const MAX_REASON_LENGTH = 300;
@@ -88,7 +88,8 @@ export declare enum FORM_TYPE {
     DPRD_KAB_KOTA = 8,
     DPRK = 9,
     OTHERS = 10,
-    MALICIOUS = 11
+    PEMANDANGAN = 11,
+    MALICIOUS = 12
 }
 export declare type SumMap = {
     [key in SUM_KEY]: number;
