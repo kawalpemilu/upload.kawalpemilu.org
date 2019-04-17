@@ -71,3 +71,6 @@ public/
 functions/1oz4pZ0MTidjEteHbvlNdfvAu7p1.json
 functions/src/sa-key.json
 functions/lib/sa-key.json
+kpu/cache/**
+kpu/uploaded-md5/**
+functions/gEQFS1n5gpTzMTy5JASPPLk4yRA3.json

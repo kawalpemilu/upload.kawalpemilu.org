@@ -2,10 +2,10 @@
 exports.__esModule = true;
 exports.APP_SCOPED_PREFIX_URL = 'https://www.facebook.com/app_scoped_user_id/';
 exports.MAX_REFERRALS = 1500;
-exports.MAX_NUM_UPLOADS = 100;
+exports.MAX_NUM_UPLOADS = 1500;
 exports.MAX_URL_LENGTH = 300;
 exports.MAX_REASON_LENGTH = 300;
-exports.MAX_REPORT_ERRORS = 10;
+exports.MAX_REPORT_ERRORS = 100;
 exports.LOCAL_STORAGE_LAST_URL = 'last_url';
 var USER_ROLE;
 (function (USER_ROLE) {

@@ -2,6 +2,7 @@ import * as admin from 'firebase-admin';
 import * as request from 'request-promise';
 import * as fs from 'fs';
 import * as util from 'util';
+import * as crypto from 'crypto';
 
 import {
   UploadRequest,
@@ -26,6 +27,7 @@ admin.initializeApp({
 
 const auth = admin.auth();
 const fsdb = admin.firestore();
+const bucket = admin.storage().bucket('kawal-c1.appspot.com');
 
 const readFileAsync = util.promisify(fs.readFile);
 const statAsync = util.promisify(fs.stat);
@@ -36,6 +38,13 @@ interface User {
   refreshToken: string;
   expiresIn: number;
   expiresAt: number;
+}
+
+function md5(str) {
+  return crypto
+    .createHash('md5')
+    .update(str)
+    .digest('hex');
 }
 
 async function reauthenticate(
@@ -379,19 +388,16 @@ async function checkHierarchy() {
   recCheck(0, 0);
 }
 
-async function kpuUpload() {
-  const kelId = 25221;
-  const tpsNo = 5;
+async function kpuUploadImage(kelId, tpsNo, filename) {
+  const stats = await statAsync(filename);
+
+  console.log('uploading', kelId, tpsNo, filename);
   const kpuScanUid = 'gEQFS1n5gpTzMTy5JASPPLk4yRA3';
   const imageId = autoId();
   const destination = `uploads/${kelId}/${tpsNo}/${kpuScanUid}/${imageId}`;
 
-  const bucket = admin.storage().bucket('kawal-c1.appspot.com');
-  const filename = '/Users/felixhalim/Downloads/dbz.jpg';
-
   await bucket.upload(filename, { destination });
 
-  const stats = await statAsync(filename);
   const res = await upload(kpuScanUid, {
     imageId,
     kelId,
@@ -411,13 +417,41 @@ async function kpuUpload() {
     sum: null // Will be populated later by Moderator
   });
 
-  console.log(res);
+  if (!res.ok) throw new Error(res);
+}
+
+async function kpuUploadDir(kelId: number) {
+  const LOCAL_FS = '/Users/felixhalim/Projects/kawal-c1/kpu/cache';
+  const hashdir = LOCAL_FS + '/../uploaded-md5';
+  const dir = LOCAL_FS + `/${kelId}`;
+  if (!fs.existsSync(dir)) return;
+
+  for (const file of fs.readdirSync(dir)) {
+    if (!file.endsWith('.jpg')) continue;
+    const filename = dir + `/${file}`;
+    const hash = md5(fs.readFileSync(filename));
+    const hashFile = hashdir + `/${hash}`;
+    if (fs.existsSync(hashFile)) continue;
+
+    const tpsNo = +file.split('-')[1];
+    await kpuUploadImage(kelId, tpsNo, filename);
+    fs.writeFileSync(hashFile, '1', 'utf8');
+  }
+  console.log('uploaded kel', kelId);
+}
+
+async function kpuUpload() {
+  for (const id of Object.keys(H)) {
+    const h = H[id];
+    if (h.depth === 4) {
+      await kpuUploadDir(+id);
+    }
+  }
+  console.log('uploadone');
 }
 
 async function fixPemandangan() {
-  const mods = await fsdb
-    .collection('t2')
-    .get();
+  const mods = await fsdb.collection('t2').get();
   for (const snap of mods.docs) {
     const t = snap.data() as TpsData;
     for (const imageId of Object.keys(t.images)) {
@@ -434,5 +468,5 @@ async function fixPemandangan() {
 // fixClaimersRole().catch(console.error);
 // fixUploadersCount().catch(console.error);
 // checkHierarchy().catch(console.error);
-// kpuUpload().catch(console.error);
-fixPemandangan().catch(console.error);
+kpuUpload().catch(console.error);
+// fixPemandangan().catch(console.error);

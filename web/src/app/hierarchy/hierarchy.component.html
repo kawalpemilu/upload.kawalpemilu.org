@@ -27,7 +27,7 @@
       </th>
       <th class="paslon1">
         {{ sum(state, 'cakupan') | number }} / {{ sumTps(state) | number }} =
-        {{ sum(state, 'cakupan') / sumTps(state) | number: '1.0-1' }}%
+        {{ (100 * sum(state, 'cakupan')) / sumTps(state) | number: '1.0-1' }}%
       </th>
     </tr>
   </tfoot>
@@ -59,7 +59,7 @@
         </td>
         <td class="paslon1">
           {{ coverage(state, c[0]) | number }} / {{ c[2] | number }} =
-          {{ coverage(state, c[0]) / c[2] | number: '1.0-1' }}%
+          {{ (100 * coverage(state, c[0])) / c[2] | number: '1.0-1' }}%
         </td>
       </tr>
     </ng-container>
