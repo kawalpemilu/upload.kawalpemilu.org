@@ -1,186 +1,192 @@
-<table
-  *ngIf="(tps$ | async) as tps; else loading"
-  style="margin-top: 10px"
-  cellpadding="0"
-  cellspacing="0"
->
-  <tr>
-    <td align="left" valign="top">
-      Foto by:
-      <app-orang
-        [profile]="tps.uploader"
-        [activity]="true"
-        [blankTarget]="true"
-      ></app-orang>
-      <app-meta [meta]="tps.meta"></app-meta>
-      <br />
-      <app-thumbnail
-        [url]="tps.url"
-        [linkSize]="3000"
-        [srcSize]="1280"
-        [maxWidth]="'100%'"
-      ></app-thumbnail>
-    </td>
-    <td width="190" style="padding: 5px" valign="top">
-      <ng-container *ngIf="!isChangeKel">
-        <app-hie-link [id]="kelId" [name]="kelName"></app-hie-link>
-        <button mat-icon-button (click)="changeKel()">
-          <mat-icon>edit</mat-icon>
-        </button>
-      </ng-container>
-
-      <ng-container *ngIf="isChangeKel">
-        <app-cari-kel
-          (kelId)="changeKelId($event)"
-          (cancel)="isChangeKel = false"
-        ></app-cari-kel>
-      </ng-container>
-
-      <br />
-      TPS #
-      <input
-        matInput
-        type="number"
-        [(ngModel)]="tpsNo"
-        style="width: 50px; background-color: white"
-      />
-
-      <br />
-
-      <ng-container
-        *ngIf="initialKelId != kelId || initialTpsNo != tpsNo; else go"
-      >
-        <p>
-          <button
-            [disabled]="isLoading"
-            mat-raised-button
-            color="primary"
-            (click)="
-              formType = FORM_TYPE.OTHERS; isPlano = IS_PLANO.NO; approve()
-            "
-          >
-            Pindahkan Foto
+<ng-container *ngIf="(userService.relawan$ | async) as relawan">
+  <table
+    *ngIf="(tps$ | async) as tps; else loading"
+    style="margin-top: 10px"
+    cellpadding="0"
+    cellspacing="0"
+  >
+    <tr>
+      <td align="left" valign="top">
+        Foto by:
+        <app-orang
+          [profile]="tps.uploader"
+          [activity]="true"
+          [blankTarget]="true"
+        ></app-orang>
+        <app-meta [meta]="tps.meta"></app-meta>
+        <br />
+        <app-thumbnail
+          [url]="tps.url"
+          [linkSize]="3000"
+          [srcSize]="1280"
+          [maxWidth]="'100%'"
+        ></app-thumbnail>
+      </td>
+      <td width="190" style="padding: 5px" valign="top">
+        <ng-container *ngIf="!isChangeKel">
+          <app-hie-link [id]="kelId" [name]="kelName"></app-hie-link>
+          <button mat-icon-button (click)="changeKel()">
+            <mat-icon>edit</mat-icon>
           </button>
-        </p>
-      </ng-container>
+        </ng-container>
 
-      <ng-template #go>
-        <ng-container *ngIf="formType; else pilihTipe">
-          C1: <b>{{ FORM_TYPE[formType] }}</b>
-          <button mat-icon-button color="primary" (click)="formType = null">
-            <mat-icon>cancel</mat-icon>
-          </button>
-          <br />
+        <ng-container *ngIf="isChangeKel">
+          <app-cari-kel
+            (kelId)="changeKelId($event)"
+            (cancel)="isChangeKel = false"
+          ></app-cari-kel>
+        </ng-container>
 
-          <ng-container *ngIf="LEMBAR[formType]">
-            <ng-container *ngIf="isPlano; else pilihIsPlano">
-              Plano: <b>{{ IS_PLANO[isPlano] }}</b>
-              <button mat-icon-button color="primary" (click)="isPlano = null">
-                <mat-icon>cancel</mat-icon>
-              </button>
-              <br />
+        <br />
+        TPS #
+        <input
+          matInput
+          type="number"
+          [(ngModel)]="tpsNo"
+          style="width: 50px; background-color: white"
+        />
 
-              <ng-container *ngIf="halaman; else pilihLembar">
-                Lembar: <b>{{ halaman }}</b>
+        <br />
+
+        <ng-container
+          *ngIf="initialKelId != kelId || initialTpsNo != tpsNo; else go"
+        >
+          <p>
+            <button
+              [disabled]="isLoading"
+              mat-raised-button
+              color="primary"
+              (click)="
+                formType = FORM_TYPE.OTHERS; isPlano = IS_PLANO.NO; approve()
+              "
+            >
+              Pindahkan Foto
+            </button>
+          </p>
+        </ng-container>
+
+        <ng-template #go>
+          <ng-container *ngIf="formType; else pilihTipe">
+            C1: <b>{{ FORM_TYPE[formType] }}</b>
+            <button mat-icon-button color="primary" (click)="formType = null">
+              <mat-icon>cancel</mat-icon>
+            </button>
+            <br />
+
+            <ng-container *ngIf="LEMBAR[formType]">
+              <ng-container *ngIf="isPlano; else pilihIsPlano">
+                Plano: <b>{{ IS_PLANO[isPlano] }}</b>
                 <button
                   mat-icon-button
                   color="primary"
-                  (click)="halaman = null"
+                  (click)="isPlano = null"
                 >
                   <mat-icon>cancel</mat-icon>
                 </button>
                 <br />
 
-                <ng-container *ngIf="getLembar()">
-                  <form [formGroup]="formGroup">
-                    <ng-container *ngFor="let field of getLembar()">
-                      <mat-form-field style="width: 180px">
-                        <input
-                          matInput
-                          autocomplete="off"
-                          placeholder="{{ LABEL[field] }}"
-                          formControlName="{{ field }}"
-                          type="number"
-                          required
-                        />
-                      </mat-form-field>
-                      <!-- <span *ngIf="getError(p.form) as error" class="alert">
+                <ng-container *ngIf="halaman; else pilihLembar">
+                  Lembar: <b>{{ halaman }}</b>
+                  <button
+                    mat-icon-button
+                    color="primary"
+                    (click)="halaman = null"
+                  >
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                  <br />
+
+                  <ng-container *ngIf="getLembar()">
+                    <form [formGroup]="formGroup">
+                      <ng-container *ngFor="let field of getLembar()">
+                        <mat-form-field style="width: 180px">
+                          <input
+                            matInput
+                            autocomplete="off"
+                            placeholder="{{ LABEL[field] }}"
+                            formControlName="{{ field }}"
+                            type="number"
+                            required
+                          />
+                        </mat-form-field>
+                        <!-- <span *ngIf="getError(p.form) as error" class="alert">
                 {{ error }}
               </span> -->
-                      <br />
-                    </ng-container>
-                    <button
-                      *ngIf="approveStatus == 'pending'"
-                      type="submit"
-                      [disabled]="formGroup?.invalid || isLoading"
-                      mat-raised-button
-                      color="primary"
-                      (click)="approve()"
-                    >
-                      Bungkusss!
-                    </button>
-                  </form>
+                        <br />
+                      </ng-container>
+                      <button
+                        *ngIf="approveStatus == 'pending'"
+                        type="submit"
+                        [disabled]="formGroup?.invalid || isLoading"
+                        mat-raised-button
+                        color="primary"
+                        (click)="approve()"
+                      >
+                        Bungkusss!
+                      </button>
+                    </form>
+                  </ng-container>
                 </ng-container>
               </ng-container>
             </ng-container>
           </ng-container>
-        </ng-container>
-      </ng-template>
+        </ng-template>
 
-      <ng-template #pilihLembar>
-        <h3>Pilih Lembar</h3>
+        <ng-template #pilihLembar>
+          <h3>Pilih Lembar</h3>
 
-        <mat-radio-group
-          class="radio-group"
-          (change)="setHalaman($event.value)"
-        >
-          <mat-radio-button *ngFor="let hal of getHalaman()" [value]="hal">
-            Lembar {{ hal }}
-          </mat-radio-button>
-        </mat-radio-group>
-      </ng-template>
-
-      <ng-template #pilihIsPlano>
-        <h3>Kertas tipe Plano</h3>
-
-        <mat-radio-group
-          class="radio-group"
-          (change)="setIsPlano($event.value)"
-        >
-          <mat-radio-button [value]="IS_PLANO.YES">
-            YES
-          </mat-radio-button>
-          <mat-radio-button [value]="IS_PLANO.NO">
-            NO
-          </mat-radio-button>
-        </mat-radio-group>
-      </ng-template>
-
-      <ng-template #pilihTipe>
-        <h3>Pilih Tipe Form</h3>
-
-        <mat-radio-group
-          class="radio-group"
-          (change)="setFormType($event.value)"
-        >
-          <ng-container *ngFor="let e of FORM_TYPE_ENTRIES">
-            <!-- TODO: remove ngIf pas hari H -->
-            <mat-radio-button
-              [value]="e[0]"
-              *ngIf="e[0] != FORM_TYPE.MALICIOUS"
-            >
-              <ng-container *ngIf="e[0] == FORM_TYPE.MALICIOUS; else normal">
-                MALICIOUS<br />(<b style="color: red">BAN USER</b>)
-              </ng-container>
-              <ng-template #normal>
-                {{ e[1] }}
-              </ng-template>
+          <mat-radio-group
+            class="radio-group"
+            (change)="setHalaman($event.value)"
+          >
+            <mat-radio-button *ngFor="let hal of getHalaman()" [value]="hal">
+              Lembar {{ hal }}
             </mat-radio-button>
-          </ng-container>
-        </mat-radio-group>
-      </ng-template>
+          </mat-radio-group>
+        </ng-template>
 
-      <p *ngIf="(userService.relawan$ | async) as relawan">
+        <ng-template #pilihIsPlano>
+          <h3>Kertas tipe Plano</h3>
+
+          <mat-radio-group
+            class="radio-group"
+            (change)="setIsPlano($event.value)"
+          >
+            <mat-radio-button [value]="IS_PLANO.YES">
+              YES
+            </mat-radio-button>
+            <mat-radio-button [value]="IS_PLANO.NO">
+              NO
+            </mat-radio-button>
+          </mat-radio-group>
+        </ng-template>
+
+        <ng-template #pilihTipe>
+          <h3>Pilih Tipe Form</h3>
+
+          <mat-radio-group
+            class="radio-group"
+            (change)="setFormType($event.value)"
+          >
+            <ng-container *ngFor="let e of FORM_TYPE_ENTRIES">
+              <mat-radio-button
+                [value]="e[0]"
+                *ngIf="
+                  e[0] != FORM_TYPE.MALICIOUS ||
+                  relawan.profile.role >= USER_ROLE.ADMIN
+                "
+              >
+                <ng-container *ngIf="e[0] == FORM_TYPE.MALICIOUS; else normal">
+                  MALICIOUS<br />(<b style="color: red">BAN USER</b>)
+                </ng-container>
+                <ng-template #normal>
+                  {{ e[1] }}
+                </ng-template>
+              </mat-radio-button>
+            </ng-container>
+          </mat-radio-group>
+        </ng-template>
+
         <span *ngIf="approveStatus == 'approved'">
           Approved by:<br />
           <app-orang [profile]="relawan.profile" [activity]="true"></app-orang>
@@ -196,10 +202,10 @@
             Bungkusss!
           </button>
         </ng-container>
-      </p>
-    </td>
-  </tr>
-</table>
+      </td>
+    </tr>
+  </table>
+</ng-container>
 
 <ng-template #loading>
   <p>

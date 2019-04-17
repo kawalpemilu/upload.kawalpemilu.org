@@ -17,7 +17,8 @@ import {
   enumEntries,
   IS_PLANO,
   Halaman,
-  HierarchyNode
+  HierarchyNode,
+  USER_ROLE
 } from 'shared';
 import { startWith, take, distinctUntilChanged } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
@@ -270,6 +271,8 @@ export class ApproverComponent implements OnInit, OnDestroy {
   FORM_TYPE_ENTRIES = enumEntries(FORM_TYPE);
 
   IS_PLANO = IS_PLANO;
+
+  USER_ROLE = USER_ROLE;
 
   Object = Object;
   VALIDATORS = [Validators.pattern('^[0-9]{1,3}$')];

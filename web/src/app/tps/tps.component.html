@@ -7,7 +7,7 @@
       <ng-container *ngFor="let s of slices">
         <button
           mat-raised-button
-          color="primary"
+          [color]="s.error ? 'warn' : 'primary'"
           [disabled]="showingSlice == s"
           (click)="showingSlice = s"
           style="margin-right: 15px"
