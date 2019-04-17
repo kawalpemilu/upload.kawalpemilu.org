@@ -5,8 +5,8 @@ from google.appengine.api.images import get_serving_url
 import webapp2
 import logging
 
-# 3 hours
-CACHE_TIMEOUT = 3 * 60 * 60
+# 1 hours
+CACHE_TIMEOUT = 1 * 60 * 60
 
 # https://cloud.google.com/appengine/docs/standard/python/images/#get-serving-url
 class GetServingUrl(webapp2.RequestHandler):
