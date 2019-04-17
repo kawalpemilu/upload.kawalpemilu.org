@@ -181,7 +181,7 @@ async function getHierarchyNode(
 ): Promise<HierarchyNode> {
   const ts = Date.now();
   const isPublic = uid.startsWith('public');
-  const level = isPublic ? 'debug' : 'error';
+  const level = isPublic || privateFailCount < 10 ? 'debug' : 'error';
   if (fallbackUntilTs < ts || (!isPublic && privateFailCount < 10)) {
     try {
       const host = '35.193.104.134:8080';
@@ -675,6 +675,9 @@ app.post(
         img.reports = img.reports || {};
         img.reports[ts] = { reporter, reason: p.reason };
         img.sum.error = 1;
+        if (rp.profile.role >= USER_ROLE.ADMIN && p.reason.startsWith('OK:')) {
+          img.sum.error = 0;
+        }
 
         u.reporter = reporter;
         u.action = computeAction(tps);

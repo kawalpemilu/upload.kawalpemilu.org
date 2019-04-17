@@ -219,7 +219,7 @@ export class TpsComponent implements OnInit {
               imageId,
               ts: i.uploader.ts,
               sum: i.sum,
-              error: false,
+              error: i.sum && !!i.sum.error,
               reports:
                 Object.keys(i.reports || {}).length > 0 ? i.reports : null,
               uploader: i.uploader,
