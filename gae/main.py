@@ -4,9 +4,7 @@ from google.appengine.api import urlfetch
 from google.appengine.api.images import get_serving_url
 import webapp2
 import logging
-
-# 1 hours
-CACHE_TIMEOUT = 1 * 60 * 60
+import json
 
 # https://cloud.google.com/appengine/docs/standard/python/images/#get-serving-url
 class GetServingUrl(webapp2.RequestHandler):
@@ -20,25 +18,30 @@ class GetServingUrl(webapp2.RequestHandler):
 class GetChildrenApi(webapp2.RequestHandler):
     def get(self, cid):
         self.response.headers['Content-Type'] = 'application/json'
-        self.response.headers['Cache-Control'] = 'max-age=' + str(CACHE_TIMEOUT)
+        self.response.headers['Cache-Control'] = 'max-age=3600'
         self.response.headers['Access-Control-Allow-Origin'] = '*'
 
         # Loads from memcache if exists.
-        json = memcache.get(cid)
-        if json is not None:
+        jsonTxt = memcache.get(cid)
+        if jsonTxt is not None:
             self.response.headers['X-Cache'] = 'HIT-M'
-            return self.response.out.write(json)
+            return self.response.out.write(jsonTxt)
 
         try:
             # Fetch fresh from the real API and set it to memcache.
             url = 'https://kawal-c1.firebaseapp.com/api/c/' + cid + '?abracadabra=1'
-            json = urlfetch.fetch(url).content
+            jsonTxt = urlfetch.fetch(url).content
             self.response.headers['X-Cache'] = 'HIT-D'
-            self.response.out.write(json)
-            memcache.set(cid, json, CACHE_TIMEOUT)
+            self.response.out.write(jsonTxt)
+
+            h = json.loads(jsonTxt)
+            CACHE_TIMEOUT = 3600
+            if 'depth' in h:
+                CACHE_TIMEOUT = (3 ** h['depth']) * 60
+            memcache.set(cid, jsonTxt, CACHE_TIMEOUT)
         except urlfetch.Error:
             self.response.out.write('{}')
-            memcache.set(cid, '{}', CACHE_TIMEOUT)
+            memcache.set(cid, '{}', 3600)
             logging.exception('Failed fetching ' + url)
 
 app = webapp2.WSGIApplication([
