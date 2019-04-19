@@ -140,11 +140,13 @@ function rateLimitRequests() {
   return (req, res, next) => {
     if (!req.query.abracadabra) {
       const user = req.user as admin.auth.DecodedIdToken;
-      quota[user.uid] = quota[user.uid] || {};
-      if (!quotaSpecs.request(quota[user.uid], Date.now())) {
-        console.warn(`User ${user.uid} is rate-limited: ${req.url}`);
-        res.status(403).json({ error: 'Rate-limited' });
-        return null;
+      if (user.uid !== KPU_SCAN_UID) {
+        quota[user.uid] = quota[user.uid] || {};
+        if (!quotaSpecs.request(quota[user.uid], Date.now())) {
+          console.warn(`User ${user.uid} is rate-limited: ${req.url}`);
+          res.status(403).json({ error: 'Rate-limited' });
+          return null;
+        }
       }
     }
     next();

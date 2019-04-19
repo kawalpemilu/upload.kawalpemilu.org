@@ -3,7 +3,7 @@ export declare const MAX_REFERRALS = 1500;
 export declare const MAX_NUM_UPLOADS = 1500;
 export declare const MAX_URL_LENGTH = 300;
 export declare const MAX_REASON_LENGTH = 300;
-export declare const MAX_REPORT_ERRORS = 100;
+export declare const MAX_REPORT_ERRORS = 200;
 export declare const LOCAL_STORAGE_LAST_URL = "last_url";
 export declare const KPU_SCAN_UID = "gEQFS1n5gpTzMTy5JASPPLk4yRA3";
 export declare enum USER_ROLE {

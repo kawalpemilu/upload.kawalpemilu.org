@@ -10,7 +10,10 @@ import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material';
   template: `
     <h1 mat-dialog-title>Laporkan Kesalahan</h1>
     <div mat-dialog-content>
-      <p>Tulis kesalahan yang ingin kamu laporkan (max 300 huruf):</p>
+      <p>
+        Tulis kesalahan yang ingin kamu laporkan (max 300 huruf).<br><br>Kurang tanda
+        tangan itu <b style="color: red">BUKAN</b> kesalahan (tidak perlu kamu laporkan).
+      </p>
       <mat-form-field>
         <input
           #reason
