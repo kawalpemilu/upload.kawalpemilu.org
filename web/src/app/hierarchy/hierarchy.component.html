@@ -45,15 +45,25 @@
           &nbsp;
           <ng-container *ngIf="state.data[c[0]] as d">
             <ng-container *ngIf="d.sum.error">
-              <sup [style.color]="'red'">{{ d.sum.error }}</sup>
+              <sup
+                matTooltip="Jumlah TPS yang ada laporan kesalahan"
+                [style.color]="'red'"
+                >{{ d.sum.error }}</sup
+              >
             </ng-container>
             <ng-container *ngIf="d.sum.pending">
-              <span [style.color]="getColor(state, c[0])"
+              <span
+                matTooltip="Jumlah TPS yang ada foto baru masuk dan belum didigitisasi"
+                [style.color]="getColor(state, c[0])"
                 >({{ d.sum.pending }})
               </span>
             </ng-container>
             <ng-container *ngIf="d.sum.janggal">
-              <sub [style.color]="'orange'">{{ d.sum.janggal }}</sub>
+              <sub
+                matTooltip="Jumlah TPS yang janggal (ada 2+ foto yang hasil digitisasinya berbeda)"
+                [style.color]="'orange'"
+                >{{ d.sum.janggal }}</sub
+              >
             </ng-container>
           </ng-container>
         </td>

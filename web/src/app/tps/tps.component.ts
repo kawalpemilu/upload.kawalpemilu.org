@@ -39,6 +39,7 @@ interface Slice {
   hi: number;
   pending: number;
   error: number;
+  janggal: number;
 }
 
 @Component({
@@ -130,14 +131,16 @@ export class TpsComponent implements OnInit {
       const tpsHi = tpsLo + jump;
       let pending = 0;
       let error = 0;
+      let janggal = 0;
       while (hi < arr.length && arr[hi].tpsNo < tpsHi) {
         if (arr[hi].agg && arr[hi].agg.sum) {
           pending += arr[hi].agg.sum.pending || 0;
           error += arr[hi].agg.sum.error || 0;
+          janggal += arr[hi].agg.sum.janggal || 0;
         }
         hi++;
       }
-      this.slices.push({ tpsLo, tpsHi, lo, hi, pending, error });
+      this.slices.push({ tpsLo, tpsHi, lo, hi, pending, error, janggal });
       lo = hi;
       tpsLo = tpsHi;
     }

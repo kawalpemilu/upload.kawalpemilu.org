@@ -37,6 +37,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatBottomSheetModule } from '@angular/material/bottom-sheet';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { HttpClientModule } from '@angular/common/http';
 import {
@@ -130,7 +131,8 @@ import { CariKelComponent } from './cari-kel/cari-kel.component';
     MatAutocompleteModule,
     MatBadgeModule,
     MatDialogModule,
-    MatBottomSheetModule
+    MatBottomSheetModule,
+    MatTooltipModule
   ],
   providers: [{ provide: LOCALE_ID, useValue: 'id' }, Title],
   bootstrap: [AppComponent]
