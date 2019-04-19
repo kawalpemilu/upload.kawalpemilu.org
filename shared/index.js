@@ -7,6 +7,7 @@ exports.MAX_URL_LENGTH = 300;
 exports.MAX_REASON_LENGTH = 300;
 exports.MAX_REPORT_ERRORS = 100;
 exports.LOCAL_STORAGE_LAST_URL = 'last_url';
+exports.KPU_SCAN_UID = 'gEQFS1n5gpTzMTy5JASPPLk4yRA3';
 var USER_ROLE;
 (function (USER_ROLE) {
     USER_ROLE[USER_ROLE["BANNED"] = -1] = "BANNED";

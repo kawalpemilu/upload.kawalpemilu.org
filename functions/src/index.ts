@@ -41,7 +41,8 @@ import {
   QuotaSegments,
   QuotaSpecs,
   isValidHalaman,
-  computeAction
+  computeAction,
+  KPU_SCAN_UID
 } from 'shared';
 
 const t1 = Date.now();
@@ -339,25 +340,28 @@ async function uploadPhoto(p: UploadRequest, req) {
       return 'Uploader not found';
     }
 
-    const photo = await getRelawanPhotos(t, pRef, user.uid);
-    photo.profile = r.profile;
+    let photo: RelawanPhotos = null;
+    if (user.uid !== KPU_SCAN_UID) {
+      photo = await getRelawanPhotos(t, pRef, user.uid);
+      photo.profile = r.profile;
 
-    let tps = (await t.get(tRef)).data() as TpsData;
-    tps = tps || { images: {}, imgCount: 0 };
+      photo.uploadCount = (photo.uploadCount || 0) + 1;
+      const maxNumUploads = photo.maxUploadCount || MAX_NUM_UPLOADS;
+      if (photo.uploadCount <= maxNumUploads) {
+        photo.uploads.unshift(p);
+      }
 
-    photo.uploads.unshift(p);
-    photo.uploadCount = photo.uploads.length;
-    const maxNumUploads = photo.maxUploadCount || MAX_NUM_UPLOADS;
-    if (photo.uploadCount > maxNumUploads) return 'Exceeded max uploads';
-
-    const pu = photo.uploads;
-    photo.nTps = new Set(pu.map(up => up.kelId + '-' + up.tpsNo)).size;
-    photo.nKel = new Set(pu.map(up => up.kelId)).size;
+      const pu = photo.uploads;
+      photo.nTps = new Set(pu.map(up => up.kelId + '-' + up.tpsNo)).size;
+      photo.nKel = new Set(pu.map(up => up.kelId)).size;
+    }
 
     const ua = req.headers['user-agent'];
     const ip = getIp(req);
-    const uploader = { ...photo.profile, ts, ua, ip } as UpsertProfile;
+    const uploader = { ...r.profile, ts, ua, ip } as UpsertProfile;
 
+    let tps = (await t.get(tRef)).data() as TpsData;
+    tps = tps || { images: {}, imgCount: 0 };
     tps.images[p.imageId] = {
       uploader,
       reviewer: null,
@@ -372,8 +376,12 @@ async function uploadPhoto(p: UploadRequest, req) {
     const action = computeAction(tps);
     const upsert = { request: p, uploader, done: 0, action } as Upsert;
 
-    t.create(fsdb.doc(FsPath.upserts(p.imageId)), upsert);
-    t.set(pRef, photo);
+    const imageRef = fsdb.doc(FsPath.upserts(p.imageId));
+    if ((await t.get(imageRef)).exists) return true;
+    t.create(imageRef, upsert);
+    if (photo) {
+      t.set(pRef, photo);
+    }
     t.set(tRef, tps);
     return true;
   });
@@ -546,7 +554,8 @@ app.post(
         const urp = self ? rp : ((await t.get(pRef)).data() as RelawanPhotos);
         if (!urp) return 'No relawan photo';
         const photo = urp.uploads.find(p => p.imageId === a.imageId);
-        if (!photo) return `No photo for ${a.imageId}`;
+        if (!photo && urp.profile.uid !== KPU_SCAN_UID)
+          return `No photo for ${a.imageId}`;
 
         const tRef = fsdb.doc(FsPath.tps(u.request.kelId, u.request.tpsNo));
         const tps = (await t.get(tRef)).data() as TpsData;
@@ -562,17 +571,20 @@ app.post(
           }
         }
 
-        photo.c1 = img.c1 = a.c1;
-        photo.sum = img.sum = a.sum;
+        img.c1 = a.c1;
+        img.sum = a.sum;
         img.sum.pending = 0;
 
         u.reviewer = img.reviewer = { ...r.profile, ts, ua, ip };
         u.action = computeAction(tps);
         u.done = 0;
-        photo.sum = img.sum = asum;
-
-        if (pRef) {
-          t.update(pRef, urp);
+        img.sum = asum;
+        if (photo) {
+          photo.c1 = img.c1;
+          photo.sum = img.sum;
+          if (pRef) {
+            t.update(pRef, urp);
+          }
         }
         t.set(rpRef, rp);
         t.update(rRef, r);
@@ -586,7 +598,9 @@ app.post(
       });
 
     if (ok !== true) {
-      console.warn(`Error approve ${user.uid} : ${ok}`);
+      if (!ok.startsWith('Already')) {
+        console.warn(`Error approve ${user.uid} : ${ok}`);
+      }
       return res.json({ error: ok });
     }
     return res.json({ ok: true });

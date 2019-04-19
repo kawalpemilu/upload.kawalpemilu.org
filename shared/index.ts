@@ -6,6 +6,7 @@ export const MAX_URL_LENGTH = 300;
 export const MAX_REASON_LENGTH = 300;
 export const MAX_REPORT_ERRORS = 100;
 export const LOCAL_STORAGE_LAST_URL = 'last_url';
+export const KPU_SCAN_UID = 'gEQFS1n5gpTzMTy5JASPPLk4yRA3';
 
 export enum USER_ROLE {
   BANNED = -1,
