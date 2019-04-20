@@ -46,5 +46,5 @@ class GetChildrenApi(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([
     ('/gsu', GetServingUrl),
-    (r'/api/c/(\d+)', GetChildrenApi)
+    (r'/api/c/-?(\d+)', GetChildrenApi)
     ], debug=False)
