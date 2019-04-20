@@ -265,13 +265,6 @@ function populateServingUrl() {
       sum: null // Will be populated on approved
     });
 
-    if (p.imageId.startsWith('zzzzzzz')) {
-      p.url =
-        'http://lh3.googleusercontent.com/dRp80J1IsmVNeI3HBh-' +
-        'ToZA-VumvKXOzp-P_XrgsyhkjMV9Lldfq7-V9hhkolUAED75_QPn9t4NFNrJNMP8';
-      return next();
-    }
-
     if (!isValidImageId(p.imageId)) {
       console.warn(`Metadata invalid ${p.imageId}, ${user.uid}`);
       return res.json({ error: 'Invalid imageId' });
@@ -460,7 +453,7 @@ function populateApprove() {
         return res.json({ error: 'Invalid sum key' });
       }
       const sum = b.sum[key];
-      if (typeof sum !== 'number' || sum < 0 || sum > 1000) {
+      if (typeof sum !== 'number' || sum < 0 || sum > 3000) {
         console.error(`Sum ${sum} out of range ${user.uid}`);
         return res.json({ error: 'Invalid sum range' });
       }

@@ -66,8 +66,9 @@
               style="border: 1px solid black; width: 90px; padding: 5px"
               (click)="toggleDetails(state, tps.tpsNo)"
               [style.cursor]="state.isModerator ? 'pointer' : ''"
+              *ngIf="getNormalizedTps(tps.tpsNo) as t"
             >
-              TPS # <b style="font-size: large">{{ tps.tpsNo }}</b>
+              {{ t.name }} # <b style="font-size: large">{{ t.no }}</b>
             </div>
           </td>
           <td rowspan="3" style="padding: 10px">

@@ -396,14 +396,12 @@ async function kpuUploadImage(kelId, tpsNo, filename: string) {
   console.log('uploading', kelId, tpsNo, filename, stats.size);
 
   if (stats.size < 10 << 10) {
-    console.error('too small', kelId, tpsNo);
-    return;
+    throw new Error(`Image too small ${kelId} ${tpsNo}`);
   }
 
   const h: HierarchyNode = H[kelId];
   if (!h.children.find(c => c[0] === tpsNo)) {
-    console.error('tps not found', kelId, tpsNo);
-    return;
+    throw new Error(`TPS not found ${kelId} ${tpsNo}`);
   }
 
   const imageId = autoId();
@@ -446,9 +444,12 @@ async function kpuUploadDir(kelId: number) {
     const filename = dir + `/${file}`;
     const hash = md5(fs.readFileSync(filename));
     const hashFile = hashdir + `/${hash}`;
+
+    // TODO: query the actual fsdb, if not exist continuupload.
     if (fs.existsSync(hashFile)) continue;
 
-    const tpsNo = +file.split('-')[1];
+    const s = file.split('-');
+    const tpsNo = file[0] !== '-' ? +s[1] : decodeTpsNo(s[2]);
     promises.push(
       kpuUploadImage(kelId, tpsNo, filename).then(() =>
         fs.writeFileSync(hashFile, '1', 'utf8')
@@ -460,6 +461,13 @@ async function kpuUploadDir(kelId: number) {
   } catch (e) {
     console.error('failed upload', kelId, e.message);
   }
+}
+
+function decodeTpsNo(t) {
+  const s = t.split(' ');
+  if (s[0] === 'KSK') return +s[1] + 2000;
+  if (s[0] === 'POS') return +s[1] + 1000;
+  return +s[1];
 }
 
 async function kpuUpload() {

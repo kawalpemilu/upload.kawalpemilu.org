@@ -98,15 +98,20 @@ export class TpsComponent implements OnInit {
           this.digitize = {};
           this.details = {};
         }
-        if (state.tpsList.length > 200) {
-          this.populateSlices(state.tpsList, 40);
-        } else if (state.tpsList.length > 100) {
-          this.populateSlices(state.tpsList, 20);
-        } else if (state.tpsList.length > 20) {
-          this.populateSlices(state.tpsList, 10);
-        } else {
-          this.populateSlices(state.tpsList, 400);
+        if (state.id < 0) {
+          this.populateSlices(state.tpsList, 4000);
           this.showingSlice = this.slices[0];
+        } else {
+          if (state.tpsList.length > 200) {
+            this.populateSlices(state.tpsList, 40);
+          } else if (state.tpsList.length > 100) {
+            this.populateSlices(state.tpsList, 20);
+          } else if (state.tpsList.length > 20) {
+            this.populateSlices(state.tpsList, 10);
+          } else {
+            this.populateSlices(state.tpsList, 400);
+            this.showingSlice = this.slices[0];
+          }
         }
         return state;
       }),
@@ -232,5 +237,15 @@ export class TpsComponent implements OnInit {
           return arr;
         })
       );
+  }
+
+  getNormalizedTps(tpsNo) {
+    if (tpsNo >= 2000) {
+      return { name: 'KSK', no: tpsNo - 2000 };
+    }
+    if (tpsNo >= 1000) {
+      return { name: 'POS', no: tpsNo - 1000 };
+    }
+    return { name: 'TPS', no: tpsNo };
   }
 }

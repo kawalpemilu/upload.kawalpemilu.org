@@ -275,7 +275,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
   USER_ROLE = USER_ROLE;
 
   Object = Object;
-  VALIDATORS = [Validators.pattern('^[0-9]{1,3}$')];
+  VALIDATORS = [Validators.pattern('^[1-3]?[0-9]{1,3}$')];
 
   initialKelId: number;
   initialTpsNo: number;

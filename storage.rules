@@ -2,8 +2,8 @@ service firebase.storage {
   match /b/{bucket}/o {
     // Only allows write. The images are read from serving url.
     match /uploads/{kelurahanId}/{tpsNo}/{userId}/{imageId} {
-      allow write: if kelurahanId.matches('[0-9]{1,10}')
-                   && tpsNo.matches('[0-9]{1,3}')
+      allow write: if kelurahanId.matches('-?[0-9]{1,10}')
+                   && tpsNo.matches('[0-9]{1,4}')
                    && userId == request.auth.uid
                    && imageId.matches('[A-Za-z0-9]{20}')
                    && request.resource.size < 15 * 1024 * 1024

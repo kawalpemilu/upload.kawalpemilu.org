@@ -31,20 +31,18 @@ async function download(url, output) {
 }
 
 async function downloadWithRetry(url, output) {
-  for (let i = 0; i < 3; i++) {
-    try {
-      await download(url, output);
-      const s = fs.statSync(output);
-      if (s.size < 10 << 10) {
-        // console.error('image too small', url);
-        fs.unlinkSync(output);
-      } else {
-        console.log('downloaded', url);
-      }
-      return;
-    } catch (e) {
-      console.error('download retry', i, e.message);
+  try {
+    await download(url, output);
+    const s = fs.statSync(output);
+    if (s.size < 10 << 10) {
+      // console.error('image too small', url);
+      fs.unlinkSync(output);
+    } else {
+      console.log('downloaded', url);
     }
+    return;
+  } catch (e) {
+    console.error('download retry', e.message);
   }
 }
 
@@ -230,7 +228,12 @@ async function fixHierarchy() {
         }
         await Promise.all(promises);
       }
-      if (nChildren > h.children.length && id !== 83553 && id !== 72398 && id !== 930135) {
+      if (
+        nChildren > h.children.length &&
+        id !== 83553 &&
+        id !== 72398 &&
+        id !== 930135
+      ) {
         // console.error('here', nChildren, h.children.length, path, res, h);
         throw new Error(`Child mismatch ${nChildren} != ${h.children.length}`);
       }
@@ -298,7 +301,6 @@ async function fixHierarchy() {
   fs.writeFileSync(hieFn, `exports.H = ${JSON.stringify(H)};`);
 }
 
-fixHierarchy().catch(console.error);
+// fixHierarchy().catch(console.error);
 
-// sedot(32676, 1, [0]).catch(console.error);
-// sedot(0, 0, []).catch(console.error);
+sedot(0, 0, []).catch(console.error);
