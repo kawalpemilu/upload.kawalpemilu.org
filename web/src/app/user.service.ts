@@ -84,28 +84,28 @@ export class UserService {
 
     this.topUploaders$ = this.fsdb
       .collection<RelawanPhotos>(FsPath.relawanPhoto(), ref =>
-        ref.orderBy('uploadCount', 'desc').limit(20)
+        ref.orderBy('uploadCount', 'desc').limit(100)
       )
       .valueChanges()
       .pipe(shareReplay(1));
 
     this.topReporters$ = this.fsdb
       .collection<RelawanPhotos>(FsPath.relawanPhoto(), ref =>
-        ref.orderBy('reportCount', 'desc').limit(20)
+        ref.orderBy('reportCount', 'desc').limit(100)
       )
       .valueChanges()
       .pipe(shareReplay(1));
 
     this.topReviewers$ = this.fsdb
       .collection<RelawanPhotos>(FsPath.relawanPhoto(), ref =>
-        ref.orderBy('reviewCount', 'desc').limit(20)
+        ref.orderBy('reviewCount', 'desc').limit(100)
       )
       .valueChanges()
       .pipe(shareReplay(1));
 
     this.topReferrers$ = this.fsdb
       .collection<Relawan>(FsPath.relawan(), ref =>
-        ref.orderBy('profile.dr4', 'desc').limit(20)
+        ref.orderBy('profile.dr4', 'desc').limit(100)
       )
       .valueChanges()
       .pipe(
