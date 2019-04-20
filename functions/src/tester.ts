@@ -13,7 +13,9 @@ import {
   RelawanPhotos,
   Aggregate,
   autoId,
-  TpsData
+  TpsData,
+  HierarchyNode,
+  KPU_SCAN_UID
 } from 'shared';
 
 import { H } from './hierarchy';
@@ -388,28 +390,40 @@ async function checkHierarchy() {
   recCheck(0, 0);
 }
 
-async function kpuUploadImage(kelId, tpsNo, filename) {
+async function kpuUploadImage(kelId, tpsNo, filename: string) {
   const stats = await statAsync(filename);
 
-  console.log('uploading', kelId, tpsNo, filename);
-  const kpuScanUid = 'gEQFS1n5gpTzMTy5JASPPLk4yRA3';
+  console.log('uploading', kelId, tpsNo, filename, stats.size);
+
+  if (stats.size < 10 << 10) {
+    console.error('too small', kelId, tpsNo);
+    return;
+  }
+
+  const h: HierarchyNode = H[kelId];
+  if (!h.children.find(c => c[0] === tpsNo)) {
+    console.error('tps not found', kelId, tpsNo);
+    return;
+  }
+
   const imageId = autoId();
-  const destination = `uploads/${kelId}/${tpsNo}/${kpuScanUid}/${imageId}`;
+  const destination = `uploads/${kelId}/${tpsNo}/${KPU_SCAN_UID}/${imageId}`;
 
   await bucket.upload(filename, { destination });
 
-  const res = await upload(kpuScanUid, {
+  const res = await upload(KPU_SCAN_UID, {
     imageId,
     kelId,
     kelName: '', // Will be populated on the server.
     tpsNo,
     meta: {
-      u: kpuScanUid,
+      u: KPU_SCAN_UID,
       k: kelId,
       t: tpsNo,
       a: Date.now(),
       l: stats.mtime.getTime(), // Last Modified Timestamp.
-      s: stats.size // Size in Bytes.
+      s: stats.size, // Size in Bytes.
+      m: [filename.substring(filename.lastIndexOf('/') + 1), '']
     } as ImageMetadata,
     url: null, // Will be populated on the server.
     ts: null, // Will be populated on the server.
@@ -417,7 +431,7 @@ async function kpuUploadImage(kelId, tpsNo, filename) {
     sum: null // Will be populated later by Moderator
   });
 
-  if (!res.ok) throw new Error(res);
+  if (!res.ok) throw new Error(JSON.stringify(res, null, 2));
 }
 
 async function kpuUploadDir(kelId: number) {
@@ -426,6 +440,7 @@ async function kpuUploadDir(kelId: number) {
   const dir = LOCAL_FS + `/${kelId}`;
   if (!fs.existsSync(dir)) return;
 
+  const promises = [];
   for (const file of fs.readdirSync(dir)) {
     if (!file.endsWith('.jpg')) continue;
     const filename = dir + `/${file}`;
@@ -434,10 +449,17 @@ async function kpuUploadDir(kelId: number) {
     if (fs.existsSync(hashFile)) continue;
 
     const tpsNo = +file.split('-')[1];
-    await kpuUploadImage(kelId, tpsNo, filename);
-    fs.writeFileSync(hashFile, '1', 'utf8');
+    promises.push(
+      kpuUploadImage(kelId, tpsNo, filename).then(() =>
+        fs.writeFileSync(hashFile, '1', 'utf8')
+      )
+    );
   }
-  console.log('uploaded kel', kelId);
+  try {
+    await Promise.all(promises);
+  } catch (e) {
+    console.error('failed upload', kelId, e.message);
+  }
 }
 
 async function kpuUpload() {
@@ -447,7 +469,7 @@ async function kpuUpload() {
       await kpuUploadDir(+id);
     }
   }
-  console.log('uploadone');
+  console.log('upload done');
 }
 
 async function fixPemandangan() {
