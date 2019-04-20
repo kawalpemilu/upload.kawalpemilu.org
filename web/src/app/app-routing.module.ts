@@ -22,6 +22,11 @@ const routes: Routes = [
     component: HierarchyComponent,
     canActivate: [AuthGuardService]
   },
+  {
+    path: 't/:id/:tpsNo',
+    component: TpsComponent,
+    canActivate: [AuthGuardService]
+  },
   { path: 't/:id', component: TpsComponent, canActivate: [AuthGuardService] },
   {
     path: 'c/:code',

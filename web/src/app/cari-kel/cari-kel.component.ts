@@ -75,7 +75,7 @@ export class CariKelComponent implements OnInit {
               .where('depth', '==', 4)
               .where('name', '>=', ('' + prefix).toUpperCase())
               .where('name', '<=', ('' + prefix).toUpperCase() + '{')
-              .limit(10)
+              .limit(50)
           )
           .valueChanges()
       )

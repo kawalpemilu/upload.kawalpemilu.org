@@ -5,7 +5,7 @@ exports.MAX_REFERRALS = 1500;
 exports.MAX_NUM_UPLOADS = 1500;
 exports.MAX_URL_LENGTH = 300;
 exports.MAX_REASON_LENGTH = 300;
-exports.MAX_REPORT_ERRORS = 200;
+exports.MAX_REPORT_ERRORS = 300;
 exports.LOCAL_STORAGE_LAST_URL = 'last_url';
 exports.KPU_SCAN_UID = 'gEQFS1n5gpTzMTy5JASPPLk4yRA3';
 var USER_ROLE;
@@ -149,7 +149,7 @@ function getServingUrl(url, size) {
 exports.getServingUrl = getServingUrl;
 function isValidImageId(imageId) {
     return (typeof imageId === 'string' &&
-        imageId.match(/^[A-Za-z0-9]{20}(-[0-9]+-[0-9]+)*$/));
+        imageId.match(/^[A-Za-z0-9]{20}(--?[0-9]+-[0-9]+)*$/));
 }
 exports.isValidImageId = isValidImageId;
 function isValidUserId(uid) {

@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { HierarchyService } from '../hierarchy.service';
 import { ActivatedRoute } from '@angular/router';
-import { map, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
+import { map, switchMap, tap, take } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
 import {
@@ -70,11 +70,13 @@ export class TpsComponent implements OnInit {
 
   ngOnInit() {
     let previousId = -1;
+    let reqTpsNo = 0;
     this.state$ = this.route.paramMap.pipe(
-      map(params => params.get('id')),
-      filter(Boolean),
-      map(id => parseInt(id, 10)),
-      distinctUntilChanged(),
+      map(params => {
+        reqTpsNo = parseInt(params.get('tpsNo'), 10) || 0;
+        return parseInt(params.get('id'), 10);
+      }),
+      take(1),
       switchMap(id => this.hie.get$(id)),
       map((state: State) => {
         this.titleService.setTitle(`Kelurahan ${state.name} :: KPJS 2019`);
@@ -112,6 +114,14 @@ export class TpsComponent implements OnInit {
             this.populateSlices(state.tpsList, 400);
             this.showingSlice = this.slices[0];
           }
+          if (!this.showingSlice) {
+            for (const slice of this.slices) {
+              if (slice.tpsLo <= reqTpsNo && reqTpsNo < slice.tpsHi) {
+                this.showingSlice = slice;
+                break;
+              }
+            }
+          }
         }
         return state;
       }),
@@ -122,7 +132,17 @@ export class TpsComponent implements OnInit {
             return state;
           })
         )
-      )
+      ),
+      tap(() => {
+        if (reqTpsNo > 0) {
+          setTimeout(() => {
+            const el = document.getElementById('t' + reqTpsNo);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 1000);
+        }
+      })
     );
 
     console.log('TpsComponent inited');
@@ -207,15 +227,17 @@ export class TpsComponent implements OnInit {
       .pipe(
         map(tps => {
           const arr: CarouselItem[] = [];
-          const imageIds = Object.keys(tps.images).sort((a, b) => {
-            const ia = tps.images[a];
-            const ib = tps.images[b];
-            const ta = (ia.c1 && ia.c1.type * 10 + ia.c1.plano) || 0;
-            const tb = (ib.c1 && ib.c1.type * 10 + ib.c1.plano) || 0;
-            const va = ta * 1e14 + ia.uploader.ts;
-            const vb = tb * 1e14 + ib.uploader.ts;
-            return va - vb;
-          });
+          const imageIds = Object.keys((tps && tps.images) || []).sort(
+            (a, b) => {
+              const ia = tps.images[a];
+              const ib = tps.images[b];
+              const ta = (ia.c1 && ia.c1.type * 10 + ia.c1.plano) || 0;
+              const tb = (ib.c1 && ib.c1.type * 10 + ib.c1.plano) || 0;
+              const va = ta * 1e14 + ia.uploader.ts;
+              const vb = tb * 1e14 + ib.uploader.ts;
+              return va - vb;
+            }
+          );
           for (const imageId of imageIds) {
             const i = tps.images[imageId];
             arr.push({
