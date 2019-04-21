@@ -588,7 +588,7 @@ app.post(
         return true;
       })
       .catch(e => {
-        console.error(`DB error approve ${user.uid}`, e);
+        console.error(`DB error approve ${user.uid}`, a, e);
         return `Database error`;
       });
 

@@ -483,6 +483,7 @@ export function canGenerateCustomCode(user) {
 export function computeAction(tps: TpsData) {
   const sum = { pending: 0, cakupan: 0, janggal: 0 } as SumMap;
   const action = { sum, photos: {}, ts: 0, c1: null };
+  const valid = {};
   for (const imageId of Object.keys(tps.images)) {
     const i = tps.images[imageId];
     if (!i.c1) {
@@ -504,15 +505,20 @@ export function computeAction(tps: TpsData) {
       action.ts = Math.max(action.ts, i.reviewer.ts);
     }
     for (const key of Object.keys(i.sum)) {
-      if (typeof action.sum[key] === 'number') {
-        if (action.sum[key] !== i.sum[key]) {
-          if (!ignore) {
-            action.sum.janggal = 1;
-          }
-        }
-      } else {
+      if (!valid[key]) {
         action.sum[key] = i.sum[key];
+        valid[key] = !ignore;
+        continue;
       }
+      if (ignore) continue;
+      if (action.sum[key] !== i.sum[key]) {
+        action.sum.janggal = 1;
+      }
+    }
+  }
+  if (action.sum.jum && action.sum.sah && action.sum.tSah) {
+    if (action.sum.jum !== action.sum.sah + action.sum.tSah) {
+      action.sum.janggal = 1;
     }
   }
   return action;

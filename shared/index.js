@@ -281,6 +281,7 @@ exports.canGenerateCustomCode = canGenerateCustomCode;
 function computeAction(tps) {
     var sum = { pending: 0, cakupan: 0, janggal: 0 };
     var action = { sum: sum, photos: {}, ts: 0, c1: null };
+    var valid = {};
     for (var _i = 0, _a = Object.keys(tps.images); _i < _a.length; _i++) {
         var imageId = _a[_i];
         var i = tps.images[imageId];
@@ -304,16 +305,21 @@ function computeAction(tps) {
         }
         for (var _b = 0, _c = Object.keys(i.sum); _b < _c.length; _b++) {
             var key = _c[_b];
-            if (typeof action.sum[key] === 'number') {
-                if (action.sum[key] !== i.sum[key]) {
-                    if (!ignore) {
-                        action.sum.janggal = 1;
-                    }
-                }
-            }
-            else {
+            if (!valid[key]) {
                 action.sum[key] = i.sum[key];
+                valid[key] = !ignore;
+                continue;
             }
+            if (ignore)
+                continue;
+            if (action.sum[key] !== i.sum[key]) {
+                action.sum.janggal = 1;
+            }
+        }
+    }
+    if (action.sum.jum && action.sum.sah && action.sum.tSah) {
+        if (action.sum.jum !== action.sum.sah + action.sum.tSah) {
+            action.sum.janggal = 1;
         }
     }
     return action;
