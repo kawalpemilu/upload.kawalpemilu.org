@@ -22,13 +22,25 @@ td {
 }
 
 .paslon1 {
-  width: 160px;
-  text-align: right;
+  width: 40px;
+  text-align: center;
   font-size: small;
 }
 
 .paslon2 {
-  width: 80px;
+  width: 40px;
+  text-align: center;
+  font-size: small;
+}
+
+.status {
+  width: 50px;
+  text-align: center;
+  font-size: small;
+}
+
+.cakupan {
+  width: 30px;
   text-align: right;
   font-size: small;
 }
@@ -66,12 +78,20 @@ a.link {
   }
 
   .paslon1 {
-    width: 200px;
+    width: 50px;
     font-size: medium;
   }
 
   .paslon2 {
-    width: 100px;
+    width: 50px;
     font-size: medium;
+  }
+
+  .status {
+    width: 60px;
+  }
+
+  .cakupan {
+    width: 40px;
   }
 }

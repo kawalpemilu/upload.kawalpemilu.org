@@ -44,7 +44,7 @@ export class AppComponent implements OnDestroy {
 
   constructor(
     changeDetectorRef: ChangeDetectorRef,
-    media: MediaMatcher,
+    private media: MediaMatcher,
     public userService: UserService,
     private router: Router
   ) {
@@ -63,6 +63,10 @@ export class AppComponent implements OnDestroy {
       ua.indexOf('fban') > -1 || ua.indexOf('fbav') > -1;
     AppComponent.SUPPORTED_BROWSER =
       ua.indexOf('chrome') > -1 || ua.indexOf('safari') > -1;
+  }
+
+  get WIDE_ENOUGH() {
+    return !this.media.matchMedia('(max-width: 899px)').matches;
   }
 
   get SUPPORTED_BROWSER() {

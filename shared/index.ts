@@ -387,8 +387,8 @@ export class FsPath {
     return `c${code ? '/' + code : ''}`;
   }
 
-  static changeLog(logId: string) {
-    return `l/${logId}`;
+  static changeLog(logId?: string) {
+    return `l${logId ? '/' + logId : ''}`;
   }
 
   static imageMetadata(imageId: string) {

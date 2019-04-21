@@ -178,7 +178,7 @@ var FsPath = /** @class */ (function () {
         return "c" + (code ? '/' + code : '');
     };
     FsPath.changeLog = function (logId) {
-        return "l/" + logId;
+        return "l" + (logId ? '/' + logId : '');
     };
     FsPath.imageMetadata = function (imageId) {
         return "i2/" + imageId;

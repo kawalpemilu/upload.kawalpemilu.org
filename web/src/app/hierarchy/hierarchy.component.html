@@ -13,7 +13,23 @@
     <tr [style.height.px]="ROW_HEIGHT" style="background-color: lightgray">
       <th class="index">#</th>
       <th class="wilayah">Nama {{ WILAYAH[state.depth + 1] }}</th>
-      <th class="paslon1">Cakupan TPS</th>
+      <th class="paslon1">01</th>
+      <th class="paslon2">02</th>
+      <th class="status">
+        <span
+          matTooltip="Jumlah TPS yang ada foto baru masuk dan belum didigitisasi"
+        >
+          Pending </span
+        ><br />
+        <span matTooltip="Jumlah TPS yang ada laporan kesalahan">Err</span>
+        /
+        <span
+          matTooltip="Jumlah TPS yang janggal (ada 2+ foto yang hasil digitisasinya berbeda)"
+        >
+          Jgl
+        </span>
+      </th>
+      <th class="cakupan">TPS</th>
     </tr>
   </thead>
 </table>
@@ -25,9 +41,49 @@
       <th class="wilayah" align="right">
         TOTAL ({{ state.children.length }}) &nbsp;
       </th>
-      <th class="paslon1">
-        {{ sum(state, 'cakupan') | number }} / {{ sumTps(state) | number }} =
-        {{ (100 * sum(state, 'cakupan')) / sumTps(state) | number: '1.0-1' }}%
+      <th
+        class="paslon1"
+        style="font-size: small"
+        [style.font-weight]="state.sum.pas1 > state.sum.pas2 ? 'bold' : ''"
+      >
+        {{
+          (state.sum.pas1 / (state.sum.pas1 + state.sum.pas2)) * 100
+            | number: '1.0-1'
+        }}%
+        <br />
+        <span style="font-size: x-small">{{ state.sum.pas1 | number }}</span>
+      </th>
+
+      <th
+        class="paslon2"
+        style="font-size: small"
+        [style.font-weight]="state.sum.pas1 < state.sum.pas2 ? 'bold' : ''"
+      >
+        {{
+          (state.sum.pas2 / (state.sum.pas1 + state.sum.pas2)) * 100
+            | number: '1.0-1'
+        }}%
+        <br />
+        <span style="font-size: x-small">{{ state.sum.pas2 | number }}</span>
+      </th>
+
+      <td class="status">
+        <b>{{ state.sum.pending || 0 | number }}</b>
+        <br />
+        <span [style.color]="'red'" style="font-size: xx-small">{{
+          state.sum.error || 0 | number
+        }}</span>
+        /
+        <span [style.color]="'orange'" style="font-size: xx-small">{{
+          state.sum.janggal || 0 | number
+        }}</span>
+      </td>
+
+      <th
+        class="cakupan"
+        [matTooltip]="state.sum.cakupan + ' / ' + sumTps(state)"
+      >
+        {{ (100 * state.sum.cakupan) / sumTps(state) | number: '1.0-1' }}%
       </th>
     </tr>
   </tfoot>
@@ -42,33 +98,52 @@
         <td class="index">{{ index + 1 }}</td>
         <td class="wilayah">
           <app-hie-link [id]="c[0]" [name]="c[1]"></app-hie-link>
-          &nbsp;
-          <ng-container *ngIf="state.data[c[0]] as d">
-            <ng-container *ngIf="d.sum.error">
-              <sup
-                matTooltip="Jumlah TPS yang ada laporan kesalahan"
-                [style.color]="'red'"
-                >{{ d.sum.error }}</sup
-              >
-            </ng-container>
-            <ng-container *ngIf="d.sum.pending">
-              <span
-                matTooltip="Jumlah TPS yang ada foto baru masuk dan belum didigitisasi"
-                [style.color]="getColor(state, c[0])"
-                >({{ d.sum.pending }})
-              </span>
-            </ng-container>
-            <ng-container *ngIf="d.sum.janggal">
-              <sub
-                matTooltip="Jumlah TPS yang janggal (ada 2+ foto yang hasil digitisasinya berbeda)"
-                [style.color]="'orange'"
-                >{{ d.sum.janggal }}</sub
-              >
-            </ng-container>
-          </ng-container>
         </td>
-        <td class="paslon1">
-          {{ coverage(state, c[0]) | number }} / {{ c[2] | number }} =
+
+        <ng-container *ngIf="state.data[c[0]] as d">
+          <td
+            class="paslon1"
+            style="font-size: small"
+            [style.font-weight]="d.sum.pas1 > d.sum.pas2 ? 'bold' : ''"
+          >
+            {{
+              (d.sum.pas1 / (d.sum.pas1 + d.sum.pas2)) * 100 | number: '1.0-1'
+            }}%
+            <br />
+            <span style="font-size: x-small">{{ d.sum.pas1 | number }}</span>
+          </td>
+
+          <td
+            class="paslon2"
+            style="font-size: small"
+            [style.font-weight]="d.sum.pas1 < d.sum.pas2 ? 'bold' : ''"
+          >
+            {{
+              (d.sum.pas2 / (d.sum.pas1 + d.sum.pas2)) * 100 | number: '1.0-1'
+            }}%
+            <br />
+            <span style="font-size: x-small">{{ d.sum.pas2 | number }}</span>
+          </td>
+
+          <td class="status">
+            <span
+              [style.color]="getColor(state, c[0])"
+              style="-webkit-text-stroke-width: 0.2px;
+            -webkit-text-stroke-color: black; font-weight: bold"
+              >{{ d.sum.pending || 0 | number }}</span
+            ><br />
+
+            <span [style.color]="'red'" style="font-size: xx-small">{{
+              d.sum.error || 0 | number
+            }}</span>
+            /
+            <span [style.color]="'orange'" style="font-size: xx-small">{{
+              d.sum.janggal || 0 | number
+            }}</span>
+          </td>
+        </ng-container>
+
+        <td class="cakupan" [matTooltip]="coverage(state, c[0]) + ' / ' + c[2]">
           {{ (100 * coverage(state, c[0])) / c[2] | number: '1.0-1' }}%
         </td>
       </tr>

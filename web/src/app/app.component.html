@@ -29,7 +29,7 @@
   <mat-sidenav
     #snav
     [mode]="mobileQuery.matches ? 'over' : 'side'"
-    [opened]="!mobileQuery.matches"
+    [opened]="WIDE_ENOUGH"
     [fixedInViewport]="mobileQuery.matches"
     fixedTopGap="56"
   >

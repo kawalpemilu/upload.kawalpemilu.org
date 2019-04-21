@@ -102,11 +102,20 @@ export class HierarchyComponent implements OnInit, OnDestroy {
       filter(id => !isNaN(id)),
       distinctUntilChanged(),
       switchMap(id => this.hie.get$(id)),
-      tap(state => {
+      map(state => {
         const wilayah = this.WILAYAH[state.depth];
         this.titleService.setTitle(`${wilayah} ${state.name} :: KPJS 2019`);
         this.numRows = state.children.length;
         this.onWindowResize();
+        // @ts-ignore
+        const sum = (state.sum = {});
+        for (const c of state.children) {
+          const d = state.data[c[0]];
+          for (const key of Object.keys(SUM_KEY)) {
+            sum[key] = (sum[key] || 0) + ((d && d.sum && d.sum[key]) || 0);
+          }
+        }
+        return state;
       }),
       shareReplay(1)
     );
@@ -119,15 +128,6 @@ export class HierarchyComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     AppComponent.PADDING = this.paddingTemp;
-  }
-
-  sum(state: HierarchyNode, key: SUM_KEY) {
-    let res = 0;
-    for (const c of state.children) {
-      const d = state.data[c[0]];
-      res += (d && d.sum && d.sum[key]) || 0;
-    }
-    return res;
   }
 
   sumTps(state: HierarchyNode) {

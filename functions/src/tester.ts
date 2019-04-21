@@ -15,7 +15,8 @@ import {
   autoId,
   TpsData,
   HierarchyNode,
-  KPU_SCAN_UID
+  KPU_SCAN_UID,
+  ChangeLog
 } from 'shared';
 
 import { H } from './hierarchy';
@@ -493,10 +494,23 @@ async function fixPemandangan() {
   }
 }
 
+async function whoChangedRole() {
+  const logs = await fsdb
+    .collection(FsPath.changeLog())
+    .where('tuid', '==', 'vAajmbHXCVWVqLi9JrEuk6NJAcl1')
+    .get();
+  for (const snap of logs.docs) {
+    const log = snap.data() as ChangeLog;
+    console.log(log);
+  }
+}
+
 // parallelUpload().catch(console.error);
 // loadTest().catch(console.error);
 // fixClaimersRole().catch(console.error);
 // fixUploadersCount().catch(console.error);
 // checkHierarchy().catch(console.error);
-kpuUpload().catch(console.error);
 // fixPemandangan().catch(console.error);
+// whoChangedRole().catch(console.error);
+
+kpuUpload().catch(console.error);
