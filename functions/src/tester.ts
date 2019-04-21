@@ -439,45 +439,71 @@ async function kpuUploadDir(kelId: number) {
   const dir = LOCAL_FS + `/${kelId}`;
   if (!fs.existsSync(dir)) return;
 
-  const promises = [];
-  for (const file of fs.readdirSync(dir)) {
-    if (!file.endsWith('.jpg')) continue;
+  const newFileHashes = {};
+  fs.readdirSync(dir).forEach(file => {
+    if (!file.endsWith('.jpg')) return;
     const filename = dir + `/${file}`;
     const hash = md5(fs.readFileSync(filename));
     const hashFile = hashdir + `/${hash}`;
 
     // TODO: query the actual fsdb, if not exist continuupload.
-    if (fs.existsSync(hashFile)) continue;
+    if (fs.existsSync(hashFile)) return;
 
-    const s = file.split('-');
-    const tpsNo = file[0] !== '-' ? +s[1] : decodeTpsNo(s[2]);
-    promises.push(
-      kpuUploadImage(kelId, tpsNo, filename).then(() =>
-        fs.writeFileSync(hashFile, '1', 'utf8')
-      )
-    );
-  }
-  try {
-    await Promise.all(promises);
-  } catch (e) {
-    console.error('failed upload', kelId, e.message);
-  }
-}
+    newFileHashes[file] = hashFile;
+  });
 
-function decodeTpsNo(t) {
-  const s = t.split(' ');
-  if (s[0] === 'KSK') return +s[1] + 2000;
-  if (s[0] === 'POS') return +s[1] + 1000;
-  return +s[1];
+  if (!Object.keys(newFileHashes).length) return;
+
+  // console.log('newFIleHashes', newFileHashes);
+
+  const res = JSON.parse(fs.readFileSync(`${LOCAL_FS}/${kelId}.json`, 'utf8'));
+  const arr = Object.keys(res.table).filter(id => res.table[id]['21'] !== null);
+  const wil = JSON.parse(fs.readFileSync(`${LOCAL_FS}/w${kelId}.json`, 'utf8'));
+  for (const key of arr) {
+    const s = wil[key].nama.split(' ');
+    let tpsNo = parseInt(s[1], 10);
+    if (s[0] === 'TPS') {
+      // Ignored.
+    } else if (s[0] === 'POS') {
+      tpsNo += 1000;
+    } else if (s[0] === 'KSK') {
+      tpsNo += 2000;
+    }
+
+    const img = JSON.parse(fs.readFileSync(`${dir}/${key}.json`, 'utf8'));
+    for (const fn of img.images) {
+      if (newFileHashes[fn]) {
+        try {
+          await kpuUploadImage(kelId, tpsNo, `${dir}/${fn}`).then(() =>
+            fs.writeFileSync(newFileHashes[fn], '1', 'utf8')
+          );
+        } catch (e) {
+          console.error('failed upload', kelId, e.message);
+        }
+        delete newFileHashes[fn];
+      }
+    }
+  }
+
+  if (Object.keys(newFileHashes).length) throw new Error();
 }
 
 async function kpuUpload() {
+  const paralellism = 50;
+  const promises = [];
+  for (let i = 0; i < paralellism; i++) {
+    promises.push(Promise.resolve());
+  }
+  let idx = 0;
   for (const id of Object.keys(H)) {
     const h = H[id];
     if (h.depth === 4) {
-      await kpuUploadDir(+id);
+      promises[idx] = promises[idx].then(() => kpuUploadDir(+id));
+      idx = (idx + 1) % paralellism;
     }
   }
+  console.log('upload setup');
+  await Promise.all(promises);
   console.log('upload done');
 }
 
