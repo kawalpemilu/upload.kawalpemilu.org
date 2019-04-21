@@ -33,12 +33,6 @@ td {
   font-size: small;
 }
 
-.status {
-  width: 50px;
-  text-align: center;
-  font-size: small;
-}
-
 .cakupan {
   width: 30px;
   text-align: right;
@@ -85,10 +79,6 @@ a.link {
   .paslon2 {
     width: 50px;
     font-size: medium;
-  }
-
-  .status {
-    width: 60px;
   }
 
   .cakupan {
