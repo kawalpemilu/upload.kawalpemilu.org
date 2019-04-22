@@ -24,8 +24,10 @@ class GetChildrenApi(webapp2.RequestHandler):
         # Loads from memcache if exists.
         jsonTxt = memcache.get(cid)
         if jsonTxt is not None:
-            self.response.headers['X-Cache'] = 'HIT-M'
-            return self.response.out.write(jsonTxt)
+            h = json.loads(jsonTxt)
+            if 'depth' in h:
+                self.response.headers['X-Cache'] = 'HIT-M'
+                return self.response.out.write(jsonTxt)
 
         try:
             # Fetch fresh from the real API and set it to memcache.
@@ -35,10 +37,9 @@ class GetChildrenApi(webapp2.RequestHandler):
             self.response.out.write(jsonTxt)
 
             h = json.loads(jsonTxt)
-            CACHE_TIMEOUT = 60
             if 'depth' in h:
                 CACHE_TIMEOUT = (3 ** h['depth']) * 60
-            memcache.set(cid, jsonTxt, CACHE_TIMEOUT)
+                memcache.set(cid, jsonTxt, CACHE_TIMEOUT)
         except urlfetch.Error:
             self.response.out.write('{}')
             memcache.set(cid, '{}', 3600)
