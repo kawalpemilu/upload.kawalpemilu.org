@@ -387,9 +387,16 @@ export class ApproverComponent implements OnInit, OnDestroy {
 
     const imgs = this.tpsData.images;
     let lembar = 1;
-    for (const id of Object.keys(imgs).sort(
-      (a, b) => imgs[a].uploader.ts - imgs[b].uploader.ts
-    )) {
+    for (const id of Object.keys(imgs).sort((a, b) => {
+      const x = imgs[a];
+      const y = imgs[b];
+      if (x.meta && x.meta.m && y.meta && y.meta.m) {
+        const p = x.meta.m[0];
+        const q = y.meta.m[0];
+        return p < q ? -1 : p > q ? -1 : 0;
+      }
+      return x.uploader.ts - y.uploader.ts;
+    })) {
       const i = imgs[id];
       if (i.uploader.uid === KPU_SCAN_UID) {
         // @ts-ignore
