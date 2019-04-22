@@ -18,7 +18,9 @@ import {
   IS_PLANO,
   Halaman,
   HierarchyNode,
-  USER_ROLE
+  USER_ROLE,
+  KPU_SCAN_UID,
+  Autofill
 } from 'shared';
 import { startWith, take, distinctUntilChanged } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
@@ -296,7 +298,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
   formType: FORM_TYPE;
   isPlano: IS_PLANO;
   halaman: Halaman;
-  approveStatus: 'pending' | 'ready' | 'approved';
+  approveStatus: 'pending' | 'ready' | 'approved' = 'pending';
   autoSumSub: Subscription;
 
   isChangeKel = false;
@@ -330,11 +332,46 @@ export class ApproverComponent implements OnInit, OnDestroy {
         this.tpsData = tpsData;
         const img = this.tpsData.images[this.imageId];
         if (img) {
+          this.setExistingTipe(img);
           this.tps$.next(img);
+          this.autofill(img);
         } else {
           this.digitizeNextImage();
         }
       });
+  }
+
+  setExistingTipe(i: TpsImage) {
+    if (i.c1 && i.c1.type && i.c1.plano && i.c1.halaman) {
+      // @ts-ignore
+      const tipe = (i.tipe =
+        i.c1.type + '.' + i.c1.plano + '.' + i.c1.halaman + '.ex');
+      const a = this.tpsData.autofill || ({} as Autofill);
+      a[tipe] = i.sum;
+      this.tpsData.autofill = a;
+    }
+  }
+
+  autofill(i: TpsImage) {
+    // @ts-ignore
+    const tipe = i.tipe;
+    if (tipe) {
+      const t = tipe.split('.');
+      this.setFormType(+t[0]);
+      this.setIsPlano(+t[1]);
+      this.setHalaman(t[2]);
+      if (this.tpsData.autofill) {
+        const sum = this.tpsData.autofill[tipe];
+        if (sum) {
+          for (const key of Object.keys(sum)) {
+            if (!(key in SUM_KEY)) {
+              delete sum[key];
+            }
+          }
+          this.formGroup.setValue(sum);
+        }
+      }
+    }
   }
 
   digitizeNextImage() {
@@ -347,17 +384,33 @@ export class ApproverComponent implements OnInit, OnDestroy {
     this.approveStatus = 'pending';
     this.tryUnsubscribe();
     let next: TpsImage = null;
-    for (const id of Object.keys(this.tpsData.images)) {
-      const img = this.tpsData.images[id];
+
+    const imgs = this.tpsData.images;
+    let lembar = 1;
+    for (const id of Object.keys(imgs).sort(
+      (a, b) => imgs[a].uploader.ts - imgs[b].uploader.ts
+    )) {
+      const i = imgs[id];
+      if (i.uploader.uid === KPU_SCAN_UID) {
+        // @ts-ignore
+        i.tipe = FORM_TYPE.PPWP + '.' + IS_PLANO.NO + '.' + lembar + '.sam';
+        lembar++;
+      }
+      this.setExistingTipe(i);
+    }
+
+    for (const id of Object.keys(imgs)) {
+      const img = imgs[id];
       if (!img.c1 && (!this.imageId || next.uploader.ts > img.uploader.ts)) {
         this.imageId = id;
-        this.imageIdChange.emit(id);
         next = img;
       }
     }
     this.tps$.next(next);
-
-    if (!this.imageId) {
+    if (this.imageId) {
+      this.imageIdChange.emit(this.imageId);
+      this.autofill(next);
+    } else {
       this.imageId = 'done';
       this.imageIdChange.emit('done');
       this.hie.update(this.initialKelId).then(() => {
