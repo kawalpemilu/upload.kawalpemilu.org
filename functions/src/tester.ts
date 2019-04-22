@@ -41,7 +41,7 @@ const KPU_WIL = 'https://pemilu2019.kpu.go.id/static/json/wilayah';
 
 const LOCAL_FS = '/Users/felixhalim/Projects/kawal-c1/kpu/cache';
 const proxy = 'socks5h://localhost:12345';
-const isOffline = true;
+const isOffline = false;
 
 interface User {
   uid: string;
@@ -618,39 +618,59 @@ async function kpuUploadKel(kelId: number, path) {
   if (leftover) console.error('Upload leftover', leftover);
 }
 
+const uploadParallelsim = 100;
+const uploadPromises = [];
+for (let i = 0; i < uploadParallelsim; i++) {
+  uploadPromises.push(Promise.resolve());
+}
+let uploadPromiseIdx = 0;
+
 async function kpuUpload(id, depth, opath) {
   const path = opath.slice();
   path.push(id);
   const url = getPathUrlPrefix(KPU_API, path) + '.json';
   const inProgressFn = c => c.progress.proses < c.progress.total;
   const res = await getCached(url, `${LOCAL_FS}/${id}.json`, inProgressFn);
+
+  if (!inProgressFn(res)) return;
+
+  if (depth === 4) {
+    uploadPromises[uploadPromiseIdx] = uploadPromises[uploadPromiseIdx].then(
+      () =>
+        kpuUploadKel(id, path)
+          .then(() => console.log('Kel done', id))
+          .catch(console.error)
+    );
+    uploadPromiseIdx = (uploadPromiseIdx + 1) % uploadParallelsim;
+    return;
+  }
+
   const arr = Object.keys(res.table).filter(
     key => res.table[key]['21'] !== null
   );
-
-  if (depth === 4) {
-    await kpuUploadKel(id, path);
-    return;
-  }
-
-  if (depth <= 2) {
-    for (const cid of arr) {
-      if (id === -99) {
-        const cpath = path.slice();
-        for (let i = 2; i > 0; i--) {
-          cpath.push(+cid + i);
-        }
-        await kpuUpload(+cid, depth + 3, cpath);
-      } else {
-        await kpuUpload(+cid, depth + 1, path);
+  for (const cid of arr) {
+    if (id === -99) {
+      const cpath = path.slice();
+      for (let i = 2; i > 0; i--) {
+        cpath.push(+cid + i);
       }
+      await kpuUpload(+cid, depth + 3, cpath);
+    } else {
+      await kpuUpload(+cid, depth + 1, path);
     }
-    return;
   }
+}
 
-  await Promise.all(arr.map(cid => kpuUpload(+cid, depth + 1, path)));
-  const h = H[id] as HierarchyNode;
-  console.log('done', id, h.name, h.parentNames);
+async function continuousKpuUpload() {
+  while (true) {
+    await kpuUpload(0, 0, [])
+      .then(async () => {
+        console.log('KPU upload setup');
+        await Promise.all(uploadPromises);
+        console.log('ALL done');
+      })
+      .catch(console.error);
+  }
 }
 
 async function fixPemandangan() {
@@ -832,4 +852,4 @@ async function fixHierarchy() {
 // whoChangedRole().catch(console.error);
 // fixHierarchy().catch(console.error);
 
-kpuUpload(0, 0, []).catch(console.error);
+continuousKpuUpload().catch(console.error);
