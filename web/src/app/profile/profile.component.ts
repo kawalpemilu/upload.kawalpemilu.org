@@ -4,7 +4,8 @@ import {
   Relawan,
   FsPath,
   USER_ROLE,
-  RelawanPhotos
+  RelawanPhotos,
+  Upsert
 } from 'shared';
 import { AngularFirestore, Query } from '@angular/fire/firestore';
 import { Observable, of, Subject, BehaviorSubject, combineLatest } from 'rxjs';
@@ -41,6 +42,7 @@ export class ProfileComponent implements OnInit {
   relawanPhotos$: Observable<RelawanPhotos>;
   relawans$: Observable<Relawan[]>;
   previousRole: USER_ROLE;
+  reviews$: Observable<Upsert[]>;
 
   constructor(
     public userService: UserService,
@@ -71,6 +73,19 @@ export class ProfileComponent implements OnInit {
             }),
             shareReplay(1)
           )
+      )
+    );
+
+    this.reviews$ = uid$.pipe(
+      switchMap(uid =>
+        this.fsdb
+          .collection<Upsert>(FsPath.upserts(), (ref: Query) => {
+            return ref
+              .where('reviewer.uid', '==', uid)
+              .orderBy('reviewer.ts', 'desc')
+              .limit(25);
+          })
+          .valueChanges()
       )
     );
 

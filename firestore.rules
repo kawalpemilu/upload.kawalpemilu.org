@@ -39,7 +39,7 @@ service cloud.firestore {
       allow get: if request.auth.uid == resource.data.uploader.uid;
 
       // Moderator can see the uploaded photos.
-      allow list: if request.query.limit <= 1 && getUserRole() >= 1;
+      allow list: if request.query.limit <= 100 && getUserRole() >= 1;
     }
 
     // TPS change log.
