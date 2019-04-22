@@ -221,6 +221,12 @@ export interface ErrorReports {
   };
 }
 
+export type Autofill = {
+  // The key is a dot separated value of:
+  // formType.isPlano.halaman.comment
+  [key: string]: SumMap;
+};
+
 export interface TpsImage {
   uploader: UpsertProfile;
   reviewer: UpsertProfile;
@@ -233,6 +239,7 @@ export interface TpsImage {
 
 export interface TpsData {
   images: { [imageId: string]: TpsImage };
+  autofill?: Autofill;
   imgCount: number;
 }
 

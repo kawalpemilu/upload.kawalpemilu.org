@@ -166,6 +166,9 @@ export interface ErrorReports {
         reason: string;
     };
 }
+export declare type Autofill = {
+    [key: string]: SumMap;
+};
 export interface TpsImage {
     uploader: UpsertProfile;
     reviewer: UpsertProfile;
@@ -179,6 +182,7 @@ export interface TpsData {
     images: {
         [imageId: string]: TpsImage;
     };
+    autofill?: Autofill;
     imgCount: number;
 }
 export interface Upsert {
