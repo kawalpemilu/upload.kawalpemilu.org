@@ -53,7 +53,7 @@ interface User {
 
 async function curl(url): Promise<string> {
   return new Promise((resolve, reject) => {
-    const c = spawn('curl', ['-s', '--proxy', proxy, url]);
+    const c = spawn('curl', ['-s', '--proxy', proxy, '-m', 60, url]);
     let s = '';
     c.stdout.on('data', data => (s += data));
     c.on('close', code => {
@@ -65,7 +65,7 @@ async function curl(url): Promise<string> {
 
 async function download(url, output): Promise<void> {
   return new Promise((resolve, reject) => {
-    const params = ['-s', '--proxy', proxy, '--output', output, url];
+    const params = ['-s', '--proxy', proxy, '-m', 60, '--output', output, url];
     const c = spawn('curl', params);
     c.on('close', code => {
       if (code) reject(new Error(`Exit code ${code}`));
@@ -585,7 +585,7 @@ function getNewFileHashes(dir) {
 async function kpuUploadKel(kelId: number, path) {
   const imgJson = await fetchKelImages(kelId, path);
   const dir = LOCAL_FS + `/${kelId}`;
-  if (!fs.existsSync(dir)) return;
+  if (!Object.keys(imgJson).length || !fs.existsSync(dir)) return;
 
   const newFileHashes = getNewFileHashes(dir);
   if (!Object.keys(newFileHashes).length) return;
@@ -612,7 +612,9 @@ async function kpuUploadKel(kelId: number, path) {
       );
     }
   }
+  console.log(`kpuUploadKel ${promises.length} entries for ${kelId}`);
   await Promise.all(promises);
+  console.log(`done kpuUploadKel ${promises.length} entries for ${kelId}`);
 
   const leftover = Object.keys(newFileHashes).length;
   if (leftover) console.error('Upload leftover', leftover);
@@ -620,9 +622,6 @@ async function kpuUploadKel(kelId: number, path) {
 
 const uploadParallelsim = 100;
 const uploadPromises = [];
-for (let i = 0; i < uploadParallelsim; i++) {
-  uploadPromises.push(Promise.resolve());
-}
 let uploadPromiseIdx = 0;
 
 async function kpuUpload(id, depth, opath) {
@@ -638,7 +637,7 @@ async function kpuUpload(id, depth, opath) {
     uploadPromises[uploadPromiseIdx] = uploadPromises[uploadPromiseIdx].then(
       () =>
         kpuUploadKel(id, path)
-          .then(() => console.log('Kel done', id))
+          .then(() => console.log('Done', id, H[id].parentNames, H[id].name))
           .catch(console.error)
     );
     uploadPromiseIdx = (uploadPromiseIdx + 1) % uploadParallelsim;
@@ -663,6 +662,12 @@ async function kpuUpload(id, depth, opath) {
 
 async function continuousKpuUpload() {
   while (true) {
+    uploadPromiseIdx = 0;
+    uploadPromises.length = 0;
+    for (let i = 0; i < uploadParallelsim; i++) {
+      uploadPromises.push(Promise.resolve());
+    }
+
     await kpuUpload(0, 0, [])
       .then(async () => {
         console.log('KPU upload setup');
