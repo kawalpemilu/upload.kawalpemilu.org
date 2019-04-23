@@ -393,7 +393,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
       if (x.meta && x.meta.m && y.meta && y.meta.m) {
         const p = x.meta.m[0];
         const q = y.meta.m[0];
-        return p < q ? -1 : p > q ? -1 : 0;
+        return p < q ? -1 : p > q ? 1 : 0;
       }
       return x.uploader.ts - y.uploader.ts;
     })) {
