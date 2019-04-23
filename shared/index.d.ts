@@ -251,6 +251,9 @@ export interface HierarchyNode {
         [cid: string]: TpsAggregate;
     };
 }
+export declare type KpuData = {
+    [tpsNo: string]: SumMap;
+};
 export interface ImageMetadata {
     u: string;
     k: number;
@@ -277,6 +280,7 @@ export declare class FsPath {
     static relawan(uid?: string): string;
     static relawanPhoto(uid?: string): string;
     static tps(kelId: number, tpsNo: number): string;
+    static kpu(kelId: number): string;
     static codeReferral(code?: string): string;
     static changeLog(logId?: string): string;
     static imageMetadata(imageId: string): string;

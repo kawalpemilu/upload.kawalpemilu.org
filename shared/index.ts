@@ -313,6 +313,10 @@ export interface HierarchyNode {
   data: { [cid: string]: TpsAggregate };
 }
 
+export type KpuData = {
+  [tpsNo: string]: SumMap;
+};
+
 export interface ImageMetadata {
   u: string; // The userId who uploaded.
   k: number; // Kelurahan ID wher it's set.
@@ -388,6 +392,10 @@ export class FsPath {
 
   static tps(kelId: number, tpsNo: number) {
     return `t2/${kelId}-${tpsNo}`;
+  }
+
+  static kpu(kelId: number) {
+    return `k/${kelId}`;
   }
 
   static codeReferral(code?: string) {

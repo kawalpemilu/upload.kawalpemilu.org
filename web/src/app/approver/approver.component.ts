@@ -20,7 +20,7 @@ import {
   HierarchyNode,
   USER_ROLE,
   KPU_SCAN_UID,
-  Autofill
+  KpuData
 } from 'shared';
 import { startWith, take, distinctUntilChanged } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
@@ -304,6 +304,8 @@ export class ApproverComponent implements OnInit, OnDestroy {
   isChangeKel = false;
   isLoading = false;
 
+  kpuData: KpuData;
+
   constructor(
     public userService: UserService,
     public location: Location,
@@ -313,7 +315,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
     private hie: HierarchyService
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
     this.initialKelId = this.kelId;
     this.initialTpsNo = this.tpsNo;
 
@@ -323,12 +325,34 @@ export class ApproverComponent implements OnInit, OnDestroy {
       .toPromise()
       .then(node => (this.kelName = node.name));
 
+    this.kpuData = await this.fsdb
+      .doc<KpuData>(FsPath.kpu(this.kelId))
+      .valueChanges()
+      .pipe(take(1))
+      .toPromise();
+
     this.fsdb
       .doc<TpsData>(FsPath.tps(this.kelId, this.tpsNo))
       .valueChanges()
       .pipe(take(1))
       .toPromise()
       .then(tpsData => {
+        tpsData.autofill = tpsData.autofill || {};
+        if (this.kpuData) {
+          const data = this.kpuData[this.tpsNo];
+          if (data) {
+            const prefix = FORM_TYPE.PPWP + '.' + IS_PLANO.NO;
+            tpsData.autofill[`${prefix}.1.kpu`] = {
+              [SUM_KEY.jum]: data[SUM_KEY.jum]
+            } as SumMap;
+            tpsData.autofill[`${prefix}.2.kpu`] = {
+              [SUM_KEY.pas1]: data[SUM_KEY.pas1],
+              [SUM_KEY.pas2]: data[SUM_KEY.pas2],
+              [SUM_KEY.sah]: data[SUM_KEY.sah],
+              [SUM_KEY.tSah]: data[SUM_KEY.tSah]
+            } as SumMap;
+          }
+        }
         this.tpsData = tpsData;
         const img = this.tpsData.images[this.imageId];
         if (img) {
@@ -346,9 +370,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
       // @ts-ignore
       const tipe = (i.tipe =
         i.c1.type + '.' + i.c1.plano + '.' + i.c1.halaman + '.ex');
-      const a = this.tpsData.autofill || ({} as Autofill);
-      a[tipe] = i.sum;
-      this.tpsData.autofill = a;
+      this.tpsData.autofill[tipe] = i.sum;
     }
   }
 
@@ -375,6 +397,8 @@ export class ApproverComponent implements OnInit, OnDestroy {
   }
 
   digitizeNextImage() {
+    this.kelId = this.initialKelId;
+    this.tpsNo = this.initialTpsNo;
     this.imageId = '';
     this.imageIdChange.emit('');
     this.formType = null;
@@ -400,7 +424,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
       const i = imgs[id];
       if (i.uploader.uid === KPU_SCAN_UID) {
         // @ts-ignore
-        i.tipe = FORM_TYPE.PPWP + '.' + IS_PLANO.NO + '.' + lembar + '.sam';
+        i.tipe = FORM_TYPE.PPWP + '.' + IS_PLANO.NO + '.' + lembar + '.kpu';
         lembar++;
       }
       this.setExistingTipe(i);

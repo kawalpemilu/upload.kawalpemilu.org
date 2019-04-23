@@ -17,7 +17,9 @@ import {
   TpsData,
   HierarchyNode,
   KPU_SCAN_UID,
-  ChangeLog
+  ChangeLog,
+  SUM_KEY,
+  KpuData
 } from 'shared';
 
 import { H } from './hierarchy';
@@ -92,14 +94,16 @@ async function downloadWithRetry(url, output) {
 
 async function getWithRetry(url) {
   console.log('fetching', url);
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; ; i++) {
     try {
       return await curl(url);
     } catch (e) {
-      console.error('get retry', i, e.message);
+      if (i >= 3) {
+        console.error('get retry', i, e.message);
+        return JSON.stringify({ table: {}, images: [] });
+      }
     }
   }
-  return JSON.stringify({ table: {}, images: [] });
 }
 
 async function getCached(url, cachedFilename, inProgressFn) {
@@ -582,6 +586,14 @@ function getNewFileHashes(dir) {
   return newFileHashes;
 }
 
+function readJson(path: string) {
+  try {
+    return JSON.parse(fs.readFileSync(`${LOCAL_FS}/${path}`, 'utf8'));
+  } catch (e) {
+    return null;
+  }
+}
+
 async function kpuUploadKel(kelId: number, path) {
   const imgJson = await fetchKelImages(kelId, path);
   const dir = LOCAL_FS + `/${kelId}`;
@@ -590,6 +602,12 @@ async function kpuUploadKel(kelId: number, path) {
   const newFileHashes = getNewFileHashes(dir);
   if (!Object.keys(newFileHashes).length) return;
   // console.log('newFIleHashes', newFileHashes);
+
+  const filename = `data/${kelId}.json`;
+  const data: KpuData = readJson(filename);
+  const kpu = {} as KpuData;
+  let same = true;
+  let ada = false;
 
   const wurl = getPathUrlPrefix(KPU_WIL, path) + '.json';
   const wil = await getCached(wurl, `${LOCAL_FS}/w${kelId}.json`, c => false);
@@ -600,7 +618,22 @@ async function kpuUploadKel(kelId: number, path) {
       s[0] === 'TPS' ? 0 : s[0] === 'POS' ? 1000 : s[0] === 'KSK' ? 2000 : -1;
     if (add < 0) throw new Error();
     const tpsNo = parseInt(s[1], 10) + add;
-    for (const fn of imgJson[imageId].images) {
+
+    const sum = (kpu[tpsNo] = {} as SumMap);
+    const res = imgJson[imageId];
+    if (res && res.chart) {
+      sum[SUM_KEY.pas1] = res.chart['21'];
+      sum[SUM_KEY.pas2] = res.chart['22'];
+      sum[SUM_KEY.tSah] = res.suara_tidak_sah;
+      sum[SUM_KEY.sah] = res.suara_sah;
+      sum[SUM_KEY.jum] = res.pengguna_j;
+      ada = true;
+      if (!data || JSON.stringify(data[tpsNo]) !== JSON.stringify(sum)) {
+        same = false;
+      }
+    }
+
+    for (const fn of res.images) {
       if (!newFileHashes[fn]) continue;
       promises.push(
         kpuUploadImage(kelId, tpsNo, `${dir}/${fn}`)
@@ -612,12 +645,14 @@ async function kpuUploadKel(kelId: number, path) {
       );
     }
   }
-  console.log(`kpuUploadKel ${promises.length} entries for ${kelId}`);
   await Promise.all(promises);
-  console.log(`done kpuUploadKel ${promises.length} entries for ${kelId}`);
 
   const leftover = Object.keys(newFileHashes).length;
   if (leftover) console.error('Upload leftover', leftover);
+
+  if (!ada || same) return;
+  fs.writeFileSync(`${LOCAL_FS}/${filename}`, JSON.stringify(kpu));
+  await fsdb.doc(FsPath.kpu(kelId)).set(kpu);
 }
 
 const uploadParallelsim = 100;
@@ -635,10 +670,7 @@ async function kpuUpload(id, depth, opath) {
 
   if (depth === 4) {
     uploadPromises[uploadPromiseIdx] = uploadPromises[uploadPromiseIdx].then(
-      () =>
-        kpuUploadKel(id, path)
-          .then(() => console.log('Done', id, H[id].parentNames, H[id].name))
-          .catch(console.error)
+      () => kpuUploadKel(id, path).catch(console.error)
     );
     uploadPromiseIdx = (uploadPromiseIdx + 1) % uploadParallelsim;
     return;
@@ -648,6 +680,9 @@ async function kpuUpload(id, depth, opath) {
     key => res.table[key]['21'] !== null
   );
   for (const cid of arr) {
+    if (depth === 0) {
+      console.log('Scanning', H[cid].name);
+    }
     if (id === -99) {
       const cpath = path.slice();
       for (let i = 2; i > 0; i--) {

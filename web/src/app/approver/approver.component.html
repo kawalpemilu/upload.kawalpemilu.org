@@ -57,7 +57,10 @@
               mat-raised-button
               color="primary"
               (click)="
-                formType = FORM_TYPE.OTHERS; isPlano = IS_PLANO.NO; approve()
+                formType = FORM_TYPE.OTHERS;
+                isPlano = IS_PLANO.NO;
+                formGroup = null;
+                approve()
               "
             >
               Pindahkan Foto

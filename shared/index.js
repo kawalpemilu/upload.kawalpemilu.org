@@ -174,6 +174,9 @@ var FsPath = /** @class */ (function () {
     FsPath.tps = function (kelId, tpsNo) {
         return "t2/" + kelId + "-" + tpsNo;
     };
+    FsPath.kpu = function (kelId) {
+        return "k/" + kelId;
+    };
     FsPath.codeReferral = function (code) {
         return "c" + (code ? '/' + code : '');
     };
