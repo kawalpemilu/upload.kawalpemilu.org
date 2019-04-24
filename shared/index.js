@@ -1,5 +1,6 @@
 "use strict";
 exports.__esModule = true;
+var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
 exports.APP_SCOPED_PREFIX_URL = 'https://www.facebook.com/app_scoped_user_id/';
 exports.MAX_REFERRALS = 1500;
 exports.MAX_NUM_UPLOADS = 1500;
@@ -110,6 +111,171 @@ var IS_PLANO;
     IS_PLANO[IS_PLANO["YES"] = 1] = "YES";
     IS_PLANO[IS_PLANO["NO"] = 2] = "NO";
 })(IS_PLANO = exports.IS_PLANO || (exports.IS_PLANO = {}));
+var LEMBAR_KEY;
+(function (LEMBAR_KEY) {
+    LEMBAR_KEY[LEMBAR_KEY["PILPRES"] = 1] = "PILPRES";
+    LEMBAR_KEY[LEMBAR_KEY["PARTAI4"] = 2] = "PARTAI4";
+    LEMBAR_KEY[LEMBAR_KEY["PARTAI16_PLANO"] = 3] = "PARTAI16_PLANO";
+    LEMBAR_KEY[LEMBAR_KEY["PARTAI4_NO_DIGITIZE"] = 4] = "PARTAI4_NO_DIGITIZE";
+    LEMBAR_KEY[LEMBAR_KEY["PARTAI16_PLANO_NO_DIGITIZE"] = 5] = "PARTAI16_PLANO_NO_DIGITIZE";
+    LEMBAR_KEY[LEMBAR_KEY["PARTAI5_NO_DIGITIZE"] = 6] = "PARTAI5_NO_DIGITIZE";
+    LEMBAR_KEY[LEMBAR_KEY["PARTAI20_PLANO_NO_DIGITIZE"] = 7] = "PARTAI20_PLANO_NO_DIGITIZE";
+    LEMBAR_KEY[LEMBAR_KEY["CALON3_NO_DIGITIZE"] = 8] = "CALON3_NO_DIGITIZE";
+    LEMBAR_KEY[LEMBAR_KEY["CALON5_PLANO_NO_DIGITIZE"] = 9] = "CALON5_PLANO_NO_DIGITIZE";
+})(LEMBAR_KEY = exports.LEMBAR_KEY || (exports.LEMBAR_KEY = {}));
+exports.LEMBAR_SPEC = (_a = {},
+    _a[LEMBAR_KEY.PILPRES] = {
+        '1': [SUM_KEY.jum],
+        '2': [SUM_KEY.pas1, SUM_KEY.pas2, SUM_KEY.sah, SUM_KEY.tSah]
+    },
+    _a[LEMBAR_KEY.PARTAI4] = {
+        '1': [SUM_KEY.pJum],
+        '2.1': [SUM_KEY.pkb, SUM_KEY.ger, SUM_KEY.pdi, SUM_KEY.gol],
+        '2.2': [SUM_KEY.nas, SUM_KEY.gar, SUM_KEY.ber, SUM_KEY.sej],
+        '2.3': [SUM_KEY.per, SUM_KEY.ppp, SUM_KEY.psi, SUM_KEY.pan],
+        '2.4': [SUM_KEY.han, SUM_KEY.dem, SUM_KEY.pbb, SUM_KEY.pkp],
+        '3': [SUM_KEY.pSah, SUM_KEY.pTSah]
+    },
+    _a[LEMBAR_KEY.PARTAI16_PLANO] = {
+        '1': [SUM_KEY.pJum],
+        '2.1': [SUM_KEY.pkb],
+        '2.2': [SUM_KEY.ger],
+        '2.3': [SUM_KEY.pdi],
+        '2.4': [SUM_KEY.gol],
+        '2.5': [SUM_KEY.nas],
+        '2.6': [SUM_KEY.gar],
+        '2.7': [SUM_KEY.ber],
+        '2.8': [SUM_KEY.sej],
+        '2.9': [SUM_KEY.per],
+        '2.10': [SUM_KEY.ppp],
+        '2.11': [SUM_KEY.psi],
+        '2.12': [SUM_KEY.pan],
+        '2.13': [SUM_KEY.han],
+        '2.14': [SUM_KEY.dem],
+        '2.15': [SUM_KEY.pbb],
+        '2.16': [SUM_KEY.pkp],
+        '3': [SUM_KEY.pSah, SUM_KEY.pTSah]
+    },
+    _a[LEMBAR_KEY.PARTAI4_NO_DIGITIZE] = {
+        '1': null,
+        '2.1': null,
+        '2.2': null,
+        '2.3': null,
+        '2.4': null,
+        '3': null
+    },
+    _a[LEMBAR_KEY.PARTAI16_PLANO_NO_DIGITIZE] = {
+        '1': null,
+        '2.1': null,
+        '2.2': null,
+        '2.3': null,
+        '2.4': null,
+        '2.5': null,
+        '2.6': null,
+        '2.7': null,
+        '2.8': null,
+        '2.9': null,
+        '2.10': null,
+        '2.11': null,
+        '2.12': null,
+        '2.13': null,
+        '2.14': null,
+        '2.15': null,
+        '2.16': null,
+        '3': null
+    },
+    _a[LEMBAR_KEY.PARTAI5_NO_DIGITIZE] = {
+        '1': null,
+        '2.1': null,
+        '2.2': null,
+        '2.3': null,
+        '2.4': null,
+        '2.5': null,
+        '3': null
+    },
+    _a[LEMBAR_KEY.PARTAI20_PLANO_NO_DIGITIZE] = {
+        '1': null,
+        '2.1': null,
+        '2.2': null,
+        '2.3': null,
+        '2.4': null,
+        '2.5': null,
+        '2.6': null,
+        '2.7': null,
+        '2.8': null,
+        '2.9': null,
+        '2.10': null,
+        '2.11': null,
+        '2.12': null,
+        '2.13': null,
+        '2.14': null,
+        '2.15': null,
+        '2.16': null,
+        '2.17': null,
+        '2.18': null,
+        '2.19': null,
+        '2.20': null,
+        '3': null
+    },
+    _a[LEMBAR_KEY.CALON3_NO_DIGITIZE] = {
+        '1': null,
+        '2.1': null,
+        '2.2': null,
+        '2.3': null,
+        '3': null
+    },
+    _a[LEMBAR_KEY.CALON5_PLANO_NO_DIGITIZE] = {
+        '1': null,
+        '2.1': null,
+        '2.2': null,
+        '2.3': null,
+        '2.4': null,
+        '2.5': null,
+        '3': null
+    },
+    _a);
+exports.LEMBAR = (_b = {},
+    _b[FORM_TYPE.PPWP] = (_c = {},
+        _c[IS_PLANO.YES] = this.LEMBAR_SPEC[LEMBAR_KEY.PILPRES],
+        _c[IS_PLANO.NO] = this.LEMBAR_SPEC[LEMBAR_KEY.PILPRES],
+        _c),
+    _b[FORM_TYPE.DPR] = (_d = {},
+        _d[IS_PLANO.YES] = this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO],
+        _d[IS_PLANO.NO] = this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4],
+        _d),
+    // These forms below are not digitized, only classified.
+    _b[FORM_TYPE.DPRPB] = (_e = {},
+        _e[IS_PLANO.YES] = this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO_NO_DIGITIZE],
+        _e[IS_PLANO.NO] = this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4_NO_DIGITIZE],
+        _e),
+    _b[FORM_TYPE.DPRP] = (_f = {},
+        _f[IS_PLANO.YES] = this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO_NO_DIGITIZE],
+        _f[IS_PLANO.NO] = this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4_NO_DIGITIZE],
+        _f),
+    _b[FORM_TYPE.DPRK] = (_g = {},
+        _g[IS_PLANO.YES] = this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI20_PLANO_NO_DIGITIZE],
+        _g[IS_PLANO.NO] = this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI5_NO_DIGITIZE],
+        _g),
+    _b[FORM_TYPE.DPRD_PROV] = (_h = {},
+        _h[IS_PLANO.YES] = this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO_NO_DIGITIZE],
+        _h[IS_PLANO.NO] = this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4_NO_DIGITIZE],
+        _h),
+    _b[FORM_TYPE.DPRD_KAB_KOTA] = (_j = {},
+        _j[IS_PLANO.YES] = this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO_NO_DIGITIZE],
+        _j[IS_PLANO.NO] = this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4_NO_DIGITIZE],
+        _j),
+    _b[FORM_TYPE.DPRA] = (_k = {},
+        _k[IS_PLANO.YES] = this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI20_PLANO_NO_DIGITIZE],
+        _k[IS_PLANO.NO] = this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI5_NO_DIGITIZE],
+        _k),
+    _b[FORM_TYPE.DPD] = (_l = {},
+        _l[IS_PLANO.YES] = this.LEMBAR_SPEC[LEMBAR_KEY.CALON5_PLANO_NO_DIGITIZE],
+        _l[IS_PLANO.NO] = this.LEMBAR_SPEC[LEMBAR_KEY.CALON3_NO_DIGITIZE],
+        _l),
+    _b[FORM_TYPE.OTHERS] = null,
+    _b[FORM_TYPE.PEMANDANGAN] = null,
+    _b[FORM_TYPE.MALICIOUS] = null,
+    _b);
 function isValidHalaman(hal) {
     if (!hal || typeof hal !== 'string')
         return false;
@@ -310,7 +476,7 @@ function computeAction(tps) {
             var key = _c[_b];
             if (!valid[key]) {
                 action.sum[key] = i.sum[key];
-                valid[key] = !ignore;
+                valid[key] = !ignore && isCorrectType(i.c1, key);
                 continue;
             }
             if (ignore)
@@ -320,7 +486,7 @@ function computeAction(tps) {
             }
         }
     }
-    if (action.sum.jum && action.sum.sah && action.sum.tSah) {
+    if (action.sum.jum && (action.sum.sah || action.sum.tSah)) {
         if (action.sum.jum !== action.sum.sah + action.sum.tSah) {
             action.sum.janggal = 1;
         }
@@ -328,6 +494,18 @@ function computeAction(tps) {
     return action;
 }
 exports.computeAction = computeAction;
+function isCorrectType(c1, key) {
+    var plano = exports.LEMBAR[c1.type];
+    if (!plano)
+        return false;
+    var spec = plano[c1.plano];
+    if (!spec)
+        return false;
+    var hal = spec[c1.halaman];
+    if (!spec)
+        return false;
+    return hal.indexOf(key) !== -1;
+}
 // The quota specifications: a list of quota restrictions.
 var QuotaSpecs = /** @class */ (function () {
     function QuotaSpecs(key) {

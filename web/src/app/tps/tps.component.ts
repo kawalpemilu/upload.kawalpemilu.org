@@ -76,7 +76,6 @@ export class TpsComponent implements OnInit {
         reqTpsNo = parseInt(params.get('tpsNo'), 10) || 0;
         return parseInt(params.get('id'), 10);
       }),
-      take(1),
       switchMap(id => this.hie.get$(id)),
       map((state: State) => {
         this.titleService.setTitle(`Kelurahan ${state.name} :: KPJS 2019`);

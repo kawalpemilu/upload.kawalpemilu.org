@@ -548,7 +548,7 @@ async function kpuUploadImage(kelId, tpsNo, filename: string) {
 }
 
 async function fetchKelImages(kelId: number, path) {
-  const inProgressFn = c => c.progress.proses < c.progress.total;
+  const inProgressFn = c => !c.progress || c.progress.proses < c.progress.total;
   const url = getPathUrlPrefix(KPU_API, path) + '.json';
   const res = await getCached(url, `${LOCAL_FS}/${kelId}.json`, inProgressFn);
   const arr = Object.keys(res.table).filter(id => res.table[id]['21'] !== null);

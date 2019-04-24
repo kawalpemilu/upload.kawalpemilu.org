@@ -20,7 +20,8 @@ import {
   HierarchyNode,
   USER_ROLE,
   KPU_SCAN_UID,
-  KpuData
+  KpuData,
+  LEMBAR
 } from 'shared';
 import { startWith, take, distinctUntilChanged } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
@@ -30,20 +31,6 @@ import { ApiService } from '../api.service';
 import { UserService } from '../user.service';
 import { Location } from '@angular/common';
 import { HierarchyService } from '../hierarchy.service';
-
-enum LEMBAR_KEY {
-  PILPRES = 1,
-  PARTAI4,
-  PARTAI16_PLANO,
-  PARTAI4_NO_DIGITIZE,
-  PARTAI16_PLANO_NO_DIGITIZE,
-  PARTAI5_NO_DIGITIZE,
-  PARTAI20_PLANO_NO_DIGITIZE,
-  CALON3_NO_DIGITIZE,
-  CALON5_PLANO_NO_DIGITIZE
-}
-
-type LembarSpec = { [halaman in Halaman]: SUM_KEY[] };
 
 @Component({
   selector: 'app-approver',
@@ -90,189 +77,11 @@ export class ApproverComponent implements OnInit, OnDestroy {
     [SUM_KEY.pTSah]: 'Suara Tidak Sah'
   };
 
-  LEMBAR_SPEC: { [key in LEMBAR_KEY]: LembarSpec } = {
-    [LEMBAR_KEY.PILPRES]: {
-      '1': [SUM_KEY.jum],
-      '2': [SUM_KEY.pas1, SUM_KEY.pas2, SUM_KEY.sah, SUM_KEY.tSah]
-    } as LembarSpec,
-
-    [LEMBAR_KEY.PARTAI4]: {
-      '1': [SUM_KEY.pJum],
-      '2.1': [SUM_KEY.pkb, SUM_KEY.ger, SUM_KEY.pdi, SUM_KEY.gol],
-      '2.2': [SUM_KEY.nas, SUM_KEY.gar, SUM_KEY.ber, SUM_KEY.sej],
-      '2.3': [SUM_KEY.per, SUM_KEY.ppp, SUM_KEY.psi, SUM_KEY.pan],
-      '2.4': [SUM_KEY.han, SUM_KEY.dem, SUM_KEY.pbb, SUM_KEY.pkp],
-      '3': [SUM_KEY.pSah, SUM_KEY.pTSah]
-    } as LembarSpec,
-
-    [LEMBAR_KEY.PARTAI16_PLANO]: {
-      '1': [SUM_KEY.pJum],
-
-      '2.1': [SUM_KEY.pkb],
-      '2.2': [SUM_KEY.ger],
-      '2.3': [SUM_KEY.pdi],
-      '2.4': [SUM_KEY.gol],
-
-      '2.5': [SUM_KEY.nas],
-      '2.6': [SUM_KEY.gar],
-      '2.7': [SUM_KEY.ber],
-      '2.8': [SUM_KEY.sej],
-
-      '2.9': [SUM_KEY.per],
-      '2.10': [SUM_KEY.ppp],
-      '2.11': [SUM_KEY.psi],
-      '2.12': [SUM_KEY.pan],
-
-      '2.13': [SUM_KEY.han],
-      '2.14': [SUM_KEY.dem],
-      '2.15': [SUM_KEY.pbb],
-      '2.16': [SUM_KEY.pkp],
-
-      '3': [SUM_KEY.pSah, SUM_KEY.pTSah]
-    } as LembarSpec,
-
-    [LEMBAR_KEY.PARTAI4_NO_DIGITIZE]: {
-      '1': null,
-      '2.1': null,
-      '2.2': null,
-      '2.3': null,
-      '2.4': null,
-      '3': null
-    } as LembarSpec,
-
-    [LEMBAR_KEY.PARTAI16_PLANO_NO_DIGITIZE]: {
-      '1': null,
-
-      '2.1': null,
-      '2.2': null,
-      '2.3': null,
-      '2.4': null,
-
-      '2.5': null,
-      '2.6': null,
-      '2.7': null,
-      '2.8': null,
-
-      '2.9': null,
-      '2.10': null,
-      '2.11': null,
-      '2.12': null,
-
-      '2.13': null,
-      '2.14': null,
-      '2.15': null,
-      '2.16': null,
-
-      '3': null
-    } as LembarSpec,
-
-    [LEMBAR_KEY.PARTAI5_NO_DIGITIZE]: {
-      '1': null,
-      '2.1': null,
-      '2.2': null,
-      '2.3': null,
-      '2.4': null,
-      '2.5': null,
-      '3': null
-    } as LembarSpec,
-
-    [LEMBAR_KEY.PARTAI20_PLANO_NO_DIGITIZE]: {
-      '1': null,
-
-      '2.1': null,
-      '2.2': null,
-      '2.3': null,
-      '2.4': null,
-
-      '2.5': null,
-      '2.6': null,
-      '2.7': null,
-      '2.8': null,
-
-      '2.9': null,
-      '2.10': null,
-      '2.11': null,
-      '2.12': null,
-
-      '2.13': null,
-      '2.14': null,
-      '2.15': null,
-      '2.16': null,
-
-      '2.17': null,
-      '2.18': null,
-      '2.19': null,
-      '2.20': null,
-
-      '3': null
-    } as LembarSpec,
-
-    [LEMBAR_KEY.CALON3_NO_DIGITIZE]: {
-      '1': null,
-      '2.1': null,
-      '2.2': null,
-      '2.3': null,
-      '3': null
-    } as LembarSpec,
-
-    [LEMBAR_KEY.CALON5_PLANO_NO_DIGITIZE]: {
-      '1': null,
-      '2.1': null,
-      '2.2': null,
-      '2.3': null,
-      '2.4': null,
-      '2.5': null,
-      '3': null
-    } as LembarSpec
-  };
-
-  LEMBAR: { [key in FORM_TYPE]: { [key2 in IS_PLANO]: LembarSpec } } = {
-    [FORM_TYPE.PPWP]: {
-      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PILPRES],
-      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PILPRES]
-    },
-    [FORM_TYPE.DPR]: {
-      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO],
-      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4]
-    },
-    // These forms below are not digitized, only classified.
-    [FORM_TYPE.DPRPB]: {
-      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO_NO_DIGITIZE],
-      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4_NO_DIGITIZE]
-    },
-    [FORM_TYPE.DPRP]: {
-      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO_NO_DIGITIZE],
-      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4_NO_DIGITIZE]
-    },
-    [FORM_TYPE.DPRK]: {
-      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI20_PLANO_NO_DIGITIZE],
-      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI5_NO_DIGITIZE]
-    },
-    [FORM_TYPE.DPRD_PROV]: {
-      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO_NO_DIGITIZE],
-      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4_NO_DIGITIZE]
-    },
-    [FORM_TYPE.DPRD_KAB_KOTA]: {
-      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI16_PLANO_NO_DIGITIZE],
-      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI4_NO_DIGITIZE]
-    },
-    [FORM_TYPE.DPRA]: {
-      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI20_PLANO_NO_DIGITIZE],
-      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.PARTAI5_NO_DIGITIZE]
-    },
-    [FORM_TYPE.DPD]: {
-      [IS_PLANO.YES]: this.LEMBAR_SPEC[LEMBAR_KEY.CALON5_PLANO_NO_DIGITIZE],
-      [IS_PLANO.NO]: this.LEMBAR_SPEC[LEMBAR_KEY.CALON3_NO_DIGITIZE]
-    },
-    [FORM_TYPE.OTHERS]: null,
-    [FORM_TYPE.PEMANDANGAN]: null,
-    [FORM_TYPE.MALICIOUS]: null
-  };
-
   FORM_TYPE = FORM_TYPE;
   FORM_TYPE_ENTRIES = enumEntries(FORM_TYPE);
 
   IS_PLANO = IS_PLANO;
+  LEMBAR = LEMBAR;
 
   USER_ROLE = USER_ROLE;
 
@@ -491,7 +300,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
     const sum = {} as SumMap;
     if (this.formGroup) {
       this.formGroup.disable();
-      for (const key of this.LEMBAR[this.formType][this.isPlano][
+      for (const key of LEMBAR[this.formType][this.isPlano][
         this.halaman
       ]) {
         sum[key] = this.formGroup.get(key).value;
@@ -578,11 +387,11 @@ export class ApproverComponent implements OnInit, OnDestroy {
   }
 
   getLembar() {
-    return this.LEMBAR[this.formType][this.isPlano][this.halaman];
+    return LEMBAR[this.formType][this.isPlano][this.halaman];
   }
 
   getHalaman() {
-    const lembar = this.LEMBAR[this.formType][this.isPlano];
+    const lembar = LEMBAR[this.formType][this.isPlano];
     return Object.keys(lembar).sort((a, b) => this.toInt(a) - this.toInt(b));
   }
 

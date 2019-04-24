@@ -468,7 +468,6 @@ app.post(
   '/api/approve',
   [
     (req, res, next) => {
-      const user = req.user as admin.auth.DecodedIdToken;
       const b = req.body as ApproveRequest;
       const p: ApproveRequest = {
         kelId: +b.kelId,

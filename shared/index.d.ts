@@ -144,6 +144,28 @@ export declare enum IS_PLANO {
     NO = 2
 }
 export declare type Halaman = '0' | '1' | '2' | '2.1' | '2.2' | '2.3' | '2.4' | '2.5' | '2.6' | '2.7' | '2.8' | '2.9' | '2.10' | '2.11' | '2.12' | '2.13' | '2.14' | '2.15' | '2.16' | '2.17' | '2.18' | '2.19' | '2.20' | '3';
+export declare enum LEMBAR_KEY {
+    PILPRES = 1,
+    PARTAI4 = 2,
+    PARTAI16_PLANO = 3,
+    PARTAI4_NO_DIGITIZE = 4,
+    PARTAI16_PLANO_NO_DIGITIZE = 5,
+    PARTAI5_NO_DIGITIZE = 6,
+    PARTAI20_PLANO_NO_DIGITIZE = 7,
+    CALON3_NO_DIGITIZE = 8,
+    CALON5_PLANO_NO_DIGITIZE = 9
+}
+export declare type LembarSpec = {
+    [halaman in Halaman]: SUM_KEY[];
+};
+export declare const LEMBAR_SPEC: {
+    [key in LEMBAR_KEY]: LembarSpec;
+};
+export declare const LEMBAR: {
+    [key in FORM_TYPE]: {
+        [key2 in IS_PLANO]: LembarSpec;
+    };
+};
 export declare function isValidHalaman(hal: any): boolean;
 export interface C1Form {
     type: FORM_TYPE;
