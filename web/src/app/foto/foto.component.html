@@ -13,9 +13,14 @@
       </tr>
       <tr *ngFor="let p of photos; let i = index">
         <td align="center" width="120">
-          <a style="text-decoration: none" [routerLink]="['/t', p.kelId]">{{
-            p.kelName || p.kelId
-          }}</a>
+          <a
+            style="text-decoration: none"
+            target="_blank"
+            href="/t/{{ p.kelId }}/{{ p.tpsNo }}"
+          >
+            {{ p.kelName || p.kelId }}
+          </a>
+
           <p style="border: 1px solid black; width: 80px; padding: 5px">
             TPS # <b style="font-size: large">{{ p.tpsNo }}</b>
           </p>

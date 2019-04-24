@@ -740,7 +740,7 @@ function isCorrectType(c1: C1Form, key) {
   const spec = plano[c1.plano];
   if (!spec) return false;
   const hal = spec[c1.halaman];
-  if (!spec) return false;
+  if (!hal) return false;
   return hal.indexOf(key) !== -1;
 }
 

@@ -502,7 +502,7 @@ function isCorrectType(c1, key) {
     if (!spec)
         return false;
     var hal = spec[c1.halaman];
-    if (!spec)
+    if (!hal)
         return false;
     return hal.indexOf(key) !== -1;
 }
