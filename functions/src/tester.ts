@@ -93,7 +93,7 @@ async function downloadWithRetry(url, output) {
 }
 
 async function getWithRetry(url) {
-  console.log('fetching', url);
+  // console.log('fetching', url);
   for (let i = 0; ; i++) {
     try {
       return await curl(url);
@@ -663,7 +663,7 @@ async function kpuUpload(id, depth, opath) {
   const path = opath.slice();
   path.push(id);
   const url = getPathUrlPrefix(KPU_API, path) + '.json';
-  const inProgressFn = c => c.progress.proses < c.progress.total;
+  const inProgressFn = c => !c.progress || c.progress.proses < c.progress.total;
   const res = await getCached(url, `${LOCAL_FS}/${id}.json`, inProgressFn);
 
   if (!inProgressFn(res)) return;
@@ -676,23 +676,28 @@ async function kpuUpload(id, depth, opath) {
     return;
   }
 
+  const promises = [];
   const arr = Object.keys(res.table).filter(
     key => res.table[key]['21'] !== null
   );
   for (const cid of arr) {
-    if (depth === 0) {
-      console.log('Scanning', H[cid].name);
-    }
+    let promise;
     if (id === -99) {
       const cpath = path.slice();
       for (let i = 2; i > 0; i--) {
         cpath.push(+cid + i);
       }
-      await kpuUpload(+cid, depth + 3, cpath);
+      promise = kpuUpload(+cid, depth + 3, cpath);
     } else {
-      await kpuUpload(+cid, depth + 1, path);
+      promise = kpuUpload(+cid, depth + 1, path);
+    }
+    if (depth === 0) {
+      promises.push(promise);
+    } else {
+      await promise;
     }
   }
+  await Promise.all(promises);
 }
 
 async function continuousKpuUpload() {
@@ -883,6 +888,30 @@ async function fixHierarchy() {
   fs.writeFileSync(hieFn, `exports.H = ${JSON.stringify(H)};`);
 }
 
+async function fixTpsCount() {
+  function recTpsCount(id, depth): number {
+    let nTps = 0;
+    const arr = H[id].children;
+    if (depth === 4) {
+      nTps = arr.length;
+    } else {
+      for (const a of arr) {
+        const cid = a[0];
+        a[2] = recTpsCount(cid, depth + 1);
+        nTps += a[2];
+      }
+    }
+    return nTps;
+  }
+
+  console.log(H[0]);
+  console.log('nTPS', recTpsCount(0, 0));
+  console.log(H[0]);
+
+  const hieFn = '/Users/felixhalim/Projects/kawal-c1/functions/hierarchy.js';
+  fs.writeFileSync(hieFn, `exports.H = ${JSON.stringify(H)};`);
+}
+
 // parallelUpload().catch(console.error);
 // loadTest().catch(console.error);
 // fixClaimersRole().catch(console.error);
@@ -891,5 +920,6 @@ async function fixHierarchy() {
 // fixPemandangan().catch(console.error);
 // whoChangedRole().catch(console.error);
 // fixHierarchy().catch(console.error);
+fixTpsCount().catch(console.error);
 
-continuousKpuUpload().catch(console.error);
+// continuousKpuUpload().catch(console.error);
