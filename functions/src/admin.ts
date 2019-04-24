@@ -191,14 +191,23 @@ function recomputeH(id: number, depth: number) {
   const arr = H[id].children;
   const all = {};
   if (depth === 4) {
-    for (const tpsNo of arr) {
-      const sum = h[id] && h[id][tpsNo[0]] && h[id][tpsNo[0]].sum;
-      if (sum) aggregate(all, sum);
+    for (const [tpsNo] of arr) {
+      const sum = h[id] && h[id][tpsNo] && h[id][tpsNo].sum;
+      if (!sum) continue;
+      if (sum.jum && (sum.sah || sum.tSah)) {
+        if (sum.jum !== sum.sah + sum.tSah) {
+          if (!sum.janggal) {
+            console.log('Set janggal', id, tpsNo);
+            sum.janggal = 1;
+          }
+        }
+      }
+      aggregate(all, sum);
     }
   } else {
-    for (const cid of arr) {
-      const csum = recomputeH(cid[0], depth + 1);
-      const ch = getUpsertData(id, cid[0]);
+    for (const [cid] of arr) {
+      const csum = recomputeH(cid, depth + 1);
+      const ch = getUpsertData(id, cid);
       ch.sum = ch.sum || ({} as SumMap);
       for (const key in ch.sum) {
         if (ch.sum[key] !== csum[key]) {
@@ -208,18 +217,11 @@ function recomputeH(id: number, depth: number) {
       }
       for (const key in csum) {
         if (ch.sum[key] !== csum[key]) {
-          console.log(
-            'missing',
-            cid[0],
-            H[cid[0]].name,
-            key,
-            ch.sum[key],
-            csum[key]
-          );
+          console.log('missing', cid, H[cid].name, key, ch.sum[key], csum[key]);
           ch.sum[key] = csum[key];
         }
       }
-      aggregate(all, recomputeH(cid[0], depth + 1));
+      aggregate(all, csum);
     }
   }
   return all;
