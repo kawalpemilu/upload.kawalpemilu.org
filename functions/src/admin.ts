@@ -194,7 +194,10 @@ function recomputeH(id: number, depth: number) {
     for (const [tpsNo] of arr) {
       const sum = h[id] && h[id][tpsNo] && h[id][tpsNo].sum;
       if (!sum) continue;
-      if (sum.jum && (sum.sah || sum.tSah)) {
+      if (
+        sum.hasOwnProperty('jum') &&
+        (sum.hasOwnProperty('sah') || sum.hasOwnProperty('tSah'))
+      ) {
         if (sum.jum !== sum.sah + sum.tSah) {
           if (!sum.janggal) {
             console.log('Set janggal', id, tpsNo);

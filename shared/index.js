@@ -486,7 +486,8 @@ function computeAction(tps) {
             }
         }
     }
-    if (action.sum.jum && (action.sum.sah || action.sum.tSah)) {
+    if (action.sum.hasOwnProperty('jum') &&
+        (action.sum.hasOwnProperty('sah') || action.sum.hasOwnProperty('tSah'))) {
         if (action.sum.jum !== action.sum.sah + action.sum.tSah) {
             action.sum.janggal = 1;
         }
