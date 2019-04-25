@@ -1,7 +1,6 @@
 import * as admin from 'firebase-admin';
 import * as request from 'request-promise';
 import * as fs from 'fs';
-import * as util from 'util';
 import * as crypto from 'crypto';
 import { spawn } from 'child_process';
 
@@ -33,10 +32,6 @@ admin.initializeApp({
 
 const auth = admin.auth();
 const fsdb = admin.firestore();
-const bucket = admin.storage().bucket('kawal-c1.appspot.com');
-
-const readFileAsync = util.promisify(fs.readFile);
-const statAsync = util.promisify(fs.stat);
 
 const KPU_API = 'https://pemilu2019.kpu.go.id/static/json/hhcw/ppwp';
 const KPU_WIL = 'https://pemilu2019.kpu.go.id/static/json/wilayah';
@@ -76,6 +71,23 @@ async function download(url, output): Promise<void> {
   });
 }
 
+async function gsutilCopy(src, destination) {
+  return new Promise((resolve, reject) => {
+    const dst = `gs://kawal-c1.appspot.com/${destination}`;
+    const params = ['cp', src, dst];
+    const c = spawn('gsutil', params);
+    let s = '';
+    let e = '';
+    c.stdout.on('data', data => (s += data));
+    c.stderr.on('data', data => (e += data));
+    c.on('close', code => {
+      if (code)
+        reject(new Error(`Exit code ${code}\nstdout:\n${s}\nstderr:\n${e}\n`));
+      else resolve(s);
+    });
+  });
+}
+
 async function downloadWithRetry(url, output) {
   try {
     await download(url, output);
@@ -107,15 +119,22 @@ async function getWithRetry(url) {
 }
 
 async function getCached(url, cachedFilename, inProgressFn) {
+  let cacheJson: string;
+  let cache: any;
   try {
-    const cache = JSON.parse(fs.readFileSync(cachedFilename, 'utf8'));
+    cacheJson = fs.readFileSync(cachedFilename, 'utf8');
+    cache = JSON.parse(cacheJson);
     if (isOffline) return cache;
     if (!inProgressFn(cache)) return cache;
   } catch (e) {}
 
   try {
     const res = JSON.parse(await getWithRetry(url));
-    fs.writeFileSync(cachedFilename, JSON.stringify(res));
+    const resJson = JSON.stringify(res);
+    if (cacheJson === resJson) {
+      res.nochange = true;
+    }
+    fs.writeFileSync(cachedFilename, resJson);
     return res;
   } catch (e) {
     console.error(e.message);
@@ -140,7 +159,7 @@ async function fetchImageJson(imageId, path) {
   return getCached(
     getPathUrlPrefix(KPU_API, path) + `/${imageId}.json`,
     dir + `/${imageId}.json`,
-    c => c.images.length < 2
+    c => !c.images || c.images.length !== 2
   );
 }
 
@@ -204,7 +223,7 @@ async function autoRenewIdToken(user: User) {
     );
   }
 
-  if (user.expiresAt < Date.now()) {
+  if (user.expiresAt < Date.now() + 2 * 60 * 1000) {
     console.log('refresh id token', user);
     return await reauthenticate(
       `https://securetoken.googleapis.com/v1/token`,
@@ -443,7 +462,7 @@ async function fixUploadersCount() {
 }
 
 async function checkHierarchy() {
-  const h = JSON.parse(await readFileAsync('h.json', 'utf8'));
+  const h = JSON.parse(fs.readFileSync('h.json', 'utf8'));
   let cnt = 0;
   for (const id of Object.keys(h)) {
     const node = h[id];
@@ -506,9 +525,7 @@ async function checkHierarchy() {
 }
 
 async function kpuUploadImage(kelId, tpsNo, filename: string) {
-  const stats = await statAsync(filename);
-
-  console.log('uploading', kelId, tpsNo, filename, stats.size);
+  const stats = fs.statSync(filename);
 
   if (stats.size < 10 << 10) {
     throw new Error(`Image too small ${kelId} ${tpsNo}`);
@@ -522,7 +539,10 @@ async function kpuUploadImage(kelId, tpsNo, filename: string) {
   const imageId = autoId();
   const destination = `uploads/${kelId}/${tpsNo}/${KPU_SCAN_UID}/${imageId}`;
 
-  await bucket.upload(filename, { destination });
+  const t0 = Date.now();
+  await gsutilCopy(filename, destination);
+  const elapsed = Date.now() - t0;
+  console.log('uploaded', kelId, tpsNo, filename, stats.size, elapsed);
 
   const res = await upload(KPU_SCAN_UID, {
     imageId,
@@ -655,8 +675,9 @@ async function kpuUploadKel(kelId: number, path) {
   await fsdb.doc(FsPath.kpu(kelId)).set(kpu);
 }
 
-const uploadParallelsim = 100;
+const uploadParallelsim = 7;
 const uploadPromises = [];
+const lastTouch = [];
 let uploadPromiseIdx = 0;
 
 async function kpuUpload(id, depth, opath) {
@@ -666,11 +687,37 @@ async function kpuUpload(id, depth, opath) {
   const inProgressFn = c => !c.progress || c.progress.proses < c.progress.total;
   const res = await getCached(url, `${LOCAL_FS}/${id}.json`, inProgressFn);
 
-  if (!inProgressFn(res)) return;
+  if (!isOffline) {
+    // if (!inProgressFn(res)) return;
+    if (!inProgressFn(res) || res.nochange) return;
+  }
 
   if (depth === 4) {
+    const idx = uploadPromiseIdx;
     uploadPromises[uploadPromiseIdx] = uploadPromises[uploadPromiseIdx].then(
-      () => kpuUploadKel(id, path).catch(console.error)
+      () =>
+        kpuUploadKel(id, path)
+          .catch(console.error)
+          .then(() => {
+            const ts = (lastTouch[idx] = Date.now());
+            let oldest = 0;
+            for (let i = 1; i < uploadParallelsim; i++) {
+              if (lastTouch[i] < lastTouch[oldest]) {
+                oldest = i;
+              }
+            }
+            const gap = ts - lastTouch[oldest];
+            if (gap > 10 * 60 * 1000)
+              console.log(
+                'Done',
+                idx,
+                H[id].parentNames,
+                H[id].name,
+                id,
+                oldest,
+                gap
+              );
+          })
     );
     uploadPromiseIdx = (uploadPromiseIdx + 1) % uploadParallelsim;
     return;
@@ -920,6 +967,6 @@ async function fixTpsCount() {
 // fixPemandangan().catch(console.error);
 // whoChangedRole().catch(console.error);
 // fixHierarchy().catch(console.error);
-fixTpsCount().catch(console.error);
+// fixTpsCount().catch(console.error);
 
-// continuousKpuUpload().catch(console.error);
+continuousKpuUpload().catch(console.error);
