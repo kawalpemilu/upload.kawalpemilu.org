@@ -150,11 +150,11 @@ export class ApproverComponent implements OnInit, OnDestroy {
         if (this.kpuData) {
           const data = this.kpuData[this.tpsNo];
           if (data) {
-            const prefix = FORM_TYPE.PPWP + '.' + IS_PLANO.NO;
-            tpsData.autofill[`${prefix}.1.kpu`] = {
+            const prefix = FORM_TYPE.PPWP + ';' + IS_PLANO.NO;
+            tpsData.autofill[`${prefix};1;kpu`] = {
               [SUM_KEY.jum]: data[SUM_KEY.jum]
             } as SumMap;
-            tpsData.autofill[`${prefix}.2.kpu`] = {
+            tpsData.autofill[`${prefix};2;kpu`] = {
               [SUM_KEY.pas1]: data[SUM_KEY.pas1],
               [SUM_KEY.pas2]: data[SUM_KEY.pas2],
               [SUM_KEY.sah]: data[SUM_KEY.sah],
@@ -178,7 +178,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
     if (i.c1 && i.c1.type && i.c1.plano && i.c1.halaman) {
       // @ts-ignore
       const tipe = (i.tipe =
-        i.c1.type + '.' + i.c1.plano + '.' + i.c1.halaman + '.ex');
+        i.c1.type + ';' + i.c1.plano + ';' + i.c1.halaman + ';ex');
       this.tpsData.autofill[tipe] = i.sum;
     }
   }
@@ -187,7 +187,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
     // @ts-ignore
     const tipe = i.tipe;
     if (tipe) {
-      const t = tipe.split('.');
+      const t = tipe.split(';');
       this.setFormType(+t[0]);
       this.setIsPlano(+t[1]);
       this.setHalaman(t[2]);
@@ -233,7 +233,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
       const i = imgs[id];
       if (i.uploader.uid === KPU_SCAN_UID) {
         // @ts-ignore
-        i.tipe = FORM_TYPE.PPWP + '.' + IS_PLANO.NO + '.' + lembar + '.kpu';
+        i.tipe = FORM_TYPE.PPWP + ';' + IS_PLANO.NO + ';' + lembar + ';kpu';
         lembar++;
       }
       this.setExistingTipe(i);
