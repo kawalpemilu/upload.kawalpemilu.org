@@ -724,16 +724,13 @@ export function computeAction(tps: TpsData) {
         valid[key] = !ignore && isCorrectType(i.c1, key);
         continue;
       }
-      if (ignore) continue;
+      if (ignore || !isCorrectType(i.c1, key)) continue;
       if (action.sum[key] !== i.sum[key]) {
         action.sum.janggal = 1;
       }
     }
   }
-  if (
-    action.sum.hasOwnProperty('jum') &&
-    (action.sum.hasOwnProperty('sah') || action.sum.hasOwnProperty('tSah'))
-  ) {
+  if (valid['jum'] && (valid['sah'] || valid['tSah'])) {
     if (action.sum.jum !== action.sum.sah + action.sum.tSah) {
       action.sum.janggal = 1;
     }
