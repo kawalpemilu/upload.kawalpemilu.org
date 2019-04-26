@@ -146,11 +146,15 @@ async function doBackup() {
 }
 
 async function processNewUpserts() {
-  const upserts = await getUpsertBatch(100).catch(e => {
+  const upserts = (await getUpsertBatch(100).catch(e => {
     console.error(`get upsert batch failed: ${e.message}`);
     return {};
+  })) as Upserts;
+  const imageIds = Object.keys(upserts).sort((a, b) => {
+    const ua = upserts[a];
+    const ub = upserts[b];
+    return ua.reviewer.ts - ub.reviewer.ts;
   });
-  const imageIds = Object.keys(upserts);
   if (imageIds.length > 0) {
     await appendFileAsync('upserts.log', JSON.stringify(upserts) + '\n').catch(
       e => console.error(`append upsert.log failed ${e.message}`)
