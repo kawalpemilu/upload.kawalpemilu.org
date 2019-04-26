@@ -81,7 +81,34 @@
         class="cakupan"
         [matTooltip]="state.sum.cakupan + ' / ' + sumTps(state)"
       >
-        {{ (100 * state.sum.cakupan) / sumTps(state) | number: '1.0-1' }}%
+        {{ (100 * state.sum.cakupan) / sumTps(state) | number: '1.0-1' }}%<br />
+
+        <div
+          style="
+          width: 100%; height:5px; margin-top: 3px;
+          background:red; border: 1px solid black;
+        "
+          [ngStyle]="{
+            'background-image':
+              'linear-gradient(to right,
+            green 0%,
+            green ' +
+              (100 * (state.sum.cakupan - state.sum.pending)) / sumTps(state) +
+              '%,
+            orange ' +
+              (100 * (state.sum.cakupan - state.sum.pending)) / sumTps(state) +
+              '%,
+            orange ' +
+              (100 * state.sum.cakupan) / sumTps(state) +
+              '%,
+            white ' +
+              (100 * state.sum.cakupan) / sumTps(state) +
+              '%,
+            white 100%)'
+          }"
+        >
+          <br />
+        </div>
       </th>
     </tr>
   </tfoot>
@@ -136,7 +163,40 @@
         </ng-container>
 
         <td class="cakupan" [matTooltip]="coverage(state, c[0]) + ' / ' + c[2]">
-          {{ (100 * coverage(state, c[0])) / c[2] | number: '1.0-1' }}%
+          {{ (100 * coverage(state, c[0])) / c[2] | number: '1.0-1' }}%<br />
+
+          <div
+            style="
+              width: 100%; height:5px; margin-top: 3px;
+              background:red; border: 1px solid black;
+            "
+            [ngStyle]="{
+              'background-image':
+                'linear-gradient(to right,
+                green 0%,
+                green ' +
+                (100 *
+                  (coverage(state, c[0]) -
+                    (state.data[c[0]]?.sum?.pending || 0))) /
+                  c[2] +
+                '%,
+                orange ' +
+                (100 *
+                  (coverage(state, c[0]) -
+                    (state.data[c[0]]?.sum?.pending || 0))) /
+                  c[2] +
+                '%,
+                orange ' +
+                (100 * coverage(state, c[0])) / c[2] +
+                '%,
+                white ' +
+                (100 * coverage(state, c[0])) / c[2] +
+                '%,
+                white 100%)'
+            }"
+          >
+            <br />
+          </div>
         </td>
       </tr>
     </ng-container>
