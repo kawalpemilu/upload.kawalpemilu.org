@@ -153,7 +153,10 @@ async function processNewUpserts() {
   const imageIds = Object.keys(upserts).sort((a, b) => {
     const ua = upserts[a];
     const ub = upserts[b];
-    return ((ua.reviewer && ua.reviewer.ts) || 0) - ((ub.reviewer && ub.reviewer.ts) || 0);
+    return (
+      ((ua.reviewer && ua.reviewer.ts) || 0) -
+      ((ub.reviewer && ub.reviewer.ts) || 0)
+    );
   });
   if (imageIds.length > 0) {
     await appendFileAsync('upserts.log', JSON.stringify(upserts) + '\n').catch(

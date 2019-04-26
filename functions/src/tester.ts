@@ -675,52 +675,55 @@ async function kpuUploadKel(kelId: number, path) {
   await fsdb.doc(FsPath.kpu(kelId)).set(kpu);
 }
 
-const uploadParallelsim = 7;
+const uploadParallelsim = 3;
 const uploadPromises = [];
 const lastTouch = [];
 let uploadPromiseIdx = 0;
+let isShutdown = false;
+
+function touchIndex(idx, id) {
+  const ts = (lastTouch[idx] = Date.now());
+  let oldest = 0;
+  for (let i = 1; i < uploadParallelsim; i++) {
+    if (lastTouch[i] < lastTouch[oldest]) {
+      oldest = i;
+    }
+  }
+  const gap = ts - lastTouch[oldest];
+  if (gap > 10 * 60 * 1000)
+    console.log('Done', idx, H[id].parentNames, H[id].name, id, oldest, gap);
+}
 
 async function kpuUpload(id, depth, opath) {
+  if (isShutdown) return;
+
   const path = opath.slice();
   path.push(id);
+
+  if (depth === 4) {
+    const idx = uploadPromiseIdx;
+    uploadPromises[uploadPromiseIdx] = uploadPromises[uploadPromiseIdx].then(
+      async () => {
+        if (isShutdown) return;
+        try {
+          await kpuUploadKel(id, path);
+        } catch (e) {
+          console.error('Kel Error', H[id].name, id, e);
+        }
+        touchIndex(idx, id);
+      }
+    );
+    uploadPromiseIdx = (uploadPromiseIdx + 1) % uploadParallelsim;
+    return;
+  }
+
   const url = getPathUrlPrefix(KPU_API, path) + '.json';
   const inProgressFn = c => !c.progress || c.progress.proses < c.progress.total;
   const res = await getCached(url, `${LOCAL_FS}/${id}.json`, inProgressFn);
 
   if (!isOffline) {
-    // if (!inProgressFn(res)) return;
-    if (!inProgressFn(res) || res.nochange) return;
-  }
-
-  if (depth === 4) {
-    const idx = uploadPromiseIdx;
-    uploadPromises[uploadPromiseIdx] = uploadPromises[uploadPromiseIdx].then(
-      () =>
-        kpuUploadKel(id, path)
-          .catch(console.error)
-          .then(() => {
-            const ts = (lastTouch[idx] = Date.now());
-            let oldest = 0;
-            for (let i = 1; i < uploadParallelsim; i++) {
-              if (lastTouch[i] < lastTouch[oldest]) {
-                oldest = i;
-              }
-            }
-            const gap = ts - lastTouch[oldest];
-            if (gap > 10 * 60 * 1000)
-              console.log(
-                'Done',
-                idx,
-                H[id].parentNames,
-                H[id].name,
-                id,
-                oldest,
-                gap
-              );
-          })
-    );
-    uploadPromiseIdx = (uploadPromiseIdx + 1) % uploadParallelsim;
-    return;
+    if (!inProgressFn(res)) return;
+    // if (!inProgressFn(res) || res.nochange) return;
   }
 
   const promises = [];
@@ -748,7 +751,18 @@ async function kpuUpload(id, depth, opath) {
 }
 
 async function continuousKpuUpload() {
-  while (true) {
+  const tRef = fsdb.doc('tester/status');
+  await tRef.set({ running: true });
+  const unsub = tRef.onSnapshot(snap => {
+    const status = snap.data();
+    if (status && !status.running) {
+      isShutdown = true;
+      console.log('Shutting down... no more processing kel');
+      unsub();
+    }
+  });
+
+  while (!isShutdown) {
     uploadPromiseIdx = 0;
     uploadPromises.length = 0;
     for (let i = 0; i < uploadParallelsim; i++) {
