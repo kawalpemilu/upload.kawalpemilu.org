@@ -94,7 +94,7 @@
               ><mat-icon>person_outline</mat-icon> &nbsp; Profile Page</a
             >
           </mat-list-item>
-          <mat-list-item *ngIf="relawan.profile.role >= USER_ROLE.ADMIN">
+          <mat-list-item *ngIf="relawan.profile.role >= USER_ROLE.MODERATOR">
             <a
               mat-list-item
               [routerLink]="['/scoreboard']"

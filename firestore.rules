@@ -53,5 +53,11 @@ service cloud.firestore {
       // Only Moderator and above can see KPU data.
       allow get: if getUserRole() >= 1;
     }
+
+    // Scoreboard
+    match /s/s {
+      // Only Moderator and above can see scoreboard.
+      allow get: if getUserRole() >= 1;
+    }
   }
 }

@@ -593,6 +593,10 @@ export class FsPath {
     return `k/${kelId}`;
   }
 
+  static scoreboard() {
+    return `s/s`;
+  }
+
   static codeReferral(code?: string) {
     return `c${code ? '/' + code : ''}`;
   }

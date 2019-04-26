@@ -1051,6 +1051,85 @@ exports.api = functions.https.onRequest(app);
 
 const t3 = Date.now();
 
+exports.updateScoreboard =
+functions.pubsub.schedule('every 60 minutes').onRun(async () => {
+  const tt0 = Date.now();
+  const s = {
+    uploaders: [],
+    reviewers: [],
+    reporters: [],
+    referrals: []
+  };
+
+  (await fsdb
+    .collection(FsPath.relawanPhoto())
+    .orderBy('uploadCount', 'desc')
+    .limit(128)
+    .get()).forEach(snap => {
+    const r = snap.data() as RelawanPhotos;
+    s.uploaders.push({
+      profile: r.profile,
+      uploadCount: r.uploadCount,
+      nKel: r.nKel,
+      nTps: r.nTps
+    });
+  });
+  const tt1 = Date.now();
+
+  (await fsdb
+    .collection(FsPath.relawanPhoto())
+    .orderBy('reviewCount', 'desc')
+    .limit(128)
+    .get()).forEach(snap => {
+    const r = snap.data() as RelawanPhotos;
+    s.reviewers.push({
+      profile: r.profile,
+      reviewCount: r.reviewCount
+    });
+  });
+  const tt2 = Date.now();
+
+  (await fsdb
+    .collection(FsPath.relawanPhoto())
+    .orderBy('reportCount', 'desc')
+    .limit(128)
+    .get()).forEach(snap => {
+    const r = snap.data() as RelawanPhotos;
+    s.reporters.push({
+      profile: r.profile,
+      reportCount: r.reportCount
+    });
+  });
+  const tt3 = Date.now();
+
+  (await fsdb
+    .collection(FsPath.relawan())
+    .orderBy('profile.dr4', 'desc')
+    .limit(128)
+    .get()).forEach(snap => {
+    const rel = snap.data() as Relawan;
+    s.referrals.push({
+      profile: rel.profile,
+      ddr: Object.keys(rel.code)
+        .map(c => rel.code[c])
+        .filter(c => c.claimer)
+        .reduce((p, cu) => p + 1, 0)
+    });
+  });
+  const tt4 = Date.now();
+
+  await fsdb.doc(FsPath.scoreboard()).set(s);
+  const tt5 = Date.now();
+  console.log(
+    'Updated scoreboard',
+    tt1 - tt0,
+    tt2 - tt1,
+    tt3 - tt2,
+    tt4 - tt3,
+    tt5 - tt4
+  );
+});
+
 console.info(
   `createdNewFunction ${JSON.stringify({
     imports: t1 - t0,

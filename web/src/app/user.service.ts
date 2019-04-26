@@ -24,10 +24,7 @@ export class UserService {
   user: User;
   relawan$: Observable<Relawan>;
   relawanPhotos$: Observable<RelawanPhotos>;
-  topUploaders$: Observable<RelawanPhotos[]>;
-  topReporters$: Observable<RelawanPhotos[]>;
-  topReviewers$: Observable<RelawanPhotos[]>;
-  topReferrers$: Observable<Relawan[]>;
+  scoreboard$: Observable<any>;
   upsert$: { [imageId: string]: Observable<Upsert> } = {};
   isModerator$: Observable<boolean>;
   isLoading = true;
@@ -67,6 +64,11 @@ export class UserService {
       shareReplay(1)
     );
 
+    this.scoreboard$ = this.fsdb
+      .doc<any>(FsPath.scoreboard())
+      .valueChanges()
+      .pipe(shareReplay(1));
+
     this.isModerator$ = this.relawan$.pipe(
       map(r => r && r.profile.role >= USER_ROLE.MODERATOR)
     );
@@ -81,46 +83,6 @@ export class UserService {
       ),
       shareReplay(1)
     );
-
-    this.topUploaders$ = this.fsdb
-      .collection<RelawanPhotos>(FsPath.relawanPhoto(), ref =>
-        ref.orderBy('uploadCount', 'desc').limit(100)
-      )
-      .valueChanges()
-      .pipe(shareReplay(1));
-
-    this.topReporters$ = this.fsdb
-      .collection<RelawanPhotos>(FsPath.relawanPhoto(), ref =>
-        ref.orderBy('reportCount', 'desc').limit(100)
-      )
-      .valueChanges()
-      .pipe(shareReplay(1));
-
-    this.topReviewers$ = this.fsdb
-      .collection<RelawanPhotos>(FsPath.relawanPhoto(), ref =>
-        ref.orderBy('reviewCount', 'desc').limit(100)
-      )
-      .valueChanges()
-      .pipe(shareReplay(1));
-
-    this.topReferrers$ = this.fsdb
-      .collection<Relawan>(FsPath.relawan(), ref =>
-        ref.orderBy('profile.dr4', 'desc').limit(100)
-      )
-      .valueChanges()
-      .pipe(
-        map(rels => {
-          rels.forEach(rel => {
-            // @ts-ignore
-            rel.ddr = Object.keys(rel.code)
-              .map(c => rel.code[c])
-              .filter(c => c.claimer)
-              .reduce((p, cu) => p + 1, 0);
-          });
-          return rels;
-        }),
-        shareReplay(1)
-      );
 
     this.afAuth.auth
       .getRedirectResult()

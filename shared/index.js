@@ -343,6 +343,9 @@ var FsPath = /** @class */ (function () {
     FsPath.kpu = function (kelId) {
         return "k/" + kelId;
     };
+    FsPath.scoreboard = function () {
+        return "s/s";
+    };
     FsPath.codeReferral = function (code) {
         return "c" + (code ? '/' + code : '');
     };

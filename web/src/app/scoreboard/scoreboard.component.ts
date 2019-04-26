@@ -5,10 +5,9 @@ import { Title } from '@angular/platform-browser';
 @Component({
   selector: 'app-scoreboard',
   template: `
-    <mat-tab-group>
+    <mat-tab-group *ngIf="userService.scoreboard$ | async as s">
       <mat-tab label="Uploaders">
         <table
-          *ngIf="(userService.topUploaders$ | async) as arr"
           cellspacing="0"
           cellpadding="5"
           style="margin-top: 10px"
@@ -21,7 +20,7 @@ import { Title } from '@angular/platform-browser';
             <th>#Kel</th>
             <th>#TPS</th>
           </tr>
-          <tr *ngFor="let r of arr; let i = index">
+          <tr *ngFor="let r of s.uploaders; let i = index">
             <td align="center">{{ i + 1 }}</td>
             <td>
               <app-orang [profile]="r.profile" [activity]="true"></app-orang>
@@ -35,7 +34,6 @@ import { Title } from '@angular/platform-browser';
 
       <mat-tab label="Reviewers">
         <table
-          *ngIf="(userService.topReviewers$ | async) as arr"
           cellspacing="0"
           cellpadding="5"
           style="margin-top: 10px"
@@ -46,7 +44,7 @@ import { Title } from '@angular/platform-browser';
             <th width="200" align="left">Nama Orang</th>
             <th>#Reviews</th>
           </tr>
-          <tr *ngFor="let r of arr; let i = index">
+          <tr *ngFor="let r of s.reviewers; let i = index">
             <td align="center">{{ i + 1 }}</td>
             <td>
               <app-orang [profile]="r.profile" [activity]="true"></app-orang>
@@ -58,7 +56,6 @@ import { Title } from '@angular/platform-browser';
 
       <mat-tab label="Reporters">
         <table
-          *ngIf="(userService.topReporters$ | async) as arr"
           cellspacing="0"
           cellpadding="5"
           style="margin-top: 10px"
@@ -69,7 +66,7 @@ import { Title } from '@angular/platform-browser';
             <th width="200" align="left">Nama Orang</th>
             <th>#Reports</th>
           </tr>
-          <tr *ngFor="let r of arr; let i = index">
+          <tr *ngFor="let r of s.reporters; let i = index">
             <td align="center">{{ i + 1 }}</td>
             <td>
               <app-orang [profile]="r.profile" [activity]="true"></app-orang>
@@ -81,7 +78,6 @@ import { Title } from '@angular/platform-browser';
 
       <mat-tab label="Referrals">
         <table
-          *ngIf="(userService.topReferrers$ | async) as arr"
           cellspacing="0"
           cellpadding="5"
           style="margin-top: 10px"
@@ -93,7 +89,7 @@ import { Title } from '@angular/platform-browser';
             <th>#DR</th>
             <th>#DDR</th>
           </tr>
-          <tr *ngFor="let r of arr; let i = index">
+          <tr *ngFor="let r of s.referrals; let i = index">
             <td align="center">{{ i + 1 }}</td>
             <td>
               <app-orang

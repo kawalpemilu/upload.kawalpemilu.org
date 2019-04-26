@@ -44,10 +44,7 @@ const routes: Routes = [
   {
     path: 'scoreboard',
     component: ScoreboardComponent,
-    canActivate: [AuthGuardService],
-    data: {
-      role: USER_ROLE.ADMIN
-    }
+    canActivate: [AuthGuardService]
   },
   {
     path: 'a/:kelId/:tpsNo/:imageId',
