@@ -22,6 +22,7 @@ import {
 } from 'shared';
 
 import { H } from './hierarchy';
+import { kpuH } from './kpuh';
 
 const delay = (ms: number) => new Promise(_ => setTimeout(_, ms));
 
@@ -39,6 +40,7 @@ const KPU_WIL = 'https://pemilu2019.kpu.go.id/static/json/wilayah';
 const LOCAL_FS = '/Users/felixhalim/Projects/kawal-c1/kpu/cache';
 const proxy = 'socks5h://localhost:12345';
 const isOffline = false;
+let isShutdown = false;
 
 interface User {
   uid: string;
@@ -65,8 +67,21 @@ async function download(url, output): Promise<void> {
     const params = ['-s', '--proxy', proxy, '-m', 60, '--output', output, url];
     const c = spawn('curl', params);
     c.on('close', code => {
-      if (code) reject(new Error(`Exit code ${code}`));
-      else resolve();
+      if (code) {
+        console.error(`Download error, code: ${code}`);
+      } else {
+        try {
+          if (fs.statSync(output).size < 10 << 10) {
+            // console.error('image too small', url);
+            fs.unlinkSync(output);
+          } else {
+            console.log('Downloaded', url);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      resolve();
     });
   });
 }
@@ -88,22 +103,6 @@ async function gsutilCopy(src, destination) {
   });
 }
 
-async function downloadWithRetry(url, output) {
-  try {
-    await download(url, output);
-    const s = fs.statSync(output);
-    if (s.size < 10 << 10) {
-      // console.error('image too small', url);
-      fs.unlinkSync(output);
-    } else {
-      console.log('downloaded', url);
-    }
-    return;
-  } catch (e) {
-    console.error('download retry', e.message);
-  }
-}
-
 async function getWithRetry(url) {
   // console.log('fetching', url);
   for (let i = 0; ; i++) {
@@ -119,22 +118,22 @@ async function getWithRetry(url) {
 }
 
 async function getCached(url, cachedFilename, inProgressFn) {
-  let cacheJson: string;
-  let cache: any;
-  try {
-    cacheJson = fs.readFileSync(cachedFilename, 'utf8');
-    cache = JSON.parse(cacheJson);
-    if (isOffline) return cache;
-    if (!inProgressFn(cache)) return cache;
-  } catch (e) {}
+  if (cachedFilename) {
+    let cacheJson: string;
+    let cache: any;
+    try {
+      cacheJson = fs.readFileSync(cachedFilename, 'utf8');
+      cache = JSON.parse(cacheJson);
+      if (!inProgressFn(cache)) return cache;
+    } catch (e) {}
+  }
 
   try {
     const res = JSON.parse(await getWithRetry(url));
-    const resJson = JSON.stringify(res);
-    if (cacheJson === resJson) {
-      res.nochange = true;
+    if (cachedFilename) {
+      const resJson = JSON.stringify(res);
+      fs.writeFileSync(cachedFilename, resJson);
     }
-    fs.writeFileSync(cachedFilename, resJson);
     return res;
   } catch (e) {
     console.error(e.message);
@@ -148,32 +147,6 @@ function getPathUrlPrefix(prefix, path) {
     url += `/${path[i]}`;
   }
   return url;
-}
-
-async function fetchImageJson(imageId, path) {
-  const dir = LOCAL_FS + '/' + path[path.length - 1];
-  try {
-    fs.mkdirSync(dir);
-  } catch (e) {}
-
-  return getCached(
-    getPathUrlPrefix(KPU_API, path) + `/${imageId}.json`,
-    dir + `/${imageId}.json`,
-    c => !c.images || c.images.length !== 2
-  );
-}
-
-async function downloadImage(fn, imageId, path) {
-  if (isOffline) return;
-  const a = imageId.substring(0, 3);
-  const b = imageId.substring(3, 6);
-  const url = `https://pemilu2019.kpu.go.id/img/c/${a}/${b}/${imageId}/${fn}`;
-
-  const dir = LOCAL_FS + '/' + path[path.length - 1];
-  const filename = dir + `/${fn}`;
-  if (!fs.existsSync(filename)) {
-    await downloadWithRetry(url, filename);
-  }
 }
 
 function md5(str) {
@@ -567,80 +540,95 @@ async function kpuUploadImage(kelId, tpsNo, filename: string) {
   if (!res.ok) throw new Error(JSON.stringify(res, null, 2));
 }
 
-async function fetchKelImages(kelId: number, path) {
-  const inProgressFn = c => !c.progress || c.progress.proses < c.progress.total;
+async function fetchKelImages(path) {
+  const inProgressFn = c =>
+    !isOffline && (!c.progress || c.progress.proses < c.progress.total);
   const url = getPathUrlPrefix(KPU_API, path) + '.json';
-  const res = await getCached(url, `${LOCAL_FS}/${kelId}.json`, inProgressFn);
+  const res = await getCached(url, null, inProgressFn);
   const arr = Object.keys(res.table).filter(id => res.table[id]['21'] !== null);
-  const imgJson = {};
+  const img = {} as { [imageId: string]: any };
   await Promise.all(
     arr.map(async imageId => {
-      const i = await fetchImageJson(imageId, path);
-      if (!i.images) {
-        console.error('null images', kelId, path, imageId);
-        return;
+      const iurl = getPathUrlPrefix(KPU_API, path) + `/${imageId}.json`;
+      const pendingFn = c => !isOffline && (!c.images || c.images.length !== 2);
+      const i = await getCached(iurl, null, pendingFn);
+      img[imageId] = i;
+
+      if (isOffline) return;
+
+      const promises = [];
+      for (const fn of i.images || []) {
+        const a = imageId.substring(0, 3);
+        const b = imageId.substring(3, 6);
+        const u = `https://pemilu2019.kpu.go.id/img/c/${a}/${b}/${imageId}/${fn}`;
+        const filename = LOCAL_FS + '/' + path[path.length - 1] + `/${fn}`;
+        if (!fs.existsSync(filename)) {
+          promises.push(download(u, filename));
+        }
       }
-      imgJson[imageId] = i;
-      for (const fn of i.images) {
-        await downloadImage(fn, imageId, path);
-      }
+      await Promise.all(promises);
     })
   );
-  return imgJson;
+  return { res, img };
 }
 
-function getNewFileHashes(dir) {
-  const newFileHashes = {};
-  const hashdir = LOCAL_FS + '/../uploaded-md5';
-  fs.readdirSync(dir).forEach(file => {
-    if (!file.endsWith('.jpg')) return;
-    const filename = dir + `/${file}`;
-    const hash = md5(fs.readFileSync(filename));
-    const hashFile = hashdir + `/${hash}`;
-
-    // TODO: query the actual fsdb, if not exist continuupload.
-    if (fs.existsSync(hashFile)) return;
-
-    newFileHashes[file] = hashFile;
-  });
-  return newFileHashes;
-}
-
-function readJson(path: string) {
+type Data = {
+  kpu: KpuData;
+  wil: any;
+  res: any;
+  img: { [imageId: string]: any };
+  uploaded: { [filename: string]: number };
+};
+async function getKelData(kelId: number, path, dataFilename) {
+  let data: Data;
   try {
-    return JSON.parse(fs.readFileSync(`${LOCAL_FS}/${path}`, 'utf8'));
+    const x = JSON.parse(fs.readFileSync(dataFilename, 'utf8'));
+    data = x.kpu ? x : ({ kpu: x as KpuData } as Data);
   } catch (e) {
-    return null;
+    data = { kpu: {} as KpuData } as Data;
   }
+
+  if (!data.wil) {
+    const url = getPathUrlPrefix(KPU_WIL, path) + '.json';
+    data.wil = await getCached(url, `${LOCAL_FS}/w${kelId}.json`, c => false);
+  }
+
+  if (!data.wil || !data.img || !isOffline) {
+    const { res, img } = await fetchKelImages(path);
+    data.res = res;
+    data.img = img;
+  }
+
+  data.uploaded = data.uploaded || {};
+  return data;
 }
 
 async function kpuUploadKel(kelId: number, path) {
-  const imgJson = await fetchKelImages(kelId, path);
+  const dataFilename = `${LOCAL_FS}/data/${kelId}.json`;
+  const data = await getKelData(kelId, path, dataFilename);
+  if (!Object.keys(data.img).length) return;
+
   const dir = LOCAL_FS + `/${kelId}`;
-  if (!Object.keys(imgJson).length || !fs.existsSync(dir)) return;
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir);
+  }
 
-  const newFileHashes = getNewFileHashes(dir);
-  if (!Object.keys(newFileHashes).length) return;
-  // console.log('newFIleHashes', newFileHashes);
-
-  const filename = `data/${kelId}.json`;
-  const data: KpuData = readJson(filename);
   const kpu = {} as KpuData;
   let same = true;
   let ada = false;
-
-  const wurl = getPathUrlPrefix(KPU_WIL, path) + '.json';
-  const wil = await getCached(wurl, `${LOCAL_FS}/w${kelId}.json`, c => false);
   const promises = [];
-  for (const imageId of Object.keys(imgJson)) {
-    const s = wil[imageId].nama.split(' ');
+  for (const imageId of Object.keys(data.img)) {
+    const s = data.wil[imageId].nama.split(' ');
     const add =
       s[0] === 'TPS' ? 0 : s[0] === 'POS' ? 1000 : s[0] === 'KSK' ? 2000 : -1;
-    if (add < 0) throw new Error();
+    if (add < 0) {
+      console.error('Negative add', kelId, path, imageId);
+      continue;
+    }
     const tpsNo = parseInt(s[1], 10) + add;
 
     const sum = (kpu[tpsNo] = {} as SumMap);
-    const res = imgJson[imageId];
+    const res = data.img[imageId];
     if (res && res.chart) {
       sum[SUM_KEY.pas1] = res.chart['21'];
       sum[SUM_KEY.pas2] = res.chart['22'];
@@ -648,18 +636,30 @@ async function kpuUploadKel(kelId: number, path) {
       sum[SUM_KEY.sah] = res.suara_sah;
       sum[SUM_KEY.jum] = res.pengguna_j;
       ada = true;
-      if (!data || JSON.stringify(data[tpsNo]) !== JSON.stringify(sum)) {
+      if (JSON.stringify(data.kpu[tpsNo]) !== JSON.stringify(sum)) {
         same = false;
       }
     }
 
     for (const fn of res.images) {
-      if (!newFileHashes[fn]) continue;
+      if (!fn || data.uploaded[fn]) continue;
+
+      const filename = dir + `/${fn}`;
+      if (!fs.existsSync(filename)) continue;
+      const hash = md5(fs.readFileSync(filename));
+      const hashFile = LOCAL_FS + `/../uploaded-md5/${hash}`;
+
+      // TODO: query the actual fsdb.
+      if (fs.existsSync(hashFile)) {
+        data.uploaded[fn] = 1;
+        continue;
+      }
+
       promises.push(
-        kpuUploadImage(kelId, tpsNo, `${dir}/${fn}`)
+        kpuUploadImage(kelId, tpsNo, filename)
           .then(() => {
-            fs.writeFileSync(newFileHashes[fn], '1', 'utf8');
-            delete newFileHashes[fn];
+            fs.writeFileSync(hashFile, '1', 'utf8');
+            data.uploaded[fn] = 1;
           })
           .catch(e => console.error('upload failed', kelId, tpsNo, e.message))
       );
@@ -667,90 +667,24 @@ async function kpuUploadKel(kelId: number, path) {
   }
   await Promise.all(promises);
 
-  const leftover = Object.keys(newFileHashes).length;
-  if (leftover) console.error('Upload leftover', leftover);
-
-  if (!ada || same) return;
-  fs.writeFileSync(`${LOCAL_FS}/${filename}`, JSON.stringify(kpu));
-  await fsdb.doc(FsPath.kpu(kelId)).set(kpu);
+  data.kpu = kpu;
+  fs.writeFileSync(dataFilename, JSON.stringify(data, null, 2));
+  if (ada && !same) await fsdb.doc(FsPath.kpu(kelId)).set(kpu);
 }
 
-const uploadParallelsim = 3;
-const uploadPromises = [];
-const lastTouch = [];
-let uploadPromiseIdx = 0;
-let isShutdown = false;
-
-function touchIndex(idx, id) {
+function touchIndex(idx, id, lastTouch) {
   const ts = (lastTouch[idx] = Date.now());
   let oldest = 0;
-  for (let i = 1; i < uploadParallelsim; i++) {
+  for (let i = 1; i < lastTouch.length; i++) {
     if (lastTouch[i] < lastTouch[oldest]) {
       oldest = i;
     }
   }
   const gap = ts - lastTouch[oldest];
-  if (gap > 10 * 60 * 1000)
-    console.log('Done', idx, H[id].parentNames, H[id].name, id, oldest, gap);
+  console.log('Done', idx, H[id].parentNames, H[id].name, id, oldest, gap);
 }
 
-async function kpuUpload(id, depth, opath) {
-  if (isShutdown) return;
-
-  const path = opath.slice();
-  path.push(id);
-
-  if (depth === 4) {
-    const idx = uploadPromiseIdx;
-    uploadPromises[uploadPromiseIdx] = uploadPromises[uploadPromiseIdx].then(
-      async () => {
-        if (isShutdown) return;
-        try {
-          await kpuUploadKel(id, path);
-        } catch (e) {
-          console.error('Kel Error', H[id].name, id, e);
-        }
-        touchIndex(idx, id);
-      }
-    );
-    uploadPromiseIdx = (uploadPromiseIdx + 1) % uploadParallelsim;
-    return;
-  }
-
-  const url = getPathUrlPrefix(KPU_API, path) + '.json';
-  const inProgressFn = c => !c.progress || c.progress.proses < c.progress.total;
-  const res = await getCached(url, `${LOCAL_FS}/${id}.json`, inProgressFn);
-
-  if (!isOffline) {
-    if (!inProgressFn(res)) return;
-    // if (!inProgressFn(res) || res.nochange) return;
-  }
-
-  const promises = [];
-  const arr = Object.keys(res.table).filter(
-    key => res.table[key]['21'] !== null
-  );
-  for (const cid of arr) {
-    let promise;
-    if (id === -99) {
-      const cpath = path.slice();
-      for (let i = 2; i > 0; i--) {
-        cpath.push(+cid + i);
-      }
-      promise = kpuUpload(+cid, depth + 3, cpath);
-    } else {
-      promise = kpuUpload(+cid, depth + 1, path);
-    }
-    if (depth === 0) {
-      promises.push(promise);
-    } else {
-      await promise;
-    }
-  }
-  await Promise.all(promises);
-}
-
-async function continuousKpuUpload() {
+async function continuousKpuUpload(concurrency: number) {
   const tRef = fsdb.doc('tester/status');
   await tRef.set({ running: true });
   const unsub = tRef.onSnapshot(snap => {
@@ -758,25 +692,73 @@ async function continuousKpuUpload() {
     if (status && !status.running) {
       isShutdown = true;
       console.log('Shutting down... no more processing kel');
-      unsub();
     }
   });
 
   while (!isShutdown) {
-    uploadPromiseIdx = 0;
-    uploadPromises.length = 0;
-    for (let i = 0; i < uploadParallelsim; i++) {
-      uploadPromises.push(Promise.resolve());
-    }
-
-    await kpuUpload(0, 0, [])
-      .then(async () => {
-        console.log('KPU upload setup');
-        await Promise.all(uploadPromises);
-        console.log('ALL done');
-      })
-      .catch(console.error);
+    const promises = [];
+    const lastTouch = [];
+    let idx = 0;
+    Object.keys(kpuH)
+      .sort((a, b) => +a - +b)
+      .forEach(id => {
+        if (kpuH[id].depth !== 4) throw new Error();
+        const index = idx;
+        promises[idx] = (promises[idx] || Promise.resolve()).then(async () => {
+          if (isShutdown) return;
+          try {
+            await kpuUploadKel(+id, kpuH[id].path);
+          } catch (e) {
+            console.error('Kel Error', H[id].name, id, e);
+          }
+          touchIndex(index, id, lastTouch);
+        });
+        idx = (idx + 1) % concurrency;
+      });
+    console.log('Upload setup');
+    await Promise.all(promises);
+    console.log('ALL done');
   }
+  unsub();
+}
+
+async function recKpuHie(id, depth, opath) {
+  const path = opath.concat(id);
+  if (depth === 4) {
+    kpuH[id] = { depth, path };
+    return;
+  }
+
+  const url = getPathUrlPrefix(KPU_API, path) + '.json';
+  const res = await getCached(url, `${LOCAL_FS}/${id}.json`, () => false);
+  for (const cid of Object.keys(res.table)) {
+    if (id === -99) {
+      const cpath = path.slice();
+      for (let i = 2; i > 0; i--) {
+        cpath.push(+cid + i);
+      }
+      await recKpuHie(+cid, depth + 3, cpath);
+    } else {
+      await recKpuHie(+cid, depth + 1, path);
+    }
+  }
+}
+
+function buildKpuHie() {
+  recKpuHie(0, 0, [])
+    .then(() => {
+      const arr1 = Object.keys(H).filter(id => H[id].depth === 4);
+      const arr2 = Object.keys(kpuH).filter(id => kpuH[id].depth === 4);
+      for (const id of arr1) {
+        if (!kpuH[id]) console.log('missing KPU', id);
+      }
+      for (const id of arr2) {
+        if (!H[id]) console.log('missing H', id);
+      }
+      console.log(arr1.length, arr2.length);
+      fs.writeFileSync(`${LOCAL_FS}/kpuh.js`, JSON.stringify(kpuH));
+    })
+    .catch(console.error);
 }
 
 async function fixPemandangan() {
@@ -983,4 +965,4 @@ async function fixTpsCount() {
 // fixHierarchy().catch(console.error);
 // fixTpsCount().catch(console.error);
 
-continuousKpuUpload().catch(console.error);
+continuousKpuUpload(57).catch(console.error);
