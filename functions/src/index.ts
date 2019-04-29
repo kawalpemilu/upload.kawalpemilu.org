@@ -531,7 +531,7 @@ app.post(
     const ok = await fsdb
       .runTransaction(async t => {
         const r = (await t.get(rRef)).data() as Relawan;
-        if (!r || r.profile.role < USER_ROLE.MODERATOR) 'Not Authorized';
+        if (!r || r.profile.role < USER_ROLE.MODERATOR) return 'Not Authorized';
         const rp = await getRelawanPhotos(t, rpRef, user.uid);
         rp.profile = r.profile;
         rp.reviewCount = (rp.reviewCount || 0) + 1;
@@ -581,7 +581,6 @@ app.post(
           }
         }
         t.set(rpRef, rp);
-        t.update(rRef, r);
         t.update(uRef, u);
         t.update(tRef, tps);
         return true;
@@ -990,6 +989,8 @@ async function changeRole(
         const referrer = (await t.get(referrerRef)).data() as Relawan;
         if (!referrer) {
           console.error(`Referrer missing: ${tuid} ${target.referrer.uid}`);
+        } else if (referrer.profile.uid === 'dGad94BMRKbvILklfZKPvzlvkLy2') {
+          console.error(`KP referrer: ${tuid} ${target.referrer.uid}`);
         } else {
           let refCode = '';
           for (const code of Object.keys(referrer.code)) {
