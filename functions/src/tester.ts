@@ -68,20 +68,20 @@ async function download(url, output): Promise<void> {
     const c = spawn('curl', params);
     c.on('close', code => {
       if (code) {
-        console.error(`Download error, code: ${code}`);
-      } else {
-        try {
-          if (fs.statSync(output).size < 10 << 10) {
-            // console.error('image too small', url);
-            fs.unlinkSync(output);
-          } else {
-            console.log('Downloaded', url);
-          }
-        } catch (e) {
-          console.error(e);
-        }
+        reject(new Error(`Download error: ${url}, code: ${code}`));
+        return;
       }
-      resolve();
+      try {
+        if (fs.statSync(output).size < 10 << 10) {
+          fs.unlinkSync(output);
+          reject(new Error(`Image too small: ${url}`));
+          return;
+        }
+        console.log('Downloaded', url);
+        resolve();
+      } catch (e) {
+        reject(e);
+      }
     });
   });
 }
@@ -117,7 +117,7 @@ async function getWithRetry(url) {
   }
 }
 
-async function getCached(url, cachedFilename, inProgressFn) {
+async function getCached(url, cachedFilename = null, inProgressFn = null) {
   if (cachedFilename) {
     let cacheJson: string;
     let cache: any;
@@ -512,10 +512,7 @@ async function kpuUploadImage(kelId, tpsNo, filename: string) {
   const imageId = autoId();
   const destination = `uploads/${kelId}/${tpsNo}/${KPU_SCAN_UID}/${imageId}`;
 
-  const t0 = Date.now();
   await gsutilCopy(filename, destination);
-  const elapsed = Date.now() - t0;
-  console.log('uploaded', kelId, tpsNo, filename, stats.size, elapsed);
 
   const res = await upload(KPU_SCAN_UID, {
     imageId,
@@ -538,38 +535,8 @@ async function kpuUploadImage(kelId, tpsNo, filename: string) {
   });
 
   if (!res.ok) throw new Error(JSON.stringify(res, null, 2));
-}
 
-async function fetchKelImages(path) {
-  const inProgressFn = c =>
-    !isOffline && (!c.progress || c.progress.proses < c.progress.total);
-  const url = getPathUrlPrefix(KPU_API, path) + '.json';
-  const res = await getCached(url, null, inProgressFn);
-  const arr = Object.keys(res.table).filter(id => res.table[id]['21'] !== null);
-  const img = {} as { [imageId: string]: any };
-  await Promise.all(
-    arr.map(async imageId => {
-      const iurl = getPathUrlPrefix(KPU_API, path) + `/${imageId}.json`;
-      const pendingFn = c => !isOffline && (!c.images || c.images.length !== 2);
-      const i = await getCached(iurl, null, pendingFn);
-      img[imageId] = i;
-
-      if (isOffline) return;
-
-      const promises = [];
-      for (const fn of i.images || []) {
-        const a = imageId.substring(0, 3);
-        const b = imageId.substring(3, 6);
-        const u = `https://pemilu2019.kpu.go.id/img/c/${a}/${b}/${imageId}/${fn}`;
-        const filename = LOCAL_FS + '/' + path[path.length - 1] + `/${fn}`;
-        if (!fs.existsSync(filename)) {
-          promises.push(download(u, filename));
-        }
-      }
-      await Promise.all(promises);
-    })
-  );
-  return { res, img };
+  console.log('uploaded', h.parentNames[1], h.name, kelId, tpsNo, filename);
 }
 
 type Data = {
@@ -579,34 +546,51 @@ type Data = {
   img: { [imageId: string]: any };
   uploaded: { [filename: string]: number };
 };
-async function getKelData(kelId: number, path, dataFilename) {
+async function getKelData(
+  kelId: number,
+  path,
+  dataFilename
+): Promise<[Data, string]> {
   let data: Data;
+  let dataJson: string = '';
   try {
-    const x = JSON.parse(fs.readFileSync(dataFilename, 'utf8'));
+    dataJson = fs.readFileSync(dataFilename, 'utf8');
+    const x = JSON.parse(dataJson);
     data = x.kpu ? x : ({ kpu: x as KpuData } as Data);
   } catch (e) {
     data = { kpu: {} as KpuData } as Data;
   }
+
+  const p = data.res && data.res.progress;
+  if (p && p.proses === p.total) return [null, null];
 
   if (!data.wil) {
     const url = getPathUrlPrefix(KPU_WIL, path) + '.json';
     data.wil = await getCached(url, `${LOCAL_FS}/w${kelId}.json`, c => false);
   }
 
-  if (!data.wil || !data.img || !isOffline) {
-    const { res, img } = await fetchKelImages(path);
-    data.res = res;
-    data.img = img;
+  if (!data.res || !data.img || !isOffline) {
+    data.res = await getCached(getPathUrlPrefix(KPU_API, path) + '.json');
+    data.img = {} as { [imageId: string]: any };
+    await Promise.all(
+      Object.keys(data.res.table)
+        .filter(id => data.res.table[id]['21'] !== null)
+        .map(async imageId => {
+          const iurl = getPathUrlPrefix(KPU_API, path) + `/${imageId}.json`;
+          data.img[imageId] = await getCached(iurl);
+        })
+    );
   }
 
   data.uploaded = data.uploaded || {};
-  return data;
+
+  return [data, dataJson];
 }
 
 async function kpuUploadKel(kelId: number, path) {
   const dataFilename = `${LOCAL_FS}/data/${kelId}.json`;
-  const data = await getKelData(kelId, path, dataFilename);
-  if (!Object.keys(data.img).length) return;
+  const [data, dataJson] = await getKelData(kelId, path, dataFilename);
+  if (!data || !Object.keys(data.img).length) return;
 
   const dir = LOCAL_FS + `/${kelId}`;
   if (!fs.existsSync(dir)) {
@@ -641,47 +625,40 @@ async function kpuUploadKel(kelId: number, path) {
       }
     }
 
-    for (const fn of res.images) {
+    for (const fn of res.images || []) {
+      // TODO: query the actual fsdb to check if uploaded.
       if (!fn || data.uploaded[fn]) continue;
 
+      const a = imageId.substring(0, 3);
+      const b = imageId.substring(3, 6);
+      const u = `https://pemilu2019.kpu.go.id/img/c/${a}/${b}/${imageId}/${fn}`;
       const filename = dir + `/${fn}`;
-      if (!fs.existsSync(filename)) continue;
-      const hash = md5(fs.readFileSync(filename));
-      const hashFile = LOCAL_FS + `/../uploaded-md5/${hash}`;
-
-      // TODO: query the actual fsdb.
-      if (fs.existsSync(hashFile)) {
+      const runUpload = async () => {
+        if (!fs.existsSync(filename)) await download(u, filename);
+        await kpuUploadImage(kelId, tpsNo, filename);
         data.uploaded[fn] = 1;
-        continue;
-      }
+      };
 
       promises.push(
-        kpuUploadImage(kelId, tpsNo, filename)
-          .then(() => {
-            fs.writeFileSync(hashFile, '1', 'utf8');
-            data.uploaded[fn] = 1;
-          })
-          .catch(e => console.error('upload failed', kelId, tpsNo, e.message))
+        runUpload().catch(e => {
+          if (e.message.indexOf('Image too small') === -1) {
+            console.error('Upload failed', fn, e.message);
+          }
+          try {
+            data.res.progress.proses = 0;
+          } catch (ex) {
+            console.error(ex);
+          }
+        })
       );
     }
   }
   await Promise.all(promises);
 
   data.kpu = kpu;
-  fs.writeFileSync(dataFilename, JSON.stringify(data, null, 2));
+  const newDataJson = JSON.stringify(data, null, 2);
+  if (dataJson !== newDataJson) fs.writeFileSync(dataFilename, newDataJson);
   if (ada && !same) await fsdb.doc(FsPath.kpu(kelId)).set(kpu);
-}
-
-function touchIndex(idx, id, lastTouch) {
-  const ts = (lastTouch[idx] = Date.now());
-  let oldest = 0;
-  for (let i = 1; i < lastTouch.length; i++) {
-    if (lastTouch[i] < lastTouch[oldest]) {
-      oldest = i;
-    }
-  }
-  const gap = ts - lastTouch[oldest];
-  console.log('Done', idx, H[id].parentNames, H[id].name, id, oldest, gap);
 }
 
 async function continuousKpuUpload(concurrency: number) {
@@ -696,25 +673,25 @@ async function continuousKpuUpload(concurrency: number) {
   });
 
   while (!isShutdown) {
+    const arr = Object.keys(kpuH).sort((a, b) => +a - +b);
+    console.log('Total Kels', arr.length);
+    let arr_idx = 0;
     const promises = [];
-    const lastTouch = [];
-    let idx = 0;
-    Object.keys(kpuH)
-      .sort((a, b) => +a - +b)
-      .forEach(id => {
+    const run = async () => {
+      while (arr_idx < arr.length && !isShutdown) {
+        const idx = arr_idx++;
+        const id = arr[idx];
         if (kpuH[id].depth !== 4) throw new Error();
-        const index = idx;
-        promises[idx] = (promises[idx] || Promise.resolve()).then(async () => {
-          if (isShutdown) return;
-          try {
-            await kpuUploadKel(+id, kpuH[id].path);
-          } catch (e) {
-            console.error('Kel Error', H[id].name, id, e);
-          }
-          touchIndex(index, id, lastTouch);
-        });
-        idx = (idx + 1) % concurrency;
-      });
+        try {
+          await kpuUploadKel(+id, kpuH[id].path);
+        } catch (e) {
+          console.error('Kel Error', H[id].name, id, e);
+        }
+      }
+    };
+    for (let i = 0; i < concurrency; i++) {
+      promises.push(run());
+    }
     console.log('Upload setup');
     await Promise.all(promises);
     console.log('ALL done');
@@ -965,4 +942,4 @@ async function fixTpsCount() {
 // fixHierarchy().catch(console.error);
 // fixTpsCount().catch(console.error);
 
-continuousKpuUpload(57).catch(console.error);
+continuousKpuUpload(7).catch(console.error);
