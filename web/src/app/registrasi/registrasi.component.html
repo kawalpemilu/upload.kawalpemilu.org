@@ -141,14 +141,6 @@
         <p><mat-spinner></mat-spinner></p>
       </ng-template>
 
-      <p>
-        <b style="color: red">Catatan penting</b>: Mulai sekarang sampai tanggal
-        <b>15 April 2019</b>, semua relawan diminta untuk mencoba
-        <a [routerLink]="['/foto']" style="font-weight: bold">upload foto</a>
-        di area sekitar TPS yang akan dikawal untuk latihan sekaligus menandai
-        TPS tersebut (dengan adanya foto yang kamu upload di TPS tersebut).
-      </p>
-
       <ng-container *ngIf="useCustomCode">
         <form [formGroup]="formGroup">
           <mat-form-field style="width: 275px">

@@ -464,6 +464,71 @@ function populateApprove() {
   };
 }
 
+async function approve(a: ApproveRequest, ua, ip, ts, user) {
+  const uRef = fsdb.doc(FsPath.upserts(a.imageId));
+  const rRef = fsdb.doc(FsPath.relawan(user.uid));
+  const rpRef = fsdb.doc(FsPath.relawanPhoto(user.uid));
+  return await fsdb
+    .runTransaction(async t => {
+      const r = (await t.get(rRef)).data() as Relawan;
+      if (!r || r.profile.role < USER_ROLE.MODERATOR) return 'Not Authorized';
+      const rp = await getRelawanPhotos(t, rpRef, user.uid);
+      rp.profile = r.profile;
+      rp.reviewCount = (rp.reviewCount || 0) + 1;
+
+      const u = (await t.get(uRef)).data() as Upsert;
+      if (!u) return 'No Upsert';
+      if (r.profile.role < USER_ROLE.ADMIN && u.reviewer)
+        return 'Already approved';
+
+      const self = u.uploader.uid === user.uid;
+      const pRef = self ? null : fsdb.doc(FsPath.relawanPhoto(u.uploader.uid));
+      const urp = self ? rp : ((await t.get(pRef)).data() as RelawanPhotos);
+      if (!urp) return 'No relawan photo';
+      const photo = urp.uploads.find(p => p.imageId === a.imageId);
+      if (!photo && urp.profile.uid !== KPU_SCAN_UID)
+        return `No photo for ${a.imageId}`;
+
+      const tRef = fsdb.doc(FsPath.tps(u.request.kelId, u.request.tpsNo));
+      const tps = (await t.get(tRef)).data() as TpsData;
+      if (!tps) return 'No TPS';
+
+      const img = tps.images[a.imageId];
+      if (!img) return 'No Image';
+
+      const asum = JSON.parse(JSON.stringify(a.sum));
+      for (const key of Object.keys(img.sum || {})) {
+        if (!a.sum.hasOwnProperty(key)) {
+          a.sum[key] = 0;
+        }
+      }
+
+      img.c1 = a.c1;
+      img.sum = a.sum;
+      img.sum.pending = 0;
+
+      u.reviewer = img.reviewer = { ...r.profile, ts, ua, ip };
+      u.action = computeAction(tps);
+      u.done = 0;
+      img.sum = asum;
+      if (photo) {
+        photo.c1 = img.c1;
+        photo.sum = img.sum;
+        if (pRef) {
+          t.update(pRef, urp);
+        }
+      }
+      t.set(rpRef, rp);
+      t.update(uRef, u);
+      t.update(tRef, tps);
+      return true;
+    })
+    .catch(e => {
+      console.error(`DB error approve ${user.uid}`, a, e);
+      return `Database error`;
+    });
+}
+
 app.post(
   '/api/approve',
   [
@@ -506,6 +571,10 @@ app.post(
       upsert.request.kelId !== a.kelId ||
       upsert.request.tpsNo !== a.tpsNo
     ) {
+      if (a.c1.type === FORM_TYPE.OTHERS) {
+        console.debug(`Tolong refresh browser kamu ${user.uid}`);
+        return res.json({ error: `Tolong refresh browser kamu` });
+      }
       // Moving photo to another TPS is like make a copy then set the old to OTHERS.
       const copy: UploadRequest = {
         imageId: upsert.request.imageId + '-' + a.kelId + '-' + a.tpsNo,
@@ -520,76 +589,28 @@ app.post(
       };
       const oku = await uploadPhoto(copy, req).catch(() => `Database error`);
       if (oku !== true) {
-        console.debug(`Error move ${user.uid} : ${oku}`);
+        console.debug(`Error move copy ${user.uid} : ${oku}`);
         return res.json({ error: oku });
       }
+      const apr: ApproveRequest = {
+        kelId: a.kelId,
+        kelName: a.kelName,
+        tpsNo: a.tpsNo,
+        imageId: copy.imageId,
+        sum: a.sum,
+        c1: a.c1
+      };
+      console.log('move approve', apr);
+      const oka = await approve(apr, ua, ip, ts, user);
+      if (oka !== true) {
+        console.debug(`Error move approve ${user.uid} : ${oka}`);
+        return res.json({ error: oka });
+      }
       a.c1.type = FORM_TYPE.OTHERS;
+      a.sum = {} as SumMap;
     }
 
-    const rRef = fsdb.doc(FsPath.relawan(user.uid));
-    const rpRef = fsdb.doc(FsPath.relawanPhoto(user.uid));
-    const ok = await fsdb
-      .runTransaction(async t => {
-        const r = (await t.get(rRef)).data() as Relawan;
-        if (!r || r.profile.role < USER_ROLE.MODERATOR) return 'Not Authorized';
-        const rp = await getRelawanPhotos(t, rpRef, user.uid);
-        rp.profile = r.profile;
-        rp.reviewCount = (rp.reviewCount || 0) + 1;
-
-        const u = (await t.get(uRef)).data() as Upsert;
-        if (!u) return 'No Upsert';
-        if (r.profile.role < USER_ROLE.ADMIN && u.reviewer)
-          return 'Already approved';
-
-        const self = u.uploader.uid === user.uid;
-        const pRef = self
-          ? null
-          : fsdb.doc(FsPath.relawanPhoto(u.uploader.uid));
-        const urp = self ? rp : ((await t.get(pRef)).data() as RelawanPhotos);
-        if (!urp) return 'No relawan photo';
-        const photo = urp.uploads.find(p => p.imageId === a.imageId);
-        if (!photo && urp.profile.uid !== KPU_SCAN_UID)
-          return `No photo for ${a.imageId}`;
-
-        const tRef = fsdb.doc(FsPath.tps(u.request.kelId, u.request.tpsNo));
-        const tps = (await t.get(tRef)).data() as TpsData;
-        if (!tps) return 'No TPS';
-
-        const img = tps.images[a.imageId];
-        if (!img) return 'No Image';
-
-        const asum = JSON.parse(JSON.stringify(a.sum));
-        for (const key of Object.keys(img.sum || {})) {
-          if (!a.sum.hasOwnProperty(key)) {
-            a.sum[key] = 0;
-          }
-        }
-
-        img.c1 = a.c1;
-        img.sum = a.sum;
-        img.sum.pending = 0;
-
-        u.reviewer = img.reviewer = { ...r.profile, ts, ua, ip };
-        u.action = computeAction(tps);
-        u.done = 0;
-        img.sum = asum;
-        if (photo) {
-          photo.c1 = img.c1;
-          photo.sum = img.sum;
-          if (pRef) {
-            t.update(pRef, urp);
-          }
-        }
-        t.set(rpRef, rp);
-        t.update(uRef, u);
-        t.update(tRef, tps);
-        return true;
-      })
-      .catch(e => {
-        console.error(`DB error approve ${user.uid}`, a, e);
-        return `Database error`;
-      });
-
+    const ok = await approve(a, ua, ip, ts, user);
     if (ok !== true) {
       if (!ok.startsWith('Already')) {
         console.warn(`Error approve ${user.uid} : ${ok}`);
@@ -1052,84 +1073,85 @@ exports.api = functions.https.onRequest(app);
 
 const t3 = Date.now();
 
-exports.updateScoreboard =
-functions.pubsub.schedule('every 60 minutes').onRun(async () => {
-  const tt0 = Date.now();
-  const s = {
-    uploaders: [],
-    reviewers: [],
-    reporters: [],
-    referrals: []
-  };
+exports.updateScoreboard = functions.pubsub
+  .schedule('every 60 minutes')
+  .onRun(async () => {
+    const tt0 = Date.now();
+    const s = {
+      uploaders: [],
+      reviewers: [],
+      reporters: [],
+      referrals: []
+    };
 
-  (await fsdb
-    .collection(FsPath.relawanPhoto())
-    .orderBy('uploadCount', 'desc')
-    .limit(128)
-    .get()).forEach(snap => {
-    const r = snap.data() as RelawanPhotos;
-    s.uploaders.push({
-      profile: r.profile,
-      uploadCount: r.uploadCount,
-      nKel: r.nKel,
-      nTps: r.nTps
+    (await fsdb
+      .collection(FsPath.relawanPhoto())
+      .orderBy('uploadCount', 'desc')
+      .limit(128)
+      .get()).forEach(snap => {
+      const r = snap.data() as RelawanPhotos;
+      s.uploaders.push({
+        profile: r.profile,
+        uploadCount: r.uploadCount,
+        nKel: r.nKel,
+        nTps: r.nTps
+      });
     });
-  });
-  const tt1 = Date.now();
+    const tt1 = Date.now();
 
-  (await fsdb
-    .collection(FsPath.relawanPhoto())
-    .orderBy('reviewCount', 'desc')
-    .limit(128)
-    .get()).forEach(snap => {
-    const r = snap.data() as RelawanPhotos;
-    s.reviewers.push({
-      profile: r.profile,
-      reviewCount: r.reviewCount
+    (await fsdb
+      .collection(FsPath.relawanPhoto())
+      .orderBy('reviewCount', 'desc')
+      .limit(128)
+      .get()).forEach(snap => {
+      const r = snap.data() as RelawanPhotos;
+      s.reviewers.push({
+        profile: r.profile,
+        reviewCount: r.reviewCount
+      });
     });
-  });
-  const tt2 = Date.now();
+    const tt2 = Date.now();
 
-  (await fsdb
-    .collection(FsPath.relawanPhoto())
-    .orderBy('reportCount', 'desc')
-    .limit(128)
-    .get()).forEach(snap => {
-    const r = snap.data() as RelawanPhotos;
-    s.reporters.push({
-      profile: r.profile,
-      reportCount: r.reportCount
+    (await fsdb
+      .collection(FsPath.relawanPhoto())
+      .orderBy('reportCount', 'desc')
+      .limit(128)
+      .get()).forEach(snap => {
+      const r = snap.data() as RelawanPhotos;
+      s.reporters.push({
+        profile: r.profile,
+        reportCount: r.reportCount
+      });
     });
-  });
-  const tt3 = Date.now();
+    const tt3 = Date.now();
 
-  (await fsdb
-    .collection(FsPath.relawan())
-    .orderBy('profile.dr4', 'desc')
-    .limit(128)
-    .get()).forEach(snap => {
-    const rel = snap.data() as Relawan;
-    s.referrals.push({
-      profile: rel.profile,
-      ddr: Object.keys(rel.code)
-        .map(c => rel.code[c])
-        .filter(c => c.claimer)
-        .reduce((p, cu) => p + 1, 0)
+    (await fsdb
+      .collection(FsPath.relawan())
+      .orderBy('profile.dr4', 'desc')
+      .limit(128)
+      .get()).forEach(snap => {
+      const rel = snap.data() as Relawan;
+      s.referrals.push({
+        profile: rel.profile,
+        ddr: Object.keys(rel.code)
+          .map(c => rel.code[c])
+          .filter(c => c.claimer)
+          .reduce((p, cu) => p + 1, 0)
+      });
     });
-  });
-  const tt4 = Date.now();
+    const tt4 = Date.now();
 
-  await fsdb.doc(FsPath.scoreboard()).set(s);
-  const tt5 = Date.now();
-  console.log(
-    'Updated scoreboard',
-    tt1 - tt0,
-    tt2 - tt1,
-    tt3 - tt2,
-    tt4 - tt3,
-    tt5 - tt4
-  );
-});
+    await fsdb.doc(FsPath.scoreboard()).set(s);
+    const tt5 = Date.now();
+    console.log(
+      'Updated scoreboard',
+      tt1 - tt0,
+      tt2 - tt1,
+      tt3 - tt2,
+      tt4 - tt3,
+      tt5 - tt4
+    );
+  });
 
 console.info(
   `createdNewFunction ${JSON.stringify({

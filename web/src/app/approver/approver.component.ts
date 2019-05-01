@@ -253,13 +253,15 @@ export class ApproverComponent implements OnInit, OnDestroy {
     } else {
       this.imageId = 'done';
       this.imageIdChange.emit('done');
-      this.hie.update(this.initialKelId).then(() => {
-        setTimeout(() => {
-          this.imageId = '';
-          this.imageIdChange.emit('');
-          this.completed.next();
-        }, 100);
-      });
+      setTimeout(() => {
+        this.hie.update(this.initialKelId).then(() => {
+          setTimeout(() => {
+            this.imageId = '';
+            this.imageIdChange.emit('');
+            this.completed.next();
+          }, 100);
+        });
+      }, 1000);
     }
   }
 

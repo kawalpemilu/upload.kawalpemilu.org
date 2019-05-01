@@ -672,10 +672,12 @@ async function continuousKpuUpload(concurrency: number) {
     }
   });
 
+  let initialIdx = 45000;
   while (!isShutdown) {
     const arr = Object.keys(kpuH).sort((a, b) => +a - +b);
     console.log('Total Kels', arr.length);
-    let arr_idx = 0;
+    let arr_idx = initialIdx;
+    initialIdx = 0;
     const promises = [];
     const run = async () => {
       while (arr_idx < arr.length && !isShutdown) {

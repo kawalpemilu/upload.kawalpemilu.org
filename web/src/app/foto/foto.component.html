@@ -1,6 +1,14 @@
 <h2>Upload Foto</h2>
 
-<ng-container *ngIf="(photos$ | async) as photos">
+<p>
+  <b style="color:red">Catatan</b>:
+  <b>Jangan mengupload</b>
+  salinan C1 scan yang didownload dari web KPU untuk menghindari kemubaziran
+  tenaga. KawalPemilu secara berkala akan memasukkan C1 scan salinan dari KPU
+  secara otomatis.
+</p>
+
+<ng-container *ngIf="photos$ | async as photos">
   <ng-container *ngIf="photos.length > 0">
     <p>
       <b>Tips:</b> klik nama kelurahan di bawah untuk meng-upload foto lain di

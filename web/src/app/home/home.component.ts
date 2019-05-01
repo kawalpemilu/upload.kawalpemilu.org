@@ -23,7 +23,7 @@ import { AppComponent } from '../app.component';
 
         <li>
           <a [routerLink]="['/foto']">
-            Tes upload foto
+            Upload foto
           </a>
         </li>
 
@@ -31,10 +31,6 @@ import { AppComponent } from '../app.component';
           <a [routerLink]="['/h', 0]">
             Lihat cakupan TPS
           </a>
-        </li>
-
-        <li style="color: gray">
-          Lihat hasil hitung suara (live 17 April 2019)
         </li>
       </ul>
 
