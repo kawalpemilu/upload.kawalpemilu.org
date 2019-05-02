@@ -464,7 +464,9 @@ function computeAction(tps) {
         }
         var ignore = i.c1.type === FORM_TYPE.MALICIOUS || i.c1.type === FORM_TYPE.OTHERS;
         if (ignore) {
-            action.photos[i.url] = null;
+            if (!action.photos.hasOwnProperty(i.url)) {
+                action.photos[i.url] = null;
+            }
         }
         else {
             action.sum.cakupan = 1;

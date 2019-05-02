@@ -216,6 +216,7 @@ export class TpsComponent implements OnInit {
     if (!state.isModerator) {
       return;
     }
+    this.hie.update(state.id);
     if (this.details[tpsNo]) {
       this.details[tpsNo] = null;
       return;

@@ -553,7 +553,6 @@ app.post(
     const a = req.parsedBody as ApproveRequest;
     const ua = req.headers['user-agent'];
     const ip = getIp(req);
-    const ts = Date.now();
 
     const uRef = fsdb.doc(FsPath.upserts(a.imageId));
     const upsert = (await uRef.get()).data() as Upsert;
@@ -583,7 +582,7 @@ app.post(
         tpsNo: a.tpsNo,
         meta: upsert.request.meta,
         url: upsert.request.url,
-        ts,
+        ts: Date.now(),
         c1: null,
         sum: null
       };
@@ -592,6 +591,7 @@ app.post(
         console.debug(`Error move copy ${user.uid} : ${oku}`);
         return res.json({ error: oku });
       }
+      await delay(3000);
       const apr: ApproveRequest = {
         kelId: a.kelId,
         kelName: a.kelName,
@@ -600,8 +600,7 @@ app.post(
         sum: a.sum,
         c1: a.c1
       };
-      console.log('move approve', apr);
-      const oka = await approve(apr, ua, ip, ts, user);
+      const oka = await approve(apr, ua, ip, Date.now(), user);
       if (oka !== true) {
         console.debug(`Error move approve ${user.uid} : ${oka}`);
         return res.json({ error: oka });
@@ -610,7 +609,7 @@ app.post(
       a.sum = {} as SumMap;
     }
 
-    const ok = await approve(a, ua, ip, ts, user);
+    const ok = await approve(a, ua, ip, Date.now(), user);
     if (ok !== true) {
       if (!ok.startsWith('Already')) {
         console.warn(`Error approve ${user.uid} : ${ok}`);

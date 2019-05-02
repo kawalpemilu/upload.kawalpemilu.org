@@ -52,7 +52,7 @@ interface User {
 
 async function curl(url): Promise<string> {
   return new Promise((resolve, reject) => {
-    const c = spawn('curl', ['-s', '--proxy', proxy, '-m', 60, url]);
+    const c = spawn('curl', ['-s', '--proxy', proxy, '-m', 180, url]);
     let s = '';
     c.stdout.on('data', data => (s += data));
     c.on('close', code => {
@@ -64,7 +64,7 @@ async function curl(url): Promise<string> {
 
 async function download(url, output): Promise<void> {
   return new Promise((resolve, reject) => {
-    const params = ['-s', '--proxy', proxy, '-m', 60, '--output', output, url];
+    const params = ['-s', '--proxy', proxy, '-m', 180, '--output', output, url];
     const c = spawn('curl', params);
     c.on('close', code => {
       if (code) {
@@ -672,7 +672,7 @@ async function continuousKpuUpload(concurrency: number) {
     }
   });
 
-  let initialIdx = 45000;
+  let initialIdx = 40000;
   while (!isShutdown) {
     const arr = Object.keys(kpuH).sort((a, b) => +a - +b);
     console.log('Total Kels', arr.length);
@@ -944,4 +944,4 @@ async function fixTpsCount() {
 // fixHierarchy().catch(console.error);
 // fixTpsCount().catch(console.error);
 
-continuousKpuUpload(7).catch(console.error);
+continuousKpuUpload(3).catch(console.error);
