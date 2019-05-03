@@ -699,6 +699,16 @@ app.post(
 
         const img = tps.images[imageId];
         img.reports = img.reports || {};
+        if (
+          Object.keys(img.reports)
+            .map(tt => img.reports[tt])
+            .find(
+              r =>
+                r.reporter.role >= USER_ROLE.ADMIN && r.reason.startsWith('OK:')
+            )
+        ) {
+          return 'Foto ini sudah dicek oleh admin dan tidak ditemukan kesalahan.';
+        }
         img.reports[ts] = { reporter, reason: p.reason };
         img.sum.error = 1;
         if (rp.profile.role >= USER_ROLE.ADMIN && p.reason.startsWith('OK:')) {
@@ -708,6 +718,10 @@ app.post(
         u.reporter = reporter;
         u.action = computeAction(tps);
         u.done = 0;
+
+        if (u.action.sum.janggal) {
+          return 'Kamu tidak perlu melaporkan kesalahan di TPS yang sudah ditandai janggal.';
+        }
 
         t.update(tRef, tps);
         t.update(uRef, u);
@@ -1072,8 +1086,9 @@ exports.api = functions.https.onRequest(app);
 
 const t3 = Date.now();
 
-exports.updateScoreboard = functions.pubsub
-  .schedule('every 60 minutes')
+exports.updateScoreboard = functions
+  .runWith({ memory: '1GB' })
+  .pubsub.schedule('every 60 minutes')
   .onRun(async () => {
     const tt0 = Date.now();
     const s = {

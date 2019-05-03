@@ -11,8 +11,9 @@ import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material';
     <h1 mat-dialog-title>Laporkan Kesalahan</h1>
     <div mat-dialog-content>
       <p>
-        Tulis kesalahan yang ingin kamu laporkan (max 300 huruf).<br><br>Kurang tanda
-        tangan itu <b style="color: red">BUKAN</b> kesalahan (tidak perlu kamu laporkan).
+        Tulis kesalahan yang ingin kamu laporkan (max 300 huruf).<br /><br />Kurang
+        tanda tangan itu <b style="color: red">BUKAN</b> kesalahan (tidak perlu
+        kamu laporkan).
       </p>
       <mat-form-field>
         <input
@@ -114,7 +115,16 @@ export class LaporButtonComponent implements OnInit {
     dialogRef.afterClosed().subscribe(async reason => {
       if (reason) {
         this.data.reason = reason;
-        await this.api.post(this.userService.user, `problem`, this.data);
+        const res: any = await this.api.post(
+          this.userService.user,
+          `problem`,
+          this.data
+        );
+        if (res.error) {
+          alert(res.error);
+          this.data.reason = '';
+          return;
+        }
         await new Promise(resolve => setTimeout(resolve, 1000));
         await this.hie.update(this.kelId);
       }
