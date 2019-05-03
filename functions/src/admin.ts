@@ -202,15 +202,23 @@ function recomputeH(id: number, depth: number) {
       const sum = h[id] && h[id][tpsNo] && h[id][tpsNo].sum;
       if (!sum) continue;
       if (
+        !sum.janggal &&
         sum.hasOwnProperty('jum') &&
-        (sum.hasOwnProperty('sah') || sum.hasOwnProperty('tSah'))
+        (sum.hasOwnProperty('sah') || sum.hasOwnProperty('tSah')) &&
+        sum.jum !== sum.sah + sum.tSah
       ) {
-        if (sum.jum !== sum.sah + sum.tSah) {
-          if (!sum.janggal) {
-            console.log('Set janggal', id, tpsNo);
-            sum.janggal = 1;
-          }
-        }
+        console.log('Set janggal php', id, tpsNo);
+        sum.janggal = 1;
+      }
+      if (
+        !sum.janggal &&
+        sum.hasOwnProperty('sah') &&
+        sum.hasOwnProperty('pas1') &&
+        sum.hasOwnProperty('pas2') &&
+        sum.sah !== sum.pas1 + sum.pas2
+      ) {
+        console.log('Set janggal pas12sah', id, tpsNo);
+        sum.janggal = 1;
       }
       aggregate(all, sum);
     }

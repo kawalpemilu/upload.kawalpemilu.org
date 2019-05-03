@@ -597,6 +597,12 @@ async function kpuUploadKel(kelId: number, path) {
     fs.mkdirSync(dir);
   }
 
+  // TODO:
+  // add KPU scan yang keskip...
+  // set pending ke tps yang masih ada fotonya
+  // grab list of ips of uploader/reviewer
+  // redownload image yang broken dari kpu
+
   const kpu = {} as KpuData;
   let same = true;
   let ada = false;

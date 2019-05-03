@@ -737,6 +737,11 @@ export function computeAction(tps: TpsData) {
       action.sum.janggal = 1;
     }
   }
+  if (valid['pas1'] && valid['pas2'] && valid['sah']) {
+    if (action.sum.sah !== action.sum.pas1 + action.sum.pas2) {
+      action.sum.janggal = 1;
+    }
+  }
   return action;
 }
 
