@@ -719,7 +719,7 @@ app.post(
         u.action = computeAction(tps);
         u.done = 0;
 
-        if (u.action.sum.janggal) {
+        if (u.action.sum.janggal && img.sum.error) {
           return 'Kamu tidak perlu melaporkan kesalahan di TPS yang sudah ditandai janggal.';
         }
 
