@@ -454,7 +454,11 @@ function computeAction(tps) {
     var sum = { pending: 0, cakupan: 0, janggal: 0 };
     var action = { sum: sum, photos: {}, ts: 0, c1: null };
     var valid = {};
-    for (var _i = 0, _a = Object.keys(tps.images); _i < _a.length; _i++) {
+    for (var _i = 0, _a = Object.keys(tps.images).sort(function (a, b) {
+        var ra = tps.images[a].reviewer;
+        var rb = tps.images[b].reviewer;
+        return ((rb && rb.ts) || 0) - ((ra && ra.ts) || 0);
+    }); _i < _a.length; _i++) {
         var imageId = _a[_i];
         var i = tps.images[imageId];
         if (!i.c1) {

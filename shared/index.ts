@@ -698,7 +698,11 @@ export function computeAction(tps: TpsData) {
   const sum = { pending: 0, cakupan: 0, janggal: 0 } as SumMap;
   const action = { sum, photos: {}, ts: 0, c1: null };
   const valid = {};
-  for (const imageId of Object.keys(tps.images)) {
+  for (const imageId of Object.keys(tps.images).sort((a, b) => {
+    const ra = tps.images[a].reviewer;
+    const rb = tps.images[b].reviewer;
+    return ((rb && rb.ts) || 0) - ((ra && ra.ts) || 0);
+  })) {
     const i = tps.images[imageId];
     if (!i.c1) {
       action.sum.cakupan = 1;
