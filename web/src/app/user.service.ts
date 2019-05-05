@@ -26,7 +26,6 @@ export class UserService {
   relawanPhotos$: Observable<RelawanPhotos>;
   scoreboard$: Observable<any>;
   upsert$: { [imageId: string]: Observable<Upsert> } = {};
-  isModerator$: Observable<boolean>;
   isLoading = true;
 
   constructor(
@@ -68,10 +67,6 @@ export class UserService {
       .doc<any>(FsPath.scoreboard())
       .valueChanges()
       .pipe(shareReplay(1));
-
-    this.isModerator$ = this.relawan$.pipe(
-      map(r => r && r.profile.role >= USER_ROLE.MODERATOR)
-    );
 
     this.relawanPhotos$ = user$.pipe(
       switchMap(user =>

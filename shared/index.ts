@@ -5,6 +5,7 @@ export const MAX_NUM_UPLOADS = 1500;
 export const MAX_URL_LENGTH = 300;
 export const MAX_REASON_LENGTH = 300;
 export const MAX_REPORT_ERRORS = 300;
+export const MAX_LAPOR_KPU = 5000;
 export const LOCAL_STORAGE_LAST_URL = 'last_url';
 export const KPU_SCAN_UID = 'gEQFS1n5gpTzMTy5JASPPLk4yRA3';
 
@@ -26,8 +27,9 @@ export enum SUM_KEY {
   // Common
   cakupan = 'cakupan',
   pending = 'pending',
-  error = 'error',
-  janggal = 'janggal',
+  error = 'error', // Ada angka yang bisa diperbaiki Admins.
+  janggal = 'janggal', // Ada angka yang mismatch dan tidak bisa diperbaiki.
+  laporKpu = 'laporKpu', // Laporkan kejanggalan ini ke KPU.
 
   // Pileg
   pkb = 'pkb',
@@ -127,11 +129,14 @@ export interface RelawanPhotos {
   profile: PublicProfile;
   uploads: UploadRequest[];
   reports: ProblemRequest[];
+  laporKpus: LaporKpuRequest[];
   uploadCount: number; // Number of uploaded photos.
   maxUploadCount: number; // Whitelist this person to go beyond.
   reportCount: number; // Number of reported photos.
   maxReportCount: number; // Whitelist this person to go beyond.
   reviewCount: number; // The number of images reviewed.
+  laporKpuCount: number; // The number of janggal photos lapored ke KPU.
+  maxLaporKpuCount: number; // The max number of janggal photos lapored ke KPU.
   nTps: number; // Number of different TPS uploaded.
   nKel: number; // Number of different kelurahans uploaded.
 }
@@ -436,6 +441,7 @@ export interface TpsData {
   images: { [imageId: string]: TpsImage };
   autofill?: Autofill;
   imgCount: number;
+  laporKpu: boolean;
 }
 
 export interface Upsert {
@@ -486,6 +492,13 @@ export interface ProblemRequest {
   tpsNo: number;
   url: string;
   reason: string;
+  ts: number;
+}
+
+export interface LaporKpuRequest {
+  kelId: number;
+  kelName: string;
+  tpsNo: number;
   ts: number;
 }
 
@@ -746,6 +759,7 @@ export function computeAction(tps: TpsData) {
       action.sum.janggal = 1;
     }
   }
+  action.sum.laporKpu = tps.laporKpu && action.sum.janggal ? 1 : 0;
   return action;
 }
 

@@ -42,7 +42,9 @@ import {
   QuotaSpecs,
   isValidHalaman,
   computeAction,
-  KPU_SCAN_UID
+  KPU_SCAN_UID,
+  LaporKpuRequest,
+  MAX_LAPOR_KPU
 } from 'shared';
 
 const t1 = Date.now();
@@ -356,7 +358,7 @@ async function uploadPhoto(p: UploadRequest, req) {
     const uploader = { ...r.profile, ts, ua, ip } as UpsertProfile;
 
     let tps = (await t.get(tRef)).data() as TpsData;
-    tps = tps || { images: {}, imgCount: 0 };
+    tps = tps || { images: {}, imgCount: 0, laporKpu: false };
     tps.images[p.imageId] = {
       uploader,
       reviewer: null,
@@ -634,6 +636,9 @@ async function getRelawanPhotos(t, rpRef, uid): Promise<RelawanPhotos> {
     reportCount: 0,
     maxReportCount: 0,
     reviewCount: 0,
+    laporKpus: [],
+    laporKpuCount: 0,
+    maxLaporKpuCount: 0,
     nTps: 0,
     nKel: 0
   };
@@ -735,6 +740,76 @@ app.post(
 
     if (ok !== true) {
       console.error(`Report ${user.uid} : ${ok}`);
+      return res.json({ error: ok });
+    }
+
+    return res.json({ ok: true });
+  }
+);
+
+app.post(
+  '/api/laporKpu',
+  [
+    (req, res, next) => {
+      const b = req.body as LaporKpuRequest;
+      req.parsedBody = {
+        kelId: +b.kelId,
+        kelName: '',
+        tpsNo: +b.tpsNo,
+        ts: Date.now()
+      } as LaporKpuRequest;
+      next();
+    },
+    populateKelName()
+  ],
+  async (req: any, res) => {
+    const user = req.user as admin.auth.DecodedIdToken;
+    const p = req.parsedBody as LaporKpuRequest;
+
+    const ip = getIp(req);
+    const ua = req.headers['user-agent'];
+    const tRef = fsdb.doc(FsPath.tps(p.kelId, p.tpsNo));
+    const rpRef = fsdb.doc(FsPath.relawanPhoto(user.uid));
+    const ok = await fsdb
+      .runTransaction(async t => {
+        const tps = (await t.get(tRef)).data() as TpsData;
+        const imageId = Object.keys(tps.images).find(i => {
+          const s = tps.images[i].sum;
+          return !!(s.pas1 || s.pas2 || s.sah || s.tSah);
+        });
+        if (!imageId) return 'no janggal image';
+        const uRef = fsdb.doc(FsPath.upserts(imageId));
+        const u = (await t.get(uRef)).data() as Upsert;
+        if (!u) return 'imageId not found';
+
+        const rp = await getRelawanPhotos(t, rpRef, user.uid);
+        rp.laporKpus = rp.laporKpus || [];
+        rp.laporKpus.unshift(p);
+        rp.laporKpuCount = rp.laporKpus.length;
+        const maxLaporKpu = rp.maxLaporKpuCount || MAX_LAPOR_KPU;
+        if (rp.laporKpuCount > maxLaporKpu) return 'too many lapor KPU';
+
+        tps.laporKpu = true;
+        u.reporter = { ...rp.profile, ts: p.ts, ua, ip };
+        u.action = computeAction(tps);
+        u.done = 0;
+
+        if (!u.action.sum.janggal) {
+          return 'Kamu tidak bisa lapor ke KPU untuk TPS yang tidak janggal';
+        }
+
+        t.update(tRef, tps);
+        t.update(uRef, u);
+        t.set(rpRef, rp);
+        return true;
+      })
+      .catch(e => {
+        console.error(`DB lapor kpu ${user.uid}`, e);
+        return `Database error`;
+      });
+
+    if (ok !== true) {
+      console.error(`Lapor KPU ${user.uid} : ${ok}`);
       return res.json({ error: ok });
     }
 

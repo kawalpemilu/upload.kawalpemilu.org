@@ -1,4 +1,4 @@
-<ng-container *ngIf="(state$ | async) as state; else loading">
+<ng-container *ngIf="state$ | async as state; else loading">
   <app-path [node]="state"></app-path>
 
   <ng-container *ngIf="slices.length > 1">
@@ -7,7 +7,20 @@
       <ng-container *ngFor="let s of slices">
         <button
           mat-raised-button
-          [color]="s.error ? 'warn' : s.janggal ? 'accent' : 'primary'"
+          [style.background-color]="
+            s.error
+              ? 'red'
+              : s.janggal
+              ? 'orange'
+              : s.laporKpu
+              ? 'skyblue'
+              : 'primary'
+          "
+          [style.color]="
+            s.error || s.laporKpu || s.janggal
+              ? 'white'
+              : 'black'
+          "
           [disabled]="showingSlice == s"
           (click)="showingSlice = s"
           style="margin-right: 15px"
@@ -74,7 +87,7 @@
           </td>
           <td rowspan="3" style="padding: 10px">
             <ng-container *ngIf="details[tps.tpsNo] as details$; else fotopub">
-              <ng-container *ngIf="(details$ | async) as detail; else loadTps">
+              <ng-container *ngIf="details$ | async as detail; else loadTps">
                 <app-carousel
                   [height]="425"
                   [photos]="detail"
@@ -101,7 +114,7 @@
               <br />
               <br />
               <button
-                *ngIf="state.isModerator"
+                *ngIf="state.relawan.profile.role >= USER_ROLE.MODERATOR"
                 mat-raised-button
                 color="warn"
                 (click)="digitize[tps.tpsNo] = 'next'"
@@ -120,6 +133,22 @@
               [tpsNo]="tps.tpsNo"
               [value]="'Upload Foto'"
             ></app-upload-sequence>
+
+            <p>
+              <button
+                *ngIf="
+                  state.relawan.profile.role >= USER_ROLE.ADMIN &&
+                  tps.agg?.sum?.janggal &&
+                  !tps.agg?.sum?.laporKpu
+                "
+                mat-raised-button
+                [style.background-color]="'skyblue'"
+                [style.color]="'white'"
+                (click)="digitize[tps.tpsNo] = 'next'"
+              >
+                Lapor KPU
+              </button>
+            </p>
           </td>
         </tr>
 
@@ -136,6 +165,8 @@
                     ? '#FDD'
                     : d.sum.pending
                     ? '#FFD'
+                    : d.sum.laporKpu
+                    ? 'skyblue'
                     : d.sum.janggal
                     ? 'orange'
                     : ''

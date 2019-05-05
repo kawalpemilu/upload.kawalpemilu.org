@@ -12,7 +12,8 @@ import {
   PPWP_NAMES,
   Aggregate,
   TpsData,
-  FsPath
+  FsPath,
+  Relawan
 } from 'shared';
 import { UserService } from '../user.service';
 import { CarouselItem } from '../carousel/carousel.component';
@@ -29,7 +30,7 @@ interface Tps {
 
 interface State extends HierarchyNode {
   tpsList: Tps[];
-  isModerator: boolean;
+  relawan: Relawan;
 }
 
 interface Slice {
@@ -40,6 +41,7 @@ interface Slice {
   pending: number;
   error: number;
   janggal: number;
+  laporKpu: number;
 }
 
 @Component({
@@ -125,9 +127,9 @@ export class TpsComponent implements OnInit {
         return state;
       }),
       switchMap((state: State) =>
-        this.userService.isModerator$.pipe(
-          map(isMod => {
-            state.isModerator = isMod;
+        this.userService.relawan$.pipe(
+          map(relawan => {
+            state.relawan = relawan;
             return state;
           })
         )
@@ -156,15 +158,26 @@ export class TpsComponent implements OnInit {
       let pending = 0;
       let error = 0;
       let janggal = 0;
+      let laporKpu = 0;
       while (hi < arr.length && arr[hi].tpsNo < tpsHi) {
         if (arr[hi].agg && arr[hi].agg.sum) {
           pending += arr[hi].agg.sum.pending || 0;
           error += arr[hi].agg.sum.error || 0;
           janggal += arr[hi].agg.sum.janggal || 0;
+          laporKpu += arr[hi].agg.sum.laporKpu || 0;
         }
         hi++;
       }
-      this.slices.push({ tpsLo, tpsHi, lo, hi, pending, error, janggal });
+      this.slices.push({
+        tpsLo,
+        tpsHi,
+        lo,
+        hi,
+        pending,
+        error,
+        janggal,
+        laporKpu
+      });
       lo = hi;
       tpsLo = tpsHi;
     }
@@ -213,7 +226,7 @@ export class TpsComponent implements OnInit {
   }
 
   toggleDetails(state: State, tpsNo: number) {
-    if (!state.isModerator) {
+    if (!(state.relawan.profile.role >= USER_ROLE.MODERATOR)) {
       return;
     }
     this.hie.update(state.id);

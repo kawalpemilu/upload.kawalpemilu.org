@@ -4,6 +4,7 @@ export declare const MAX_NUM_UPLOADS = 1500;
 export declare const MAX_URL_LENGTH = 300;
 export declare const MAX_REASON_LENGTH = 300;
 export declare const MAX_REPORT_ERRORS = 300;
+export declare const MAX_LAPOR_KPU = 5000;
 export declare const LOCAL_STORAGE_LAST_URL = "last_url";
 export declare const KPU_SCAN_UID = "gEQFS1n5gpTzMTy5JASPPLk4yRA3";
 export declare enum USER_ROLE {
@@ -22,6 +23,7 @@ export declare enum SUM_KEY {
     pending = "pending",
     error = "error",
     janggal = "janggal",
+    laporKpu = "laporKpu",
     pkb = "pkb",
     ger = "ger",
     pdi = "pdi",
@@ -109,11 +111,14 @@ export interface RelawanPhotos {
     profile: PublicProfile;
     uploads: UploadRequest[];
     reports: ProblemRequest[];
+    laporKpus: LaporKpuRequest[];
     uploadCount: number;
     maxUploadCount: number;
     reportCount: number;
     maxReportCount: number;
     reviewCount: number;
+    laporKpuCount: number;
+    maxLaporKpuCount: number;
     nTps: number;
     nKel: number;
 }
@@ -206,6 +211,7 @@ export interface TpsData {
     };
     autofill?: Autofill;
     imgCount: number;
+    laporKpu: boolean;
 }
 export interface Upsert {
     request: UploadRequest;
@@ -250,6 +256,12 @@ export interface ProblemRequest {
     tpsNo: number;
     url: string;
     reason: string;
+    ts: number;
+}
+export interface LaporKpuRequest {
+    kelId: number;
+    kelName: string;
+    tpsNo: number;
     ts: number;
 }
 export interface ChildData {

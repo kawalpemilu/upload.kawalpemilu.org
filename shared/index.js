@@ -7,6 +7,7 @@ exports.MAX_NUM_UPLOADS = 1500;
 exports.MAX_URL_LENGTH = 300;
 exports.MAX_REASON_LENGTH = 300;
 exports.MAX_REPORT_ERRORS = 300;
+exports.MAX_LAPOR_KPU = 5000;
 exports.LOCAL_STORAGE_LAST_URL = 'last_url';
 exports.KPU_SCAN_UID = 'gEQFS1n5gpTzMTy5JASPPLk4yRA3';
 var USER_ROLE;
@@ -29,6 +30,7 @@ var SUM_KEY;
     SUM_KEY["pending"] = "pending";
     SUM_KEY["error"] = "error";
     SUM_KEY["janggal"] = "janggal";
+    SUM_KEY["laporKpu"] = "laporKpu";
     // Pileg
     SUM_KEY["pkb"] = "pkb";
     SUM_KEY["ger"] = "ger";
@@ -505,6 +507,7 @@ function computeAction(tps) {
             action.sum.janggal = 1;
         }
     }
+    action.sum.laporKpu = tps.laporKpu && action.sum.janggal ? 1 : 0;
     return action;
 }
 exports.computeAction = computeAction;
