@@ -1,5 +1,5 @@
 <div style="padding: 0 10px">
-  <ng-container *ngIf="(state$ | async) as state; else loading">
+  <ng-container *ngIf="state$ | async as state; else loading">
     <app-path [node]="state$ | async"></app-path>
   </ng-container>
 
@@ -9,7 +9,7 @@
 </div>
 
 <table #header class="header" cellspacing="0" [style.width.px]="width">
-  <thead *ngIf="(state$ | async) as state">
+  <thead *ngIf="state$ | async as state">
     <tr [style.height.px]="ROW_HEIGHT" style="background-color: lightgray">
       <th class="index">#</th>
       <th class="wilayah">
@@ -37,7 +37,7 @@
 </table>
 
 <table #footer class="footer" cellspacing="0" [style.width.px]="width">
-  <tfoot *ngIf="(state$ | async) as state">
+  <tfoot *ngIf="state$ | async as state">
     <tr [style.height.px]="ROW_HEIGHT" style="background-color: lightgray">
       <th class="index"></th>
       <th class="wilayah" align="right">
@@ -49,6 +49,10 @@
 
         <sub [style.color]="'orange'">{{
           state.sum.janggal || 0 | number
+        }}</sub>
+        <sub> / </sub>
+        <sub [style.color]="'skyblue'">{{
+          state.sum.laporKpu || 0 | number
         }}</sub>
       </th>
       <th
@@ -115,7 +119,7 @@
 </table>
 
 <table #content class="content" cellspacing="0" [style.width.px]="width">
-  <tbody *ngIf="(state$ | async) as state" class="alternating">
+  <tbody *ngIf="state$ | async as state" class="alternating">
     <ng-container
       *ngFor="let c of state.children; let index = index; trackBy: trackByIdx"
     >
@@ -130,9 +134,27 @@
             <span *ngIf="d.sum.pending" [style.color]="getColor(state, c[0])"
               >({{ d.sum.pending || 0 | number }})</span
             >
-            <sub *ngIf="d.sum.janggal" [style.color]="'orange'">{{
-              d.sum.janggal || 0 | number
-            }}</sub>
+            <sub *ngIf="d.sum.janggal">
+              <ng-container
+                *ngIf="d.sum.janggal - (d.sum.laporKpu || 0) > 0; else laporKpu"
+              >
+                <b [style.color]="'orange'">
+                  {{ (d.sum.janggal || 0) - (d.sum.laporKpu || 0) | number }}
+                </b>
+                <ng-container *ngIf="d.sum.laporKpu">
+                  /
+                  <span [style.color]="'skyblue'">
+                    {{ d.sum.laporKpu || 0 | number }}
+                  </span>
+                </ng-container>
+              </ng-container>
+
+              <ng-template #laporKpu>
+                <span [style.color]="'skyblue'">
+                  {{ d.sum.laporKpu || 0 | number }}
+                </span>
+              </ng-template>
+            </sub>
           </td>
 
           <td

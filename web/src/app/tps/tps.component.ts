@@ -19,6 +19,7 @@ import { UserService } from '../user.service';
 import { CarouselItem } from '../carousel/carousel.component';
 import { Title } from '@angular/platform-browser';
 import { AngularFirestore } from '@angular/fire/firestore';
+import { ApiService } from '../api.service';
 
 interface Tps {
   tpsNo: number;
@@ -64,6 +65,7 @@ export class TpsComponent implements OnInit {
 
   constructor(
     public hie: HierarchyService,
+    private api: ApiService,
     private userService: UserService,
     private route: ActivatedRoute,
     private titleService: Title,
@@ -282,5 +284,20 @@ export class TpsComponent implements OnInit {
       return { name: 'POS', no: tpsNo - 1000 };
     }
     return { name: 'TPS', no: tpsNo };
+  }
+
+  async laporKpu(kelId, tpsNo) {
+    const data = { kelId, kelName: '', tpsNo, ts: 0 };
+    const res: any = await this.api.post(
+      this.userService.user,
+      `laporKpu`,
+      data
+    );
+    if (res.error) {
+      alert(res.error);
+      return;
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    await this.hie.update(kelId);
   }
 }

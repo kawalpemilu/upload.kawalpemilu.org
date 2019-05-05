@@ -203,8 +203,8 @@ function recomputeH(id: number, depth: number) {
       if (!sum) continue;
       if (
         !sum.janggal &&
-        sum.hasOwnProperty('jum') &&
-        (sum.hasOwnProperty('sah') || sum.hasOwnProperty('tSah')) &&
+        sum.jum &&
+        (sum.sah || sum.tSah) &&
         sum.jum !== sum.sah + sum.tSah
       ) {
         console.log('Set janggal php', id, tpsNo);
