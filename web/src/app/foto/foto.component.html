@@ -8,6 +8,12 @@
   secara otomatis.
 </p>
 
+<p>
+  <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
+    Cari TPS kamu dan Upload Foto
+  </a>
+</p>
+
 <ng-container *ngIf="photos$ | async as photos">
   <ng-container *ngIf="photos.length > 0">
     <p>

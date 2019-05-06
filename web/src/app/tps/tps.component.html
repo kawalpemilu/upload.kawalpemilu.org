@@ -10,7 +10,7 @@
           [style.background-color]="
             s.error
               ? 'red'
-              : s.janggal
+              : s.janggal - (s.laporKpu || 0) > 0
               ? 'orange'
               : s.laporKpu
               ? 'skyblue'
@@ -141,6 +141,7 @@
                 [style.background-color]="'skyblue'"
                 [style.color]="'white'"
                 (click)="laporKpu(state.id, tps.tpsNo)"
+                [disabled]="isLoading"
               >
                 Lapor KPU
               </button>

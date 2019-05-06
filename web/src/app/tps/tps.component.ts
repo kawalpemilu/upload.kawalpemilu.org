@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { HierarchyService } from '../hierarchy.service';
 import { ActivatedRoute } from '@angular/router';
-import { map, switchMap, tap, take } from 'rxjs/operators';
+import { map, switchMap, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
 import {
@@ -62,6 +62,7 @@ export class TpsComponent implements OnInit {
   DPR_NAMES = DPR_NAMES;
   ALL_NAMES = Object.keys(PPWP_NAMES).concat(Object.keys(DPR_NAMES));
   Object = Object;
+  isLoading = false;
 
   constructor(
     public hie: HierarchyService,
@@ -287,17 +288,23 @@ export class TpsComponent implements OnInit {
   }
 
   async laporKpu(kelId, tpsNo) {
-    const data = { kelId, kelName: '', tpsNo, ts: 0 };
-    const res: any = await this.api.post(
-      this.userService.user,
-      `laporKpu`,
-      data
-    );
-    if (res.error) {
-      alert(res.error);
-      return;
+    this.isLoading = true;
+    try {
+      const data = { kelId, kelName: '', tpsNo, ts: 0 };
+      const res: any = await this.api.post(
+        this.userService.user,
+        `laporKpu`,
+        data
+      );
+      if (res.error) {
+        alert(res.error);
+        return;
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await this.hie.update(kelId);
+    } catch (e) {
+      console.error(e);
     }
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    await this.hie.update(kelId);
+    this.isLoading = false;
   }
 }
