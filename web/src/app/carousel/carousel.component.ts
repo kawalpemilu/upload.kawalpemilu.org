@@ -136,7 +136,7 @@ export class BottomSheetErrorComponent {
                 </td>
               </tr>
               <tr *ngIf="p.uploader as uploader">
-                <td colspan="2" align="center">
+                <td colspan="2" align="center" style="word-break: break-word">
                   by
                   <app-orang
                     [profile]="uploader"

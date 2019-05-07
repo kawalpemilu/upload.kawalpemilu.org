@@ -43,6 +43,7 @@ import {
   isValidHalaman,
   computeAction,
   KPU_SCAN_UID,
+  BAWASLU_UID,
   LaporKpuRequest,
   MAX_LAPOR_KPU
 } from 'shared';
@@ -297,7 +298,7 @@ function populateKelName() {
       tpsNo: number;
       kelName: string;
     };
-    if (!p.kelId || !p.tpsNo) {
+    if (!p.kelId || typeof p.tpsNo !== 'number') {
       console.warn(`KelName ${p.kelId} ${p.tpsNo}, ${user.uid}`);
       return res.json({ error: 'missing parameters' });
     }
@@ -317,9 +318,16 @@ function populateKelName() {
       }
     }
     p.kelName = mem.name;
-    if (!mem.hasTpsNo[p.tpsNo]) {
-      console.warn(`TPS missing ${p.kelId} ${p.tpsNo}, ${user.uid}`);
-      return res.json({ error: 'tpsNo does not exists' });
+    if (user.uid === BAWASLU_UID) {
+      if (p.tpsNo !== 0) {
+        return res.json({ error: 'tpsNo must be zero' });
+      }
+    } else if (!mem.hasTpsNo[p.tpsNo]) {
+      // @ts-ignore
+      if (p.tpsNo !== 0 || p.c1.type !== FORM_TYPE.OTHERS) {
+        console.warn(`TPS missing ${p.kelId} ${p.tpsNo}, ${user.uid}`);
+        return res.json({ error: 'tpsNo does not exists' });
+      }
     }
     next();
   };
@@ -573,6 +581,10 @@ app.post(
       upsert.request.tpsNo !== a.tpsNo
     ) {
       if (a.c1.type === FORM_TYPE.OTHERS) {
+        if (upsert.request.tpsNo === 0) {
+          console.debug(`Tolong OTHERS kan foto bawaslu di TPS 0 ${user.uid}`);
+          return res.json({ error: `Tolong OTHERS kan foto bawaslu di TPS 0` });
+        }
         console.debug(`Tolong refresh browser kamu ${user.uid}`);
         return res.json({ error: `Tolong refresh browser kamu` });
       }

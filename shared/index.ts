@@ -8,6 +8,7 @@ export const MAX_REPORT_ERRORS = 300;
 export const MAX_LAPOR_KPU = 5000;
 export const LOCAL_STORAGE_LAST_URL = 'last_url';
 export const KPU_SCAN_UID = 'gEQFS1n5gpTzMTy5JASPPLk4yRA3';
+export const BAWASLU_UID = 'JxtI70W33rWM0EfMlZSbaiRfsEk2';
 
 export enum USER_ROLE {
   BANNED = -1,

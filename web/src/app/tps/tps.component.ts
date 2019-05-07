@@ -171,16 +171,18 @@ export class TpsComponent implements OnInit {
         }
         hi++;
       }
-      this.slices.push({
-        tpsLo,
-        tpsHi,
-        lo,
-        hi,
-        pending,
-        error,
-        janggal,
-        laporKpu
-      });
+      if (hi > lo) {
+        this.slices.push({
+          tpsLo,
+          tpsHi,
+          lo,
+          hi,
+          pending,
+          error,
+          janggal,
+          laporKpu
+        });
+      }
       lo = hi;
       tpsLo = tpsHi;
     }

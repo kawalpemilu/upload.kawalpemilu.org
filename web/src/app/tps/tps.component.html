@@ -1,6 +1,70 @@
 <ng-container *ngIf="state$ | async as state; else loading">
   <app-path [node]="state"></app-path>
 
+  <ng-container *ngIf="state.data[0] as d">
+    <ng-template #digitizeBawaslu>
+      <app-approver
+        [kelId]="state.id"
+        [tpsNo]="0"
+        [(imageId)]="digitize[0]"
+        (completed)="digitize[0] = ''"
+      ></app-approver>
+
+      <p style="padding: 0 10px">
+        <button mat-raised-button color="primary" (click)="digitize[0] = ''">
+          <mat-icon>arrow_back</mat-icon>
+          Gak Jadi Digitize Deh
+        </button>
+      </p>
+    </ng-template>
+
+    <ng-container
+      *ngIf="!digitize[0] || digitize[0] === 'done'; else digitizeBawaslu"
+    >
+      <table
+        (click)="toggleDetails(state, 0)"
+        [style.cursor]="'pointer'"
+        [attr.id]="'t0'"
+      >
+        <tr>
+          <td
+            align="center"
+            style="border: 1px solid black; width: 90px; padding: 5px"
+          >
+            BAWASLU
+          </td>
+        </tr>
+      </table>
+
+      <ng-container *ngIf="details[0] as details$">
+        <ng-container *ngIf="details$ | async as detail; else loadTps">
+          <app-carousel
+            [height]="425"
+            [photos]="detail"
+            (edited)="digitize[0] = $event.imageId"
+          ></app-carousel>
+        </ng-container>
+        <ng-template #loadTps>
+          <div style="height: 425px">
+            <mat-spinner></mat-spinner>
+          </div>
+        </ng-template>
+      </ng-container>
+
+      <p *ngIf="d.sum?.pending">
+        <button
+          *ngIf="state.relawan.profile.role >= USER_ROLE.MODERATOR"
+          mat-raised-button
+          color="warn"
+          (click)="digitize[0] = 'next'"
+        >
+          Digitize foto dari BAWASLU
+        </button>
+      </p>
+    </ng-container>
+    <p></p>
+  </ng-container>
+
   <ng-container *ngIf="slices.length > 1">
     <p><b>Pilih kisaran nomor TPS:</b></p>
     <p style="line-height: 50px; padding-top: 0px">

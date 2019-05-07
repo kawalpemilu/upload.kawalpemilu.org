@@ -10,6 +10,7 @@ exports.MAX_REPORT_ERRORS = 300;
 exports.MAX_LAPOR_KPU = 5000;
 exports.LOCAL_STORAGE_LAST_URL = 'last_url';
 exports.KPU_SCAN_UID = 'gEQFS1n5gpTzMTy5JASPPLk4yRA3';
+exports.BAWASLU_UID = 'JxtI70W33rWM0EfMlZSbaiRfsEk2';
 var USER_ROLE;
 (function (USER_ROLE) {
     USER_ROLE[USER_ROLE["BANNED"] = -1] = "BANNED";
