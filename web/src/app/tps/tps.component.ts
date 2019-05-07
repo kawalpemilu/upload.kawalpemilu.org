@@ -198,13 +198,24 @@ export class TpsComponent implements OnInit {
     return Object.keys(DPR_NAMES).find(k => sum[k] !== undefined);
   }
 
+  normalizeHalaman(hal) {
+    const s = hal.split('.');
+    let num = +s[0];
+    if (s.length === 2) {
+      num += +s[1] / 100;
+    }
+    return num;
+  }
+
   toCarousel(kelId, tpsNo, photos: { [url: string]: Aggregate }) {
     const arr: CarouselItem[] = [];
     const urls = Object.keys(photos).sort((a, b) => {
       const pa = photos[a];
       const pb = photos[b];
-      const va = (pa.c1.type * 10 + pa.c1.plano) * 1e14 + pa.ts;
-      const vb = (pb.c1.type * 10 + pb.c1.plano) * 1e14 + pb.ts;
+      const pah = this.normalizeHalaman(pa.c1.halaman);
+      const pbh = this.normalizeHalaman(pb.c1.halaman);
+      const va = ((pa.c1.type * 3 + pa.c1.plano) * 4 + +pah) * 1e14 + pa.ts;
+      const vb = ((pb.c1.type * 3 + pb.c1.plano) * 4 + +pbh) * 1e14 + pb.ts;
       return va - vb;
     });
     for (const url of urls) {

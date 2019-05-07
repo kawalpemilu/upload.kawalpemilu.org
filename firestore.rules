@@ -7,7 +7,7 @@ service cloud.firestore {
 
     // Static herarchy for searching.
     match /h/{userId} {
-      allow list: if request.auth.uid != null && request.query.limit <= 50;
+      allow list: if request.auth.uid != null && request.query.limit <= 100;
     }
  
     // Relawan database.
