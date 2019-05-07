@@ -196,8 +196,10 @@ function aggregate(dst, src) {
 
 function recomputeH(id: number, depth: number) {
   const arr = H[id].children;
-  const all = {};
+  const all = {} as SumMap;
   if (depth === 4) {
+    const bsum = h[id] && h[id][0] && h[id][0].sum;
+    if (bsum && bsum.pending) all.pending = (all.pending || 0) + 1;
     for (const [tpsNo] of arr) {
       const sum = h[id] && h[id][tpsNo] && h[id][tpsNo].sum;
       if (!sum) continue;
