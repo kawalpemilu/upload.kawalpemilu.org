@@ -143,7 +143,7 @@ function rateLimitRequests() {
   return (req, res, next) => {
     if (!req.query.abracadabra) {
       const user = req.user as admin.auth.DecodedIdToken;
-      if (user.uid !== KPU_SCAN_UID) {
+      if (user.uid !== KPU_SCAN_UID && user.uid !== BAWASLU_UID) {
         quota[user.uid] = quota[user.uid] || {};
         if (!quotaSpecs.request(quota[user.uid], Date.now())) {
           console.warn(`User ${user.uid} is rate-limited: ${req.url}`);
@@ -346,7 +346,7 @@ async function uploadPhoto(p: UploadRequest, req) {
     }
 
     let photo: RelawanPhotos = null;
-    if (user.uid !== KPU_SCAN_UID) {
+    if (user.uid !== KPU_SCAN_UID && user.uid !== BAWASLU_UID) {
       photo = await getRelawanPhotos(t, pRef, user.uid);
       photo.profile = r.profile;
 
@@ -379,6 +379,7 @@ async function uploadPhoto(p: UploadRequest, req) {
     tps.imgCount++;
 
     const action = computeAction(tps);
+    if (p.tpsNo === 0) action.sum.cakupan = 0;
     const upsert = { request: p, uploader, done: 0, action } as Upsert;
 
     const imageRef = fsdb.doc(FsPath.upserts(p.imageId));
@@ -496,7 +497,11 @@ async function approve(a: ApproveRequest, ua, ip, ts, user) {
       const urp = self ? rp : ((await t.get(pRef)).data() as RelawanPhotos);
       if (!urp) return 'No relawan photo';
       const photo = urp.uploads.find(p => p.imageId === a.imageId);
-      if (!photo && urp.profile.uid !== KPU_SCAN_UID)
+      if (
+        !photo &&
+        urp.profile.uid !== KPU_SCAN_UID &&
+        urp.profile.uid !== BAWASLU_UID
+      )
         return `No photo for ${a.imageId}`;
 
       const tRef = fsdb.doc(FsPath.tps(u.request.kelId, u.request.tpsNo));
