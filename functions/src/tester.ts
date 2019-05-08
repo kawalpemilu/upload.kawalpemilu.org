@@ -25,11 +25,6 @@ import { kpuH } from './kpuh';
 
 const delay = (ms: number) => new Promise(_ => setTimeout(_, ms));
 
-admin.initializeApp({
-  credential: admin.credential.cert(require('./sa-key.json')),
-  databaseURL: 'https://kawal-c1.firebaseio.com'
-});
-
 const fsdb = admin.firestore();
 
 const KPU_API = 'https://pemilu2019.kpu.go.id/static/json/hhcw/ppwp';
@@ -528,7 +523,7 @@ async function continuousKpuUpload(concurrency: number) {
     }
   });
 
-  let initialIdx = 40000;
+  let initialIdx = 30000;
   while (!isShutdown) {
     const arr = Object.keys(kpuH).sort((a, b) => +a - +b);
     console.log('Total Kels', arr.length);

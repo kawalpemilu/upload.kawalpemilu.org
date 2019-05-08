@@ -325,7 +325,9 @@ function populateKelName() {
     } else if (!mem.hasTpsNo[p.tpsNo]) {
       // @ts-ignore
       if (p.tpsNo !== 0 || p.c1.type !== FORM_TYPE.OTHERS) {
-        console.warn(`TPS missing ${p.kelId} ${p.tpsNo}, ${user.uid}`);
+        if (p.tpsNo) {
+          console.warn(`TPS missing ${p.kelId} ${p.tpsNo}, ${user.uid}`);
+        }
         return res.json({ error: 'tpsNo does not exists' });
       }
     }
@@ -497,12 +499,12 @@ async function approve(a: ApproveRequest, ua, ip, ts, user) {
       const urp = self ? rp : ((await t.get(pRef)).data() as RelawanPhotos);
       if (!urp) return 'No relawan photo';
       const photo = urp.uploads.find(p => p.imageId === a.imageId);
-      if (
-        !photo &&
-        urp.profile.uid !== KPU_SCAN_UID &&
-        urp.profile.uid !== BAWASLU_UID
-      )
-        return `No photo for ${a.imageId}`;
+      // if (
+      //   !photo &&
+      //   urp.profile.uid !== KPU_SCAN_UID &&
+      //   urp.profile.uid !== BAWASLU_UID
+      // )
+      //   return `No photo for ${a.imageId}`;
 
       const tRef = fsdb.doc(FsPath.tps(u.request.kelId, u.request.tpsNo));
       const tps = (await t.get(tRef)).data() as TpsData;
