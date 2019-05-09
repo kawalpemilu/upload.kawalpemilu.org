@@ -109,6 +109,7 @@ export class BottomSheetErrorComponent {
                   <img
                     *ngIf="p.url.startsWith('data')"
                     [src]="p.url"
+                    loading="lazy"
                     style="max-height:110px; max-width:110px; height:auto; width:auto;"
                   />
                 </td>
@@ -212,7 +213,7 @@ export class BottomSheetErrorComponent {
               </ng-container>
 
               <ng-container *ngIf="p.reviewer">
-                <ng-container *ngIf="(userService.relawan$ | async) as r">
+                <ng-container *ngIf="userService.relawan$ | async as r">
                   <tr *ngIf="r.profile.role >= USER_ROLE.ADMIN" height="50">
                     <td colspan="2" align="center">
                       <button mat-raised-button color="warn" (click)="edit(p)">

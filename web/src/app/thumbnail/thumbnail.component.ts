@@ -6,6 +6,7 @@ import { getServingUrl } from 'shared';
   template: `
     <a [href]="link" target="_blank">
       <img
+        loading="lazy"
         [src]="src"
         [style.maxWidth]="maxWidth"
         [style.maxHeight]="maxHeight"
