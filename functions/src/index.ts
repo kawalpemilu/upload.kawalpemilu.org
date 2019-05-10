@@ -526,7 +526,8 @@ async function approve(a: ApproveRequest, ua, ip, ts, user) {
 
       u.reviewer = img.reviewer = { ...r.profile, ts, ua, ip };
       u.action = computeAction(tps);
-      u.done = 0;
+      // @ts-ignore
+      u.done = admin.firestore.FieldValue.increment(-1);
       img.sum = asum;
       if (photo) {
         photo.c1 = img.c1;
@@ -741,7 +742,8 @@ app.post(
 
         u.reporter = reporter;
         u.action = computeAction(tps);
-        u.done = 0;
+        // @ts-ignore
+        u.done = admin.firestore.FieldValue.increment(-1);
 
         if (u.action.sum.janggal && img.sum.error) {
           return 'Kamu tidak perlu melaporkan kesalahan di TPS yang sudah ditandai janggal.';
@@ -811,7 +813,8 @@ app.post(
         tps.laporKpu = true;
         u.reporter = { ...rp.profile, ts: p.ts, ua, ip };
         u.action = computeAction(tps);
-        u.done = 0;
+        // @ts-ignore
+        u.done = admin.firestore.FieldValue.increment(-1);
 
         if (!u.action.sum.janggal) {
           return 'Kamu tidak bisa lapor ke KPU untuk TPS yang tidak janggal';

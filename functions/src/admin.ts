@@ -111,7 +111,7 @@ async function getUpsertBatch(limit: number): Promise<Upserts> {
   return new Promise<Upserts>(resolve => {
     const unsub = fsdb
       .collection(FsPath.upserts())
-      .where('done', '==', 0)
+      .where('done', '<=', 0)
       .limit(limit)
       .onSnapshot(
         s => {
@@ -170,7 +170,9 @@ async function processNewUpserts() {
       const kelId = u.request.kelId;
       await updateAggregates(kelId, u.request.tpsNo, u.action)
         .then(() =>
-          batch.update(fsdb.doc(FsPath.upserts(imageId)), { done: 1 })
+          batch.update(fsdb.doc(FsPath.upserts(imageId)), {
+            done: admin.firestore.FieldValue.increment(1)
+          })
         )
         .catch(e => console.error(`update aggregates failed: ${e.message}`));
     }
