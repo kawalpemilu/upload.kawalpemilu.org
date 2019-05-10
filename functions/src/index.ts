@@ -380,8 +380,7 @@ async function uploadPhoto(p: UploadRequest, req) {
     };
     tps.imgCount++;
 
-    const action = computeAction(tps);
-    if (p.tpsNo === 0) action.sum.cakupan = 0;
+    const action = computeAction(tps, p.tpsNo);
     const upsert = { request: p, uploader, done: 0, action } as Upsert;
 
     const imageRef = fsdb.doc(FsPath.upserts(p.imageId));
@@ -525,7 +524,7 @@ async function approve(a: ApproveRequest, ua, ip, ts, user) {
       img.sum.pending = 0;
 
       u.reviewer = img.reviewer = { ...r.profile, ts, ua, ip };
-      u.action = computeAction(tps);
+      u.action = computeAction(tps, u.request.tpsNo);
       // @ts-ignore
       u.done = admin.firestore.FieldValue.increment(-1);
       img.sum = asum;
@@ -613,7 +612,6 @@ app.post(
         console.debug(`Error move copy ${user.uid} : ${oku}`);
         return res.json({ error: oku });
       }
-      await delay(3000);
       const apr: ApproveRequest = {
         kelId: a.kelId,
         kelName: a.kelName,
@@ -741,7 +739,7 @@ app.post(
         }
 
         u.reporter = reporter;
-        u.action = computeAction(tps);
+        u.action = computeAction(tps, p.tpsNo);
         // @ts-ignore
         u.done = admin.firestore.FieldValue.increment(-1);
 
@@ -812,7 +810,7 @@ app.post(
 
         tps.laporKpu = true;
         u.reporter = { ...rp.profile, ts: p.ts, ua, ip };
-        u.action = computeAction(tps);
+        u.action = computeAction(tps, p.tpsNo);
         // @ts-ignore
         u.done = admin.firestore.FieldValue.increment(-1);
 

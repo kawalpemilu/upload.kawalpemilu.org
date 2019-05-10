@@ -332,7 +332,7 @@ export declare function lsGetItem(key: any): any;
 export declare function lsSetItem(key: any, value: any): void;
 export declare function enumEntries(e: any): any[][2];
 export declare function canGenerateCustomCode(user: any): any;
-export declare function computeAction(tps: TpsData): {
+export declare function computeAction(tps: TpsData, tpsNo: number): {
     sum: SumMap;
     photos: {};
     ts: number;

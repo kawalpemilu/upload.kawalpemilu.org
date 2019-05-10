@@ -453,7 +453,7 @@ function canGenerateCustomCode(user) {
     return (user.email || '').endsWith('_group@tfbnw.net');
 }
 exports.canGenerateCustomCode = canGenerateCustomCode;
-function computeAction(tps) {
+function computeAction(tps, tpsNo) {
     var sum = { pending: 0, cakupan: 0, janggal: 0 };
     var action = { sum: sum, photos: {}, ts: 0, c1: null };
     var valid = {};
@@ -465,7 +465,7 @@ function computeAction(tps) {
         var imageId = _a[_i];
         var i = tps.images[imageId];
         if (!i.c1) {
-            action.sum.cakupan = 1;
+            action.sum.cakupan = tpsNo > 0 ? 1 : 0;
             action.sum.pending = 1;
             continue;
         }
@@ -476,7 +476,7 @@ function computeAction(tps) {
             }
         }
         else {
-            action.sum.cakupan = 1;
+            action.sum.cakupan = tpsNo > 0 ? 1 : 0;
             action.photos[i.url] = {
                 c1: i.c1,
                 sum: i.sum,

@@ -708,7 +708,7 @@ export function canGenerateCustomCode(user) {
   return (user.email || '').endsWith('_group@tfbnw.net');
 }
 
-export function computeAction(tps: TpsData) {
+export function computeAction(tps: TpsData, tpsNo: number) {
   const sum = { pending: 0, cakupan: 0, janggal: 0 } as SumMap;
   const action = { sum, photos: {}, ts: 0, c1: null };
   const valid = {};
@@ -719,7 +719,7 @@ export function computeAction(tps: TpsData) {
   })) {
     const i = tps.images[imageId];
     if (!i.c1) {
-      action.sum.cakupan = 1;
+      action.sum.cakupan = tpsNo > 0 ? 1 : 0;
       action.sum.pending = 1;
       continue;
     }
@@ -730,7 +730,7 @@ export function computeAction(tps: TpsData) {
         action.photos[i.url] = null;
       }
     } else {
-      action.sum.cakupan = 1;
+      action.sum.cakupan = tpsNo > 0 ? 1 : 0;
       action.photos[i.url] = {
         c1: i.c1,
         sum: i.sum,

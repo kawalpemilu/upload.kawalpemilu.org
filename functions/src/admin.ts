@@ -232,7 +232,7 @@ function recomputeH(id: number, depth: number) {
       const ch = getUpsertData(id, cid);
       ch.sum = ch.sum || ({} as SumMap);
       for (const key in ch.sum) {
-        if (ch.sum[key] !== csum[key]) {
+        if (ch.sum[key] !== csum[key] || 0) {
           console.log('wrong', id, H[id].name, key, ch.sum[key], csum[key]);
           ch.sum[key] = csum[key];
         }
