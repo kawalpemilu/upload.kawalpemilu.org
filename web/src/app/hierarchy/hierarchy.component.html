@@ -53,13 +53,17 @@
 
         <b>({{ state.sum.pending || 0 | number }})</b>
 
-        <sub [style.color]="'orange'">{{
-          state.sum.janggal || 0 | number
-        }}</sub>
-        <sub> / </sub>
-        <sub [style.color]="'skyblue'">{{
-          state.sum.laporKpu || 0 | number
-        }}</sub>
+        <sub *ngIf="state.sum.janggal">
+          <span [style.color]="'orange'">
+            {{ state.sum.janggal - (state.sum.laporKpu || 0) | number }}
+          </span>
+          <ng-container *ngIf="state.sum.laporKpu">
+            /
+            <span [style.color]="'skyblue'">{{
+              state.sum.laporKpu || 0 | number
+            }}</span>
+          </ng-container>
+        </sub>
       </th>
       <th
         class="paslon1"
