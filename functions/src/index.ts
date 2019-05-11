@@ -793,8 +793,8 @@ app.post(
       .runTransaction(async t => {
         const tps = (await t.get(tRef)).data() as TpsData;
         const imageId = Object.keys(tps.images).find(i => {
-          const s = tps.images[i].sum;
-          return !!(s.pas1 || s.pas2 || s.sah || s.tSah);
+          const c1 = tps.images[i].c1;
+          return c1.type === FORM_TYPE.PPWP && c1.halaman === '2';
         });
         if (!imageId) return 'no janggal image';
         const uRef = fsdb.doc(FsPath.upserts(imageId));
