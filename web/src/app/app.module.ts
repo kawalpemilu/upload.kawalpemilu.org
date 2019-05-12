@@ -11,6 +11,7 @@ import { AngularFireModule } from '@angular/fire';
 import { AngularFireStorageModule } from '@angular/fire/storage';
 import { AngularFireAuthModule } from '@angular/fire/auth';
 import { AngularFirestoreModule } from '@angular/fire/firestore';
+import { AngularFirePerformanceModule } from '@angular/fire/performance';
 
 import { environment } from '../environments/environment';
 import { HierarchyComponent } from './hierarchy/hierarchy.component';
@@ -109,6 +110,7 @@ import { CariKelComponent } from './cari-kel/cari-kel.component';
     AngularFireAuthModule,
     AngularFirestoreModule,
     AngularFireStorageModule,
+    AngularFirePerformanceModule,
     AppRoutingModule,
 
     FormsModule,
