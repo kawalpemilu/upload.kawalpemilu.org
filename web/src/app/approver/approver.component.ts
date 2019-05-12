@@ -31,6 +31,9 @@ import { ApiService } from '../api.service';
 import { UserService } from '../user.service';
 import { Location } from '@angular/common';
 import { HierarchyService } from '../hierarchy.service';
+import { AngularFirePerformance } from '@angular/fire/performance';
+
+import * as firebase from 'firebase/app';
 
 @Component({
   selector: 'app-approver',
@@ -121,7 +124,8 @@ export class ApproverComponent implements OnInit, OnDestroy {
     private fsdb: AngularFirestore,
     private api: ApiService,
     private formBuilder: FormBuilder,
-    private hie: HierarchyService
+    private hie: HierarchyService,
+    private perf: AngularFirePerformance
   ) {}
 
   async ngOnInit() {
@@ -137,7 +141,10 @@ export class ApproverComponent implements OnInit, OnDestroy {
     this.kpuData = await this.fsdb
       .doc<KpuData>(FsPath.kpu(this.kelId))
       .valueChanges()
-      .pipe(take(1))
+      .pipe(
+        this.perf.trace('kpuData'),
+        take(1)
+      )
       .toPromise();
 
     this.fsdb
@@ -298,13 +305,14 @@ export class ApproverComponent implements OnInit, OnDestroy {
   }
 
   async approve() {
+    const perf = firebase.performance();
+    const trace = perf.trace('approve');
+    trace.start();
     this.isLoading = true;
     const sum = {} as SumMap;
     if (this.formGroup) {
       this.formGroup.disable();
-      for (const key of LEMBAR[this.formType][this.isPlano][
-        this.halaman
-      ]) {
+      for (const key of LEMBAR[this.formType][this.isPlano][this.halaman]) {
         sum[key] = this.formGroup.get(key).value;
       }
     }
@@ -342,6 +350,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
       this.formGroup.enable();
     }
     this.isLoading = false;
+    trace.stop();
   }
 
   setFormType(type: FORM_TYPE) {

@@ -68,6 +68,8 @@ import { ScoreboardComponent } from './scoreboard/scoreboard.component';
 import { TweetComponent } from './tweet/tweet.component';
 import { CariKelComponent } from './cari-kel/cari-kel.component';
 
+import 'firebase/performance';
+
 @NgModule({
   entryComponents: [
     RegistrasiComponent,
