@@ -520,10 +520,11 @@ export interface HierarchyNode {
   children: any[];
   depth: number;
   data: { [cid: string]: TpsAggregate };
+  kpu: KpuData;
 }
 
 export type KpuData = {
-  [tpsNo: string]: SumMap;
+  [cid: string]: SumMap;
 };
 
 export interface ImageMetadata {

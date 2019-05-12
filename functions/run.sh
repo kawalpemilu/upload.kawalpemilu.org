@@ -23,11 +23,15 @@ referral)
     ;;
 
 backup)
-    gcloud beta firestore export gs://kawal-c1.appspot.com/firestore-dump/may-7
+    gcloud beta firestore export gs://kawal-c1.appspot.com/firestore-dump/may-11
     ;;
 
 tester)
     npm run build && node --max-old-space-size=5120 lib/tester.js
+    ;;
+
+kpu_uploads)
+    npm run build && node --max-old-space-size=5120 lib/kpu_uploads.js
     ;;
 
 tunnel)

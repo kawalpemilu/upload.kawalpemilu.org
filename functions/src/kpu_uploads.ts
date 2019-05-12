@@ -1,7 +1,14 @@
 import * as admin from 'firebase-admin';
 import * as fs from 'fs';
 
-import { KpuData, SUM_KEY, SumMap, KPU_SCAN_UID, FsPath } from 'shared';
+import {
+  KpuData,
+  SUM_KEY,
+  SumMap,
+  KPU_SCAN_UID,
+  FsPath,
+  HierarchyNode
+} from 'shared';
 
 import { H } from './hierarchy';
 import { kpuH } from './kpuh';
@@ -16,8 +23,15 @@ import {
 } from './upload_util';
 
 const fsdb = admin.firestore();
+const rtdb = admin.database();
 
+// Only fetch KPU if there are incomplete data.
+const pendingOnly = false;
+
+// Attempt to fetch remote data.
 const isOffline = false;
+
+// Signal to terminate the sync.
 let isShutdown = false;
 
 type Data = {
@@ -27,23 +41,19 @@ type Data = {
   img: { [imageId: string]: any };
   uploaded: { [filename: string]: number };
 };
-async function getKelData(
-  kelId: number,
-  path,
-  dataFilename
-): Promise<[Data, string]> {
+async function getKelData(kelId: number, path, dataFilename): Promise<Data> {
   let data: Data;
-  let dataJson: string = '';
   try {
-    dataJson = fs.readFileSync(dataFilename, 'utf8');
-    const x = JSON.parse(dataJson);
+    const x = JSON.parse(fs.readFileSync(dataFilename, 'utf8'));
     data = x.kpu ? x : ({ kpu: x as KpuData } as Data);
   } catch (e) {
     data = { kpu: {} as KpuData } as Data;
   }
 
-  const p = data.res && data.res.progress;
-  if (p && p.proses === p.total) return [null, null];
+  if (pendingOnly) {
+    const p = data.res && data.res.progress;
+    if (p && p.proses === p.total) return null;
+  }
 
   if (!data.wil) {
     const url = getPathUrlPrefix(KPU_WIL, path) + '.json';
@@ -69,12 +79,64 @@ async function getKelData(
 
   data.uploaded = data.uploaded || {};
 
-  return [data, dataJson];
+  return data;
+}
+
+function getSum(node: KpuData) {
+  const sum = {} as SumMap;
+  for (const cid of Object.keys(node || {})) {
+    const data = node[cid];
+    for (const key of Object.keys(data)) {
+      if (!(key in SUM_KEY)) throw new Error();
+      sum[key] = (sum[key] || 0) + data[key];
+    }
+  }
+  return sum;
+}
+
+async function getKpuFromDb(kelId) {
+  const h = H[kelId] as HierarchyNode;
+  const ids = h.parentIds.concat(kelId);
+  const vals = ids.map(id => rtdb.ref(`k/${id}`).once('value'));
+  return (await Promise.all(vals)).map(s => s.val() as KpuData);
+}
+
+function getDelta(oldSum: SumMap, newSum: SumMap) {
+  const delta = {} as SumMap;
+  for (const key of Object.keys(newSum)) {
+    if (!(key in SUM_KEY)) throw new Error();
+    delta[key] = (newSum[key] || 0) - (oldSum[key] || 0);
+  }
+  for (const key of Object.keys(oldSum)) {
+    if (!newSum.hasOwnProperty(key)) throw new Error();
+  }
+  return delta;
+}
+
+async function updateKpuHie(kelId, kpu: KpuData) {
+  const kpus = await getKpuFromDb(kelId);
+  const delta = getDelta(getSum(kpus[kpus.length - 1]), getSum(kpu));
+
+  const h = H[kelId] as HierarchyNode;
+  const ids = h.parentIds.concat(kelId);
+  for (let i = kpus.length - 2; i >= 0; i--) {
+    const data = (kpus[i] = kpus[i] || {});
+    const cid = ids[i + 1];
+    const dataSum = (data[cid] = data[cid] || ({} as SumMap));
+    for (const key of Object.keys(delta)) {
+      dataSum[key] = (dataSum[key] || 0) + delta[key];
+    }
+  }
+  kpus[kpus.length - 1] = kpu;
+
+  if (ids.length !== kpus.length) throw new Error();
+  await Promise.all(ids.map((id, i) => rtdb.ref(`k/${id}`).set(kpus[i])));
 }
 
 async function kpuUploadKel(kelId: number, path) {
   const dataFilename = `${KPU_CACHE_PATH}/data/${kelId}.json`;
-  const [data, dataJson] = await getKelData(kelId, path, dataFilename);
+  const data = await getKelData(kelId, path, dataFilename);
+  if (!pendingOnly && !data) throw new Error();
   if (!data || !Object.keys(data.img).length) return;
 
   const dir = KPU_CACHE_PATH + `/${kelId}`;
@@ -125,9 +187,16 @@ async function kpuUploadKel(kelId: number, path) {
       const u = `https://pemilu2019.kpu.go.id/img/c/${a}/${b}/${imageId}/${fn}`;
       const filename = dir + `/${fn}`;
       const runUpload = async () => {
-        if (!fs.existsSync(filename)) await download(u, filename);
-        await kpuUploadImage(KPU_SCAN_UID, kelId, tpsNo, filename);
-        data.uploaded[fn] = 1;
+        if (isOffline) {
+          if (fs.existsSync(filename)) {
+            await kpuUploadImage(KPU_SCAN_UID, kelId, tpsNo, filename);
+            data.uploaded[fn] = 1;
+          }
+        } else {
+          if (!fs.existsSync(filename)) await download(u, filename);
+          await kpuUploadImage(KPU_SCAN_UID, kelId, tpsNo, filename);
+          data.uploaded[fn] = 1;
+        }
       };
 
       promises.push(
@@ -147,9 +216,11 @@ async function kpuUploadKel(kelId: number, path) {
   await Promise.all(promises);
 
   data.kpu = kpu;
-  const newDataJson = JSON.stringify(data, null, 2);
-  if (dataJson !== newDataJson) fs.writeFileSync(dataFilename, newDataJson);
-  if (ada && !same) await fsdb.doc(FsPath.kpu(kelId)).set(kpu);
+  fs.writeFileSync(dataFilename, JSON.stringify(data, null, 2));
+  if (ada && !same) {
+    await fsdb.doc(FsPath.kpu(kelId)).set(kpu);
+    await updateKpuHie(kelId, kpu);
+  }
 }
 
 async function continuousKpuUpload(concurrency: number) {
@@ -163,7 +234,7 @@ async function continuousKpuUpload(concurrency: number) {
     }
   });
 
-  let initialIdx = 30000;
+  let initialIdx = 0;
   while (!isShutdown) {
     const arr = Object.keys(kpuH).sort((a, b) => +a - +b);
     console.log('Total Kels', arr.length);
@@ -190,5 +261,9 @@ async function continuousKpuUpload(concurrency: number) {
     console.log('ALL done');
   }
   unsub();
+  console.log('Unsubscribed');
+  await rtdb.app.delete();
+  console.log('rtdb disconnected');
 }
+
 continuousKpuUpload(3).catch(console.error);

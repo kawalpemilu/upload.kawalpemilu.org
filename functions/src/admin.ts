@@ -11,7 +11,8 @@ import {
   Aggregate,
   TpsAggregate,
   toChild,
-  HierarchyNode
+  HierarchyNode,
+  KpuData
 } from 'shared';
 
 admin.initializeApp({
@@ -26,9 +27,15 @@ const readFileAsync = util.promisify(fs.readFile);
 const appendFileAsync = util.promisify(fs.appendFile);
 
 const fsdb = admin.firestore();
+const rtdb = admin.database();
 
 // In memory database containing the aggregates of all children.
 let h: { [key: string]: { [key: string]: Aggregate } } = {};
+
+// In memory cache of KPU data.
+const KPU_CACHE_TIMEOUT = 5 * 60 * 60 * 1000;
+const k: { [kelId: string]: KpuData } = {};
+const kExpireTs: { [kelId: string]: number } = {};
 
 const CHILDREN_STALENESS_MS = 1 * 60 * 1000;
 const dirtyKelId: { [kelId: string]: NodeJS.Timer } = {};
@@ -249,6 +256,22 @@ function recomputeH(id: number, depth: number) {
   return all;
 }
 
+async function getKpu(kelId: number) {
+  const ts = Date.now();
+  const expireTs = kExpireTs[kelId] || 0;
+  const expired = ts - expireTs > KPU_CACHE_TIMEOUT;
+  if (expired) {
+    const ref = rtdb.ref(`k/${kelId}`).once('value');
+    if (k[kelId]) {
+      ref.then(snap => (k[kelId] = snap.val())).catch(console.error);
+    } else {
+      k[kelId] = (await ref).val();
+    }
+    kExpireTs[kelId] = ts;
+  }
+  return k[kelId];
+}
+
 (async () => {
   process.setMaxListeners(50);
   h = JSON.parse(await readFileAsync('h.json', 'utf8'));
@@ -258,16 +281,19 @@ function recomputeH(id: number, depth: number) {
   process.on('SIGINT', async function() {
     console.log('Ctrl-C... do backup');
     await doBackup().catch(e => console.error(`fbackup failed: ${e.message}`));
+    console.log('Disconnecting rtdb');
+    await rtdb.app.delete().catch(console.error);
     console.log('Exiting...');
     process.exit(2);
   });
 
   const app = express();
   app.get('/api/c/:id', async (req, res) => {
-    const cid = req.params.id;
-    if (!H[cid]) return res.json({});
-    H[cid].data = h[cid] || {};
-    return res.json(H[cid]);
+    const kelId = req.params.id;
+    if (!H[kelId]) return res.json({});
+    H[kelId].data = h[kelId] || {};
+    H[kelId].kpu = await getKpu(kelId).catch(() => ({} as KpuData));
+    return res.json(H[kelId]);
   });
   const server = app.listen(8080, () => {
     const port = server.address().port;
