@@ -29,7 +29,8 @@ const h: { [key: string]: HierarchyNode } = {
     parentIds: [],
     parentNames: [],
     children: [],
-    data: {}
+    data: {},
+    kpu: {}
   }
 };
 
@@ -87,7 +88,8 @@ for (let i = 1; i < lines.length; i++) {
         parentIds: node.parentIds.slice(),
         parentNames: node.parentNames.slice(),
         children: [],
-        data: {}
+        data: {},
+        kpu: {}
       };
       h[cid].parentIds.push(node.id);
       h[cid].parentNames.push(node.name);
