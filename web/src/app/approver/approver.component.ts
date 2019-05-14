@@ -21,7 +21,8 @@ import {
   USER_ROLE,
   KPU_SCAN_UID,
   KpuData,
-  LEMBAR
+  LEMBAR,
+  C1Form
 } from 'shared';
 import { startWith, take, distinctUntilChanged } from 'rxjs/operators';
 import { AngularFirestore } from '@angular/fire/firestore';
@@ -351,6 +352,11 @@ export class ApproverComponent implements OnInit, OnDestroy {
     }
     this.isLoading = false;
     trace.stop();
+  }
+
+  skipDulu() {
+    this.tpsData.images[this.imageId].c1 = {} as C1Form;
+    this.digitizeNextImage();
   }
 
   setFormType(type: FORM_TYPE) {

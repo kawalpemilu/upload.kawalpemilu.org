@@ -313,9 +313,10 @@ export class TpsComponent implements OnInit {
         alert(res.error);
         return;
       }
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
       await this.hie.update(kelId);
     } catch (e) {
+      alert(e.message);
       console.error(e);
     }
     this.isLoading = false;
