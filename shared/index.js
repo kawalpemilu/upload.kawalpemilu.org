@@ -280,9 +280,20 @@ exports.LEMBAR = (_b = {},
     _b[FORM_TYPE.MALICIOUS] = null,
     _b);
 function isValidHalaman(c1) {
-    return !!(exports.LEMBAR[c1.type] &&
-        exports.LEMBAR[c1.type][c1.plano] &&
-        exports.LEMBAR[c1.type][c1.plano][c1.halaman]);
+    if (c1.type === FORM_TYPE.PPWP || c1.type === FORM_TYPE.DPR) {
+        return !!(exports.LEMBAR[c1.type] &&
+            exports.LEMBAR[c1.type][c1.plano] &&
+            exports.LEMBAR[c1.type][c1.plano][c1.halaman]);
+    }
+    var hal = c1.halaman;
+    if (!hal || typeof hal !== 'string')
+        return false;
+    var h = hal.split('.');
+    if (!(+h[0] >= 1 && +h[0] <= 3))
+        return false;
+    if (h.length === 1)
+        return true;
+    return h.length === 2 && +h[1] >= 1 && +h[1] <= 20;
 }
 exports.isValidHalaman = isValidHalaman;
 function extractImageMetadata(m) {

@@ -22,13 +22,24 @@ export async function download(url, output): Promise<void> {
           reject(new Error(`Image too small: ${url}`));
           return;
         }
-        console.log('Downloaded', url);
+        // console.log('Downloaded', url);
         resolve();
       } catch (e) {
         reject(e);
       }
     });
   });
+}
+
+export async function downloadWithRetry(url, output) {
+  for (let i = 0; ; i++) {
+    try {
+      await download(url, output);
+      break;
+    } catch (e) {
+      if (i >= 3) throw e;
+    }
+  }
 }
 
 async function curl(url): Promise<string> {

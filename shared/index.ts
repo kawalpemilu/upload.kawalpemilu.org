@@ -392,11 +392,20 @@ export const LEMBAR: {
 };
 
 export function isValidHalaman(c1: C1Form) {
-  return !!(
-    LEMBAR[c1.type] &&
-    LEMBAR[c1.type][c1.plano] &&
-    LEMBAR[c1.type][c1.plano][c1.halaman]
-  );
+  if (c1.type === FORM_TYPE.PPWP || c1.type === FORM_TYPE.DPR) {
+    return !!(
+      LEMBAR[c1.type] &&
+      LEMBAR[c1.type][c1.plano] &&
+      LEMBAR[c1.type][c1.plano][c1.halaman]
+    );
+  }
+
+  const hal = c1.halaman;
+  if (!hal || typeof hal !== 'string') return false;
+  const h = hal.split('.');
+  if (!(+h[0] >= 1 && +h[0] <= 3)) return false;
+  if (h.length === 1) return true;
+  return h.length === 2 && +h[1] >= 1 && +h[1] <= 20;
 }
 
 export interface C1Form {
