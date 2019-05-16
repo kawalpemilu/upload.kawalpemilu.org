@@ -172,7 +172,7 @@ export declare const LEMBAR: {
         [key2 in IS_PLANO]: LembarSpec;
     };
 };
-export declare function isValidHalaman(hal: any): boolean;
+export declare function isValidHalaman(c1: C1Form): boolean;
 export interface C1Form {
     type: FORM_TYPE;
     plano: IS_PLANO;

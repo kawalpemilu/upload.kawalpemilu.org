@@ -447,7 +447,7 @@ function populateApprove() {
         return res.json({ error: 'Invalid form' });
       }
     }
-    if (b.c1.halaman !== '0' && !isValidHalaman(b.c1.halaman)) {
+    if (b.c1.halaman !== '0' && !isValidHalaman(b.c1)) {
       console.warn(`Invalid halaman ${b.c1.halaman} for ${user.uid}`);
       return res.json({ error: 'Invalid halaman' });
     }

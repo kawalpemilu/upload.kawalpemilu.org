@@ -279,15 +279,10 @@ exports.LEMBAR = (_b = {},
     _b[FORM_TYPE.PEMANDANGAN] = null,
     _b[FORM_TYPE.MALICIOUS] = null,
     _b);
-function isValidHalaman(hal) {
-    if (!hal || typeof hal !== 'string')
-        return false;
-    var h = hal.split('.');
-    if (!(+h[0] >= 1 && +h[0] <= 3))
-        return false;
-    if (h.length === 1)
-        return true;
-    return h.length === 2 && +h[1] >= 1 && +h[1] <= 20;
+function isValidHalaman(c1) {
+    return !!(exports.LEMBAR[c1.type] &&
+        exports.LEMBAR[c1.type][c1.plano] &&
+        exports.LEMBAR[c1.type][c1.plano][c1.halaman]);
 }
 exports.isValidHalaman = isValidHalaman;
 function extractImageMetadata(m) {

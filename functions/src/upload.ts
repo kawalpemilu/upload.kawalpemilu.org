@@ -1,6 +1,7 @@
 import * as admin from 'firebase-admin';
 import * as request from 'request-promise';
 import * as fs from 'fs';
+import * as crypto from 'crypto';
 import { spawn } from 'child_process';
 
 import { UploadRequest, ImageMetadata, autoId, HierarchyNode, BAWASLU_UID } from 'shared';
@@ -159,4 +160,11 @@ export async function kpuUploadImage(uid, kelId, tpsNo, filename: string) {
   if (!res.ok) throw new Error(JSON.stringify(res, null, 2));
 
   console.log('uploaded', h.parentNames[1], h.name, kelId, tpsNo, filename);
+}
+
+export function md5(str) {
+  return crypto
+    .createHash('md5')
+    .update(str)
+    .digest('hex');
 }

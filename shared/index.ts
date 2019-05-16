@@ -391,12 +391,12 @@ export const LEMBAR: {
   [FORM_TYPE.MALICIOUS]: null
 };
 
-export function isValidHalaman(hal) {
-  if (!hal || typeof hal !== 'string') return false;
-  const h = hal.split('.');
-  if (!(+h[0] >= 1 && +h[0] <= 3)) return false;
-  if (h.length === 1) return true;
-  return h.length === 2 && +h[1] >= 1 && +h[1] <= 20;
+export function isValidHalaman(c1: C1Form) {
+  return !!(
+    LEMBAR[c1.type] &&
+    LEMBAR[c1.type][c1.plano] &&
+    LEMBAR[c1.type][c1.plano][c1.halaman]
+  );
 }
 
 export interface C1Form {

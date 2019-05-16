@@ -1,7 +1,6 @@
 import * as admin from 'firebase-admin';
 import * as request from 'request-promise';
 import * as fs from 'fs';
-import * as crypto from 'crypto';
 
 import {
   UploadRequest,
@@ -23,13 +22,6 @@ import { getPathUrlPrefix, getCached, KPU_API, KPU_CACHE_PATH, KPU_WIL } from '.
 const delay = (ms: number) => new Promise(_ => setTimeout(_, ms));
 
 const fsdb = admin.firestore();
-
-function md5(str) {
-  return crypto
-    .createHash('md5')
-    .update(str)
-    .digest('hex');
-}
 
 function makeRequest(kelId, tpsNo) {
   const imageId = `zzzzzzz${kelId}t${tpsNo}`;
