@@ -89,10 +89,12 @@ export class FotoComponent {
         }
         const uname = userService.user && userService.user.displayName;
         titleService.setTitle(`Foto ${uname} :: KPJS 2019`);
-        return Object.values(photosByTpsAndTpsNo).map(p => {
-          p.items = this.toCarousel(p.kelId, p.tpsNo, p.photos);
-          return p;
-        });
+        return Object.values(photosByTpsAndTpsNo)
+          .slice(0, 50)
+          .map(p => {
+            p.items = this.toCarousel(p.kelId, p.tpsNo, p.photos);
+            return p;
+          });
       }),
       shareReplay(1)
     );

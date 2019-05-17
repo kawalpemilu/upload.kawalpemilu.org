@@ -525,3 +525,5 @@ async function fixTpsCount() {
 // whoChangedRole().catch(console.error);
 // fixHierarchy().catch(console.error);
 // fixTpsCount().catch(console.error);
+
+console.log(Object.keys(H).map(i => +i).reduce((p, c) => Math.max(p, c), 0));

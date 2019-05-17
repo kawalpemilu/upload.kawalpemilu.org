@@ -335,6 +335,22 @@ function populateKelName() {
   };
 }
 
+async function uploadPhotoWithRetry(p: UploadRequest, req) {
+  for (let i = 1; ; i++) {
+    try {
+      return await uploadPhoto(p, req);
+    } catch (e) {
+      if (e.message.toLowerCase().indexOf('please try again') && i <= 3) {
+        await delay(i * 1000);
+        continue;
+      }
+      const user = req.user as admin.auth.DecodedIdToken;
+      console.error(`Error Upload Photo ${user.uid}`, p, e);
+      return e.message;
+    }
+  }
+}
+
 async function uploadPhoto(p: UploadRequest, req) {
   const user = req.user as admin.auth.DecodedIdToken;
   const ts = p.ts;
@@ -400,10 +416,7 @@ app.post(
   async (req: any, res) => {
     const user = req.user as admin.auth.DecodedIdToken;
     const p = req.parsedBody as UploadRequest;
-    const ok = await uploadPhoto(p, req).catch(e => {
-      console.error(`DB error ${user.uid}`, e);
-      return `Database error`;
-    });
+    const ok = await uploadPhotoWithRetry(p, req);
     if (ok !== true) {
       console.error(`Upload failed ${user.uid}: ${ok}`, p);
       return res.json({ error: ok });
@@ -617,7 +630,7 @@ app.post(
         c1: null,
         sum: null
       };
-      const oku = await uploadPhoto(copy, req).catch(() => `Database error`);
+      const oku = await uploadPhotoWithRetry(copy, req);
       if (oku !== true) {
         console.debug(`Error move copy ${user.uid} : ${oku}`);
         return res.json({ error: oku });
@@ -805,7 +818,7 @@ app.post(
         const tps = (await t.get(tRef)).data() as TpsData;
         const imageId = Object.keys(tps.images).find(i => {
           const c1 = tps.images[i].c1;
-          return c1.type === FORM_TYPE.PPWP && c1.halaman === '2';
+          return c1 && c1.type === FORM_TYPE.PPWP && c1.halaman === '2';
         });
         if (!imageId) return 'no janggal image';
         const uRef = fsdb.doc(FsPath.upserts(imageId));
