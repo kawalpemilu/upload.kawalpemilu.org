@@ -405,7 +405,7 @@ app.post(
       return `Database error`;
     });
     if (ok !== true) {
-      console.error(`Upload failed ${user.uid}: ${ok}`);
+      console.error(`Upload failed ${user.uid}: ${ok}`, p);
       return res.json({ error: ok });
     }
     return res.json({ ok: true });
@@ -428,13 +428,13 @@ function populateApprove() {
       kelName: b.kelName
     } as ApproveRequest;
     if (!b || !isValidImageId(b.imageId)) {
-      console.warn(`Invalid imageId ${b.imageId} for user ${user.uid}`);
+      console.warn(`Invalid imageId ${b.imageId} for user ${user.uid}`, b);
       return res.json({ error: 'Invalid imageId' });
     }
     a.imageId = b.imageId;
 
     if (!b.c1 || !FORM_TYPE[b.c1.type]) {
-      console.warn(`Invalid form ${JSON.stringify(b.c1)} for ${user.uid}`);
+      console.warn(`Invalid form ${JSON.stringify(b.c1)} for ${user.uid}`, b);
       return res.json({ error: 'Invalid form' });
     }
     if (
@@ -461,12 +461,12 @@ function populateApprove() {
     a.sum = {} as SumMap;
     for (const key in b.sum) {
       if (!SUM_KEY[key]) {
-        console.error(`Sum key invalid ${user.uid}`);
+        console.error(`Sum key invalid ${user.uid}`, b);
         return res.json({ error: 'Invalid sum key' });
       }
       const sum = b.sum[key];
       if (typeof sum !== 'number' || sum < 0 || sum > 3000) {
-        console.error(`Sum ${sum} out of range ${user.uid}`);
+        console.error(`Sum ${sum} out of range ${user.uid}`, b);
         return res.json({ error: 'Invalid sum range' });
       }
       a.sum[key] = sum;
@@ -476,74 +476,84 @@ function populateApprove() {
   };
 }
 
+async function approveWithRetry(a: ApproveRequest, ua, ip, ts, user) {
+  for (let i = 1; ; i++) {
+    try {
+      return await approve(a, ua, ip, ts, user);
+    } catch (e) {
+      if (e.message.toLowerCase().indexOf('please try again') && i <= 3) {
+        await delay(i * 1000);
+        continue;
+      }
+      console.error(`Error Approve ${user.uid}`, a, e);
+      return e.message;
+    }
+  }
+}
+
 async function approve(a: ApproveRequest, ua, ip, ts, user) {
   const uRef = fsdb.doc(FsPath.upserts(a.imageId));
   const rRef = fsdb.doc(FsPath.relawan(user.uid));
   const rpRef = fsdb.doc(FsPath.relawanPhoto(user.uid));
-  return await fsdb
-    .runTransaction(async t => {
-      const r = (await t.get(rRef)).data() as Relawan;
-      if (!r || r.profile.role < USER_ROLE.MODERATOR) return 'Not Authorized';
-      const rp = await getRelawanPhotos(t, rpRef, user.uid);
-      rp.profile = r.profile;
-      rp.reviewCount = (rp.reviewCount || 0) + 1;
+  return await fsdb.runTransaction(async t => {
+    const r = (await t.get(rRef)).data() as Relawan;
+    if (!r || r.profile.role < USER_ROLE.MODERATOR) return 'Not Authorized';
+    const rp = await getRelawanPhotos(t, rpRef, user.uid);
+    rp.profile = r.profile;
+    rp.reviewCount = (rp.reviewCount || 0) + 1;
 
-      const u = (await t.get(uRef)).data() as Upsert;
-      if (!u) return 'No Upsert';
-      if (r.profile.role < USER_ROLE.ADMIN && u.reviewer)
-        return 'Already approved';
+    const u = (await t.get(uRef)).data() as Upsert;
+    if (!u) return 'No Upsert';
+    if (r.profile.role < USER_ROLE.ADMIN && u.reviewer)
+      return 'Already approved';
 
-      const self = u.uploader.uid === user.uid;
-      const pRef = self ? null : fsdb.doc(FsPath.relawanPhoto(u.uploader.uid));
-      const urp = self ? rp : ((await t.get(pRef)).data() as RelawanPhotos);
-      if (!urp) return 'No relawan photo';
-      const photo = urp.uploads.find(p => p.imageId === a.imageId);
-      // if (
-      //   !photo &&
-      //   urp.profile.uid !== KPU_SCAN_UID &&
-      //   urp.profile.uid !== BAWASLU_UID
-      // )
-      //   return `No photo for ${a.imageId}`;
+    const self = u.uploader.uid === user.uid;
+    const pRef = self ? null : fsdb.doc(FsPath.relawanPhoto(u.uploader.uid));
+    const urp = self ? rp : ((await t.get(pRef)).data() as RelawanPhotos);
+    if (!urp) return 'No relawan photo';
+    const photo = urp.uploads.find(p => p.imageId === a.imageId);
+    // if (
+    //   !photo &&
+    //   urp.profile.uid !== KPU_SCAN_UID &&
+    //   urp.profile.uid !== BAWASLU_UID
+    // )
+    //   return `No photo for ${a.imageId}`;
 
-      const tRef = fsdb.doc(FsPath.tps(u.request.kelId, u.request.tpsNo));
-      const tps = (await t.get(tRef)).data() as TpsData;
-      if (!tps) return 'No TPS';
+    const tRef = fsdb.doc(FsPath.tps(u.request.kelId, u.request.tpsNo));
+    const tps = (await t.get(tRef)).data() as TpsData;
+    if (!tps) return 'No TPS';
 
-      const img = tps.images[a.imageId];
-      if (!img) return 'No Image';
+    const img = tps.images[a.imageId];
+    if (!img) return 'No Image';
 
-      const asum = JSON.parse(JSON.stringify(a.sum));
-      for (const key of Object.keys(img.sum || {})) {
-        if (!a.sum.hasOwnProperty(key)) {
-          a.sum[key] = 0;
-        }
+    const asum = JSON.parse(JSON.stringify(a.sum));
+    for (const key of Object.keys(img.sum || {})) {
+      if (!a.sum.hasOwnProperty(key)) {
+        a.sum[key] = 0;
       }
+    }
 
-      img.c1 = a.c1;
-      img.sum = a.sum;
-      img.sum.pending = 0;
+    img.c1 = a.c1;
+    img.sum = a.sum;
+    img.sum.pending = 0;
 
-      u.reviewer = img.reviewer = { ...r.profile, ts, ua, ip };
-      u.action = computeAction(tps, u.request.tpsNo);
-      // @ts-ignore
-      u.done = admin.firestore.FieldValue.increment(-1);
-      img.sum = asum;
-      if (photo) {
-        photo.c1 = img.c1;
-        photo.sum = img.sum;
-        if (pRef) {
-          t.update(pRef, urp);
-        }
+    u.reviewer = img.reviewer = { ...r.profile, ts, ua, ip };
+    u.action = computeAction(tps, u.request.tpsNo);
+    // @ts-ignore
+    u.done = admin.firestore.FieldValue.increment(-1);
+    img.sum = asum;
+    if (photo) {
+      photo.c1 = img.c1;
+      photo.sum = img.sum;
+      if (pRef) {
+        t.update(pRef, urp);
       }
-      t.set(rpRef, rp);
-      t.update(uRef, u);
-      t.update(tRef, tps);
-      return true;
-    })
-    .catch(e => {
-      console.error(`DB error approve ${user.uid}`, a, e);
-      return `Database error`;
-    });
+    }
+    t.set(rpRef, rp);
+    t.update(uRef, u);
+    t.update(tRef, tps);
+    return true;
+  });
 }
 
 app.post(
@@ -620,7 +630,7 @@ app.post(
         sum: a.sum,
         c1: a.c1
       };
-      const oka = await approve(apr, ua, ip, Date.now(), user);
+      const oka = await approveWithRetry(apr, ua, ip, Date.now(), user);
       if (oka !== true) {
         console.debug(`Error move approve ${user.uid} : ${oka}`);
         return res.json({ error: oka });
@@ -629,7 +639,7 @@ app.post(
       a.sum = {} as SumMap;
     }
 
-    const ok = await approve(a, ua, ip, Date.now(), user);
+    const ok = await approveWithRetry(a, ua, ip, Date.now(), user);
     if (ok !== true) {
       if (!ok.startsWith('Already')) {
         console.warn(`Error approve ${user.uid} : ${ok}`);
@@ -826,12 +836,12 @@ app.post(
         return true;
       })
       .catch(e => {
-        console.error(`DB lapor kpu ${user.uid}`, e);
+        console.error(`DB lapor kpu ${user.uid}`, e, p);
         return `Database error`;
       });
 
     if (ok !== true) {
-      console.error(`Lapor KPU ${user.uid} : ${ok}`);
+      console.error(`Lapor KPU ${user.uid} : ${ok}`, p);
       return res.json({ error: ok });
     }
 
