@@ -713,10 +713,11 @@ app.post(
 
         const rp = await getRelawanPhotos(t, rpRef, user.uid);
         rp.reports = rp.reports || [];
-        rp.reports.unshift(p);
-        rp.reportCount = rp.reports.length;
+        rp.reportCount = (rp.reportCount || 0) + 1;
         const maxReports = rp.maxReportCount || MAX_REPORT_ERRORS;
-        if (rp.reportCount > maxReports) return 'too many reports';
+        if (rp.reportCount < maxReports) {
+          rp.reports.unshift(p);
+        }
 
         const reporter: UpsertProfile = { ...rp.profile, ts, ua, ip };
 
@@ -803,10 +804,11 @@ app.post(
 
         const rp = await getRelawanPhotos(t, rpRef, user.uid);
         rp.laporKpus = rp.laporKpus || [];
-        rp.laporKpus.unshift(p);
-        rp.laporKpuCount = rp.laporKpus.length;
+        rp.laporKpuCount = (rp.laporKpuCount || 0) + 1;
         const maxLaporKpu = rp.maxLaporKpuCount || MAX_LAPOR_KPU;
-        if (rp.laporKpuCount > maxLaporKpu) return 'too many lapor KPU';
+        if (rp.laporKpuCount < maxLaporKpu) {
+          rp.laporKpus.unshift(p);
+        }
 
         tps.laporKpu = true;
         u.reporter = { ...rp.profile, ts: p.ts, ua, ip };

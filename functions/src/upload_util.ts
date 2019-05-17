@@ -7,7 +7,7 @@ export const KPU_API = 'https://pemilu2019.kpu.go.id/static/json/hhcw/ppwp';
 export const KPU_WIL = 'https://pemilu2019.kpu.go.id/static/json/wilayah';
 export const KPU_CACHE_PATH = '/Users/felixhalim/Projects/kawal-c1/kpu/cache';
 
-export async function download(url, output): Promise<void> {
+async function download(url, output): Promise<void> {
   return new Promise((resolve, reject) => {
     const params = ['-s', '--proxy', proxy, '-m', 180, '--output', output, url];
     const c = spawn('curl', params);
