@@ -242,7 +242,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
       if (i.uploader.uid === KPU_SCAN_UID) {
         // @ts-ignore
         i.tipe = FORM_TYPE.PPWP + ';' + IS_PLANO.NO + ';' + lembar + ';kpu';
-        lembar = lembar === 1 ? 2 : 1;
+        lembar = 2;
       }
       this.setExistingTipe(i);
     }

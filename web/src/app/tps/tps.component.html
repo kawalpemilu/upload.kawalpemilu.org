@@ -149,9 +149,10 @@
             <ng-container *ngIf="details[tps.tpsNo] as details$; else fotopub">
               <ng-container *ngIf="details$ | async as detail; else loadTps">
                 <app-carousel
-                  [height]="425"
+                  [height]="475"
                   [photos]="detail"
                   (edited)="digitize[tps.tpsNo] = $event.imageId"
+                  (changed)="refreshDetail(state.id, tps.tpsNo)"
                 ></app-carousel>
               </ng-container>
               <ng-template #loadTps>

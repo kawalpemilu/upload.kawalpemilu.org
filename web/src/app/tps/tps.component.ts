@@ -250,8 +250,12 @@ export class TpsComponent implements OnInit {
       this.details[tpsNo] = null;
       return;
     }
+    this.refreshDetail(state.id, tpsNo);
+  }
+
+  refreshDetail(kelId, tpsNo) {
     this.details[tpsNo] = this.fsdb
-      .doc<TpsData>(FsPath.tps(state.id, tpsNo))
+      .doc<TpsData>(FsPath.tps(kelId, tpsNo))
       .valueChanges()
       .pipe(
         map(tps => {
@@ -270,7 +274,7 @@ export class TpsComponent implements OnInit {
           for (const imageId of imageIds) {
             const i = tps.images[imageId];
             arr.push({
-              kelId: state.id,
+              kelId,
               tpsNo,
               c1: i.c1,
               meta: i.meta,

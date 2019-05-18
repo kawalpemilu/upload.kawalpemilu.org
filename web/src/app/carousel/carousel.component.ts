@@ -16,7 +16,8 @@ import {
   ImageMetadata,
   ErrorReports,
   PublicProfile,
-  USER_ROLE
+  USER_ROLE,
+  ApproveRequest
 } from 'shared';
 import {
   MatBottomSheetRef,
@@ -24,6 +25,7 @@ import {
   MAT_BOTTOM_SHEET_DATA
 } from '@angular/material';
 import { UserService } from '../user.service';
+import { ApiService } from '../api.service';
 
 export interface CarouselItem {
   kelId: number;
@@ -220,6 +222,17 @@ export class BottomSheetErrorComponent {
                         Edit &nbsp;
                         <mat-icon>edit</mat-icon>
                       </button>
+
+                      <p></p>
+                      <button
+                        mat-raised-button
+                        color="warn"
+                        #ot
+                        (click)="ot.disabled = true; others(p)"
+                      >
+                        OTHER
+                        <mat-icon>delete</mat-icon>
+                      </button>
                     </td>
                   </tr>
                 </ng-container>
@@ -238,6 +251,7 @@ export class CarouselComponent implements OnInit {
   @Input() lapor = false;
 
   @Output() edited = new EventEmitter();
+  @Output() changed = new EventEmitter();
 
   USER_ROLE = USER_ROLE;
   IS_PLANO = IS_PLANO;
@@ -248,6 +262,7 @@ export class CarouselComponent implements OnInit {
 
   constructor(
     private bottomSheet: MatBottomSheet,
+    private api: ApiService,
     public userService: UserService
   ) {}
 
@@ -259,5 +274,34 @@ export class CarouselComponent implements OnInit {
 
   edit(p: CarouselItem) {
     this.edited.next(p);
+  }
+
+  async others(p: CarouselItem) {
+    try {
+      const user = this.userService.user;
+      const body: ApproveRequest = {
+        kelId: p.kelId,
+        kelName: '',
+        tpsNo: p.tpsNo,
+        sum: {} as SumMap,
+        imageId: p.imageId,
+        c1: {
+          type: FORM_TYPE.OTHERS,
+          plano: null,
+          halaman: '0'
+        }
+      };
+      const res: any = await this.api.post(user, `approve`, body);
+      if (res.ok) {
+        console.log('ok');
+        this.changed.next(p);
+      } else {
+        console.error(res);
+        alert(JSON.stringify(res));
+      }
+    } catch (e) {
+      console.error(e.message);
+      alert(JSON.stringify(e.message));
+    }
   }
 }
