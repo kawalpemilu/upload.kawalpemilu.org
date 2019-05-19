@@ -264,10 +264,12 @@ export class TpsComponent implements OnInit {
             (a, b) => {
               const ia = tps.images[a];
               const ib = tps.images[b];
-              const ta = (ia.c1 && ia.c1.type * 10 + ia.c1.plano) || 0;
-              const tb = (ib.c1 && ib.c1.type * 10 + ib.c1.plano) || 0;
-              const va = ta * 1e14 + ia.uploader.ts;
-              const vb = tb * 1e14 + ib.uploader.ts;
+              const ca = ia.c1;
+              const cb = ib.c1;
+              const ta = ca && (ca.type * 10 + ca.plano) * 10 + +ca.halaman;
+              const tb = cb && (cb.type * 10 + cb.plano) * 10 + +cb.halaman;
+              const va = (ta || 0) * 1e14 + ia.uploader.ts;
+              const vb = (tb || 0) * 1e14 + ib.uploader.ts;
               return va - vb;
             }
           );

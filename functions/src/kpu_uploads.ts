@@ -12,14 +12,14 @@ import {
 
 import { H } from './hierarchy';
 import { kpuH } from './kpuh';
-import { kpuUploadImage } from './upload';
+import { kpuUploadImage, md5 } from './upload';
 import {
   getPathUrlPrefix,
   getCached,
   KPU_WIL,
   KPU_CACHE_PATH,
   KPU_API,
-  download
+  downloadWithRetry
 } from './upload_util';
 
 const fsdb = admin.firestore();
@@ -29,7 +29,7 @@ const rtdb = admin.database();
 const pendingOnly = true;
 
 // Attempt to fetch remote data.
-const isOffline = false;
+const isOnline = true;
 
 // Signal to terminate the sync.
 let isShutdown = false;
@@ -41,7 +41,7 @@ type Data = {
   wil: any;
   res: any;
   img: { [imageId: string]: any };
-  uploaded: { [filename: string]: number };
+  uploaded: { [filename: string]: string };
 };
 async function getKelData(kelId: number, path, dataFilename): Promise<Data> {
   let data: Data;
@@ -63,7 +63,7 @@ async function getKelData(kelId: number, path, dataFilename): Promise<Data> {
     data.wil = await getCached(url, cacheFn, () => false);
   }
 
-  if (!data.res || !data.img || !isOffline) {
+  if (!data.res || !data.img || isOnline) {
     data.res = await getCached(getPathUrlPrefix(KPU_API, path) + '.json');
     data.img = {} as { [imageId: string]: any };
     await Promise.all(
@@ -152,6 +152,8 @@ async function kpuUploadKel(kelId: number, path) {
   // redownload image yang broken dari kpu
   // https://upload.kawalpemilu.org/t/60729/2
   // prioritize https://docs.google.com/spreadsheets/d/1WtpO_qdqo8SiZLa9rJfm2gj6eaX9NS46D7oEVwLByKg
+  // - trace ppwp 3
+  // - expose relawan/kpu/bawaslu di API
 
   const kpu = {} as KpuData;
   let same = true;
@@ -183,22 +185,29 @@ async function kpuUploadKel(kelId: number, path) {
 
     for (const fn of res.images || []) {
       // TODO: query the actual fsdb to check if uploaded.
-      if (!fn || data.uploaded[fn]) continue;
+      if (!fn) continue;
+      if (data.uploaded[fn]) {
+        if ((data.uploaded[fn] + '').length === 32) {
+          continue;
+        }
+        console.log('invalid hash', fn, data.uploaded[fn]);
+      }
 
       const a = imageId.substring(0, 3);
       const b = imageId.substring(3, 6);
       const u = `https://pemilu2019.kpu.go.id/img/c/${a}/${b}/${imageId}/${fn}`;
       const filename = dir + `/${fn}`;
       const runUpload = async () => {
-        if (isOffline) {
-          if (fs.existsSync(filename)) {
+        if (isOnline && !fs.existsSync(filename))
+          await downloadWithRetry(u, filename);
+
+        if (fs.existsSync(filename)) {
+          const fnHash = md5(fs.readFileSync(filename, 'utf8'));
+          if (fnHash.length !== 32) throw new Error();
+          if (data.uploaded[fn] !== fnHash) {
             await kpuUploadImage(KPU_SCAN_UID, kelId, tpsNo, filename);
-            data.uploaded[fn] = 1;
+            data.uploaded[fn] = fnHash;
           }
-        } else {
-          if (!fs.existsSync(filename)) await download(u, filename);
-          await kpuUploadImage(KPU_SCAN_UID, kelId, tpsNo, filename);
-          data.uploaded[fn] = 1;
         }
       };
 
@@ -247,10 +256,10 @@ async function continuousKpuUpload(concurrency: number) {
     const run = async () => {
       while (arr_idx < arr.length && !isShutdown) {
         const idx = arr_idx++;
-        const id = arr[idx];
+        const id = +arr[idx];
         if (kpuH[id].depth !== 4) throw new Error();
         try {
-          await kpuUploadKel(+id, kpuH[id].path);
+          await kpuUploadKel(id, kpuH[id].path);
         } catch (e) {
           console.error('Kel Error', H[id].name, id, e);
         }

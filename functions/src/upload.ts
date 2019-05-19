@@ -4,7 +4,13 @@ import * as fs from 'fs';
 import * as crypto from 'crypto';
 import { spawn } from 'child_process';
 
-import { UploadRequest, ImageMetadata, autoId, HierarchyNode, BAWASLU_UID } from 'shared';
+import {
+  UploadRequest,
+  ImageMetadata,
+  autoId,
+  HierarchyNode,
+  BAWASLU_UID
+} from 'shared';
 import { H } from './hierarchy';
 
 admin.initializeApp({
@@ -66,6 +72,8 @@ async function reauthenticate(
   return user;
 }
 
+const renewUser$ = {};
+
 async function autoRenewIdToken(user: User) {
   if (!user.refreshToken) {
     console.log('setup user', user.uid);
@@ -80,15 +88,21 @@ async function autoRenewIdToken(user: User) {
   }
 
   if (user.expiresAt < Date.now() + 2 * 60 * 1000) {
-    console.log('refresh id token', user);
-    return await reauthenticate(
-      `https://securetoken.googleapis.com/v1/token`,
-      { grant_type: 'refresh_token', refresh_token: user.refreshToken },
-      user.uid,
-      'id_token',
-      'refresh_token',
-      'expires_in'
-    );
+    if (!renewUser$[user.uid]) {
+      console.log('Refresh id token', user.uid);
+      renewUser$[user.uid] = reauthenticate(
+        `https://securetoken.googleapis.com/v1/token`,
+        { grant_type: 'refresh_token', refresh_token: user.refreshToken },
+        user.uid,
+        'id_token',
+        'refresh_token',
+        'expires_in'
+      );
+      const newUser = await renewUser$[user.uid];
+      delete renewUser$[user.uid];
+      return newUser;
+    }
+    return await renewUser$[user.uid];
   }
 
   return user;
