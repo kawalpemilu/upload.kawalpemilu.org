@@ -5,7 +5,8 @@ import {
   FsPath,
   USER_ROLE,
   RelawanPhotos,
-  Upsert
+  Upsert,
+  isSuperAdmin
 } from 'shared';
 import { AngularFirestore, Query } from '@angular/fire/firestore';
 import { Observable, of, Subject, BehaviorSubject, combineLatest } from 'rxjs';
@@ -162,5 +163,9 @@ export class ProfileComponent implements OnInit {
         const dr4 = (y.claimer.dr4 || 0) - (x.claimer.dr4 || 0);
         return dr4 ? dr4 : x.claimedTs - y.claimedTs;
       });
+  }
+
+  isSuper() {
+    return isSuperAdmin(this.userService.user.uid);
   }
 }

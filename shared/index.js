@@ -581,3 +581,10 @@ var QuotaSpecs = /** @class */ (function () {
     return QuotaSpecs;
 }());
 exports.QuotaSpecs = QuotaSpecs;
+function isSuperAdmin(uid) {
+    return (uid === '5F1DwscbfSUFVoEmZACJKXZFHgk2' ||
+        uid === 'RPvv6e5Udseed9nY4usyhFpJXhJ3' ||
+        uid === 'aBttjSmH0hVbxi3rpxpDYKfgg5z1' ||
+        uid === 'GoDw4BKzhYhLbaViofhpncfWOpM2');
+}
+exports.isSuperAdmin = isSuperAdmin;

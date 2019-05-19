@@ -223,16 +223,17 @@ export class BottomSheetErrorComponent {
                         <mat-icon>edit</mat-icon>
                       </button>
 
-                      <p></p>
-                      <button
-                        mat-raised-button
-                        color="warn"
-                        #ot
-                        (click)="ot.disabled = true; others(p)"
-                      >
-                        OTHER
-                        <mat-icon>delete</mat-icon>
-                      </button>
+                      <p *ngIf="p.c1.type !== FORM_TYPE.OTHERS">
+                        <button
+                          mat-raised-button
+                          color="warn"
+                          #ot
+                          (click)="ot.disabled = true; others(p)"
+                        >
+                          OTHER
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </p>
                     </td>
                   </tr>
                 </ng-container>

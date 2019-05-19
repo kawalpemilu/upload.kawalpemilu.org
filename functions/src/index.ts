@@ -45,7 +45,8 @@ import {
   KPU_SCAN_UID,
   BAWASLU_UID,
   LaporKpuRequest,
-  MAX_LAPOR_KPU
+  MAX_LAPOR_KPU,
+  isSuperAdmin
 } from 'shared';
 
 const t1 = Date.now();
@@ -1137,6 +1138,8 @@ async function changeRole(
       if (!target) return `No relawan for ${tuid}`;
       if (target.profile.role === role) return `No change`;
       if (target.profile.role === USER_ROLE.ADMIN) return `Demoting admin`;
+      else if (!isSuperAdmin(actorUid) && role === USER_ROLE.ADMIN)
+        return `Only super admin can promote to admin`;
 
       if (target.referrer) {
         const referrerRef = fsdb.doc(FsPath.relawan(target.referrer.uid));

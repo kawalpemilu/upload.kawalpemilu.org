@@ -1,4 +1,4 @@
-<ng-container *ngIf="(userService.relawan$ | async) as curRel">
+<ng-container *ngIf="userService.relawan$ | async as curRel">
   <ng-container *ngIf="curRel.profile.role >= USER_ROLE.ADMIN">
     <mat-form-field style="width: 225px">
       <input
@@ -36,7 +36,7 @@
       </mat-radio-group>
     </p>
 
-    <ng-container *ngIf="(relawans$ | async) as arr">
+    <ng-container *ngIf="relawans$ | async as arr">
       <table
         *ngIf="showResult"
         class="alternating"
@@ -75,7 +75,7 @@
     <p><mat-spinner></mat-spinner></p>
   </ng-template>
 
-  <ng-container *ngIf="(relawan$ | async) as relawan; else loading">
+  <ng-container *ngIf="relawan$ | async as relawan; else loading">
     <table style="margin-top: 10px">
       <tr>
         <td><img [src]="relawan.profile.pic" height="70" /></td>
@@ -139,7 +139,7 @@
           </ng-template>
         </mat-radio-button>
         &nbsp;
-        <mat-radio-button [value]="USER_ROLE.ADMIN">
+        <mat-radio-button [value]="USER_ROLE.ADMIN" *ngIf="isSuper()">
           <b
             class="admin"
             *ngIf="relawan.profile.role == USER_ROLE.ADMIN; else notadmin"
@@ -184,7 +184,7 @@
         </ng-container>
       </mat-tab>
 
-      <ng-container *ngIf="(relawanPhotos$ | async) as relawanPhotos">
+      <ng-container *ngIf="relawanPhotos$ | async as relawanPhotos">
         <mat-tab label="Photos ({{ relawanPhotos.uploadCount }})">
           <p></p>
           <table
@@ -240,7 +240,7 @@
               <th width="300">Laporan</th>
             </tr>
 
-            <tr *ngFor="let r of (reviews$ | async); let i = index">
+            <tr *ngFor="let r of reviews$ | async; let i = index">
               <th>
                 {{ i + 1 }}
               </th>

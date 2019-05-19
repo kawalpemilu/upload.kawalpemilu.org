@@ -855,3 +855,12 @@ export class QuotaSpecs {
     return num * unit;
   }
 }
+
+export function isSuperAdmin(uid: string) {
+  return (
+    uid === '5F1DwscbfSUFVoEmZACJKXZFHgk2' ||
+    uid === 'RPvv6e5Udseed9nY4usyhFpJXhJ3' ||
+    uid === 'aBttjSmH0hVbxi3rpxpDYKfgg5z1' ||
+    uid === 'GoDw4BKzhYhLbaViofhpncfWOpM2'
+  );
+}

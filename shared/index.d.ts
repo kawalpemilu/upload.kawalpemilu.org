@@ -369,4 +369,5 @@ export declare class QuotaSpecs {
     request(quota: QuotaSegments, now: number): QuotaSegments;
     static getDurationMs(dur: string): number;
 }
+export declare function isSuperAdmin(uid: string): boolean;
 export {};
