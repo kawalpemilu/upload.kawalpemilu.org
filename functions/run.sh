@@ -38,4 +38,8 @@ tunnel)
     ssh -vND 12345 felix@qwords1.vps.kutu.nl
     ;;
 
+mv_upserts)
+    gsutil -m mv data/upserts_* gs://kawal-c1.appspot.com/upserts/
+    ;;
+
 esac

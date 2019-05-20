@@ -1,5 +1,8 @@
 import * as admin from 'firebase-admin';
 import * as fs from 'fs';
+
+const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+
 import { spawn } from 'child_process';
 
 import {
@@ -22,6 +25,11 @@ admin.initializeApp({
 });
 
 const fsdb = admin.firestore();
+const rtdb = admin.database();
+
+const hJson = JSON.parse(fs.readFileSync('h.json', 'utf8')) as {
+  [key: string]: { [key: string]: Aggregate };
+};
 
 async function curl(url): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -106,10 +114,6 @@ async function autofillKel(kelId: number, tpsNos: number[]) {
 }
 
 async function autofill() {
-  const hJson = JSON.parse(fs.readFileSync('h.json', 'utf8')) as {
-    [key: string]: { [key: string]: Aggregate };
-  };
-
   const arr = [];
   Object.keys(H).forEach(id => {
     const h = H[id] as HierarchyNode;
@@ -134,4 +138,77 @@ async function autofill() {
   }
 }
 
-autofill().catch(console.error);
+async function genCsv() {
+  const arr = [];
+  for (const kelId of Object.keys(H)) {
+    const h = H[kelId] as HierarchyNode;
+    if (h.depth !== 4) continue;
+
+    const ch = hJson[kelId];
+    if (!ch) continue;
+
+    // if (arr.length > 5) break;
+    console.log('processing', kelId, arr.length);
+
+    let kpu = null;
+
+    for (const [tpsNo] of h.children) {
+      const a = ch[tpsNo];
+      if (!a || tpsNo < 1) continue;
+      if (a.sum.pending) {
+        const tps = (await fsdb
+          .doc(FsPath.tps(+kelId, tpsNo))
+          .get()).data() as TpsData;
+        for (const imageId of Object.keys(tps.images)) {
+          const i = tps.images[imageId];
+          if (i.reviewer) continue;
+
+          if (!kpu) {
+            kpu = (await rtdb.ref(`k/${kelId}`).once('value')).val();
+            if (!kpu) {
+              console.log('missing KPU', kelId, kpu);
+              continue;
+            }
+          }
+
+          if (!i.meta['m']) {
+            console.log('no meta');
+            continue;
+          }
+
+          arr.push({
+            kelId,
+            tpsNo,
+            filename: i.meta['m'][0],
+            imageId,
+            imageUrl: i.url,
+            ...kpu[tpsNo]
+          });
+        }
+      }
+    }
+  }
+
+  const csvWriter = createCsvWriter({
+    path: 'bot.csv',
+    header: [
+      { id: 'kelId', title: 'kelId' },
+      { id: 'tpsNo', title: 'tpsNo' },
+      { id: 'filename', title: 'filename' },
+      { id: 'jum', title: 'jum' },
+      { id: 'pas1', title: 'pas1' },
+      { id: 'pas2', title: 'pas2' },
+      { id: 'sah', title: 'sah' },
+      { id: 'tSah', title: 'tSah' },
+      { id: 'imageId', title: 'imageId' },
+      { id: 'imageUrl', title: 'imageUrl' }
+    ]
+  });
+
+  await csvWriter.writeRecords(arr);
+
+  return rtdb.app.delete();
+}
+
+// autofill().catch(console.error);
+genCsv().catch(console.error);
