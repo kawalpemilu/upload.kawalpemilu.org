@@ -46,7 +46,8 @@ import {
   BAWASLU_UID,
   LaporKpuRequest,
   MAX_LAPOR_KPU,
-  isSuperAdmin
+  isSuperAdmin,
+  BOT_UID
 } from 'shared';
 
 const t1 = Date.now();
@@ -144,7 +145,11 @@ function rateLimitRequests() {
   return (req, res, next) => {
     if (!req.query.abracadabra) {
       const user = req.user as admin.auth.DecodedIdToken;
-      if (user.uid !== KPU_SCAN_UID && user.uid !== BAWASLU_UID) {
+      if (
+        user.uid !== KPU_SCAN_UID &&
+        user.uid !== BAWASLU_UID &&
+        user.uid !== BOT_UID
+      ) {
         quota[user.uid] = quota[user.uid] || {};
         if (!quotaSpecs.request(quota[user.uid], Date.now())) {
           console.warn(`User ${user.uid} is rate-limited: ${req.url}`);
@@ -1218,7 +1223,8 @@ exports.updateScoreboard = functions
       uploaders: [],
       reviewers: [],
       reporters: [],
-      referrals: []
+      referrals: [],
+      laporKpus: []
     };
 
     (await fsdb
@@ -1263,6 +1269,19 @@ exports.updateScoreboard = functions
     const tt3 = Date.now();
 
     (await fsdb
+      .collection(FsPath.relawanPhoto())
+      .orderBy('laporKpuCount', 'desc')
+      .limit(128)
+      .get()).forEach(snap => {
+      const r = snap.data() as RelawanPhotos;
+      s.laporKpus.push({
+        profile: r.profile,
+        laporKpuCount: r.laporKpuCount
+      });
+    });
+    const tt4 = Date.now();
+
+    (await fsdb
       .collection(FsPath.relawan())
       .orderBy('profile.dr4', 'desc')
       .limit(128)
@@ -1276,17 +1295,18 @@ exports.updateScoreboard = functions
           .reduce((p, cu) => p + 1, 0)
       });
     });
-    const tt4 = Date.now();
+    const tt5 = Date.now();
 
     await fsdb.doc(FsPath.scoreboard()).set(s);
-    const tt5 = Date.now();
+    const tt6 = Date.now();
     console.log(
       'Updated scoreboard',
       tt1 - tt0,
       tt2 - tt1,
       tt3 - tt2,
       tt4 - tt3,
-      tt5 - tt4
+      tt5 - tt4,
+      tt6 - tt5
     );
   });
 

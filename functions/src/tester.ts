@@ -516,6 +516,22 @@ async function fixTpsCount() {
   fs.writeFileSync(hieFn, `exports.H = ${JSON.stringify(H)};`);
 }
 
+async function laporKpuCount() {
+  const laporKpus = [];
+  (await fsdb
+    .collection(FsPath.relawanPhoto())
+    .orderBy('laporKpuCount', 'desc')
+    .limit(128)
+    .get()).forEach(snap => {
+    const r = snap.data() as RelawanPhotos;
+    laporKpus.push({
+      profile: r.profile,
+      laporKpuCount: r.laporKpuCount
+    });
+  });
+  console.log(JSON.stringify(laporKpus, null, 2));
+}
+
 // parallelUpload().catch(console.error);
 // loadTest().catch(console.error);
 // fixClaimersRole().catch(console.error);
@@ -526,4 +542,6 @@ async function fixTpsCount() {
 // fixHierarchy().catch(console.error);
 // fixTpsCount().catch(console.error);
 
-console.log(Object.keys(H).map(i => +i).reduce((p, c) => Math.max(p, c), 0));
+// console.log(Object.keys(H).map(i => +i).reduce((p, c) => Math.max(p, c), 0));
+
+laporKpuCount().catch(console.error);

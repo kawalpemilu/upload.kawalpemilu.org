@@ -210,5 +210,26 @@ async function genCsv() {
   return rtdb.app.delete();
 }
 
+async function totalDpt(){
+  const t = [0, 0];
+  for (const kelId of Object.keys(H)) {
+    const h = H[kelId] as HierarchyNode;
+    if (h.depth !== 4) continue;
+
+    const ch = hJson[kelId];
+
+    for (const [tpsNo, laki, pere] of h.children) {
+      t[0] += laki + pere;
+
+      const a = ch && ch[tpsNo];
+      if (tpsNo >= 1 && (!a || a.sum.pending)) {
+        t[1] += laki + pere;
+      }
+    }
+  }
+  console.log(t);
+}
+
 // autofill().catch(console.error);
-genCsv().catch(console.error);
+// genCsv().catch(console.error);
+// totalDpt().catch(console.error);
