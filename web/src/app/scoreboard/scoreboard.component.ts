@@ -108,7 +108,7 @@ import { USER_ROLE } from 'shared';
           </table>
         </mat-tab>
 
-        <mat-tab label="LaporKPU">
+        <mat-tab label="KupasJeruk">
           <table
             cellspacing="0"
             cellpadding="5"
