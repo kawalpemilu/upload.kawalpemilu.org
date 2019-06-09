@@ -49,11 +49,11 @@ a.link {
 }
 
 .content {
-  padding-bottom: 40px;
+  padding-bottom: 55px;
 }
 
 .sticky ~ .content {
-  padding-top: 40px;
+  padding-top: 55px;
 }
 
 .footer {

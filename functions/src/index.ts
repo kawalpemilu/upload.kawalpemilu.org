@@ -484,7 +484,7 @@ function populateApprove() {
         return res.json({ error: 'Invalid sum key' });
       }
       const sum = b.sum[key];
-      if (typeof sum !== 'number' || sum < 0 || sum > 3000) {
+      if (typeof sum !== 'number' || sum < 0 || sum > 4000) {
         console.error(`Sum ${sum} out of range ${user.uid}`, b);
         return res.json({ error: 'Invalid sum range' });
       }

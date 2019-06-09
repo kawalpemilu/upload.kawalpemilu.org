@@ -9,7 +9,7 @@ export const KPU_CACHE_PATH = '/Users/felixhalim/Projects/kawal-c1/kpu/cache';
 
 async function download(url, output): Promise<void> {
   return new Promise((resolve, reject) => {
-    const params = ['-s', '--proxy', proxy, '-m', 180, '--output', output, url];
+    const params = ['-s', '--proxy', proxy, '-m', 180, '--output', output, encodeURI(url)];
     const c = spawn('curl', params);
     c.on('close', code => {
       if (code) {
@@ -60,7 +60,7 @@ async function getWithRetry(url) {
       return await curl(url);
     } catch (e) {
       if (i >= 3) {
-        console.error('get retry', i, e.message);
+        console.error('get retry', i, e.message, url);
         return JSON.stringify({ table: {}, images: [] });
       }
     }

@@ -44,7 +44,7 @@ export class HierarchyComponent implements OnInit, OnDestroy {
     '#605170' // dark purple
   ];
 
-  ROW_HEIGHT = 40;
+  ROW_HEIGHT = 55;
   paddingTemp;
   state$: Observable<HierarchyNode>;
   height: number;
@@ -109,10 +109,16 @@ export class HierarchyComponent implements OnInit, OnDestroy {
         this.onWindowResize();
         // @ts-ignore
         const sum = (state.sum = {});
+        // @ts-ignore
+        const kpuSum = (state.kpuSum = {});
         for (const c of state.children) {
           const d = state.data[c[0]];
           for (const key of Object.keys(SUM_KEY)) {
             sum[key] = (sum[key] || 0) + ((d && d.sum && d.sum[key]) || 0);
+          }
+          const k = state.kpu && state.kpu[c[0]];
+          for (const key of Object.keys(SUM_KEY)) {
+            kpuSum[key] = (kpuSum[key] || 0) + ((k && k[key]) || 0);
           }
         }
         return state;

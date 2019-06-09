@@ -76,6 +76,13 @@
         }}%
         <br />
         <span style="font-size: x-small">{{ state.sum.pas1 | number }}</span>
+        <br />
+        <span
+          style="font-size: x-small"
+          *ngIf="state.kpuSum.pas1 - state.sum.pas1 as dk"
+          [style.color]="dk > 0 ? 'green' : 'red'"
+          >{{ dk | number }}</span
+        >
       </th>
 
       <th
@@ -89,6 +96,13 @@
         }}%
         <br />
         <span style="font-size: x-small">{{ state.sum.pas2 | number }}</span>
+        <br />
+        <span
+          style="font-size: x-small"
+          *ngIf="state.kpuSum.pas2 - state.sum.pas2 as dk"
+          [style.color]="dk > 0 ? 'green' : 'red'"
+          >{{ dk | number }}</span
+        >
       </th>
 
       <th
@@ -178,6 +192,13 @@
             }}%
             <br />
             <span style="font-size: x-small">{{ d.sum.pas1 | number }}</span>
+            <br />
+            <span
+              *ngIf="state.kpu[c[0]]?.pas1 - d.sum.pas1 as dk"
+              style="font-size: x-small"
+              [style.color]="dk > 0 ? 'green' : 'red'"
+              >({{ dk | number }})</span
+            >
           </td>
 
           <td
@@ -191,6 +212,13 @@
             }}%
             <br />
             <span style="font-size: x-small">{{ d.sum.pas2 | number }}</span>
+            <br />
+            <span
+              *ngIf="state.kpu[c[0]]?.pas2 - d.sum.pas2 as dk"
+              style="font-size: x-small"
+              [style.color]="dk > 0 ? 'green' : 'red'"
+              >({{ dk | number }})</span
+            >
           </td>
         </ng-container>
 

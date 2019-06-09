@@ -11,13 +11,19 @@ import {
   RelawanPhotos,
   Aggregate,
   TpsData,
-  ChangeLog,
+  ChangeLog
 } from 'shared';
 
 import { upload } from './upload';
 import { H } from './hierarchy';
 import { kpuH } from './kpuh';
-import { getPathUrlPrefix, getCached, KPU_API, KPU_CACHE_PATH, KPU_WIL } from './upload_util';
+import {
+  getPathUrlPrefix,
+  getCached,
+  KPU_API,
+  KPU_CACHE_PATH,
+  KPU_WIL
+} from './upload_util';
 
 const delay = (ms: number) => new Promise(_ => setTimeout(_, ms));
 
@@ -338,7 +344,7 @@ async function fixPemandangan() {
 async function whoChangedRole() {
   const logs = await fsdb
     .collection(FsPath.changeLog())
-    .where('tuid', '==', 'vAajmbHXCVWVqLi9JrEuk6NJAcl1')
+    .where('tuid', '==', 'ApCcXyy0ecS1As3nqHwZ8p8hOBI2')
     .get();
   for (const snap of logs.docs) {
     const log = snap.data() as ChangeLog;
@@ -356,7 +362,11 @@ async function fixHierarchy() {
 
     const url =
       getPathUrlPrefix(KPU_WIL, depth === 0 ? path.concat(0) : path) + '.json';
-    const res = await getCached(url, `${KPU_CACHE_PATH}/w${id}.json`, c => false);
+    const res = await getCached(
+      url,
+      `${KPU_CACHE_PATH}/w${id}.json`,
+      c => false
+    );
 
     let nChildren = 0;
     if (depth === 4) {
@@ -441,7 +451,11 @@ async function fixHierarchy() {
     const names = parentNames.slice();
     names.push(name);
     const url = getPathUrlPrefix(KPU_WIL, path) + '.json';
-    const res = await getCached(url, `${KPU_CACHE_PATH}/w${id}.json`, c => false);
+    const res = await getCached(
+      url,
+      `${KPU_CACHE_PATH}/w${id}.json`,
+      c => false
+    );
     // console.log(id, res);
 
     if (depth === 4) {
@@ -532,16 +546,28 @@ async function laporKpuCount() {
   console.log(JSON.stringify(laporKpus, null, 2));
 }
 
+async function moderators() {
+  (await fsdb
+    .collection(FsPath.relawan())
+    .where('profile.role', '>=', 1)
+    .get()).forEach(snap => {
+    const r = snap.data() as Relawan;
+    const p = r.profile;
+    console.log(p.role, p.uid, p.name, p.dr4, r.depth);
+  });
+}
+
 // parallelUpload().catch(console.error);
 // loadTest().catch(console.error);
 // fixClaimersRole().catch(console.error);
 // fixUploadersCount().catch(console.error);
 // checkHierarchy().catch(console.error);
 // fixPemandangan().catch(console.error);
-// whoChangedRole().catch(console.error);
+whoChangedRole().catch(console.error);
 // fixHierarchy().catch(console.error);
 // fixTpsCount().catch(console.error);
 
 // console.log(Object.keys(H).map(i => +i).reduce((p, c) => Math.max(p, c), 0));
 
-laporKpuCount().catch(console.error);
+// laporKpuCount().catch(console.error);
+// moderators().catch(console.error);
