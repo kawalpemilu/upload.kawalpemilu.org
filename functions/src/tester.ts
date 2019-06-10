@@ -22,7 +22,8 @@ import {
   getCached,
   KPU_API,
   KPU_CACHE_PATH,
-  KPU_WIL
+  KPU_WIL,
+  getKelData
 } from './upload_util';
 
 const delay = (ms: number) => new Promise(_ => setTimeout(_, ms));
@@ -557,13 +558,27 @@ async function moderators() {
   });
 }
 
+async function kpuDiff() {
+  let totTps = 0;
+  for (const id of Object.keys(kpuH).sort((a, b) => +a - +b)) {
+    const kelId = +id;
+    console.log('kelid', kelId);
+    const path = kpuH[kelId].path;
+    const dataFilename = `${KPU_CACHE_PATH}/data/${kelId}.json`;
+    const data = await getKelData(kelId, path, dataFilename);
+    totTps += Object.keys(data.wil).length;
+  }
+  console.log(totTps);
+
+}
+
 // parallelUpload().catch(console.error);
 // loadTest().catch(console.error);
 // fixClaimersRole().catch(console.error);
 // fixUploadersCount().catch(console.error);
 // checkHierarchy().catch(console.error);
 // fixPemandangan().catch(console.error);
-whoChangedRole().catch(console.error);
+// whoChangedRole().catch(console.error);
 // fixHierarchy().catch(console.error);
 // fixTpsCount().catch(console.error);
 
@@ -571,3 +586,4 @@ whoChangedRole().catch(console.error);
 
 // laporKpuCount().catch(console.error);
 // moderators().catch(console.error);
+kpuDiff().catch(console.error);

@@ -14,12 +14,9 @@ import { H } from './hierarchy';
 import { kpuH } from './kpuh';
 import { kpuUploadImage, md5 } from './upload';
 import {
-  getPathUrlPrefix,
-  getCached,
-  KPU_WIL,
   KPU_CACHE_PATH,
-  KPU_API,
-  downloadWithRetry
+  downloadWithRetry,
+  getKelData,
 } from './upload_util';
 
 const fsdb = admin.firestore();
@@ -35,51 +32,6 @@ const isOnline = true;
 let isShutdown = false;
 
 let updateKpuHie$ = Promise.resolve();
-
-type Data = {
-  kpu: KpuData;
-  wil: any;
-  res: any;
-  img: { [imageId: string]: any };
-  uploaded: { [filename: string]: string };
-};
-async function getKelData(kelId: number, path, dataFilename): Promise<Data> {
-  let data: Data;
-  try {
-    const x = JSON.parse(fs.readFileSync(dataFilename, 'utf8'));
-    data = x.kpu ? x : ({ kpu: x as KpuData } as Data);
-  } catch (e) {
-    data = { kpu: {} as KpuData } as Data;
-  }
-
-  if (pendingOnly) {
-    const p = data.res && data.res.progress;
-    if (p && p.proses === p.total) return null;
-  }
-
-  if (!data.wil) {
-    const url = getPathUrlPrefix(KPU_WIL, path) + '.json';
-    const cacheFn = `${KPU_CACHE_PATH}/w${kelId}.json`;
-    data.wil = await getCached(url, cacheFn, () => false);
-  }
-
-  if (!data.res || !data.img || isOnline) {
-    data.res = await getCached(getPathUrlPrefix(KPU_API, path) + '.json');
-    data.img = {} as { [imageId: string]: any };
-    await Promise.all(
-      Object.keys(data.res.table)
-        .filter(id => data.res.table[id]['21'] !== null)
-        .map(async imageId => {
-          const iurl = getPathUrlPrefix(KPU_API, path) + `/${imageId}.json`;
-          data.img[imageId] = await getCached(iurl);
-        })
-    );
-  }
-
-  data.uploaded = data.uploaded || {};
-
-  return data;
-}
 
 function getSum(node: KpuData) {
   const sum = {} as SumMap;
@@ -136,7 +88,7 @@ async function updateKpuHie(kelId, kpu: KpuData) {
 
 async function kpuUploadKel(kelId: number, path) {
   const dataFilename = `${KPU_CACHE_PATH}/data/${kelId}.json`;
-  const data = await getKelData(kelId, path, dataFilename);
+  const data = await getKelData(kelId, path, dataFilename, pendingOnly, isOnline);
   if (!pendingOnly && !data) throw new Error();
   if (!data) return;
 
@@ -272,6 +224,7 @@ async function continuousKpuUpload(concurrency: number) {
     await Promise.all(promises);
     console.log('ALL done');
     await updateKpuHie$;
+    isShutdown = true;
   }
   unsub();
   console.log('Unsubscribed');

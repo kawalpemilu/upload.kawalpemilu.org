@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import { spawn } from 'child_process';
+import { KpuData } from 'shared';
 
 const proxy = 'socks5h://localhost:12345';
 
@@ -7,9 +8,69 @@ export const KPU_API = 'https://pemilu2019.kpu.go.id/static/json/hhcw/ppwp';
 export const KPU_WIL = 'https://pemilu2019.kpu.go.id/static/json/wilayah';
 export const KPU_CACHE_PATH = '/Users/felixhalim/Projects/kawal-c1/kpu/cache';
 
+type Data = {
+  kpu: KpuData;
+  wil: any;
+  res: any;
+  img: { [imageId: string]: any };
+  uploaded: { [filename: string]: string };
+};
+export async function getKelData(
+  kelId: number,
+  path,
+  dataFilename,
+  pendingOnly = false,
+  isOnline = false
+): Promise<Data> {
+  let data: Data;
+  try {
+    const x = JSON.parse(fs.readFileSync(dataFilename, 'utf8'));
+    data = x.kpu ? x : ({ kpu: x as KpuData } as Data);
+  } catch (e) {
+    data = { kpu: {} as KpuData } as Data;
+  }
+
+  if (pendingOnly) {
+    const p = data.res && data.res.progress;
+    if (p && p.proses === p.total) return null;
+  }
+
+  if (!data.wil) {
+    const url = getPathUrlPrefix(KPU_WIL, path) + '.json';
+    const cacheFn = `${KPU_CACHE_PATH}/w${kelId}.json`;
+    data.wil = await getCached(url, cacheFn, () => true);
+  }
+
+  if (!data.res || !data.img || isOnline) {
+    data.res = await getCached(getPathUrlPrefix(KPU_API, path) + '.json');
+    data.img = {} as { [imageId: string]: any };
+    await Promise.all(
+      Object.keys(data.res.table)
+        .filter(id => data.res.table[id]['21'] !== null)
+        .map(async imageId => {
+          const iurl = getPathUrlPrefix(KPU_API, path) + `/${imageId}.json`;
+          data.img[imageId] = await getCached(iurl);
+        })
+    );
+  }
+
+  data.uploaded = data.uploaded || {};
+
+  return data;
+}
+
 async function download(url, output): Promise<void> {
   return new Promise((resolve, reject) => {
-    const params = ['-s', '--proxy', proxy, '-m', 180, '--output', output, encodeURI(url)];
+    const params = [
+      '-s',
+      '--proxy',
+      proxy,
+      '-m',
+      180,
+      '--output',
+      output,
+      encodeURI(url)
+    ];
     const c = spawn('curl', params);
     c.on('close', code => {
       if (code) {
