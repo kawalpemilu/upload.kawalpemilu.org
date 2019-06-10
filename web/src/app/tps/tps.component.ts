@@ -192,8 +192,10 @@ export class TpsComponent implements OnInit {
     return arr.slice(s.lo, s.hi);
   }
 
-  hasPpwp(sum: any) {
-    return Object.keys(PPWP_NAMES).find(k => sum[k] !== undefined);
+  hasPpwp(sum: any, kpuSum: any) {
+    return Object.keys(PPWP_NAMES).find(
+      k => sum[k] !== undefined || (kpuSum && kpuSum[k] !== undefined)
+    );
   }
 
   hasDpr(sum: any) {

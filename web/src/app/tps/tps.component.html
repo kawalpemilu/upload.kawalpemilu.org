@@ -234,16 +234,18 @@
                     : ''
                 "
               >
-                <thead *ngIf="hasPpwp(d.sum)">
+                <thead *ngIf="hasPpwp(d.sum, state.kpu[tps.tpsNo])">
                   <tr>
                     <th colspan="2">PPWP</th>
                   </tr>
 
                   <ng-container *ngFor="let k of Object.keys(PPWP_NAMES)">
-                    <tr *ngIf="d.sum[k] !== undefined">
+                    <tr>
                       <td class="label">{{ PPWP_NAMES[k] }}:</td>
                       <td class="angka">
-                        {{ d.sum[k] }}<br />
+                        <ng-container *ngIf="d.sum[k] !== undefined">
+                          {{ d.sum[k] }}<br />
+                        </ng-container>
                         <ng-container
                           *ngIf="
                             state.kpu[tps.tpsNo] &&
@@ -251,8 +253,8 @@
                           "
                         >
                           <span
-                            *ngIf="kpu - d.sum[k] as dk"
-                            [style.color]="dk > 0 ? 'green' : 'red'"
+                            *ngIf="kpu - (d.sum[k] || 0) as dk"
+                            [style.color]="dk > 0 ? 'limegreen' : 'red'"
                           >
                             {{ dk > 0 ? '+' : '' }}{{ dk }}
                           </span>
