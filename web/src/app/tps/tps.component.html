@@ -234,7 +234,9 @@
                     : ''
                 "
               >
-                <thead *ngIf="hasPpwp(d.sum, state.kpu[tps.tpsNo])">
+                <thead
+                  *ngIf="hasPpwp(d.sum, state.kpu && state.kpu[tps.tpsNo])"
+                >
                   <tr>
                     <th colspan="2">PPWP</th>
                   </tr>
@@ -248,6 +250,7 @@
                         </ng-container>
                         <ng-container
                           *ngIf="
+                            state.kpu &&
                             state.kpu[tps.tpsNo] &&
                             state.kpu[tps.tpsNo][k] as kpu
                           "
