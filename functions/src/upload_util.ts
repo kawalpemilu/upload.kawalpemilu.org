@@ -151,12 +151,15 @@ export async function getCached(
     }
     return res;
   } catch (e) {
-    console.error(e.message);
+    console.error('gagal', url, e.message);
     return { table: {}, images: [] };
   }
 }
 
 export function getPathUrlPrefix(prefix, path) {
+  if (path.length <= 1) {
+    return prefix + '/0';
+  }
   let url = prefix;
   for (let i = 1; i < path.length; i++) {
     url += `/${path[i]}`;

@@ -11,19 +11,17 @@ import {
   RelawanPhotos,
   Aggregate,
   TpsData,
-  ChangeLog
+  ChangeLog,
+  HierarchyNode
 } from 'shared';
 
 import { upload } from './upload';
 import { H } from './hierarchy';
-import { kpuH } from './kpuh';
 import {
   getPathUrlPrefix,
   getCached,
-  KPU_API,
   KPU_CACHE_PATH,
-  KPU_WIL,
-  getKelData
+  KPU_WIL
 } from './upload_util';
 
 const delay = (ms: number) => new Promise(_ => setTimeout(_, ms));
@@ -290,43 +288,68 @@ async function checkHierarchy() {
   recCheck(0, 0);
 }
 
+const conc = [];
 async function recKpuHie(id, depth, opath) {
+  console.log('id', id, depth);
   const path = opath.concat(id);
+  const url = getPathUrlPrefix(KPU_WIL, path) + '.json';
+  const cacheFn = `${KPU_CACHE_PATH}/w${id}.json`;
+  const wil = await getCached(url, cacheFn, () => true);
+
   if (depth === 4) {
-    kpuH[id] = { depth, path };
     return;
   }
 
-  const url = getPathUrlPrefix(KPU_API, path) + '.json';
-  const res = await getCached(url, `${KPU_CACHE_PATH}/${id}.json`, () => false);
-  for (const cid of Object.keys(res.table)) {
+  let j = 0;
+  for (const cid of Object.keys(wil)) {
     if (id === -99) {
       const cpath = path.slice();
-      for (let i = 2; i > 0; i--) {
-        cpath.push(+cid + i);
+      for (let i = 0; i < 2; i++) {
+        cpath.push(+cid - i);
       }
-      await recKpuHie(+cid, depth + 3, cpath);
+      conc[j] = conc[j].then(() => recKpuHie(+cid - 2, depth + 3, cpath));
     } else {
-      await recKpuHie(+cid, depth + 1, path);
+      conc[j] = conc[j].then(() => recKpuHie(+cid, depth + 1, path));
     }
+    j = (j + 1) % conc.length;
   }
 }
 
-function buildKpuHie() {
-  recKpuHie(0, 0, [])
-    .then(() => {
-      const arr1 = Object.keys(H).filter(id => H[id].depth === 4);
-      const arr2 = Object.keys(kpuH).filter(id => kpuH[id].depth === 4);
-      for (const id of arr1) {
-        if (!kpuH[id]) console.log('missing KPU', id);
+async function crawlKpuHie() {
+  for (let i = 0; i < 5; i++) {
+    conc.push(Promise.resolve());
+  }
+  await recKpuHie(0, 0, []);
+  await Promise.all(conc);
+}
+
+function buildKpuWil() {
+  const kpuWil = {};
+  function recKpuWil(id, depth, path) {
+    const cacheFn = `${KPU_CACHE_PATH}/w${id}.json`;
+    kpuWil[id] = JSON.parse(fs.readFileSync(cacheFn, 'utf8'));
+
+    if (depth === 4) {
+      return;
+    }
+
+    for (const key of Object.keys(kpuWil[id])) {
+      const cid = +key;
+      if (id === -99) {
+        const cpath = path.slice();
+        for (let i = 0; i < 2; i++) {
+          cpath.push(cid - i);
+        }
+        const nid = cid - 2;
+        recKpuWil(nid, depth + 3, cpath.concat(nid));
+      } else {
+        recKpuWil(cid, depth + 1, path.concat(cid));
       }
-      for (const id of arr2) {
-        if (!H[id]) console.log('missing H', id);
-      }
-      console.log(arr1.length, arr2.length);
-      fs.writeFileSync(`${KPU_CACHE_PATH}/kpuh.js`, JSON.stringify(kpuH));
-    })
-    .catch(console.error);
+    }
+  }
+
+  recKpuWil(0, 0, []);
+  fs.writeFileSync(`${KPU_CACHE_PATH}/kpuWil.js`, JSON.stringify(kpuWil));
 }
 
 async function fixPemandangan() {
@@ -559,17 +582,171 @@ async function moderators() {
 }
 
 async function kpuDiff() {
-  let totTps = 0;
-  for (const id of Object.keys(kpuH).sort((a, b) => +a - +b)) {
-    const kelId = +id;
-    console.log('kelid', kelId);
-    const path = kpuH[kelId].path;
-    const dataFilename = `${KPU_CACHE_PATH}/data/${kelId}.json`;
-    const data = await getKelData(kelId, path, dataFilename);
-    totTps += Object.keys(data.wil).length;
-  }
-  console.log(totTps);
+  const kpuWilFn = `${KPU_CACHE_PATH}/kpuWil.js`;
+  const kpuWil = JSON.parse(fs.readFileSync(kpuWilFn, 'utf8'));
+  const funPath = '/Users/felixhalim/Projects/kawal-c1/functions';
+  const hJson = JSON.parse(fs.readFileSync(`${funPath}/h.json`, 'utf8'));
 
+  function recKpuDiff(id, name, depth, path, names) {
+    const h = H[id] as HierarchyNode;
+    const k = kpuWil[id];
+    if (!h || !k) throw new Error();
+
+    if (id >= 0) {
+      if (JSON.stringify(names) !== JSON.stringify(h.parentNames)) {
+        // console.log(JSON.stringify(names));
+        // console.log(JSON.stringify(h.parentNames));
+        console.log(
+          `if (id === ${id}) h.parentNames = ${JSON.stringify(names)};`
+        );
+      }
+
+      const p = JSON.parse(JSON.stringify(path));
+      p.splice(0, 0, 0);
+      p.pop();
+      if (JSON.stringify(p) !== JSON.stringify(h.parentIds)) {
+        // console.log(p);
+        // console.log(h.parentIds);
+        console.log(`if (id === ${id}) h.parentIds = ${JSON.stringify(p)};`);
+      }
+    }
+
+    const nKpu = Object.keys(k).length;
+    if (depth === 4) {
+      function deleteTpsNo(tpsNo) {
+        const idx = h.children.findIndex(c => c[0] === tpsNo);
+        if (idx < 0) throw new Error();
+        const [deletedTpsNo, laki] = h.children.splice(idx, 1)[0];
+        if (deletedTpsNo !== tpsNo) throw new Error();
+        if (!hJson[id]) {
+          console.log('gada hjson', id, tpsNo);
+          return;
+        }
+        const data = hJson[id][tpsNo];
+        if (!data) return;
+        for (const key of Object.keys(data.sum)) {
+          if (data.sum[key]) {
+            console.log('ada sum', key, id, tpsNo, laki, data);
+            console.log('h', h);
+            console.log('k', k);
+            // console.log('h', JSON.stringify(h, null, 2));
+            // console.log('k', JSON.stringify(k, null, 2));
+            throw new Error();
+          }
+        }
+        if (Object.keys(data.photos).length) {
+          throw new Error(`Ada photos ${data.photos}`);
+        }
+      }
+
+      // if (h.children.length > nKpu) {
+      //   if (path.indexOf(23189) === -1) {
+      //     while (h.children.length > nKpu) {
+      //       const [tpsNo] = h.children[h.children.length - 1];
+      //       deleteTpsNo(tpsNo);
+      //     }
+      //   } else {
+      //     for (let i = 0; i < h.children.length; i++) {
+      //       const [tpsNo, laki] = h.children[i];
+      //       if (laki === -1) {
+      //         deleteTpsNo(tpsNo);
+      //         i--;
+      //       }
+      //     }
+      //   }
+      // }
+
+      const nKp = h.children.length;
+      if (nKp !== nKpu) {
+        console.log('kel', id, nKp, nKpu);
+        console.log('h', h);
+        console.log('k', k);
+        process.exit(0);
+      }
+
+      if (id >= 0 && path.indexOf(3205) === -1 && path.indexOf(23189) === -1) {
+        for (let i = 1; i < h.children.length; i++) {
+          const [a] = h.children[i - 1];
+          const [b] = h.children[i];
+          if (a + 1 !== b) throw new Error(`id: ${id}, ${a} + 1 != ${b}`);
+        }
+      }
+
+      return nKpu;
+    }
+
+    const x = JSON.stringify(Object.keys(kpuWil[id]).map(c => parseInt(c, 10)));
+    const y = JSON.stringify(h.children.map(c => c[0]));
+    if (x !== y && id >= 0) {
+      console.log(x);
+      console.log(y);
+      throw new Error();
+    }
+
+    let nTps = 0;
+    let s = '';
+    const arr = h.children.map(c => c[0]);
+    for (const key of Object.keys(kpuWil[id])) {
+      const cid = +key;
+      const cnama = kpuWil[id][key].nama;
+      const i = arr.indexOf(cid);
+      if (i === -1) {
+        s += `\tH[id].children.push([${cid}, 'RADA MALANDO', -1, 390, 436]);\n`;
+        continue;
+      }
+      if (arr.splice(i, 1)[0] !== cid) throw new Error();
+
+      let tpsCount = 0;
+      if (id === -99) {
+        const cpath = path.slice();
+        for (let i = 0; i < 2; i++) {
+          cpath.push(cid - i);
+        }
+        const nid = cid - 2;
+        tpsCount = recKpuDiff(
+          nid,
+          cnama,
+          depth + 3,
+          cpath.concat(nid),
+          names.concat(name)
+        );
+      } else {
+        tpsCount = recKpuDiff(
+          cid,
+          cnama,
+          depth + 1,
+          path.concat(cid),
+          names.concat(name)
+        );
+      }
+      nTps += tpsCount;
+      h.children[h.children.findIndex(c => c[0] === cid)][2] = tpsCount;
+    }
+
+    if (s) {
+      console.log(`\nif (id === ${id}) {\n${s}}\n`);
+      process.exit(0);
+    }
+
+    if (arr.length) {
+      console.log(`\nif (id === ${id}) {`);
+      for (const x of arr) {
+        console.log(`\tremoveKel(${x});`);
+      }
+      console.log(`}\n`);
+      throw new Error();
+    }
+
+    return nTps;
+  }
+
+  const tot1 = recKpuDiff(0, 'IDN', 0, [], []);
+  const tot2 = H[0].children.map(c => c[2]).reduce((a, b) => a + b, 0);
+  console.log('tot', tot1);
+  if (tot1 !== tot2) throw new Error();
+
+  // const hieFn = `${funPath}/src/hierarchy.js`;
+  // fs.writeFileSync(hieFn, `exports.H = ${JSON.stringify(H)};`);
 }
 
 // parallelUpload().catch(console.error);
@@ -587,3 +764,5 @@ async function kpuDiff() {
 // laporKpuCount().catch(console.error);
 // moderators().catch(console.error);
 kpuDiff().catch(console.error);
+// crawlKpuHie().catch(console.error);
+// buildKpuWil();
