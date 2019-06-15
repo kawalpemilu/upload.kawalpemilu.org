@@ -194,7 +194,7 @@
             <span style="font-size: x-small">{{ d.sum.pas1 | number }}</span>
             <br />
             <span
-              *ngIf="state.kpu[c[0]]?.pas1 - d.sum.pas1 as dk"
+              *ngIf="state.kpu && state.kpu[c[0]]?.pas1 - d.sum.pas1 as dk"
               style="font-size: x-small"
               [style.color]="dk > 0 ? 'green' : 'red'"
               >({{ dk | number }})</span
@@ -214,7 +214,7 @@
             <span style="font-size: x-small">{{ d.sum.pas2 | number }}</span>
             <br />
             <span
-              *ngIf="state.kpu[c[0]]?.pas2 - d.sum.pas2 as dk"
+              *ngIf="state.kpu && state.kpu[c[0]]?.pas2 - d.sum.pas2 as dk"
               style="font-size: x-small"
               [style.color]="dk > 0 ? 'green' : 'red'"
               >({{ dk | number }})</span

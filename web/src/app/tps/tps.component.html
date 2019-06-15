@@ -252,11 +252,11 @@
                           *ngIf="
                             state.kpu &&
                             state.kpu[tps.tpsNo] &&
-                            state.kpu[tps.tpsNo][k] as kpu
+                            state.kpu[tps.tpsNo][k] !== undefined
                           "
                         >
                           <span
-                            *ngIf="kpu - (d.sum[k] || 0) as dk"
+                            *ngIf="state.kpu[tps.tpsNo][k] - (d.sum[k] || 0) as dk"
                             [style.color]="dk > 0 ? 'limegreen' : 'red'"
                           >
                             {{ dk > 0 ? '+' : '' }}{{ dk }}
