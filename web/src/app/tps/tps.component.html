@@ -99,7 +99,7 @@
       cellspacing="0"
       cellpadding="0"
       width="100%"
-      height="200"
+      height="275"
       *ngFor="let tps of getSlice(state.tpsList, showingSlice); let odd = odd"
       [style.background-color]="odd ? '#FFF' : '#EEE'"
     >
@@ -223,7 +223,9 @@
                 *ngIf="tps.agg as d"
                 cellspacing="0"
                 [style.background-color]="
-                  d.sum.error
+                  !d.sum
+                    ? ''
+                    : d.sum.error
                     ? '#FDD'
                     : d.sum.pending
                     ? '#FFD'
@@ -245,7 +247,7 @@
                     <tr>
                       <td class="label">{{ PPWP_NAMES[k] }}:</td>
                       <td class="angka">
-                        <ng-container *ngIf="d.sum[k] !== undefined">
+                        <ng-container *ngIf="d.sum && d.sum[k] !== undefined">
                           {{ d.sum[k] }}<br />
                         </ng-container>
                         <ng-container
@@ -256,7 +258,10 @@
                           "
                         >
                           <span
-                            *ngIf="state.kpu[tps.tpsNo][k] - (d.sum[k] || 0) as dk"
+                            *ngIf="
+                              state.kpu[tps.tpsNo][k] -
+                              ((d.sum && d.sum[k]) || 0) as dk
+                            "
                             [style.color]="dk > 0 ? 'limegreen' : 'red'"
                           >
                             {{ dk > 0 ? '+' : '' }}{{ dk }}

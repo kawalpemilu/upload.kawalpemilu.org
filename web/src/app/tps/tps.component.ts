@@ -90,10 +90,10 @@ export class TpsComponent implements OnInit {
             tpsNo: arr[0],
             laki: arr[1],
             perempuan: arr[2],
-            agg: state.data[arr[0]] as TpsAggregate,
+            agg: state.data[arr[0]] || ({} as TpsAggregate),
             items: null
           };
-          if (t.agg) {
+          if (t.agg.photos) {
             t.items = this.toCarousel(state.id, t.tpsNo, t.agg.photos);
           }
           state.tpsList.push(t);
@@ -194,12 +194,12 @@ export class TpsComponent implements OnInit {
 
   hasPpwp(sum: any, kpuSum: any) {
     return Object.keys(PPWP_NAMES).find(
-      k => sum[k] !== undefined || (kpuSum && kpuSum[k] !== undefined)
+      k => (sum && sum[k] !== undefined) || (kpuSum && kpuSum[k] !== undefined)
     );
   }
 
   hasDpr(sum: any) {
-    return Object.keys(DPR_NAMES).find(k => sum[k] !== undefined);
+    return Object.keys(DPR_NAMES).find(k => sum && sum[k] !== undefined);
   }
 
   normalizeHalaman(hal) {
