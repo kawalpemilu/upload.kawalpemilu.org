@@ -5,6 +5,7 @@
     <ng-template #digitizeBawaslu>
       <app-approver
         [kelId]="state.id"
+        [kelName]="state.name"
         [tpsNo]="0"
         [(imageId)]="digitize[0]"
         (completed)="digitize[0] = ''"
@@ -88,7 +89,15 @@
           matBadgePosition="after"
           matBadgeColor="accent"
         >
-          {{ s.tpsLo }} - {{ s.tpsHi - 1 }}
+          <ng-container *ngIf="s.tpsLo >= 2000">
+            KSK {{ s.tpsLo - 2000 }} - {{ s.tpsHi - 2001 }}
+          </ng-container>
+          <ng-container *ngIf="s.tpsLo >= 1000 && s.tpsLo < 2000">
+            POS {{ s.tpsLo - 1000 }} - {{ s.tpsHi - 1001 }}
+          </ng-container>
+          <ng-container *ngIf="s.tpsLo < 1000">
+            {{ s.tpsLo }} - {{ s.tpsHi - 1 }}
+          </ng-container>
         </button>
       </ng-container>
     </p>
@@ -113,6 +122,7 @@
           <td colspan="2">
             <app-approver
               [kelId]="state.id"
+              [kelName]="state.name"
               [tpsNo]="tps.tpsNo"
               [(imageId)]="digitize[tps.tpsNo]"
               (completed)="digitize[tps.tpsNo] = ''"

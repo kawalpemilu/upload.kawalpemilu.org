@@ -97,7 +97,7 @@ export class ApproverComponent implements OnInit, OnDestroy {
   @Input() kelId: number;
   @Input() tpsNo: number;
   @Input() imageId: string;
-  kelName: string;
+  @Input() kelName: string;
   tpsData: TpsData;
 
   @Output() imageIdChange = new EventEmitter<string>();
@@ -132,12 +132,6 @@ export class ApproverComponent implements OnInit, OnDestroy {
   async ngOnInit() {
     this.initialKelId = this.kelId;
     this.initialTpsNo = this.tpsNo;
-
-    this.hie
-      .get$(this.kelId)
-      .pipe(take(1))
-      .toPromise()
-      .then(node => (this.kelName = node.name));
 
     this.kpuData = await this.fsdb
       .doc<KpuData>(FsPath.kpu(this.kelId))

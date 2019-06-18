@@ -104,26 +104,21 @@ export class TpsComponent implements OnInit {
           this.digitize = {};
           this.details = {};
         }
-        if (state.id < 0) {
-          this.populateSlices(state.tpsList, 4000);
-          this.showingSlice = this.slices[0];
+        if (state.tpsList.length > 200) {
+          this.populateSlices(state.tpsList, 40);
+        } else if (state.tpsList.length > 100) {
+          this.populateSlices(state.tpsList, 20);
+        } else if (state.tpsList.length > 20) {
+          this.populateSlices(state.tpsList, 10);
         } else {
-          if (state.tpsList.length > 200) {
-            this.populateSlices(state.tpsList, 40);
-          } else if (state.tpsList.length > 100) {
-            this.populateSlices(state.tpsList, 20);
-          } else if (state.tpsList.length > 20) {
-            this.populateSlices(state.tpsList, 10);
-          } else {
-            this.populateSlices(state.tpsList, 400);
-            this.showingSlice = this.slices[0];
-          }
-          if (!this.showingSlice) {
-            for (const slice of this.slices) {
-              if (slice.tpsLo <= reqTpsNo && reqTpsNo < slice.tpsHi) {
-                this.showingSlice = slice;
-                break;
-              }
+          this.populateSlices(state.tpsList, 400);
+          this.showingSlice = this.slices[0];
+        }
+        if (!this.showingSlice) {
+          for (const slice of this.slices) {
+            if (slice.tpsLo <= reqTpsNo && reqTpsNo < slice.tpsHi) {
+              this.showingSlice = slice;
+              break;
             }
           }
         }
