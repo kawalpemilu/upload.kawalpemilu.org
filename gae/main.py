@@ -25,7 +25,7 @@ class GetChildrenApi(webapp2.RequestHandler):
         jsonTxt = memcache.get(cid)
         if jsonTxt is not None:
             h = json.loads(jsonTxt)
-            if 'depth' in h:
+            if 'depth' in h and 'data' in h and len(h['data'].keys()) > 0:
                 self.response.headers['X-Cache'] = 'HIT-M'
                 return self.response.out.write(jsonTxt)
 
