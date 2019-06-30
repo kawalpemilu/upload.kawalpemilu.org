@@ -13,17 +13,13 @@ import {
 import { H } from './hierarchy';
 import { kpuH } from './kpuh';
 import { kpuUploadImage, md5 } from './upload';
-import {
-  KPU_CACHE_PATH,
-  downloadWithRetry,
-  getKelData,
-} from './upload_util';
+import { KPU_CACHE_PATH, downloadWithRetry, getKelData } from './upload_util';
 
 const fsdb = admin.firestore();
 const rtdb = admin.database();
 
 // Only fetch KPU if there are incomplete data.
-const pendingOnly = true;
+const pendingOnly = false;
 
 // Attempt to fetch remote data.
 const isOnline = true;
@@ -47,10 +43,10 @@ function getSum(node: KpuData) {
 
 async function getKpuFromDb(ids: number[]): Promise<KpuData[]> {
   const vals = ids.map(id => rtdb.ref(`k/${id}`).once('value'));
-  return (await Promise.all(vals)).map(s => s.val() as KpuData);
+  return (await Promise.all(vals)).map(s => s.val() || ({} as KpuData));
 }
 
-function getDelta(oldSum: SumMap, newSum: SumMap) {
+function getDelta(kelId, oldSum: SumMap, newSum: SumMap) {
   const delta = {} as SumMap;
   for (const key of Object.keys(newSum)) {
     if (!(key in SUM_KEY)) throw new Error();
@@ -58,7 +54,11 @@ function getDelta(oldSum: SumMap, newSum: SumMap) {
     if (diff) delta[key] = diff;
   }
   for (const key of Object.keys(oldSum)) {
-    if (!newSum.hasOwnProperty(key)) throw new Error();
+    if (!newSum.hasOwnProperty(key)) {
+      console.log(kelId, 'key not found', key, newSum);
+      console.log('old', oldSum);
+      throw new Error();
+    }
   }
   return delta;
 }
@@ -66,7 +66,7 @@ function getDelta(oldSum: SumMap, newSum: SumMap) {
 async function updateKpuHie(kelId, kpu: KpuData) {
   console.log('updating kpu hie', kelId);
   const [leaf] = await getKpuFromDb([kelId]);
-  const delta = getDelta(getSum(leaf), getSum(kpu));
+  const delta = getDelta(kelId, getSum(leaf), getSum(kpu));
   if (Object.keys(delta).length === 0) return;
 
   const h = H[kelId] as HierarchyNode;
@@ -88,7 +88,13 @@ async function updateKpuHie(kelId, kpu: KpuData) {
 
 async function kpuUploadKel(kelId: number, path) {
   const dataFilename = `${KPU_CACHE_PATH}/data/${kelId}.json`;
-  const data = await getKelData(kelId, path, dataFilename, pendingOnly, isOnline);
+  const data = await getKelData(
+    kelId,
+    path,
+    dataFilename,
+    pendingOnly,
+    isOnline
+  );
   if (!pendingOnly && !data) throw new Error();
   if (!data) return;
 
@@ -96,6 +102,13 @@ async function kpuUploadKel(kelId: number, path) {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir);
   }
+
+  console.log(
+    'syncing',
+    kelId,
+    Object.keys(data.res.table).length,
+    Object.keys(data.img).length
+  );
 
   // TODO:
   // add KPU scan yang keskip...
@@ -110,7 +123,6 @@ async function kpuUploadKel(kelId: number, path) {
   const kpu = {} as KpuData;
   let same = true;
   let ada = false;
-  const promises = [];
   for (const imageId of Object.keys(data.img)) {
     const s = data.wil[imageId].nama.split(' ');
     const add =
@@ -163,25 +175,20 @@ async function kpuUploadKel(kelId: number, path) {
         }
       };
 
-      promises.push(
-        runUpload().catch(e => {
-          if (e.message.indexOf('Image too small') === -1) {
-            console.error('Upload failed', fn, e.message);
-          }
-          try {
-            data.res.progress.proses = 0;
-          } catch (ex) {
-            console.error(ex);
-          }
-        })
-      );
+      await runUpload().catch(e => {
+        console.error('Upload failed', fn, e.message);
+        try {
+          data.res.progress.proses = 0;
+        } catch (ex) {
+          console.error(ex);
+        }
+      });
     }
   }
-  await Promise.all(promises);
 
   data.kpu = kpu;
   fs.writeFileSync(dataFilename, JSON.stringify(data, null, 2));
-  if (ada && !same) {
+  if (ada && !same && Object.keys(kpu).length) {
     await fsdb.doc(FsPath.kpu(kelId)).set(kpu);
     updateKpuHie$ = updateKpuHie$.then(() => updateKpuHie(kelId, kpu));
   }
@@ -198,9 +205,9 @@ async function continuousKpuUpload(concurrency: number) {
     }
   });
 
-  let initialIdx = 0;
+  const arr = Object.keys(kpuH).sort((a, b) => +a - +b);
+  let initialIdx = pendingOnly ? 0 : arr.indexOf('19397');
   while (!isShutdown) {
-    const arr = Object.keys(kpuH).sort((a, b) => +a - +b);
     console.log('Total Kels', arr.length);
     let arr_idx = initialIdx;
     initialIdx = 0;
@@ -210,10 +217,11 @@ async function continuousKpuUpload(concurrency: number) {
         const idx = arr_idx++;
         const id = +arr[idx];
         if (kpuH[id].depth !== 4) throw new Error();
+        // if (id !== -991104) continue;
         try {
           await kpuUploadKel(id, kpuH[id].path);
         } catch (e) {
-          console.error('Kel Error', H[id].name, id, e);
+          console.error('Kel Error', H[id].name, id, 'idx', idx, e);
         }
       }
     };
@@ -228,33 +236,58 @@ async function continuousKpuUpload(concurrency: number) {
   }
   unsub();
   console.log('Unsubscribed');
-  await rtdb.app.delete();
-  console.log('rtdb disconnected');
+}
+
+async function checkConsistency(id, depth) {
+  if (depth === 4) {
+    const kpu = (await fsdb.doc(FsPath.kpu(id)).get()).data();
+    if (kpu) {
+      await rtdb.ref(`k/${id}`).set(kpu);
+      console.log('set', id);
+    } else {
+      await rtdb.ref(`k/${id}`).remove();
+      console.error('remove', id);
+    }
+    return;
+  }
+  const h = H[id] as HierarchyNode;
+  const cids = h.children.map(cid => cid[0]);
+  const csums = await getKpuFromDb(cids);
+  const [data] = await getKpuFromDb([id]);
+  let isChanged = false;
+  for (let j = 0; j < cids.length; j++) {
+    const cid = cids[j];
+    const csum = getSum(csums[j]);
+    if (
+      csums[j] &&
+      Object.keys(csums[j]).length &&
+      JSON.stringify(data[cid]) !== JSON.stringify(csum)
+    ) {
+      console.log('differ', cid, data[cid], 'here', csums[j]);
+      data[cid] = csum;
+      isChanged = true;
+    }
+  }
+  if (!isChanged) return;
+  console.log('inconsistent', id);
+  await rtdb.ref(`k/${id}`).set(data);
 }
 
 async function consistencyCheckLevel(depth) {
-  const ids = Object.keys(H).filter(id => H[id].depth === depth);
+  const ids = Object.keys(H)
+    .filter(id => H[id].depth === depth)
+    .sort((a, b) => +a - +b);
   console.log('checking level', depth, ids.length);
-  for (let i = 0; i < ids.length; i++) {
-    const id = +ids[i];
-    const h = H[id] as HierarchyNode;
-    const cids = h.children.map(cid => cid[0]);
-    const csums = await getKpuFromDb(cids);
-    const [data] = await getKpuFromDb([id]);
-    let isChanged = false;
-    for (let j = 0; j < cids.length; j++) {
-      const cid = cids[j];
-      const csum = getSum(csums[j]);
-      if (csums[j] && JSON.stringify(data[cid]) !== JSON.stringify(csum)) {
-        // console.log('differ', cid, data[cid], 'here', csums[j]);
-        data[cid] = csum;
-        isChanged = true;
-      }
-    }
-    if (!isChanged) continue;
-    console.log(i, 'inconsistent', id);
-    await rtdb.ref(`k/${id}`).set(data);
+  const promises = [];
+  for (let i = 0; i < 10; i++) {
+    promises.push(Promise.resolve());
   }
+  let idx = 0;
+  for (const id of ids) {
+    promises[idx] = promises[idx].then(() => checkConsistency(+id, depth));
+    idx = (idx + 1) % promises.length;
+  }
+  await Promise.all(promises);
 }
 
 async function consistencyCheck() {
@@ -262,8 +295,13 @@ async function consistencyCheck() {
     await consistencyCheckLevel(depth);
   }
   console.log('All Done');
-  await rtdb.app.delete();
 }
 
-// consistencyCheck().catch(console.error);
-continuousKpuUpload(3).catch(console.error);
+continuousKpuUpload(15).catch(console.error)
+  .then(() => consistencyCheck())
+  .catch(console.error)
+  .then(() => rtdb.app.delete())
+  .catch(console.error)
+  ;
+
+  // consistencyCheck().catch(console.error)

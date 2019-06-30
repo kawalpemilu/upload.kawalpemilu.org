@@ -59,7 +59,6 @@ async function reauthenticate(
     body,
     json: true
   });
-  console.log('res', res);
   const expiresIn = +res[expiresInKey];
   const user = {
     uid,
@@ -138,6 +137,7 @@ export async function kpuUploadImage(uid, kelId, tpsNo, filename: string) {
   const stats = fs.statSync(filename);
 
   if (stats.size < 10 << 10) {
+    fs.unlinkSync(filename);
     throw new Error(`Image too small ${kelId} ${tpsNo}: ${filename}`);
   }
 

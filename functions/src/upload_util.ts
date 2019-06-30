@@ -6,6 +6,7 @@ const proxy = 'socks5h://localhost:12345';
 
 export const KPU_API = 'https://pemilu2019.kpu.go.id/static/json/hhcw/ppwp';
 export const KPU_WIL = 'https://pemilu2019.kpu.go.id/static/json/wilayah';
+export const KPU_REK = 'https://pemilu2019.kpu.go.id/static/json/hr/ppwp';
 export const KPU_CACHE_PATH = '/Users/felixhalim/Projects/kawal-c1/kpu/cache';
 
 type Data = {
@@ -35,23 +36,31 @@ export async function getKelData(
     if (p && p.proses === p.total) return null;
   }
 
-  if (!data.wil) {
+  if (!data.wil || (data.wil.table && !Object.keys(data.wil.table).length)) {
     const url = getPathUrlPrefix(KPU_WIL, path) + '.json';
     const cacheFn = `${KPU_CACHE_PATH}/w${kelId}.json`;
     data.wil = await getCached(url, cacheFn, () => true);
   }
 
-  if (!data.res || !data.img || isOnline) {
+  if (
+    !data.res ||
+    !data.res.table ||
+    !Object.keys(data.res.table).length ||
+    !data.img ||
+    !Object.keys(data.img).length ||
+    isOnline
+  ) {
     data.res = await getCached(getPathUrlPrefix(KPU_API, path) + '.json');
-    data.img = {} as { [imageId: string]: any };
-    await Promise.all(
-      Object.keys(data.res.table)
-        .filter(id => data.res.table[id]['21'] !== null)
-        .map(async imageId => {
-          const iurl = getPathUrlPrefix(KPU_API, path) + `/${imageId}.json`;
-          data.img[imageId] = await getCached(iurl);
-        })
-    );
+    data.img = data.img || {} as { [imageId: string]: any };
+    for (const id of Object.keys(data.res.table)) {
+      if (data.res.table[id]['21'] !== null) {
+        if (pendingOnly && data.img[id]) {
+          continue;
+        }
+        const iurl = getPathUrlPrefix(KPU_API, path) + `/${id}.json`;
+        data.img[id] = await getCached(iurl);
+      }
+    }
   }
 
   data.uploaded = data.uploaded || {};
