@@ -531,6 +531,7 @@ export interface HierarchyNode {
   depth: number;
   data: { [cid: string]: TpsAggregate };
   kpu: KpuData;
+  rekap: KpuData
 }
 
 export type KpuData = {

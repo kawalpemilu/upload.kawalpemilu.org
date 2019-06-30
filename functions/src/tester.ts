@@ -12,7 +12,8 @@ import {
   Aggregate,
   TpsData,
   ChangeLog,
-  HierarchyNode
+  HierarchyNode,
+  KpuData
 } from 'shared';
 
 import { upload } from './upload';
@@ -21,7 +22,8 @@ import {
   getPathUrlPrefix,
   getCached,
   KPU_CACHE_PATH,
-  KPU_WIL
+  KPU_WIL,
+  KPU_REK
 } from './upload_util';
 
 const delay = (ms: number) => new Promise(_ => setTimeout(_, ms));
@@ -749,6 +751,98 @@ async function kpuDiff() {
   // fs.writeFileSync(hieFn, `exports.H = ${JSON.stringify(H)};`);
 }
 
+function laporKpuKelIds() {
+  const h = JSON.parse(fs.readFileSync('h.json', 'utf8'));
+  const arr = [];
+  for (const id of Object.keys(h)) {
+    if (H[id].depth !== 4) continue;
+    const node = h[id];
+    for (const tpsNo of Object.keys(node)) {
+      const t = node[tpsNo];
+      if (t.sum.laporKpu) {
+        // console.log(id, tpsNo, t);
+        arr.push(+id);
+        break;
+      }
+    }
+  }
+  console.log(JSON.stringify(arr));
+}
+
+async function fetchKpuRekap() {
+  const kpuWilFn = `${KPU_CACHE_PATH}/kpuWil.js`;
+  const kpuWil = JSON.parse(fs.readFileSync(kpuWilFn, 'utf8'));
+  let savettl = 100;
+
+  function saveIt() {
+    const funPath = '/Users/felixhalim/Projects/kawal-c1/functions';
+    const hieFn = `${funPath}/src/hierarchy.js`;
+    fs.writeFileSync(hieFn, `exports.H = ${JSON.stringify(H)};`);
+    console.log('saved');
+  }
+
+  async function recKpuRekap(id, depth, path) {
+    if (depth === 4) return;
+
+    const h = H[id] as HierarchyNode;
+    const k = kpuWil[id];
+    if (!h || !k) throw new Error();
+
+    let url = KPU_REK;
+    for (let i = 0; i < path.length; i++) {
+      url += `/${path[i]}`;
+    }
+
+    if (!h.rekap) {
+      const rekap = await getCached(url + '.json');
+      if (!rekap.table || !Object.keys(rekap.table).length) {
+        console.error('No table for ', id);
+        return;
+      }
+
+      h.rekap = {} as KpuData;
+      for (const key of Object.keys(rekap.table)) {
+        const t = rekap.table[key];
+        if (t['21'] === undefined || t['22'] === undefined) throw new Error();
+        h.rekap[key] = {
+          pas1: t['21'],
+          pas2: t['22']
+        } as SumMap;
+      }
+
+      if (--savettl <= 0) {
+        savettl = 100;
+        saveIt();
+      }
+    }
+
+    for (const key of Object.keys(kpuWil[id])) {
+      const cid = +key;
+      if (id === -99) {
+        const cpath = path.slice();
+        for (let i = 0; i < 2; i++) {
+          cpath.push(cid - i);
+        }
+        const nid = cid - 2;
+        await recKpuRekap(
+          nid,
+          depth + 3,
+          cpath.concat(nid)
+        );
+      } else {
+        continue;
+        await recKpuRekap(cid, depth + 1, path.concat(cid));
+      }
+    }
+  }
+
+  console.log(H[-99].rekap);
+
+  // await recKpuRekap(0, 0, []);
+
+  // saveIt();
+}
+
 // parallelUpload().catch(console.error);
 // loadTest().catch(console.error);
 // fixClaimersRole().catch(console.error);
@@ -763,6 +857,8 @@ async function kpuDiff() {
 
 // laporKpuCount().catch(console.error);
 // moderators().catch(console.error);
-kpuDiff().catch(console.error);
+// kpuDiff().catch(console.error);
 // crawlKpuHie().catch(console.error);
 // buildKpuWil();
+// laporKpuKelIds();
+fetchKpuRekap().catch(console.error);

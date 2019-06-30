@@ -287,6 +287,7 @@ export interface HierarchyNode {
         [cid: string]: TpsAggregate;
     };
     kpu: KpuData;
+    rekap: KpuData;
 }
 export declare type KpuData = {
     [cid: string]: SumMap;
