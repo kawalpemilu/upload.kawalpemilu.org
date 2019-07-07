@@ -1,6 +1,7 @@
 "use strict";
 exports.__esModule = true;
 var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
+exports.LOCK_DOWN = true;
 exports.APP_SCOPED_PREFIX_URL = 'https://www.facebook.com/app_scoped_user_id/';
 exports.MAX_REFERRALS = 1500;
 exports.MAX_NUM_UPLOADS = 1500;

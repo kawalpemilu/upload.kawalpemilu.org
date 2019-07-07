@@ -47,7 +47,8 @@ import {
   LaporKpuRequest,
   MAX_LAPOR_KPU,
   isSuperAdmin,
-  BOT_UID
+  BOT_UID,
+  LOCK_DOWN
 } from 'shared';
 
 const t1 = Date.now();
@@ -104,6 +105,11 @@ exports.handlePhotoUpload = functions.storage
       return null;
     }
 
+    if (LOCK_DOWN) {
+      console.warn(`On LOCK_DOWN: ${object.name}`);
+      return null;
+    }
+
     const m = {} as ImageMetadata;
     m.u = userId;
     m.k = parseInt(kelurahanId, 10);
@@ -139,6 +145,20 @@ function validateToken() {
   };
 }
 
+function lockDownCheck() {
+  return async (req, res, next) => {
+    const user = req.user as admin.auth.DecodedIdToken;
+    if (LOCK_DOWN) {
+      console.log('path', req.path);
+      if (!req.path.startsWith('/api/c/')) {
+        console.warn(`LOCK_DOWN ${user.uid} ${req.path}`);
+        return res.json({ error: 'LOCK_DOWN mode' });
+      }
+    }
+    next();
+  };
+}
+
 function rateLimitRequests() {
   const quota: { [uid: string]: QuotaSegments } = {};
   const quotaSpecs = new QuotaSpecs('api');
@@ -167,6 +187,7 @@ const bodyParser = require('body-parser');
 app.use(require('cors')({ origin: true }));
 app.use(require('helmet')());
 app.use(validateToken());
+app.use(lockDownCheck());
 app.use(rateLimitRequests());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -194,7 +215,7 @@ async function getHierarchyNode(
   const ts = Date.now();
   const isPublic = uid.startsWith('public');
   const level = isPublic || privateFailCount < 10 ? 'debug' : 'error';
-  if (fallbackUntilTs < ts || (!isPublic && privateFailCount < 10)) {
+  if (!LOCK_DOWN && (fallbackUntilTs < ts || (!isPublic && privateFailCount < 10))) {
     try {
       const host = '35.193.104.134:8080';
       const options = { timeout: isPublic ? 1500 : 3000, json: true };
@@ -214,7 +235,7 @@ async function getHierarchyNode(
   let snap = await fsdb.doc(FsPath.hieCache(cid)).get();
   let c = snap.data() as HierarchyNode;
   if (c) {
-    console[level](`Cache hie for ${cid}, uid ${uid}`);
+    if (!LOCK_DOWN) console[level](`Cache hie for ${cid}, uid ${uid}`);
   } else {
     // Fallback to static hierarchy, without sum.
     snap = await fsdb.doc(FsPath.hie(cid)).get();
@@ -239,6 +260,7 @@ app.get('/api/c/:id', async (req: any, res) => {
   if (isNaN(cid) || cid >= 1e6) {
     return res.json({});
   }
+  // res.set('Cache-Control', 'public, max-age=300, s-maxage=600');
 
   const c = cache_12[cid];
   const ts = Date.now();
@@ -1214,6 +1236,7 @@ exports.api = functions.https.onRequest(app);
 
 const t3 = Date.now();
 
+/*
 exports.updateScoreboard = functions
   .runWith({ memory: '1GB' })
   .pubsub.schedule('every 60 minutes')
@@ -1309,6 +1332,7 @@ exports.updateScoreboard = functions
       tt6 - tt5
     );
   });
+*/
 
 console.info(
   `createdNewFunction ${JSON.stringify({

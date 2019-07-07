@@ -19,7 +19,7 @@ const fsdb = admin.firestore();
 const rtdb = admin.database();
 
 // Only fetch KPU if there are incomplete data.
-const pendingOnly = false;
+const pendingOnly = true;
 
 // Attempt to fetch remote data.
 const isOnline = true;
@@ -297,7 +297,7 @@ async function consistencyCheck() {
   console.log('All Done');
 }
 
-continuousKpuUpload(15).catch(console.error)
+continuousKpuUpload(5).catch(console.error)
   .then(() => consistencyCheck())
   .catch(console.error)
   .then(() => rtdb.app.delete())

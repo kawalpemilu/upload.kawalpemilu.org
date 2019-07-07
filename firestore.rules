@@ -9,6 +9,12 @@ service cloud.firestore {
     match /h/{userId} {
       allow list: if request.auth.uid != null && request.query.limit <= 100;
     }
+
+    // Hierarchy Cache Sum and KPU autofill.
+    match /hc2/{tpsId} {
+      // Anyone can read the cached sum.
+      allow get: if request.auth.uid != null;
+    }
  
     // Relawan database.
     match /r/{userId} {

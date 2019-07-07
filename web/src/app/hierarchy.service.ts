@@ -1,10 +1,18 @@
 import { Injectable } from '@angular/core';
-import { HierarchyNode, lsGetItem, lsSetItem, SumMap } from 'shared';
+import {
+  HierarchyNode,
+  lsGetItem,
+  lsSetItem,
+  SumMap,
+  LOCK_DOWN,
+  FsPath,
+  toChildren
+} from 'shared';
 import { ApiService } from './api.service';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { filter, take, distinctUntilChanged, map } from 'rxjs/operators';
 import { UserService } from './user.service';
-import { User } from 'firebase';
+import { AngularFirestore } from '@angular/fire/firestore';
 
 @Injectable({
   providedIn: 'root'
@@ -13,14 +21,30 @@ export class HierarchyService {
   hierarchy$: { [id: string]: BehaviorSubject<HierarchyNode> } = {};
   lastTs = Date.now();
 
-  constructor(private api: ApiService, private userService: UserService) {
+  constructor(
+    private api: ApiService,
+    private userService: UserService,
+    private fsdb: AngularFirestore
+  ) {
     console.log('Loaded HierarchyService');
   }
 
   async update(id: number) {
     if (this.hierarchy$[id]) {
-      return this.api
-        .get(this.userService.user, `c/${id}?${Date.now()}`)
+      const h$ = LOCK_DOWN
+        ? this.fsdb
+            .doc<HierarchyNode>(FsPath.hieCache(id))
+            .get()
+            .pipe(take(1))
+            .toPromise()
+            .then(snap => {
+              const c = snap.data() as HierarchyNode;
+              c.children = toChildren(c);
+              delete c.child;
+              return c;
+            })
+        : this.api.get(this.userService.user, `c/${id}?${Date.now()}`);
+      return h$
         .then((c: HierarchyNode) => {
           Object.keys(c.data || {})
             .filter(cid => !c.data[cid].sum)

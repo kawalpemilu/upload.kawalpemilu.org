@@ -1,3 +1,5 @@
+export const LOCK_DOWN = true;
+
 export const APP_SCOPED_PREFIX_URL =
   'https://www.facebook.com/app_scoped_user_id/';
 export const MAX_REFERRALS = 1500;

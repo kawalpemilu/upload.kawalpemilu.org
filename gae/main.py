@@ -38,8 +38,7 @@ class GetChildrenApi(webapp2.RequestHandler):
 
             h = json.loads(jsonTxt)
             if 'depth' in h:
-                CACHE_TIMEOUT = (10 ** h['depth']) * 60
-                memcache.set(cid, jsonTxt, CACHE_TIMEOUT)
+                memcache.set(cid, jsonTxt)
         except urlfetch.Error:
             self.response.out.write('{}')
             memcache.set(cid, '{}', 3600)

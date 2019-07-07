@@ -10,7 +10,7 @@
     KawalPemilu - Jaga Suara 2019
   </h1>
 
-  <ng-container *ngIf="(userService.relawan$ | async)">
+  <ng-container *ngIf="userService.relawan$ | async">
     <span style="flex: 1 1 auto;"></span>
     <button mat-icon-button [matMenuTriggerFor]="menu">
       <mat-icon>more_vert</mat-icon>
@@ -45,23 +45,16 @@
           </a>
         </mat-list-item>
       </ng-template>
-      <ng-container
-        *ngIf="(userService.relawan$ | async) as relawan; else login"
-      >
+      <ng-container *ngIf="userService.relawan$ | async as relawan; else login">
         <ng-container *ngIf="relawan.profile.role != USER_ROLE.BANNED">
-          <mat-list-item *ngIf="relawan.depth > 0">
+          <!-- <mat-list-item *ngIf="relawan.depth > 0">
             <a
               mat-list-item
               [routerLink]="['/c', 0]"
               (click)="mobileQuery.matches && snav.toggle()"
               ><mat-icon>group_add</mat-icon> &nbsp; Rekrut Teman</a
             >
-          </mat-list-item>
-          <mat-list-item>
-            <a mat-list-item (click)="openBadge2(relawan) && snav.toggle()"
-              ><mat-icon>portrait</mat-icon> &nbsp; ID Badge
-            </a>
-          </mat-list-item>
+          </mat-list-item> -->
           <mat-list-item>
             <a
               mat-list-item
@@ -101,6 +94,11 @@
               (click)="mobileQuery.matches && snav.toggle()"
               ><mat-icon>show_chart</mat-icon> &nbsp; Scoreboard</a
             >
+          </mat-list-item>
+          <mat-list-item>
+            <a mat-list-item (click)="openBadge2(relawan) && snav.toggle()"
+              ><mat-icon>portrait</mat-icon> &nbsp; ID Badge
+            </a>
           </mat-list-item>
         </ng-container>
       </ng-container>

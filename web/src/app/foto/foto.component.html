@@ -1,6 +1,6 @@
 <h2>Upload Foto</h2>
 
-<p>
+<!-- <p>
   <b style="color:red">Catatan</b>:
   <b>Jangan mengupload</b>
   salinan C1 scan yang didownload dari web KPU untuk menghindari kemubaziran
@@ -12,13 +12,14 @@
   <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
     Cari TPS kamu dan Upload Foto
   </a>
-</p>
+</p> -->
 
 <ng-container *ngIf="photos$ | async as photos">
   <ng-container *ngIf="photos.length > 0">
     <p>
-      <b>Tips:</b> klik nama kelurahan di bawah untuk meng-upload foto lain di
-      kelurahan yang sama.
+      Terima kasih atas kontribusi anda!
+      <!-- <b>Tips:</b> klik nama kelurahan di bawah untuk meng-upload foto lain di
+      kelurahan yang sama. -->
     </p>
     <table border="1" cellpadding="5" cellspacing="0" class="alternating">
       <tr height="30" [style.background-color]="'lightgray'">
@@ -55,114 +56,118 @@
   </ng-container>
 </ng-container>
 
-<ng-container *ngIf="MULAI_HITUNG; else tunggu">
-  <p><b>PENGHITUNGAN SUARA SEDANG BERLANGSUNG!</b></p>
+<ng-container *ngIf="!LOCK_DOWN">
+  <ng-container *ngIf="MULAI_HITUNG; else tunggu">
+    <p><b>PENGHITUNGAN SUARA SEDANG BERLANGSUNG!</b></p>
 
-  <p>Jangan lupa balik ke TPS untuk:</p>
+    <p>Jangan lupa balik ke TPS untuk:</p>
 
-  <ul>
-    <li><b>PANTAU</b> penghitungan suara</li>
-    <li>
-      <b>FOTO</b> formulir C1 PLANO-nya (2 halaman untuk Pilpres, 18 halaman
-      untuk Pileg DPR RI). Biasanya, formulir ini dipajang di papan besar
-      seperti
-      <a href="http://upload.kawalpemilu.org/assets/contoh.jpeg" target="_blank"
-        >contoh foto ini</a
-      >
-    </li>
-    <li>
-      <b>UPLOAD</b> foto-fotonya disini:
-      <p>
-        <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
-          Cari TPS kamu dan Upload Foto
-        </a>
-      </p>
-    </li>
-  </ul>
+    <ul>
+      <li><b>PANTAU</b> penghitungan suara</li>
+      <li>
+        <b>FOTO</b> formulir C1 PLANO-nya (2 halaman untuk Pilpres, 18 halaman
+        untuk Pileg DPR RI). Biasanya, formulir ini dipajang di papan besar
+        seperti
+        <a
+          href="http://upload.kawalpemilu.org/assets/contoh.jpeg"
+          target="_blank"
+          >contoh foto ini</a
+        >
+      </li>
+      <li>
+        <b>UPLOAD</b> foto-fotonya disini:
+        <p>
+          <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
+            Cari TPS kamu dan Upload Foto
+          </a>
+        </p>
+      </li>
+    </ul>
 
-  <p>
-    Belum terlambat untuk ajak lima (5) teman kamu untuk ikutan
-    #PantauFotoUpload dari TPS masing-masing. Jangan sampai ada TPS yang bolong
-    nggak ada fotonya!
-  </p>
+    <p>
+      Belum terlambat untuk ajak lima (5) teman kamu untuk ikutan
+      #PantauFotoUpload dari TPS masing-masing. Jangan sampai ada TPS yang
+      bolong nggak ada fotonya!
+    </p>
 
-  <p>
-    Buat yang mau tanya-tanya tentang proses penghitungan suara dan proses foto
-    / upload, troubleshooting, silakan DM kami via
-    <a target="_blank" href="https://m.me/kawalpemilu.org">Facebook</a> atau
-    <a
-      target="_blank"
-      href="https://mobile.twitter.com/messages/compose?recipient_id=2648297252"
-      >Twitter</a
-    >.
-  </p>
+    <p>
+      Buat yang mau tanya-tanya tentang proses penghitungan suara dan proses
+      foto / upload, troubleshooting, silakan DM kami via
+      <a target="_blank" href="https://m.me/kawalpemilu.org">Facebook</a> atau
+      <a
+        target="_blank"
+        href="https://mobile.twitter.com/messages/compose?recipient_id=2648297252"
+        >Twitter</a
+      >.
+    </p>
 
-  <p>
-    Terima kasih sudah bersedia menjaga suara Pemilu 2019 dengan menyetorkan
-    foto ke upload.kawalpemilu.org. Mari jadikan ini Pemilu paling transparan
-    se-dunia. TETAP SEMANGAT!!!
-  </p>
+    <p>
+      Terima kasih sudah bersedia menjaga suara Pemilu 2019 dengan menyetorkan
+      foto ke upload.kawalpemilu.org. Mari jadikan ini Pemilu paling transparan
+      se-dunia. TETAP SEMANGAT!!!
+    </p>
 
-  <p>
-    Hormat kami Tim inti KawalPemilu - Jaga Suara 2019 yang jagain sistem sambil
-    makan bubur tanpa diaduk
-  </p>
+    <p>
+      Hormat kami Tim inti KawalPemilu - Jaga Suara 2019 yang jagain sistem
+      sambil makan bubur tanpa diaduk
+    </p>
+  </ng-container>
+
+  <ng-template #tunggu>
+    <p>
+      <b>Pemilu dimulai!</b>
+    </p>
+
+    <p>
+      Pagi ini, yuk, ajak lima (5) teman kamu untuk ikutan #PantauFotoUpload
+      dari TPS mereka masing-masing. Jangan sampai ada TPS yang bolong nggak ada
+      fotonya! Caranya:
+    </p>
+
+    <ul>
+      <li>
+        Rekrut orang sambil antri di TPS, sekalian ajarin cara login dan upload
+        fotonya. Antri 1-2 jam nggak berasa kalo kamu lakukan ini.
+      </li>
+
+      <li>
+        Habis nyoblos, nangkring di warung or kafe untuk rekrut orang Ajak
+        keluarga dan temen yang nggak punya Facebook untuk setor foto C1 ke kamu
+        via WhatsApp, kamu yang setorin ke upload.kawalpemilu.org
+      </li>
+      <li>
+        Posting di medsos untuk ajak teman bergabung ke upload.kawalpemilu.org
+        dengan hashtag #PantauFotoUpload #KawalPemiluJagaSuara2019
+        #IndonesiaElection #IndonesiaDemocracy
+      </li>
+      <li>
+        Butuh infografik, video, dan segala visual yang keren supaya postingan
+        kamu kekinian? Tinggal ambil dari Facebook fanpage @kawalpemilu.org atau
+        Twitter/Instagram @kawalpemilu2019
+      </li>
+      <li>
+        Foto pemandangan sekitar TPS kamu, dan upload disini:
+
+        <p>
+          <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
+            Cari TPS dan Upload Foto Pemandangan TPS
+          </a>
+        </p>
+      </li>
+    </ul>
+
+    <p>
+      Terima kasih sudah bersedia menjaga suara Pemilu 2019 dengan menyetorkan
+      foto ke upload.kawalpemilu.org. Mari jadikan ini Pemilu paling transparan
+      se-dunia. TETAP SEMANGAT!!!
+    </p>
+
+    <p>
+      Sekitar jam 1 siang nanti, halaman ini akan diupdate dengan informasi
+      untuk mengupload foto.
+    </p>
+  </ng-template>
 </ng-container>
-
-<ng-template #tunggu>
-  <p>
-    <b>Pemilu dimulai!</b>
-  </p>
-
-  <p>
-    Pagi ini, yuk, ajak lima (5) teman kamu untuk ikutan #PantauFotoUpload dari
-    TPS mereka masing-masing. Jangan sampai ada TPS yang bolong nggak ada
-    fotonya! Caranya:
-  </p>
-
-  <ul>
-    <li>
-      Rekrut orang sambil antri di TPS, sekalian ajarin cara login dan upload
-      fotonya. Antri 1-2 jam nggak berasa kalo kamu lakukan ini.
-    </li>
-
-    <li>
-      Habis nyoblos, nangkring di warung or kafe untuk rekrut orang Ajak
-      keluarga dan temen yang nggak punya Facebook untuk setor foto C1 ke kamu
-      via WhatsApp, kamu yang setorin ke upload.kawalpemilu.org
-    </li>
-    <li>
-      Posting di medsos untuk ajak teman bergabung ke upload.kawalpemilu.org
-      dengan hashtag #PantauFotoUpload #KawalPemiluJagaSuara2019
-      #IndonesiaElection #IndonesiaDemocracy
-    </li>
-    <li>
-      Butuh infografik, video, dan segala visual yang keren supaya postingan
-      kamu kekinian? Tinggal ambil dari Facebook fanpage @kawalpemilu.org atau
-      Twitter/Instagram @kawalpemilu2019
-    </li>
-    <li>
-      Foto pemandangan sekitar TPS kamu, dan upload disini:
-
-      <p>
-        <a [routerLink]="['/h', 0]" mat-raised-button color="primary">
-          Cari TPS dan Upload Foto Pemandangan TPS
-        </a>
-      </p>
-    </li>
-  </ul>
-
-  <p>
-    Terima kasih sudah bersedia menjaga suara Pemilu 2019 dengan menyetorkan
-    foto ke upload.kawalpemilu.org. Mari jadikan ini Pemilu paling transparan
-    se-dunia. TETAP SEMANGAT!!!
-  </p>
-
-  <p>
-    Sekitar jam 1 siang nanti, halaman ini akan diupdate dengan informasi untuk
-    mengupload foto.
-  </p>
-</ng-template>
 
 <p>Ikuti perkembangan kegiatan KawalPemilu 2019 di:</p>
 

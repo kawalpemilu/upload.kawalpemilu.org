@@ -13,7 +13,8 @@ import {
   TpsData,
   ChangeLog,
   HierarchyNode,
-  KpuData
+  KpuData,
+  toChild
 } from 'shared';
 
 import { upload } from './upload';
@@ -29,6 +30,9 @@ import {
 const delay = (ms: number) => new Promise(_ => setTimeout(_, ms));
 
 const fsdb = admin.firestore();
+const rtdb = admin.database();
+
+const funPath = '/Users/felixhalim/Projects/kawal-c1/functions';
 
 function makeRequest(kelId, tpsNo) {
   const imageId = `zzzzzzz${kelId}t${tpsNo}`;
@@ -586,7 +590,6 @@ async function moderators() {
 async function kpuDiff() {
   const kpuWilFn = `${KPU_CACHE_PATH}/kpuWil.js`;
   const kpuWil = JSON.parse(fs.readFileSync(kpuWilFn, 'utf8'));
-  const funPath = '/Users/felixhalim/Projects/kawal-c1/functions';
   const hJson = JSON.parse(fs.readFileSync(`${funPath}/h.json`, 'utf8'));
 
   function recKpuDiff(id, name, depth, path, names) {
@@ -701,8 +704,8 @@ async function kpuDiff() {
       let tpsCount = 0;
       if (id === -99) {
         const cpath = path.slice();
-        for (let i = 0; i < 2; i++) {
-          cpath.push(cid - i);
+        for (let j = 0; j < 2; j++) {
+          cpath.push(cid - j);
         }
         const nid = cid - 2;
         tpsCount = recKpuDiff(
@@ -732,8 +735,8 @@ async function kpuDiff() {
 
     if (arr.length) {
       console.log(`\nif (id === ${id}) {`);
-      for (const x of arr) {
-        console.log(`\tremoveKel(${x});`);
+      for (const xx of arr) {
+        console.log(`\tremoveKel(${xx});`);
       }
       console.log(`}\n`);
       throw new Error();
@@ -769,17 +772,16 @@ function laporKpuKelIds() {
   console.log(JSON.stringify(arr));
 }
 
+function saveIt() {
+  const hieFn = `${funPath}/src/hierarchy.js`;
+  fs.writeFileSync(hieFn, `exports.H = ${JSON.stringify(H)};`);
+  console.log('saved');
+}
+
 async function fetchKpuRekap() {
   const kpuWilFn = `${KPU_CACHE_PATH}/kpuWil.js`;
   const kpuWil = JSON.parse(fs.readFileSync(kpuWilFn, 'utf8'));
   let savettl = 100;
-
-  function saveIt() {
-    const funPath = '/Users/felixhalim/Projects/kawal-c1/functions';
-    const hieFn = `${funPath}/src/hierarchy.js`;
-    fs.writeFileSync(hieFn, `exports.H = ${JSON.stringify(H)};`);
-    console.log('saved');
-  }
 
   async function recKpuRekap(id, depth, path) {
     if (depth === 4) return;
@@ -789,8 +791,8 @@ async function fetchKpuRekap() {
     if (!h || !k) throw new Error();
 
     let url = KPU_REK;
-    for (let i = 0; i < path.length; i++) {
-      url += `/${path[i]}`;
+    for (const p of path) {
+      url += `/${p}`;
     }
 
     if (!h.rekap) {
@@ -824,23 +826,57 @@ async function fetchKpuRekap() {
           cpath.push(cid - i);
         }
         const nid = cid - 2;
-        await recKpuRekap(
-          nid,
-          depth + 3,
-          cpath.concat(nid)
-        );
+        await recKpuRekap(nid, depth + 3, cpath.concat(nid));
       } else {
-        continue;
         await recKpuRekap(cid, depth + 1, path.concat(cid));
       }
     }
   }
 
-  console.log(H[-99].rekap);
+  await recKpuRekap(0, 0, []);
 
-  // await recKpuRekap(0, 0, []);
+  saveIt();
+}
 
-  // saveIt();
+async function copyHjson() {
+  const hJson = JSON.parse(fs.readFileSync(`${funPath}/src/h.json`, 'utf8'));
+
+  async function recH(id, depth) {
+    const h = H[id] as HierarchyNode;
+
+    // Fill the data and kpu auto complete.
+    h.data = hJson[id] || {};
+    h.kpu = (await rtdb.ref(`k/${id}`).once('value')).val();
+    if (!h.kpu) {
+      console.log(`Missing kpu ${id}`);
+      h.kpu = {};
+    }
+
+    const cache = JSON.parse(JSON.stringify(h));
+    cache.child = toChild(cache);
+    delete cache.children;
+    await fsdb
+      .doc(FsPath.hieCache(id))
+      .set(cache)
+      .catch(e => console.error(`children cache failed: ${e.message}`));
+
+    if (depth === 4) return;
+
+    if (depth >= 3) {
+      await Promise.all(
+        h.children.map(c => c[0]).map(cid => recH(cid, depth + 1))
+      );
+    } else {
+      for (const [cid] of h.children) {
+        await recH(cid, depth + 1);
+      }
+    }
+  }
+  await recH(0, 0);
+
+  saveIt();
+  console.log('done');
+  return rtdb.app.delete();
 }
 
 // parallelUpload().catch(console.error);
@@ -861,4 +897,5 @@ async function fetchKpuRekap() {
 // crawlKpuHie().catch(console.error);
 // buildKpuWil();
 // laporKpuKelIds();
-fetchKpuRekap().catch(console.error);
+// fetchKpuRekap().catch(console.error);
+copyHjson().catch(console.error);

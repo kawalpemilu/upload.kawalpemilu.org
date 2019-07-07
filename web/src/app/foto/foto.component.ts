@@ -7,7 +7,7 @@ import { UserService } from '../user.service';
 import { Observable, combineLatest } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { UploadService } from '../upload.service';
-import { UploadRequest, SumMap } from 'shared';
+import { UploadRequest, SumMap, LOCK_DOWN } from 'shared';
 import { CarouselItem } from '../carousel/carousel.component';
 import { Title } from '@angular/platform-browser';
 
@@ -34,6 +34,7 @@ export interface Photos {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FotoComponent {
+  LOCK_DOWN = LOCK_DOWN;
   photos$: Observable<Photos[]>;
 
   constructor(

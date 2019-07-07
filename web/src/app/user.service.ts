@@ -12,7 +12,7 @@ import {
   Upsert,
   RelawanPhotos,
   lsGetItem,
-  USER_ROLE
+  LOCK_DOWN
 } from 'shared';
 import { ApiService } from './api.service';
 import { Router } from '@angular/router';
@@ -78,6 +78,10 @@ export class UserService {
       ),
       shareReplay(1)
     );
+
+    if (LOCK_DOWN) {
+      return;
+    }
 
     this.afAuth.auth
       .getRedirectResult()

@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 
 import { UserService } from '../user.service';
 import { AppComponent } from '../app.component';
+import { LOCK_DOWN } from 'shared';
 
 /**
  *
@@ -24,16 +25,18 @@ import { AppComponent } from '../app.component';
 @Component({
   selector: 'app-upload-sequence',
   template: `
-    <input
-      #u
-      type="file"
-      (change)="upload($event)"
-      [accept]="accept"
-      style="display: none"
-    />
-    <a mat-raised-button color="primary" (click)="u.click()">
-      {{ value }}
-    </a>
+    <ng-container *ngIf="!LOCK_DOWN">
+      <input
+        #u
+        type="file"
+        (change)="upload($event)"
+        [accept]="accept"
+        style="display: none"
+      />
+      <a mat-raised-button color="primary" (click)="u.click()">
+        {{ value }}
+      </a>
+    </ng-container>
   `,
   styles: ['']
 })
@@ -44,6 +47,7 @@ export class UploadSequenceComponent implements OnInit {
   @Input() value = 'Upload foto';
 
   accept = '.png,.jpg';
+  LOCK_DOWN = LOCK_DOWN;
 
   constructor(
     private router: Router,
@@ -58,6 +62,10 @@ export class UploadSequenceComponent implements OnInit {
   }
 
   async upload(event) {
+    if (LOCK_DOWN) {
+      alert('LOCK_DOWN mode');
+      return;
+    }
     if (event.target.files.length === 0) {
       console.log('No file to be uploaded');
       return;
