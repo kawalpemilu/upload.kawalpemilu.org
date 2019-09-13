@@ -50,15 +50,20 @@ This takes crowdsourcing to the next level:
 
 ## System Architectures
 
-There are five sub-systems.
+![The KawalPemilu Sub-Systems](https://raw.githubusercontent.com/kawalpemilu/upload.kawalpemilu.org/master/web/src/assets/architecture.png)
 
-### The Public Facing (read-only) website
+### The Public Facing (kawalpemilu.org) website
 
 The [KawalPemilu.org](KawalPemilu.org) reads data from KawalPemilu REST API.
 See the [public facing website](https://github.com/kawalpemilu/kawalpemilu2019-www)
 repository.
 
-### The Public REST API (read-only) website
+The number of views to the public kawalpemilu.org website peaked at 20 April 2019, with 406,701 active users.
+
+![kawalpemilu.org analytics](https://raw.githubusercontent.com/kawalpemilu/upload.kawalpemilu.org/master/web/src/assets/analytics.png)
+
+
+### The REST API (kawal-c1.appspot.com/api/c/{wilayah_id}) website
 
 The [REST API](https://kawal-c1.appspot.com/api/c/4) takes in a {wilayah_id} 
 and returns the details of the node containing:
@@ -71,7 +76,7 @@ and returns the details of the node containing:
   
   *  [And more](https://github.com/kawalpemilu/upload.kawalpemilu.org/blob/master/shared/index.ts#L526).
 
-### The Data Entry website
+### The Data Entry (upload.kawalpemilu.org) website
 
 Users with Facebook account can login to the
 [data entry website](https://upload.kawalpemilu.org).
@@ -129,16 +134,19 @@ Below are the platforms used:
   [scripts](https://github.com/kawalpemilu/upload.kawalpemilu.org/blob/master/functions/src/kpu_uploads.ts)
   for precomputing / cleaning data. 
 
-Following is a diagram showing the interactions between the sub-systems.
+The number of views to the upload.kawalpemilu.org website peaked at 17 April 2019 with 4,792 active users:
 
-
+![upload.kawalpemilu.org analytics](https://raw.githubusercontent.com/kawalpemilu/upload.kawalpemilu.org/master/web/src/assets/analytics-upload.png)
 
 
 ### The Bot Verifier
 
-The [Bot Verifier](https://github.com/SamTheisens/kawalc1) is a service that attempts
-to automatically digitize the numbers in C1 forms with the aid of image processing
-and a neural network. The digitization process consists of [the following steps](https://docs.google.com/presentation/d/1B6wEI_9oN3t9KGF2H9HA-oI0lPi2gu1qh-4QbJTqUCQ/edit#slide=id.p1):
+The [Bot Verifier](https://github.com/SamTheisens/kawalc1) is a service that attempts to automatically 
+[digitize the numbers in C1 forms](https://www.youtube.com/watch?v=_cgl1tMVcJ0)
+with the aid of image processing and a neural network.
+The digitization process consists of the following steps:
+
+![Verification Steps](https://raw.githubusercontent.com/kawalpemilu/upload.kawalpemilu.org/master/web/src/assets/bot-steps.png)
 
   * **Alignment**. In order to locate the digits in a C1 form it is aligned with a
     [reference form](https://github.com/SamTheisens/kawalc1/blob/master/static/datasets/PPWP-2019-plano.png)
@@ -191,10 +199,13 @@ If that succeeds, the form is categorized as a
 and corrected in a 
 [semi-automated](https://www.youtube.com/watch?v=9eiWMnNIuFc) fashion.
 
-### The (internal) statistics website
+### The Error Reports website
 
-This site is for Moderators to keep track of errors report.
+This site is for Moderators to keep track of errors report and various statistics like the 
 
+[timeline to reach 98.7%](https://spotfire-next.cloud.tibco.com/spotfire/wp/analysis?file=/Users/ku2oiyw5orsvztazcjcew5ibdizqgytd/Public/Election/Election%20-%20Daily%20Progress&waid=2goohDrgQ0OZHhILNx05V-2604578e4bbPSe&wavid=0):
+
+![TPS progress](https://raw.githubusercontent.com/kawalpemilu/upload.kawalpemilu.org/master/web/src/assets/tps-progress.png)
 
 
 ## Total Spending
@@ -249,21 +260,6 @@ Of the remaining 17%, for the cases in which the bot had a confidence of more th
 an additional round of human verification was performed. 
 A human mistake was found in 27% of these remaining cases. 
 In total 1.729 human mistakes were thus detected and corrected.
-
-## Timeline to reach 98.7%
-
-[link](https://spotfire-next.cloud.tibco.com/spotfire/wp/analysis?file=/Users/ku2oiyw5orsvztazcjcew5ibdizqgytd/Public/Election/Election%20-%20Daily%20Progress&waid=2goohDrgQ0OZHhILNx05V-2604578e4bbPSe&wavid=0)
-
-
-## The number of views to the public kawalpemilu.org website
-
-The peak is at 20 April 2019, with 406,701 active users.
-
-
-## The number of views to the upload.kawalpemilu.org website
-
-The peak is at 17 April 2019 with 4,792 active users
-
 
 ## Our hope for the future
 
