@@ -86,7 +86,7 @@ to gain some build reproducibility.
 
 The maximum observed real-time number of active users was 7,107.
 
-![kawalpemilu.org max real-time active users](https://raw.githubusercontent.com/kawalpemilu/upload.kawalpemilu.org/master/web/src/assets/realtime.png)
+![kawalpemilu.org max real-time active users](https://raw.githubusercontent.com/kawalpemilu/upload.kawalpemilu.org/master/web/src/assets/devices.png)
 
 The number of views to the public kawalpemilu.org website peaked at 20 April 2019, with 406,701 active users.
 
