@@ -17,6 +17,16 @@ digitized C1 forms from three different sources:
 This takes crowdsourcing to the next level:
 **ANYONE can actively participate in guarding the election**.
 
+KawalPemilu team in 2019 partners closely with NETGRIT and branded 
+the collaboration as KPJS 2019 (Kawal Pemilu Jaga Suara 2019). 
+Initially, KawalPemilu team was unsure or at least divided in opinion, 
+on whether they should repeat what they did in 2014, 
+whether KawalPemilu was necessary at all considering the advancements of KPU, 
+most notably their KawalPemilu-like systems in a few key Pilkada between 2014-2019. 
+It was pak Hadar Nafis Gumay and his NETGRIT team who managed to convince 
+KawalPemilu team on why it is necessary to repeat in 2019, 
+but must be in a different form: crowdsourcing original C1 Plano results by photos.
+
 ## Our Goals
 
 * To guard the (Indonesian) election by inviting the public to actively 
@@ -54,9 +64,29 @@ This takes crowdsourcing to the next level:
 
 ### The Public Facing (kawalpemilu.org) website
 
-The [KawalPemilu.org](KawalPemilu.org) reads data from KawalPemilu REST API.
-See the [public facing website](https://github.com/kawalpemilu/kawalpemilu2019-www)
-repository.
+The development of the [KawalPemilu.org](KawalPemilu.org)
+website is roughly split into two stages:
+* Initially, the website was developed with an objective to 
+  let information out as quickly as possible. 
+  It was designed to be very light so it will not burden the users'
+  web browser/device and network too much.
+* Later after few weeks after the election day, 
+  the website was redesigned to be more visually appealing and 
+  responsive in different kind of users’ device capabilities.
+
+The website is implemented using a 
+[custom framework](https://github.com/kawalpemilu/kawalpemilu2019-www) with Webpack 
+for the public website,
+[hosted](https://github.com/kawalpemilu/kawalpemilu2019-www/blob/master/firebase.json)
+on Firebase Hosting
+and read data from KawalPemilu REST API (explained below).
+[Docker](https://www.docker.com/) is used to host the 
+[compilation process](https://github.com/kawalpemilu/kawalpemilu2019-www/blob/master/build.sh)
+to gain some build reproducibility.
+
+The maximum observed real-time number of active users was 7,107.
+
+![kawalpemilu.org max real-time active users](https://raw.githubusercontent.com/kawalpemilu/upload.kawalpemilu.org/master/web/src/assets/realtime.png)
 
 The number of views to the public kawalpemilu.org website peaked at 20 April 2019, with 406,701 active users.
 
@@ -170,7 +200,7 @@ The digitization process consists of the following steps:
     The 11 outputs of the network consist of the digits 0 through 9 and the letter X.
 
   * **Verification**. In principle, the digits with the highest confidence are picked 
-    to form numbers. The confidence for a number is the confidences of the digits 
+    to form numbers. The confidence for a number is the confidence of the digits 
     that make up the number multiplied.
     The C1 forms have a field for the total number of validly votes. 
     This number can be exploited as a checksum to improve accuracy. 
@@ -202,7 +232,6 @@ and corrected in a
 ### The Error Reports website
 
 This site is for Moderators to keep track of errors report and various statistics like the 
-
 [timeline to reach 98.7%](https://spotfire-next.cloud.tibco.com/spotfire/wp/analysis?file=/Users/ku2oiyw5orsvztazcjcew5ibdizqgytd/Public/Election/Election%20-%20Daily%20Progress&waid=2goohDrgQ0OZHhILNx05V-2604578e4bbPSe&wavid=0):
 
 ![TPS progress](https://raw.githubusercontent.com/kawalpemilu/upload.kawalpemilu.org/master/web/src/assets/tps-progress.png)
@@ -234,17 +263,43 @@ This site is for Moderators to keep track of errors report and various statistic
 
 In addition to the total spending above:
 
-* The website https://upload.kawalpemilu.org development was started on Jan 7, 2019 and ended on July 7, 2019. Felix Halim uses his spare time to slowly build the frontend and backend and incremental updates and maintenance. This is about 2-3 months full time software engineering job.
+* The website https://upload.kawalpemilu.org development was started on 
+  Jan 7, 2019 and ended on July 7, 2019. 
+  Felix Halim uses his spare time to slowly build the frontend and backend 
+  and incremental updates and maintenance. 
+  This is about 2-3 months full time software engineering job.
 
-* The website https://kawalpemilu.org development was started on XXX - YYY. This is about X days frontend job.
+* The website https://kawalpemilu.org development was started on March 28, 2019.
+  This is about 1 month full time frontend job. 
+  The development is led by Fajran Iman Rusadi in his spare time 
+  with contributions from three other people. 
 
-* Development on the KawalC1 verification bot was started July 2014, resumed February 10, 2019 and ended around July 2019. Roughly half a year FTE was spent on its development.
+* Development on the KawalC1 verification bot was started July 2014, 
+  resumed February 10, 2019 and ended around July 2019. 
+  Sam Theisens spent roughly half a year FTE on its development.
 
 * Relawan hours spent can be estimated on the number of uploads for C1 plano.
 
-* Moderators hours spent can be estimated on the number of photos they digitized. There are at least 802K * 2 photos. A photo may be digitized with different speeds (2 seconds with auto-fill, 5 seconds without autofill, 30 seconds for BAWASLU). Let's take an average of 10 seconds to digitize a photo. There's also a transition time between photos about another 5 seconds. Thus in total, the moderators spent around (1.64M + 224K) * 2 * 15 seconds = 324 days. This cost is spread unevenly over 700+ moderators according to scoreboards.
+* Moderators hours spent can be estimated on the number of photos they digitized. 
+  There are at least 802K * 2 photos. 
+  A photo may be digitized with different speeds 
+  (2 seconds with auto-fill, 5 seconds without autofill, 30 seconds for BAWASLU). 
+  Let's take an average of 10 seconds to digitize a photo. 
+  There's also a transition time between photos about another 5 seconds. 
+  Thus in total, the moderators spent around (1.64M + 224K) * 2 * 15 seconds = 324 days. 
+  This cost is spread unevenly over 700+ moderators according to scoreboards.
 
-* Admins hours spent is harder to measure. They constantly seek errors / discrepancy in the data. Each action they take may cost several minutes. For example, moving digitized photos to its correct location, fix errors in the entered data, review sum mismatch and decide according to the 8 rules. There are about 30K TPS with "problems". Assuming each TPS requires about 5 minutes to be resolved, the admins spent around 30K * 5 mins = 104 days. This cost is spread unevenly over 67 admins according to scoreboards. The most time-consuming part is comparing the digitization result from our system with KPU and decide who is at fault.
+* Admins hours spent is harder to measure. 
+  They constantly seek errors / discrepancy in the data. 
+  Each action they take may cost several minutes. 
+  For example, moving digitized photos to its correct location, 
+  fix errors in the entered data, review sum mismatch and decide according to the 8 rules. 
+  There are about 30K TPS with "problems". 
+  Assuming each TPS requires about 5 minutes to be resolved, 
+  the admins spent around 30K * 5 mins = 104 days. 
+  This cost is spread unevenly over 67 admins according to scoreboards. 
+  The most time-consuming part is comparing the digitization result from 
+  our system with KPU and decide who is at fault.
 
 ## How many errors found by the public?
 
