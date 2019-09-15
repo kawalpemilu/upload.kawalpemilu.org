@@ -50,9 +50,10 @@ but this time in a different form: crowdsourcing the collection of original C1 P
 * Last minute inclusion support to digitize C1 forms for pileg. 
   This has at least 4 pages and each have 23 values to be entered. 
 
-* While there has been significant advancement of deep learning to classify 
-  handwritten digits, it's a challenge to build a real-time system for the
-  digitization process. However, we repurposed it as a verifier.
+* While there has been significant advancement in machine learning to classify 
+  handwritten digits, it's a challenge to build a system that assists the
+  digitization process in real-time. However, an offline system 
+  has proven to be useful in detecting human errors.
 
 * The [KPU website](https://pemilu2019.kpu.go.id/#/ppwp/hitung-suara/)
   was not accessible outside Indonesia.
