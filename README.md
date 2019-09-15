@@ -105,6 +105,10 @@ and returns the details of the node containing:
   *  The TPS detail (for level 4) and the urls to the photos of the C1 forms.
   
   *  [And more](https://github.com/kawalpemilu/upload.kawalpemilu.org/blob/master/shared/index.ts#L526).
+  
+Data from this API has been extracted and saved into a Github Repository below for archival.
+
+  * https://github.com/kawalpemilu/kawalpemilu2019-extract
 
 ### The Data Entry (upload.kawalpemilu.org) website
 
